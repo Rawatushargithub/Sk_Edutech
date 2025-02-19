@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FaBell, FaUserCircle } from "react-icons/fa";
 import {useNavigate} from 'react-router-dom';
 
-const Navbar = () => {
+const Navbar = () => { 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 

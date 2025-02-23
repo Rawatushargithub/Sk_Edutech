@@ -195,6 +195,18 @@ const Sidebar = () => {
             <span>{openSections.certificate ? "-" : "+"}</span>
           </div>
         </li>
+        <li>
+          <NavLink
+          to="/Courses">
+          <div
+            // onClick={() => toggleSection("certificate")}
+            className="cursor-pointer py-2 px-4 rounded hover:bg-gray-700 flex justify-between"
+          >
+            Courses
+            <span>{openSections.certificate ? "-" : "+"}</span>
+          </div>
+          </NavLink>
+        </li>
       </ul>
     </div>
   );

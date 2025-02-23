@@ -5,7 +5,6 @@ import ProfileSection from "./pages/Profile/Profile";
 import ProfileDetails from "./pages/Profile/Profile_details";
 
 import Sidebar from "./components/Sidebar";
-import MainContent from "./components/MainContent";
 import Dashboard from "./pages/Dashboard";
 
 import AddNewStudent from "./pages/Manage_students/StudentAddAdmission";
@@ -13,11 +12,11 @@ import StudentAdmissionList from "./pages/Manage_students/Manage_student";
 import EnquiryForm from "./pages/EnquiryForm/EnquiryForm";
 import StudentFeeDetails from "./pages/Manage_students/StudentFeeDetails";
 
-import ExamSection from "./pages/Exam";
-import QuestionBank from "./pages/QuestionBank";
+import CertificateManagement from "./pages/Certificate.jsx/Certificate";
 
-import ApplyCertificate from "./pages/Certificate.jsx/ApplyCertificate";
-import ApproveCertificate from "./pages/Certificate.jsx/ApproveCertificate";
+import CourseList from "./pages/Courses/CourseList";
+import CourseForm from "./pages/Courses/CourseForm";
+import CourseUpdateForm from "./pages/Courses/UpdateCourse";
 
 import { StudentProvider } from "./context/StudentContext";
 
@@ -32,7 +31,7 @@ const App = () => {
         <div className="flex flex-1">
           {/* Sidebar */}
           <Sidebar />
-
+ 
           {/* Content Area */}
           <div className="flex-1 bg-gray-100 p-6 overflow-y-auto">
             <Routes>
@@ -45,9 +44,11 @@ const App = () => {
               <Route path="/fees" element={<StudentFeeDetails />} />
               <Route path="/Student_list" element={<StudentAdmissionList />} />
 
-              <Route path="/exam" element={<ExamSection />} />
+              <Route path="/Courses" element={<CourseList />} />
+              <Route path="/CourseForm" element={<CourseForm />} />
+              <Route path="/updatecourse" element={<CourseUpdateForm />} />
               
-              <Route path="/apply-certificate" element={<ApplyCertificate />} />
+              <Route path="/apply-certificate" element={<CertificateManagement />} />
               {/* <Route path="/studentAddAdmission" element={<AddNewStudent />} /> */}
             </Routes>
           </div>

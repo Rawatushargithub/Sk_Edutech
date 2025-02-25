@@ -11,7 +11,7 @@ const Fees_table = ({
   setBatches,
   setSelectedBatch,
   setRemainingSeats,
-  isSubmitting
+  isSubmitting,
 }) => {
   const [installments, setInstallments] = useState([]);
   const [courseFees, setCourseFees] = useState(0);
@@ -22,7 +22,6 @@ const Fees_table = ({
 
   const [feesBalance, setfeeBalance] = useState(0);
   const [remarks, setRemarks] = useState("");
-  
 
   const navigate = useNavigate();
 
@@ -240,6 +239,7 @@ const Fees_table = ({
               }
             />
             <button
+              type="button"
               className="col-span-1 bg-red-500 text-white px-4 py-2 rounded"
               onClick={() => removeInstallment(index)}
             >
@@ -248,6 +248,7 @@ const Fees_table = ({
           </div>
         ))}
         <button
+          type="button"
           className="bg-yellow-400 text-white px-4 py-2 rounded"
           onClick={addInstallment}
         >
@@ -311,7 +312,9 @@ const Fees_table = ({
       <button
         type="submit"
         className={`px-6 py-2 rounded-md text-white font-medium ${
-          isSubmitting ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+          isSubmitting
+            ? "bg-gray-500 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-700"
         }`}
         disabled={isSubmitting}
         onClick={handleSubmit}
@@ -347,6 +350,7 @@ const Fees_table = ({
       </button>
 
       <button
+      type="button"
         className="bg-red-500 text-white ml-10 px-4 py-2 rounded-2xl hover:bg-red-600"
         onClick={() => navigate("/")}
       >

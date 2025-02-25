@@ -12,7 +12,7 @@ const studentSchema = new mongoose.Schema({
   surnameName: { type: String },
   includeSurname: { type:Boolean , default:true},
   motherName: { type: String },
-  courseInterested: { type: String, required: true },
+  courseInterested: { type: String, required: true }, 
   studentMobile: { type: String, required: true },
   alternateMobile: { type: String },
   email: { type: String, unique: true },
@@ -25,7 +25,7 @@ const studentSchema = new mongoose.Schema({
   caste: { type: String },
   qualifications: { type: String },
   occupation: { type: String }, 
-
+ 
   // Reference Fields
   feeDetails: { type: mongoose.Schema.Types.ObjectId, ref: "Fee" }, // Linked Fee Schema
   installmentDetails: [{ type: mongoose.Schema.Types.ObjectId, ref: "Installment" }], // Linked Installments

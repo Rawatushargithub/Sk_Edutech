@@ -1,5 +1,9 @@
 import { asyncHandler } from "../utils/asynchanlder.js";
 import Student_DetaisModel from "../models/Student_Detais.model.js";
+import FeeModel from "../models/Fees_student.model.js";
+import InstallmentModel from "../models/Installment.model.js";
+import BatchModel from "../models/batch.model.js"; // Import your Batch model
+import mongoose from "mongoose"; // Make sure to import mongoose for the transaction
 import {ApiError} from "../utils/ApiError.js"; 
 import {ApiResponse} from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js"; 
@@ -10,14 +14,44 @@ const registerStudent = asyncHandler(async (req, res) => {
         motherName, courseInterested, studentMobile, alternateMobile,
         email, dob, gender, city, postCode, permanentAddress,
         referralCode, caste, qualifications, occupation,
-        admissionDate, displayAdmissionOptions
+        admissionDate, displayAdmissionOptions,
+
+        // Fee details
+        courseFees, discountType, discountAmount, totalFees, feesReceived, balance, remarks,
+        // Batch selection
+        selectedBatch,
+        // Installment details
+        installments = []
     } = req.body;
 
     // Validate required fields
     // if ([rollNumber, studentName, relationType, courseInterested, studentMobile, dob, gender, admissionDate].some(field => !field?.trim())) {
     //     throw new ApiError(400, "All required fields must be provided");
     // }
+
+    // Validate batch selection
+    if (!selectedBatch) {
+        throw new ApiError(400, "Batch selection is required");
+    }
+    console.log(selectedBatch)
+    // Find the batch by its timing or name
+    const batch = await BatchModel.findOne({ 
+        $or: [
+            { batchTiming: selectedBatch },
+            { batchName: selectedBatch },
+            { id: selectedBatch } // In case an ID is actually sent
+        ]
+    });
     
+    if (!batch) {
+        throw new ApiError(404, "Selected batch not found");
+    }
+
+    // Check remaining seats in the batch
+    if (batch.remainingSeats <= 0) {
+        throw new ApiError(400, "Selected batch has no available seats");
+    }
+
 
     // Check for student photo & signature
     const studentPhotoLocalPath = req.files?.studentPhoto?.[0]?.path;
@@ -35,8 +69,17 @@ const registerStudent = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Error uploading student images");
     }
 
+    // Define session outside the try block so it's accessible in the catch block
+    let session;
+
+    try {
+        
+     // Use a database transaction to ensure all operations succeed or fail together
+     session = await mongoose.startSession();
+    session.startTransaction();
+
     // Create student record in DB
-    const student = await Student_DetaisModel.create({
+    const student = await Student_DetaisModel.create([{
         studentPhoto: studentPhoto.url,
         studentSignature: studentSignature.url,
         rollNumber,
@@ -60,14 +103,102 @@ const registerStudent = asyncHandler(async (req, res) => {
         qualifications,
         occupation,
         admissionDate,
+        selectedBatch: batch._id, // Store the reference to the batch object ID
         displayAdmissionOptions: displayAdmissionOptions || false
-    });
+    }] , { session });
+console.log("student id" , student[0]._id)
+    const studentId = student[0]._id;
+console.log("variable studentId" , studentId)
+    // Create fee record
+    const fee = await FeeModel.create([{
+        studentId: studentId,
+        courseFees: Number(courseFees) || 0,
+        discountType: discountType || "amount-",
+        discountAmount: Number(discountAmount) || 0,
+        totalFees: Number(totalFees) || 0,
+        feesReceived: Number(feesReceived) || 0,
+        balance: Number(balance) || (Number(totalFees) - Number(feesReceived)),
+        remarks: remarks || ""
+    }], { session });
 
-    if (!student) {
+    // Create installment records if any
+    const installmentRecords = [];
+    if (installments && installments.length > 0) {
+        for (const installment of installments) {
+
+// Validate installment data before creating
+if (!installment.name) {
+    throw new ApiError(400, "Installment name is required");
+}
+
+// Parse amount properly to avoid NaN
+const amount = parseFloat(installment.amount);
+if (isNaN(amount)) {
+    throw new ApiError(400, `Invalid amount for installment: ${installment.name}`);
+}
+
+// Validate date
+if (!installment.date) {
+    throw new ApiError(400, `Date is required for installment: ${installment.name}`);
+}
+
+            const newInstallment = await InstallmentModel.create([{
+                studentId: studentId,
+                installmentName: installment.name,
+                amount: Number(installment.amount),
+                date: (installment.date),
+                paid: false
+            }], { session });
+            
+            installmentRecords.push(newInstallment[0]._id);
+        }
+    }
+
+     // Update student with fee and installment references
+     await Student_DetaisModel.findByIdAndUpdate(
+        studentId,
+        {
+            feeDetails: fee[0]._id,
+            installmentDetails: installmentRecords
+        },
+        { session }
+    );
+
+    // Update the batch to decrease remaining seats
+    await BatchModel.findByIdAndUpdate(
+        batch._id,
+        { $inc: { remainingSeats: -1 } }, // Decrease remaining seats by 1
+        { session }
+    );
+
+    // Commit the transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    // Fetch the complete student record with populated references
+    const completeStudent = await Student_DetaisModel.findById(studentId)
+    .populate('feeDetails')
+    .populate('installmentDetails')
+    .populate('selectedBatch');
+
+    if (!completeStudent) {
         throw new ApiError(500, "Something went wrong while registering the student");
     }
 
-    return res.status(201).json(new ApiResponse(201, student, "Student registered successfully"));
+    return res.status(201).json(new ApiResponse(
+        201, 
+        completeStudent, 
+        "Student registered successfully"));
+
+    } catch (error) {
+        // If anything fails, abort the transaction
+        if(session)
+        {
+            await session.abortTransaction();
+            session.endSession();
+        }
+        throw new ApiError(500, error.message || "Something went wrong while registering the student");
+    }
 });
 
 const getStudents = asyncHandler(async (req, res) => {

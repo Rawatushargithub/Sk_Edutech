@@ -39,6 +39,10 @@ import batchRouter from "./routes/batch.routes.js";
 app.use("/api/v1/student" , studentRouter); // /users is become prefix of the url local host and the control goes to user.routes.js
 app.use("/api/v1/courses" , courseRouter);
 app.use("/api/v1/batches" , batchRouter);
+app.use('/api/enquiry', EnquiryStudent);
+app.use("/notes", notesRoutes); // Routes for notes
+app.use("/api", examRoutes);
+
 
 
 

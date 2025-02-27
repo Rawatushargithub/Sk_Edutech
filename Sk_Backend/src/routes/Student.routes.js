@@ -3,7 +3,6 @@ import { registerStudent , getStudents } from "../controllers/Student.controller
 import { upload } from "../middlewares/multer.middleware.js";
 const router = Router()
 
-
 try {
     router.route("/register_student").post( 
         upload.fields( // the curely braces are the fields and we are taking the fields of array to taking the avatar and coverImage from frontend

@@ -190,7 +190,7 @@ const Sidebar = () => {
             className="cursor-pointer py-2 px-4 rounded hover:bg-gray-700 flex justify-between"
           >
             Videos
-            <span>{openSections.certificate ? "-" : "+"}</span>
+            
           </div>
         </li>
         <li>
@@ -201,7 +201,7 @@ const Sidebar = () => {
             className="cursor-pointer py-2 px-4 rounded hover:bg-gray-700 flex justify-between"
           >
             Courses
-            <span>{openSections.certificate ? "-" : "+"}</span>
+            
           </div>
           </NavLink>
         </li>

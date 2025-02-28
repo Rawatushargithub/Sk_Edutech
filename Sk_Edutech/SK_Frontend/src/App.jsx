@@ -5,7 +5,7 @@ import ProfileSection from "./pages/Profile/Profile";
 import ProfileDetails from "./pages/Profile/Profile_details";
 
 import Sidebar from "./components/Sidebar"; 
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/Dashboard/Dashboard";
 
 import AddNewStudent from "./pages/Manage_students/StudentAddAdmission";
 import StudentAdmissionList from "./pages/Manage_students/Manage_student";
@@ -15,7 +15,7 @@ import StudentFeeDetails from "./pages/Manage_students/StudentFeeDetails";
 import ExamManagement from "./pages/Exam/ExamPage";
 import AddExam from "./pages/Exam/AddExam";
 
-import CertificateManagement from "./pages/Certificate.jsx/Certificate";
+import CertificateManagement from "./pages/Certificate/Certificate";
 
 import NotesDashboard from "./pages/Notes/NotesDashboard";
 import AddNote from "./pages/Notes/AddNote";

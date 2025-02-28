@@ -1,5 +1,5 @@
-import Exam from "../models/Exam.models"
-import { asyncHandler } from "../utils/asynchanlder";
+import Exam from "../models/Exam.models.js"
+import { asyncHandler } from "../utils/asynchanlder.js";
 
 export const createExam = asyncHandler(async (req, res) => {
   try {

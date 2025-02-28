@@ -1,4 +1,4 @@
-import express from "express.js"
+import express from "express"
 import { createNote, getNotes } from "../controllers/notesControllers.js"
 import { upload } from "../middlewares/multer.middleware.js";
 

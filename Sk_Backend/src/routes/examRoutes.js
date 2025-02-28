@@ -1,8 +1,7 @@
-import express from "express.js"
+import express from "express"
 import { createExam, getAllExams, deleteExam, updateExamStatus } from "../controllers/examControllers.js"
 
 const router = express.Router();
-
 
 router.post("/exams", createExam);
 

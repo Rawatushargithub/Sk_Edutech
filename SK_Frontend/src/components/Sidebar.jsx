@@ -176,19 +176,17 @@ const Sidebar = () => {
             </ul>
           )}
         </li>
-
+          
         <li>
-          <div
-            // onClick={() => toggleSection("certificate")}
-            className="cursor-pointer py-2 px-4 rounded hover:bg-gray-700 flex justify-between"
-          >
+         
+          <NavLink
+          to="Notes"
+           className="cursor-pointer py-2 px-4 rounded hover:bg-gray-700 flex justify-between">
             Notes
-            <span>{openSections.certificate ? "-" : "+"}</span>
-          </div>
+          </NavLink>
         </li>
         <li>
           <div
-            // onClick={() => toggleSection("certificate")}
             className="cursor-pointer py-2 px-4 rounded hover:bg-gray-700 flex justify-between"
           >
             Videos

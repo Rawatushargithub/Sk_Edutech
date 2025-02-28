@@ -4,7 +4,7 @@ import Navbar from "./components/Navbar";
 import ProfileSection from "./pages/Profile/Profile";
 import ProfileDetails from "./pages/Profile/Profile_details";
 
-import Sidebar from "./components/Sidebar";
+import Sidebar from "./components/Sidebar"; 
 import Dashboard from "./pages/Dashboard";
 
 import AddNewStudent from "./pages/Manage_students/StudentAddAdmission";
@@ -12,7 +12,14 @@ import StudentAdmissionList from "./pages/Manage_students/Manage_student";
 import EnquiryForm from "./pages/EnquiryForm/EnquiryForm";
 import StudentFeeDetails from "./pages/Manage_students/StudentFeeDetails";
 
+import ExamManagement from "./pages/Exam/ExamPage";
+import AddExam from "./pages/Exam/AddExam";
+
 import CertificateManagement from "./pages/Certificate.jsx/Certificate";
+
+import NotesDashboard from "./pages/Notes/NotesDashboard";
+import AddNote from "./pages/Notes/AddNote";
+import NoteDetail from "./pages/Notes/NoteDetail";
 
 import CourseList from "./pages/Courses/CourseList";
 import CourseForm from "./pages/Courses/CourseForm";
@@ -44,11 +51,19 @@ const App = () => {
               <Route path="/fees" element={<StudentFeeDetails />} />
               <Route path="/Student_list" element={<StudentAdmissionList />} />
 
+              <Route path="/Exam" element={<ExamManagement />} />
+              <Route path="/AddExam" element={<AddExam />} />
+
+              <Route path="/apply-certificate" element={<CertificateManagement />} />
+
+              <Route path="/Notes" element={<NotesDashboard />} />
+              <Route path="/AddNote" element={<AddNote />} />
+              <Route path="/NoteDetail" element={<NoteDetail />} />
+              
               <Route path="/Courses" element={<CourseList />} />
               <Route path="/CourseForm" element={<CourseForm />} />
               <Route path="/updatecourse" element={<CourseUpdateForm />} />
               
-              <Route path="/apply-certificate" element={<CertificateManagement />} />
               {/* <Route path="/studentAddAdmission" element={<AddNewStudent />} /> */}
             </Routes>
           </div>

@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asynchanlder.js";
-import Student_DetaisModel from "../models/Student_Detais.model.js";
-import FeeModel from "../models/Fees_student.model.js";
-import InstallmentModel from "../models/Installment.model.js";
+import Student_DetaisModel from "../models/Student/Student_Detais.model.js"
+import Fees_studentModel from "../models/Student/Fees_student.model.js";
+import installmentModel from "../models/Student/installment.model.js";
 import BatchModel from "../models/batch.model.js"; // Import your Batch model
 import mongoose from "mongoose"; // Make sure to import mongoose for the transaction
 import { ApiError } from "../utils/ApiError.js";
@@ -138,7 +138,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     const studentId = student[0]._id;
     console.log("variable studentId", studentId);
     // Create fee record
-    const fee = await FeeModel.create(
+    const fee = await Fees_studentModel.create(
       [
         {
           studentId: studentId,
@@ -183,7 +183,7 @@ const registerStudent = asyncHandler(async (req, res) => {
           );
         }
 
-        const newInstallment = await InstallmentModel.create(
+        const newInstallment = await installmentModel.create(
           [
             {
               studentId: studentId,

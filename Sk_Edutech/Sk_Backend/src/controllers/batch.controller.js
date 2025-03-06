@@ -6,12 +6,14 @@ import {ApiResponse} from "../utils/ApiResponse.js";
 // Get all batches
 export const getAllBatches = asyncHandler(async (req, res) => {
     try {
-      const batches = await Batch.find({}, 'batchName _id batchTiming');
+      const batches = await Batch.find({}, 'batchName _id batchTiming batchLimit currentStudents');
       console.log(batches)
       res.status(200).json(new ApiResponse(200 , batches.map(batch => ({
         id: batch._id,
         name: batch.batchName,
-        timings: batch.batchTiming
+        timings: batch.batchTiming,
+        limit: batch.batchLimit,
+        currentStudents: batch.currentStudents
       })) , "Successfully Get all Batches"));
     } catch (error) {
       throw new ApiError(500 , "Error Fetching Batches" , error.message)
@@ -37,8 +39,9 @@ export const getBatchSeats = asyncHandler(async (req, res) => {
 
 // Create new batch
 export const createBatch = asyncHandler(async (req, res) => {
-    try {
+  
       const { batchName, batchLimit, currentStudents, batchTiming } = req.body;
+      console.log(req.body)
       
       const newBatch = new Batch({
         batchName,
@@ -47,11 +50,12 @@ export const createBatch = asyncHandler(async (req, res) => {
         batchTiming
       });
       
+      if(!newBatch)
+      {
+        throw new ApiError(500 , "Batch is not created in DB" , error.message)
+      }
       await newBatch.save();
-      res.status(201).json(new ApiResponse(200 , newBatch , "Sucessfully created the batch"));
-    } catch (error) {
-        throw new ApiError(500 , 'Error creating batch' , error.message)
-    }
+      return res.status(201).json(new ApiResponse(200 , newBatch , "Sucessfully created the batch"));
   })
 
 // Update batch
@@ -83,6 +87,7 @@ export const updateBatch = asyncHandler(async (req, res) => {
 // Delete batch
 export const deleteBatch = asyncHandler(async (req, res) => {
     try {
+      console.log(req.params.batchId)
       const deletedBatch = await Batch.findByIdAndDelete(req.params.batchId);
       
       if (!deletedBatch) {

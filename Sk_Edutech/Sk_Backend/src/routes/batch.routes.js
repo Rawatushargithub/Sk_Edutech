@@ -4,7 +4,7 @@ import {
   getAllBatches,
   getBatchSeats,
   createBatch,
-  updateBatch, 
+  updateBatch,  
   deleteBatch
 } from "../controllers/batch.controller.js"
 

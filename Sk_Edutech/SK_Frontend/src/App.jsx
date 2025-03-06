@@ -25,6 +25,8 @@ import CourseList from "./pages/Courses/CourseList";
 import CourseForm from "./pages/Courses/CourseForm";
 import CourseUpdateForm from "./pages/Courses/UpdateCourse";
 
+import Batches from "./pages/Batches/Batche";
+
 import { StudentProvider } from "./context/StudentContext";
 
 const App = () => {
@@ -42,7 +44,7 @@ const App = () => {
           {/* Content Area */}
           <div className="flex-1 bg-gray-100 p-6 overflow-y-auto">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/" element={<Dashboard />} /> 
               <Route path="/profile" element={<ProfileSection />} />
               <Route path="/profile-details" element={<ProfileDetails />} />
 
@@ -64,6 +66,7 @@ const App = () => {
               <Route path="/CourseForm" element={<CourseForm />} />
               <Route path="/updatecourse" element={<CourseUpdateForm />} />
               
+              <Route path="/Batch" element={<Batches />} />
               {/* <Route path="/studentAddAdmission" element={<AddNewStudent />} /> */}
             </Routes>
           </div>

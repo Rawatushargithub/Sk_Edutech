@@ -24,7 +24,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     gender,
     city,
     postCode,
-    permanentAddress,
+    permanentAddress, 
     referralCode,
     caste,
     qualifications,

@@ -14,7 +14,7 @@ app.use(cors({
 
 // Data is coming from different places like it comes from "forms" , "URL" ,direct_form or json_form
 // we don't want to come unlimited data in our server so we put the limit on this by using "use"
-
+ 
 //this for when a form is filling and it is coming in backend server
 app.use(express.json()) // it is for confiquring that we are accepting the data in json
 
@@ -32,6 +32,7 @@ app.use(express.static("public")); //  static only help in to store folder in my
 import studentRouter from "./routes/Student.routes.js"
 import courseRouter from "./routes/Courses.routes.js"
 import batchRouter from "./routes/batch.routes.js";
+import certificateRouter from "./routes/certificate.routes.js";
 import notesRoutes from "./routes/notesRoutes.js"
 import examRoutes from "./routes/examRoutes.js"
 
@@ -41,6 +42,7 @@ import examRoutes from "./routes/examRoutes.js"
 app.use("/api/v1/student" , studentRouter); // /users is become prefix of the url local host and the control goes to user.routes.js
 app.use("/api/v1/courses" , courseRouter);
 app.use("/api/v1/batche" , batchRouter);
+app.use("/api/v1/certificates", certificateRouter);
 // app.use('/api/enquiry', EnquiryStudent);
 app.use("/api/v1/note", notesRoutes); // Routes for notes
 app.use("/api/v1", examRoutes);

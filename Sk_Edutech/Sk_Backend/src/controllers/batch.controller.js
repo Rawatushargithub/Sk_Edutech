@@ -15,7 +15,7 @@ export const getAllBatches = asyncHandler(async (req, res) => {
         limit: batch.batchLimit,
         currentStudents: batch.currentStudents
       })) , "Successfully Get all Batches"));
-    } catch (error) {
+    } catch (error) { 
       throw new ApiError(500 , "Error Fetching Batches" , error.message)
     }
   })

@@ -65,3 +65,47 @@ export const getCourses = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+//Get courses count
+export const getCoursesCount = async (req , res) => {
+    try {
+        const count = await Course.countDocuments();       //{ instituteId: req.user.instituteId } <= courses count
+       console.log(count)
+        res.status(200).json({ count });
+      } catch (error) {
+        res.status(500).json({ message: "Error fetching course count", error });
+      }
+}
+
+// Get recently added courses
+export const getRecentCourses = async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit) || 5;
+      
+      const courses = await Course.find()
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .select("courseName courseCode courseDuration courseSubject courseMRP status courseImage createdAt");
+      
+      if (courses.length === 0) {
+        return res.status(404).json({ message: "No courses found" });
+      }
+       
+      // Format the response data
+      const formattedCourses = courses.map(course => ({
+        id: course._id,
+        name: course.courseName,
+        code: course.courseCode,
+        subject: course.courseSubject,
+        duration: course.courseDuration,
+        price: course.courseMRP,
+        status: course.status,
+        imageUrl: course.courseImage,
+        addedOn: course.createdAt
+      }));
+      
+      res.status(200).json(formattedCourses);
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
+    }
+  };

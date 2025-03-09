@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+ 
 const studentSchema = new mongoose.Schema({
   studentPhoto: { type: String, required: true }, // Cloudinary URL
   studentSignature: { type: String, required: true }, // Cloudinary URL

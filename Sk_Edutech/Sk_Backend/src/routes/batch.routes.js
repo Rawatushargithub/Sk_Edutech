@@ -9,7 +9,7 @@ import {
 } from "../controllers/batch.controller.js"
 
 const router = express.Router();
-
+ 
 // Get all batches (for dropdown) 
 router.get('/allBatches', getAllBatches);
 

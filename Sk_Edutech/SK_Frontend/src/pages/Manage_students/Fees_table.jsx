@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 const Fees_table = ({
   handleSubmit,
   formData,
+  setFormData,
   handleChange,
-  batches,
+  batches, 
   selectedBatch,
   remainingSeats,
   setBatches,
@@ -23,13 +24,13 @@ const Fees_table = ({
   const [feesBalance, setfeeBalance] = useState(0);
   const [remarks, setRemarks] = useState("");
 
-  const navigate = useNavigate();
+  const navigate = useNavigate(); 
 
   // Fetch all batches
   const fetchBatches = async () => {
     try {
       const response = await fetch(
-        "http://localhost:8000/api/v1/batches/allBatches"
+        "http://localhost:8000/api/v1/batche/allBatches"
       );
       if (!response.ok) throw new Error("Failed to fetch batches");
       console.log("Response:: ", response);
@@ -42,10 +43,10 @@ const Fees_table = ({
   };
 
   // Fetch remaining seats for selected batch
-  const fetchRemainingSeats = async (batchId) => {
+  const fetchRemainingSeats = async (batchId) => { 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/v1/batches/${batchId}/seats`
+        `http://localhost:8000/api/v1/batche/${batchId}/seats`
       );
       if (!response.ok) throw new Error("Failed to fetch remaining seats");
       const data = await response.json();
@@ -60,8 +61,18 @@ const Fees_table = ({
   // Handle batch selection change
   const handleBatchChange = (e) => {
     const batchId = e.target.value;
-
+    const selectedBatchObject = batches.find(batch => batch.id === batchId);
+  
+    if (selectedBatchObject) {
+      setFormData({
+        ...formData,
+        selectedBatch: selectedBatchObject.name
+      });
+    }
     setSelectedBatch(batchId);
+
+  console.log("Formdata data " , formData.batches)
+
     if (batchId) {
       fetchRemainingSeats(batchId);
     } else {
@@ -269,7 +280,7 @@ const Fees_table = ({
             {batches.map((batch) => (
               <option key={batch.id} value={batch.id}>
                 {batch.name} ({batch.timings})
-              </option>
+              </option> 
             ))}
           </select>
         </div>

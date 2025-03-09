@@ -8,7 +8,7 @@ const Dashboard = () => {
     const navigate = useNavigate();
 
     // Mock Data
-    const totalStudents = 120;
+    const totalStudents = 120; 
     const totalCourses = 15;
     const walletBalance = { paid: 5000, balance: 3000 };
 
@@ -31,9 +31,9 @@ const Dashboard = () => {
     // Active Tab State
     const [activeTab, setActiveTab] = useState("students");
 
-    return (
+    return ( 
         <div className="p-6 space-y-8">
-            <Header />
+            {/* <Header /> */}
            
             {/* Top Boxes */}
             <StatsCard />

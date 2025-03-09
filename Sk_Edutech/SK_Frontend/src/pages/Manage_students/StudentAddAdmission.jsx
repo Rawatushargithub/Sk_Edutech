@@ -4,7 +4,7 @@ import Fees_table from "./Fees_table";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const AddNewStudent = () => {
+const AddNewStudent = () => { 
   const [formData, setFormData] = useState({
     // Personal Details
     studentPhoto: null,
@@ -35,14 +35,14 @@ const AddNewStudent = () => {
     referralCode: "",
     qualifications: "",
     occupation: "",
-    batches:"",
+    selectedBatch:"",
 
-    // Financial Details
+    // Financial Details 
     courseFees: 0,
     discountRate: "amount-",
     discountAmount: 0,
     totalFees: 0,
-    feesReceived: 0,
+    feesReceived: 0, 
     installments: [],
   });
  
@@ -98,6 +98,7 @@ const AddNewStudent = () => {
     formDataToSend.append("studentSignature", formData.studentSignature);
   }
 
+  
   // Append other fields
   Object.entries(formData).forEach(([key, value]) => {
     if (key !== "studentPhoto" && key !== "studentSignature" && value !== null) {
@@ -459,6 +460,7 @@ for (let pair of formDataToSend.entries()) {
           <Fees_table 
           handleSubmit={handleSubmit}   
           formData={formData} handleChange={handleChange} 
+          setFormData={setFormData}
           batches={batches} setBatches={setBatches} 
           selectedBatch={selectedBatch} 
           setSelectedBatch={setSelectedBatch} 

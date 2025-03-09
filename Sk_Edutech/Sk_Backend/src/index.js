@@ -18,7 +18,7 @@ connectDB()  // as this function run the async function so it will return  the p
     })
 
 
-    app.listen(process.env.PORT || 8000 , () => {
+    app.listen( 8000 || process.env.PORT , () => {
         console.log(` Server is running at port : Server at http://localhost:${process.env.PORT}`);
     })
    

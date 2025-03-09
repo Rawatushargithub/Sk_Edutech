@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { FaUserGraduate, FaBook, FaWallet } from "react-icons/fa";
+import axios from "axios"
 
 const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textColor = "#09182a" }) => {
-  const API_URL = `https://your-api.com/${apiEndpoint}`; // Replace with actual API
+  const API_URL = `http://localhost:8000/api/v1/${apiEndpoint}`; // Replace with actual API
 
   const [value, setValue] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -11,15 +13,19 @@ const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textCo
     const fetchStats = async () => {
       setLoading(true);
       setError(false);
-
       try {
-        const response = await fetch(API_URL);
-        if (!response.ok) throw new Error("Failed to fetch data");
-
-        const data = await response.json();
-        if (!data.count) throw new Error("No data available");
-
-        setValue(data.count);
+  
+        const response = await axios.get(API_URL);
+        
+        // Axios already throws an error for non-2xx responses
+        console.log("Response data:", response.data);
+        
+        // Check if count exists in the response data
+        if (response.data && response.data.count !== undefined) {
+          setValue(response.data.count);
+        } else {
+          throw new Error("No count data available");
+        }
       } catch (err) {
         setError(true);
       } finally {
@@ -38,7 +44,7 @@ const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textCo
 
         {/* Card Content */}
         <div
-          className="relative rounded-lg stat_container p-8 text-center transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl"
+          className="relative rounded-lg stat_container p-8 text-center transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl "
           style={{ backgroundColor: bgColor }}
         >
           {Icon && <Icon className="mx-auto mb-4 text-4xl" style={{ color: textColor }} />}
@@ -69,9 +75,27 @@ const DashboardStats = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
       {/* Default Fallback Boxes */}
-      <StatsCard title="Total Students" apiEndpoint="students/count" />
-      <StatsCard title="Total Courses" apiEndpoint="courses/count" />
-      <StatsCard title="Wallet" apiEndpoint="wallet/balance" />
+      <StatsCard 
+      title="Total Students"
+      icon={FaUserGraduate} 
+      apiEndpoint="student/count"
+      bgColor="#E4E8ED"
+      textColor = "#09182a"
+      />
+      <StatsCard 
+      title="Total Courses" 
+      icon={FaBook}
+      apiEndpoint="courses/count"
+      bgColor="#E4E8ED"
+      textColor = "#09182a"
+      />
+      <StatsCard 
+      title="Wallet" 
+      icon={FaWallet} 
+      apiEndpoint="wallet/balance"
+      bgColor="#E4E8ED"
+      textColor = "#09182a"
+       />
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { Router } from "express"
-import { registerStudent , getStudents } from "../controllers/Student.controller.js"
-import { upload } from "../middlewares/multer.middleware.js";
+import { registerStudent , getStudents , getStudentCount , getRecentsStudents } from "../controllers/Student.controller.js"
+import { upload } from "../middlewares/multer.middleware.js"; 
 const router = Router()
 
 try {
@@ -19,6 +19,8 @@ try {
 
      router.route("/get_students")
     .get(getStudents);
+    router.route("/count").get(getStudentCount)
+    router.route("/recent").get(getRecentsStudents);
 
 } catch (error) {
     console.log("error occured in students routes " , error)

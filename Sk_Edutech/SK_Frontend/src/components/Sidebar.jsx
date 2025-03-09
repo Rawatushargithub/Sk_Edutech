@@ -10,6 +10,7 @@ import { LiaCertificateSolid } from "react-icons/lia";
 import { PiExam, PiStudentBold, PiUserListBold } from "react-icons/pi";
 import { FaMoneyBill1Wave } from "react-icons/fa6";
 import { IoMdClock } from "react-icons/io";
+import { RiBookShelfLine } from "react-icons/ri";
 
 
 const Sidebar = () => {
@@ -76,6 +77,11 @@ const Sidebar = () => {
       title:"Batch",
       icon:<IoMdClock className="w-5 h-5"/>,
       action: () => navigate("/Batch")
+    },
+    {
+      title:"Courses",
+      icon:<RiBookShelfLine className="w-5 h-5"/>,
+      action: () => navigate("/Courses")
     }
   ];
 

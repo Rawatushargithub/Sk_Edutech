@@ -12,22 +12,6 @@ const Dashboard = () => {
     const totalCourses = 15;
     const walletBalance = { paid: 5000, balance: 3000 };
 
-    const studentsData = [
-        { id: "SKEDU520001", name: "John Doe", course: "Mathematics", fees: "$100" },
-        { id: "SKEDU520002", name: "Jane Smith", course: "Science", fees: "$120" },
-        { id: "SKEDU520003", name: "Alice Johnson", course: "Physics", fees: "$110" },
-        { id: "SKEDU520004", name: "Bob Brown", course: "Chemistry", fees: "$105" },
-        { id: "SKEDU520005", name: "Charlie Green", course: "Biology", fees: "$115" },
-    ];
-
-    const coursesData = [
-        { courseId: "C001", duration: "3 Months", fees: "$500", batch: "A" },
-        { courseId: "C002", duration: "6 Months", fees: "$800", batch: "B" },
-        { courseId: "C003", duration: "1 Year", fees: "$1200", batch: "C" },
-        { courseId: "C004", duration: "2 Years", fees: "$2000", batch: "D" },
-        { courseId: "C005", duration: "4 Months", fees: "$600", batch: "E" },
-    ];
-
     // Active Tab State
     const [activeTab, setActiveTab] = useState("students");
 

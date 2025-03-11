@@ -35,7 +35,7 @@ import batchRouter from "./routes/batch.routes.js";
 import certificateRouter from "./routes/certificate.routes.js";
 import notesRoutes from "./routes/notesRoutes.js"
 import examRoutes from "./routes/examRoutes.js"
-
+import videoRouter from "./routes/VideoRoutes.js"
 //router declaration
 //app.get <= this was working previously becoz we are writing the routes and controller at same place
 // now we separate the routes so we have to add middleware for using routes
@@ -46,6 +46,7 @@ app.use("/api/v1/certificates", certificateRouter);
 // app.use('/api/enquiry', EnquiryStudent);
 app.use("/api/v1/note", notesRoutes); // Routes for notes
 app.use("/api/v1", examRoutes);
+app.use("/api/videos" , videoRouter)
 
 
 

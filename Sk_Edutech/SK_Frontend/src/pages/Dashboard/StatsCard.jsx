@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FaUserGraduate, FaBook, FaWallet } from "react-icons/fa";
+import { FaUserGraduate, FaBook, FaWallet , FaPlus } from "react-icons/fa";
 import axios from "axios"
+import { useNavigate } from "react-router-dom";
 
-const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textColor = "#09182a" }) => {
+const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textColor = "#09182a" , isWallet=false }) => {
   const API_URL = `http://localhost:8000/api/v1/${apiEndpoint}`; // Replace with actual API
+  const navigate = useNavigate();
 
   const [value, setValue] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -20,12 +22,22 @@ const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textCo
         // Axios already throws an error for non-2xx responses
         console.log("Response data:", response.data);
         
-        // Check if count exists in the response data
-        if (response.data && response.data.count !== undefined) {
-          setValue(response.data.count);
+       // For wallet, we expect balance instead of count
+        if (isWallet) {
+          if (response.data && response.data.balance !== undefined) {
+            setValue(response.data.balance);
+          } else {
+            throw new Error("No balance data available");
+          }
         } else {
-          throw new Error("No count data available");
+          // For other stats cards
+          if (response.data && response.data.count !== undefined) {
+            setValue(response.data.count);
+          } else {
+            throw new Error("No count data available");
+          }
         }
+
       } catch (err) {
         setError(true);
       } finally {
@@ -34,7 +46,15 @@ const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textCo
     };
 
     fetchStats();
-  }, [API_URL]);
+  }, [API_URL , isWallet]);
+
+  // Handler for wallet card click
+  const handleWalletClick = () => {
+    if (isWallet) {
+      navigate("/wallet"); // Navigate to wallet management page
+    }
+  };
+
 
   return (
     <div className="flex justify-center gap-2">
@@ -46,8 +66,10 @@ const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textCo
         <div
           className="relative rounded-lg stat_container p-8 text-center transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl "
           style={{ backgroundColor: bgColor }}
+          onClick={handleWalletClick}
         >
           {Icon && <Icon className="mx-auto mb-4 text-4xl" style={{ color: textColor }} />}
+          {isWallet && <FaPlus className=" ml-5 text-2xl" style={{ color: textColor }} />}
           <h2 className="text-2xl font-semibold mb-2" style={{ color: textColor }}>
             {title}
           </h2>
@@ -61,9 +83,16 @@ const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textCo
           ) : error ? (
             <p className="text-lg mt-3 font-extrabold text-gray-500">N/A</p>
           ) : (
-            <p className="text-6xl mt-3 font-extrabold" style={{ color: textColor }}>
-              {value}
-            </p>
+            <div>
+              <p className="text-6xl mt-3 font-extrabold" style={{ color: textColor }}>
+                {isWallet ? `₹${value}` : value}
+              </p>
+              {isWallet && (
+                <p className="mt-2 text-sm font-medium" style={{ color: textColor }}>
+                  Click to manage wallet
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -95,6 +124,7 @@ const DashboardStats = () => {
       apiEndpoint="wallet/balance"
       bgColor="#E4E8ED"
       textColor = "#09182a"
+      isWallet = {true} // Identify this as wallet card
        />
     </div>
   );

@@ -72,6 +72,7 @@ const Sidebar = () => {
     {
       title: "Videos",
       icon: <BiSolidVideos className="w-5 h-5" />,
+      action: () => navigate("/videos"),
     },
     {
       title:"Batch",

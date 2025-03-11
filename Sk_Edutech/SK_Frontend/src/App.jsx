@@ -6,6 +6,7 @@ import ProfileDetails from "./pages/Profile/Profile_details";
 
 import Sidebar from "./components/Sidebar"; 
 import Dashboard from "./pages/Dashboard/Dashboard";
+import Wallet from "./pages/Dashboard/Wallet";
 
 import AddNewStudent from "./pages/Manage_students/StudentAddAdmission";
 import StudentAdmissionList from "./pages/Manage_students/Manage_student";
@@ -26,6 +27,7 @@ import CourseForm from "./pages/Courses/CourseForm";
 import CourseUpdateForm from "./pages/Courses/UpdateCourse";
 
 import Batches from "./pages/Batches/Batche";
+import UploadCourseVideo1 from "./pages/video";
 
 import { StudentProvider } from "./context/StudentContext";
 
@@ -47,6 +49,7 @@ const App = () => {
               <Route path="/" element={<Dashboard />} /> 
               <Route path="/profile" element={<ProfileSection />} />
               <Route path="/profile-details" element={<ProfileDetails />} />
+              <Route path="/wallet" element={<Wallet />} />
 
               <Route path="/Registration" element={<AddNewStudent />} />
               <Route path="/enquiry" element={<EnquiryForm />} />
@@ -67,6 +70,8 @@ const App = () => {
               <Route path="/updatecourse" element={<CourseUpdateForm />} />
               
               <Route path="/Batch" element={<Batches />} />
+
+              <Route path="/videos" element={<UploadCourseVideo1 />} />
               {/* <Route path="/studentAddAdmission" element={<AddNewStudent />} /> */}
             </Routes>
           </div>

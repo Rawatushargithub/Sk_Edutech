@@ -179,7 +179,7 @@ const UploadCourseVideo1 = () => {
             <div className="flex justify-between items-center mt-2 p-2">
               <div>
                 <h3 className="text-sm font-bold text-gray-800">{video.title}</h3>
-                <p className="text-xs text-gray-500">{video.course}</p>
+                <p className="text-xs text-gray-500">Course: {video.course}</p>
               </div>
               <button onClick={() => handleDeleteVideo(video._id)} className="text-gray-700 text-xl ">
                 <MdDelete />

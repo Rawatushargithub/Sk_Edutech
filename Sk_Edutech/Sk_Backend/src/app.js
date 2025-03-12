@@ -30,12 +30,13 @@ app.use(express.static("public")); //  static only help in to store folder in my
 
 // routes import  
 import studentRouter from "./routes/Student.routes.js"
-import courseRouter from "./routes/Courses.routes.js"
 import batchRouter from "./routes/batch.routes.js";
 import certificateRouter from "./routes/certificate.routes.js";
 import notesRoutes from "./routes/notesRoutes.js"
 import examRoutes from "./routes/examRoutes.js"
 import videoRouter from "./routes/VideoRoutes.js"
+import paymentRouter from "./routes/payment.routes.js"
+import courseRouter from "./routes/Courses.routes.js"
 //router declaration
 //app.get <= this was working previously becoz we are writing the routes and controller at same place
 // now we separate the routes so we have to add middleware for using routes
@@ -47,7 +48,8 @@ app.use("/api/v1/certificates", certificateRouter);
 app.use("/api/v1/note", notesRoutes); // Routes for notes
 app.use("/api/v1", examRoutes);
 app.use("/api/videos" , videoRouter)
-
+app.use("/api/v1/payment" , paymentRouter)
+app.use("/api/v1/courses" , courseRouter);
 
 
 

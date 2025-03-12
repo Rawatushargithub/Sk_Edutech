@@ -8,9 +8,38 @@ const CourseList = () => {
   const [displayCount, setDisplayCount] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+
   useEffect(() => {
-    const storedCourses = JSON.parse(localStorage.getItem('courses')) || [];
-    setCourses(storedCourses);
+    const fetchCourses = async () => {
+      try {
+        // Replace with your actual API endpoint
+        const response = await fetch('http://localhost:8000/api/v1/courses/getCourses');
+       
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log(data)
+        setCourses(data);
+        
+        // Update the local storage with fetched courses (if needed)
+        localStorage.setItem('courses', JSON.stringify(data));
+      } catch (err) {
+        setError(err.message);
+        console.error("Failed to fetch courses:", err);
+        
+        // Fallback to local storage if fetch fails
+        const storedCourses = JSON.parse(localStorage.getItem('courses') || '[]');
+        if (storedCourses.length > 0) {
+          setCourses(storedCourses);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
   }, []);
 
   const handleEdit = (index) => {
@@ -102,8 +131,8 @@ const CourseList = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.courseName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.courseFees}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.courseMRP}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.minimumFees}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.duration}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.minFeePayable}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.courseDuration}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.examStatus}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.questionBankStatus}</td>
                     <td className="px-6 py-4 whitespace-nowrap">

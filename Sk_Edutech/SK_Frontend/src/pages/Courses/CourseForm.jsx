@@ -14,7 +14,7 @@ const CourseForm = () => {
       courseName: formData.get('courseName'),
       courseFees: formData.get('courseFees'),
       courseMRP: formData.get('courseMRP'),
-      minimumFees: formData.get('minimumFees'),
+      //minimumFees: formData.get('minimumFees'),
       duration: formData.get('duration'),
       examFees: formData.get('examFees'),
       status: formData.get('status'),
@@ -114,7 +114,7 @@ const CourseForm = () => {
                   </div>
                 </div>
 
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 required">
                     Institute Plan
                   </label>
@@ -127,7 +127,7 @@ const CourseForm = () => {
                     <option value="2">Institute 2</option>
                     <option value="3">Institute 3</option>
                   </select>
-                </div>
+                </div> */}
 
                 {/* Video Links Section */}
                 <div className="space-y-4">
@@ -196,7 +196,7 @@ const CourseForm = () => {
 
               {/* Right Column */}
               <div className="space-y-6">
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 required">
                     Award
                   </label>
@@ -209,7 +209,7 @@ const CourseForm = () => {
                     <option value="2">Award 2</option>
                     <option value="3">Award 3</option>
                   </select>
-                </div>
+                </div> */}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 required">
@@ -224,7 +224,7 @@ const CourseForm = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 required">
                       Minimum Fees
                     </label>
@@ -234,7 +234,7 @@ const CourseForm = () => {
                       required
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
-                  </div>
+                  </div> */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 required">
                       Course Duration

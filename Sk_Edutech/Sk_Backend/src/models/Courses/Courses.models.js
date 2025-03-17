@@ -2,19 +2,19 @@ import mongoose from 'mongoose';
 
 const courseSchema = new mongoose.Schema({
     courseCode: { type: String, required: true, unique: true },
-    award: { type: String, required: true }, // e.g., "Basic Courses, Accounting & Computer Diploma"
+  //  award: { type: String, required: true }, // e.g., "Basic Courses, Accounting & Computer Diploma"
     courseName: { type: String, required: true },
     courseSubject: { type: String, required: true },
     courseFees: { type: Number, required: true }, // Actual fee
     courseMRP: { type: Number, required: true },  // MRP of the course
-    minFeePayable: { type: Number, required: true }, // Minimum fee required to enroll
+   // minFeePayable: { type: Number, required: true }, // Minimum fee required to enroll
     courseDuration: { type: String, required: true }, // e.g., "6 Months"
-    institutePlans: [
-        {
-            planName: { type: String, required: true }, // e.g., "Plan A"
-            planFees: { type: Number, required: true }, // Fees for this plan
-        }
-    ],
+    // institutePlans: [
+    //     {
+    //         planName: { type: String, required: true }, // e.g., "Plan A"
+    //         planFees: { type: Number, required: true }, // Fees for this plan
+    //     }
+    // ],
     courseVideoLinks: [{ type: String }], // Array to store multiple video links
     courseSyllabus: { type: String, required: true }, // Detailed syllabus
     courseEligibility: { type: String, required: true }, // Eligibility criteria

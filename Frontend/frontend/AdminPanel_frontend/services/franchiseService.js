@@ -1,9 +1,6 @@
 import axios from 'axios';
 
-// Define the base URL for the backend API
-// !! IMPORTANT !!: Verify the correct port from your backend server's startup log.
-// It might not be 8000 if that port was busy or if process.env.PORT is set differently.
-// Common alternatives are 8001, 3000, etc. Update the port number below accordingly.
+
 const API_BASE_URL = 'http://localhost:8000/api/v1'; // <-- UPDATED PORT TO 8002 based on backend logs
 
 const franchiseApi = axios.create({

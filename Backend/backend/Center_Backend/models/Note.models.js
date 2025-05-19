@@ -9,5 +9,6 @@ const noteSchema = new mongoose.Schema({
   file: { type: String },
 });
 
-export default mongoose.model("Note", noteSchema);
+// Prevent OverwriteModelError
+export default mongoose.models.Note || mongoose.model("Note", noteSchema);
 

@@ -9,6 +9,7 @@ const videoSchema = new mongoose.Schema({
   thumbnailUrl: { type: String, required: true },
 }, { timestamps: true });
 
-const Video = mongoose.model("Video", videoSchema);
+// Prevent OverwriteModelError
+const Video = mongoose.models.Video || mongoose.model("Video", videoSchema);
 
 export default Video;

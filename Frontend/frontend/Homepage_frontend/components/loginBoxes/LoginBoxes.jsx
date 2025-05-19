@@ -60,7 +60,8 @@ const LoginBoxes = () => {
       {/* Center Login */}
       <div className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-6 py-8 flex items-center justify-center flex-col lg:flex-row gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer">
         <FaBuilding className="text-[#003366] group-hover:text-white transition duration-300" size={50} />
-        <div className="text-xl group-hover:text-white transition duration-300 text-center lg:text-left mt-2">
+        <div className="text-xl group-hover:text-white transition duration-300 text-center lg:text-left mt-2"
+        onClick={() => navigate("/institute")}>
           Center <br /> Login
         </div>
       </div>

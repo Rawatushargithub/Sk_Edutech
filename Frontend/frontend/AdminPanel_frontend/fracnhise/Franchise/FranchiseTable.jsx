@@ -23,8 +23,6 @@ const formatDate = (dateString) => {
 
 function FranchiseTable({ franchises = [], onActionComplete }) { // Added onActionComplete prop
     const navigate = useNavigate();
-    // const [isViewModalOpen, setIsViewModalOpen] = useState(false); // Not used if eye icon is for resend
-    // const [franchiseToView, setFranchiseToView] = useState(null); // Not used
     const [processingId, setProcessingId] = useState(null); // For delete/toggle status/resend loading
 
     if (!franchises || franchises.length === 0) {

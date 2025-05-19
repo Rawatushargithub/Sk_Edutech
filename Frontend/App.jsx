@@ -6,6 +6,8 @@ import AdminPanel from './frontend/Render_Pages/AdminPanel';
 import StudentPanel from './frontend/Render_Pages/StudentPanel'
 import GalleryHomepage from './frontend/Homepage_frontend/components/gallery/Gallery';
 import NAllReviewsPage from './frontend/Homepage_frontend/components/ReviewsSection/NewAllReviews';
+import CenterPanel from './frontend/Render_Pages/CenterPanel';
+
 import StudentAchievementsPanel from './frontend/AdminPanel_frontend/OurAchievers/Achievers';
 import MainSliderUploadPage from './frontend/AdminPanel_frontend/MainSlider/MainSliderImgUpload';
 import AdminGalleryPanel from './frontend/AdminPanel_frontend/GalleryPanel/AdminGalleryPanel';
@@ -38,7 +40,8 @@ function App() {
         <Route path="/admin/*" element={<AdminPanel />} />
         <Route path="/student/*" element={<StudentPanel />} />
     
-
+    {/* Institute Routes */}
+        <Route path="/institute/*" element={<CenterPanel />} />
         
         {/* <Route path="/admin" element={<AdminPanel/>} /> */}
 

@@ -29,6 +29,8 @@ import NoteDetail from "../Center_frontend/pages/Notes/NoteDetail.jsx"
 
 import ExamManagement from "../Center_frontend/pages/Exam/ExamPage.jsx"
 import AddExam from "../Center_frontend/pages/Exam/AddExam.jsx"
+
+import Certificate from "../Center_frontend/pages/Certificate/Certificate.jsx"
 function App() {
   return (
     <StudentProvider>
@@ -67,6 +69,8 @@ function App() {
 
               <Route path="Exam" element={<ExamManagement />} />
               <Route path="AddExam" element={<AddExam />} />
+              <Route path="apply-certificate" element={<Certificate />} />
+              
 
             </Routes>
           </div>

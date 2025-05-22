@@ -59,7 +59,7 @@ export const createCourse = asyncHandler( async (req, res) => {
 // Get all courses
 export const getCourses = async (req, res) => {
     try { 
-        const courses = await Course.find().select('courseName courseFees courseMRP minFeePayable courseDuration status');
+        const courses = await Course.find().select('courseName courseFees courseMRP minFeePayable courseDuration status courseCode');
         console.log("courses data" , courses);
         res.status(200).json(courses);
     } catch (error) {

@@ -200,22 +200,40 @@ export const deleteExam = asyncHandler(async (req, res) => {
   }
 })
 
+// PATCH /api/v1/institute_exam/exams/:examId/status - Update exam status
 export const updateExamStatus = asyncHandler(async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body; // Expecting "Active", "Completed", etc.
-
-    // Ensure the ID exists before updating
-    const exam = await Exam.findById(id);
-    if (!exam) {
-      return res.status(404).json({ message: "Exam not found" });
+    const { examId } = req.params;
+    const { status } = req.body;
+    
+    // Validate status
+    if (!['Active', 'Inactive'].includes(status)) {
+      return res.status(400).json({ 
+        message: 'Invalid status. Must be either "Active" or "Inactive"' 
+      });
     }
-
-    exam.status = status;
-    await exam.save();
-
-    res.status(200).json({ message: "Exam status updated", exam });
+    
+    const updatedExam = await Exam.findOneAndUpdate(
+      { ExamID: examId },
+      { status },
+      { new: true }
+    );
+    
+    if (!updatedExam) {
+      return res.status(404).json({ 
+        message: 'Exam not found' 
+      });
+    }
+    
+    res.status(200).json({
+      message: 'Exam status updated successfully',
+      exam: updatedExam
+    });
   } catch (error) {
-    res.status(500).json({ message: "Failed to update exam status", error });
+    console.error('Error updating exam status:', error);
+    res.status(500).json({ 
+      message: 'Failed to update exam status', 
+      error: error.message 
+    });
   }
-})
+});

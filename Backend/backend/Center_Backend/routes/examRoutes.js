@@ -7,8 +7,7 @@ router.post("/exams", createExam);
 
 // Route to fetch all exams
 router.get("/exams", getAllExams);
-
-router.put("/exams/:id/status", updateExamStatus);
+router.patch("/exams/:examId/status", updateExamStatus); // ✅ Ensure this exists!
 router.delete("/exams/:id", deleteExam); // ✅ Ensure this exists!
 
 export default router;

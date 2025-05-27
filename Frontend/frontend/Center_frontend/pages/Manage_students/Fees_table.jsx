@@ -30,7 +30,7 @@ const Fees_table = ({
   const fetchBatches = async () => {
     try {
       const response = await fetch(
-        "http://localhost:8000/api/v1/batche/allBatches"
+        "http://localhost:8000/api/v1/institute_batche/allBatches"
       );
       if (!response.ok) throw new Error("Failed to fetch batches");
       console.log("Response:: ", response);
@@ -46,7 +46,7 @@ const Fees_table = ({
   const fetchRemainingSeats = async (batchId) => { 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/v1/batche/${batchId}/seats`
+        `http://localhost:8000/api/v1/institute_batche/${batchId}/seats`
       );
       if (!response.ok) throw new Error("Failed to fetch remaining seats");
       const data = await response.json();

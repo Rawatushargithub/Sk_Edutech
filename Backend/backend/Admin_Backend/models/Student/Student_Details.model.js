@@ -12,7 +12,10 @@ const studentSchema = new mongoose.Schema({
   surnameName: { type: String },
   includeSurname: { type:Boolean , default:true},
   motherName: { type: String },
-  courseInterested: { type: String, required: true }, 
+  courseInterested: { 
+    courseName: {type: String, required: true},
+    courseCode: {type: String, required: true}  
+  },
   studentMobile: { type: String, required: true },
   alternateMobile: { type: String },
   email: { type: String, unique: true },
@@ -35,4 +38,7 @@ const studentSchema = new mongoose.Schema({
   displayAdmissionOptions: { type: Boolean, default: false }, // For ID card, admission form & fee receipt
 }, { timestamps: true });
 
-export default mongoose.model("Student", studentSchema);
+// Prevent OverwriteModelError
+const student = mongoose.models.student || mongoose.model("Student", studentSchema);
+
+export default student;

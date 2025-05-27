@@ -380,7 +380,7 @@ const AddExam = () => {
   }, []);
 
   const [newExam, setNewExam] = useState({
-    courseCode: "",
+    courseName: "",
     batch: [],
     examDate: "",
     examDurationMinutes: "",
@@ -426,13 +426,13 @@ const AddExam = () => {
     }
   };
 
-  const handleBatchChange = (timings, name) => {
+  const handleBatchChange = (timings, name , id) => {
   setNewExam(prev => {
-    const exists = prev.batch.some(b => b.timings === timings && b.name === name);
+    const exists = prev.batch.some(b => b.timings === timings && b.name === name && b.id === id);
 
     const updatedBatches = exists
-      ? prev.batch.filter(b => !(b.timings === timings && b.name === name))
-      : [...prev.batch, { timings, name }];
+      ? prev.batch.filter(b => !(b.timings === timings && b.name === name && b.id === id))
+      : [...prev.batch, { timings, name ,id}];
 
     return { ...prev, batch: updatedBatches };
   });
@@ -474,14 +474,14 @@ const AddExam = () => {
               />
               <select
                 className="w-full p-2 border rounded"
-                value={newExam.courseCode}
-                onChange={(e) => setNewExam({ ...newExam, courseCode: e.target.value })}
+                value={newExam.courseName}
+                onChange={(e) => setNewExam({ ...newExam, courseName: e.target.value })}
               >
                 <option value="">Select Course</option>
                 {filteredCourses.map(course => (
                   <option key={course.
-courseCode} value={course.
-courseCode}>
+courseName} value={course.
+courseName}>
                     {course.
 courseCode} ({course.courseName})
                   </option>
@@ -509,7 +509,7 @@ courseCode} ({course.courseName})
                       id={`batch-${batch.id}`}
                       className="w-4 h-4 mr-2"
                       checked={newExam.batch.some(b => b.timings === batch.timings && b.name === batch.name)}
-                      onChange={() => handleBatchChange(batch.timings, batch.name)}
+                      onChange={() => handleBatchChange(batch.timings, batch.name , batch.id)}
                     />
                     <label htmlFor={`batch-${batch.timings}`}>{batch.timings} ({batch.name})</label>
                   </div>

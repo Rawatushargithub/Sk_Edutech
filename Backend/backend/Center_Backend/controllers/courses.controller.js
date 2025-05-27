@@ -33,7 +33,7 @@ export const createCourse = asyncHandler( async (req, res) => {
         const newCourse = new Course({
             courseCode,
             award,
-            courseName,
+            courseCode,
             courseSubject,
             courseFees,
             courseMRP,

@@ -62,7 +62,7 @@ const Sidebar = () => {
     {
       title: "Enquiries",
       icon: <TbUserQuestion className="w-5 h-5" />,
-      link: "/institute/enquiry-list",
+      link: "/institute/Enquiries",
     },
     {
       title: "Notes",

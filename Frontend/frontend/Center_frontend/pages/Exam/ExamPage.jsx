@@ -1,25 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Filter, ChevronDown, Globe, Book, Plus, Upload, Sliders, Save, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import {
+  Search,
+  Filter,
+  ChevronDown,
+  Globe,
+  Book,
+  Plus,
+  Upload,
+  Sliders,
+  Save,
+  ArrowLeft,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-
 const ExamManagement = () => {
+  const navigate = useNavigate();
 
-    const navigate = useNavigate();
-  
-    
   // State management
-  const [mode, setMode] = useState('online');
-  const [activeTab, setActiveTab] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCourse, setSelectedCourse] = useState('all');
+  const [mode, setMode] = useState("online");
+  const [activeTab, setActiveTab] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCourse, setSelectedCourse] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // New states for upload marks page
   const [showUploadPage, setShowUploadPage] = useState(false);
   const [students, setStudents] = useState([]);
@@ -28,7 +36,7 @@ const ExamManagement = () => {
   // Sample data for courses
   const courses = [
     { id: 1, name: "BCA12H (Bachelor of Computer Application)" },
-    { id: 2, name: "MCA34P (Master of Computer Application)" }
+    { id: 2, name: "MCA34P (Master of Computer Application)" },
   ];
 
   // Exam data from API
@@ -37,24 +45,27 @@ const ExamManagement = () => {
   // Function to update exam status to inactive
   const updateExamStatus = async (examId) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/institute_exam/exams/${examId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: 'Inactive' }),
-      });
+      const response = await fetch(
+        `http://localhost:8000/api/v1/institute_exam/exams/${examId}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: "Inactive" }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log('Exam status updated:', result);
-      
+      console.log("Exam status updated:", result);
+
       return result;
     } catch (err) {
-      console.error('Error updating exam status:', err);
+      console.error("Error updating exam status:", err);
       throw err;
     }
   };
@@ -64,13 +75,16 @@ const ExamManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await fetch('http://localhost:8000/api/v1/institute_exam/exams', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+
+      const response = await fetch(
+        "http://localhost:8000/api/v1/institute_exam/exams",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -78,46 +92,49 @@ const ExamManagement = () => {
 
       const data = await response.json();
       console.log("Fetched exams:", data);
-      
+
       // Transform API data and check for expired exams
       const transformedExams = await Promise.all(
         data.map(async (exam) => {
           const daysLeft = getDaysLeft(exam.examDate);
-          
+
           // If exam date has passed and status is still Active, update it to Inactive
-          if (daysLeft <= 0 && exam.status === 'Active') {
+          if (daysLeft <= 0 && exam.status === "Active") {
             try {
               await updateExamStatus(exam.ExamID);
             } catch (err) {
-              console.error(`Failed to update status for exam ${exam.ExamID}:`, err);
+              console.error(
+                `Failed to update status for exam ${exam.ExamID}:`,
+                err
+              );
             }
           }
-          
+
           return {
             id: exam.ExamID,
             courseCode: exam.courseCode,
-            batch: exam.batch,
+            batch: exam.batch || [],
             examDate: exam.examDate,
             examDurationMinutes: exam.examDurationMinutes,
             totalQuestions: exam.totalQuestions,
             totalMarks: exam.totalMarks,
             passingMarks: exam.passingMarks,
-            modeOnline: exam.examMode === 'Online',
-            modeOffline: exam.examMode === 'Offline',
+            modeOnline: exam.examMode === "Online",
+            modeOffline: exam.examMode === "Offline",
             displayResult: "Yes",
             status: exam.status,
             createdAt: formatDate(exam.createdAt),
             marksUploaded: exam.results && exam.results.length > 0,
             results: exam.results || [],
-            daysLeft: daysLeft
+            daysLeft: daysLeft,
           };
         })
       );
 
       setExams(transformedExams);
     } catch (err) {
-      console.error('Error fetching exams:', err);
-      setError('Failed to fetch exams. Please try again.');
+      console.error("Error fetching exams:", err);
+      setError("Failed to fetch exams. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -126,34 +143,39 @@ const ExamManagement = () => {
   // Fetch students for a specific exam
   const fetchStudentsForExam = async (examId) => {
     try {
-      const exam = exams.find(e => e.id === examId);
+      const exam = exams.find((e) => e.id === examId);
       if (!exam) return;
 
-      const response = await fetch(`http://localhost:8000/api/v1/students?courseCode=${exam.courseCode}&batch=${exam.batch}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        `http://localhost:8000/api/v1/institute_exam/students?courseCode=${exam.courseCode}&batch=${exam.batch.id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const studentsData = await response.json();
-      
+      console.log("Fetched students for exam:", studentsData);
       // Transform student data and add marks field
-      const transformedStudents = studentsData.map(student => ({
+      const transformedStudents = studentsData.map((student) => ({
         rollNumber: student.rollNumber,
         studentName: student.studentName,
-        marks: '', // Empty field for input
-        existingMarks: exam.results?.find(r => r.rollNumber === student.rollNumber)?.marksObtained || ''
+        marks: "", // Empty field for input
+        existingMarks:
+          exam.results?.find((r) => r.rollNumber === student.rollNumber)
+            ?.marksObtained || "",
       }));
 
       setStudents(transformedStudents);
     } catch (err) {
-      console.error('Error fetching students:', err);
-      setError('Failed to fetch students. Please try again.');
+      console.error("Error fetching students:", err);
+      setError("Failed to fetch students. Please try again.");
     }
   };
 
@@ -166,57 +188,63 @@ const ExamManagement = () => {
 
   // Handle marks input change
   const handleMarksChange = (rollNumber, marks) => {
-    setStudents(prev => prev.map(student => 
-      student.rollNumber === rollNumber 
-        ? { ...student, marks: marks }
-        : student
-    ));
+    setStudents((prev) =>
+      prev.map((student) =>
+        student.rollNumber === rollNumber
+          ? { ...student, marks: marks }
+          : student
+      )
+    );
   };
 
   // Upload marks to database
   const uploadMarks = async () => {
     try {
       setUploadingMarks(true);
-      
+
       // Prepare marks data (only students with marks entered)
       const marksData = students
-        .filter(student => student.marks !== '' && student.marks !== null)
-        .map(student => ({
+        .filter((student) => student.marks !== "" && student.marks !== null)
+        .map((student) => ({
           rollNumber: student.rollNumber,
-          marksObtained: parseInt(student.marks)
+          marksObtained: parseInt(student.marks),
         }));
 
       if (marksData.length === 0) {
-        alert('Please enter marks for at least one student.');
+        alert("Please enter marks for at least one student.");
         return;
       }
 
-      const response = await fetch(`http://localhost:8000/api/v1/institute_exam/exams/${selectedExam}/marks`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ results: marksData }),
-      });
+      const response = await fetch(
+        `http://localhost:8000/api/v1/institute_exam/exams/${selectedExam}/marks`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ results: marksData }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log('Marks uploaded successfully:', result);
-      
-      setSuccessMessage(`Marks uploaded successfully for ${marksData.length} students!`);
+      console.log("Marks uploaded successfully:", result);
+
+      setSuccessMessage(
+        `Marks uploaded successfully for ${marksData.length} students!`
+      );
       setShowSuccessMessage(true);
       setTimeout(() => setShowSuccessMessage(false), 3000);
-      
+
       // Go back to main page and refresh data
       setShowUploadPage(false);
       fetchExams();
-      
     } catch (err) {
-      console.error('Error uploading marks:', err);
-      alert('Failed to upload marks. Please try again.');
+      console.error("Error uploading marks:", err);
+      alert("Failed to upload marks. Please try again.");
     } finally {
       setUploadingMarks(false);
     }
@@ -247,27 +275,31 @@ const ExamManagement = () => {
   }
 
   // Get exams for current mode (for calculating tab counts)
-  const modeFilteredExams = exams.filter(exam => {
-    return mode === 'online' ? exam.modeOnline : exam.modeOffline;
+  const modeFilteredExams = exams.filter((exam) => {
+    return mode === "online" ? exam.modeOnline : exam.modeOffline;
   });
 
   // Calculate tab counts based on current mode
   const tabCounts = {
     all: modeFilteredExams.length,
-    active: modeFilteredExams.filter(exam => exam.status === 'Active').length,
-    inactive: modeFilteredExams.filter(exam => exam.status === 'Inactive').length
+    active: modeFilteredExams.filter((exam) => exam.status === "Active").length,
+    inactive: modeFilteredExams.filter((exam) => exam.status === "Inactive")
+      .length,
   };
 
   // Filter exams based on mode, search term, course and tab
-  const filteredExams = exams.filter(exam => {
-    const matchesMode = mode === 'online' ? exam.modeOnline : exam.modeOffline;
-    const matchesSearch = exam.courseCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         exam.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCourse = selectedCourse === 'all' || exam.courseCode === selectedCourse;
-    const matchesTab = activeTab === 'all' ||
-                      (activeTab === 'active' && exam.status === 'Active') ||
-                      (activeTab === 'inactive' && exam.status === 'Inactive');
-    
+  const filteredExams = exams.filter((exam) => {
+    const matchesMode = mode === "online" ? exam.modeOnline : exam.modeOffline;
+    const matchesSearch =
+      exam.courseCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      exam.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCourse =
+      selectedCourse === "all" || exam.courseName === selectedCourse;
+    const matchesTab =
+      activeTab === "all" ||
+      (activeTab === "active" && exam.status === "Active") ||
+      (activeTab === "inactive" && exam.status === "Inactive");
+
     return matchesMode && matchesSearch && matchesCourse && matchesTab;
   });
 
@@ -316,8 +348,8 @@ const ExamManagement = () => {
 
   // Upload Marks Page
   if (showUploadPage) {
-    const currentExam = exams.find(e => e.id === selectedExam);
-    
+    const currentExam = exams.find((e) => e.id === selectedExam);
+
     return (
       <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-md">
@@ -327,16 +359,21 @@ const ExamManagement = () => {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => {
-                    setShowUploadPage(false)
-                    navigate('/institute/Exam')
+                    setShowUploadPage(false);
+                    navigate("/institute/Exam");
                   }}
                   className="p-2 hover:bg-gray-100 rounded-lg"
                 >
                   <ArrowLeft size={24} />
                 </button>
                 <div>
-                  <h1 className="text-3xl font-bold text-red-500">Upload Student Marks</h1>
-                  <p className="text-gray-600">Exam ID: {selectedExam} | Course: {currentExam?.courseCode} | Batch: {currentExam?.batch}</p>
+                  <h1 className="text-3xl font-bold text-red-500">
+                    Upload Student Marks
+                  </h1>
+                  <p className="text-gray-600">
+                    Exam ID: {selectedExam} | Course: {currentExam?.courseCode}{" Code"}
+                    | Batch: {currentExam?.batch.timings}
+                  </p>
                 </div>
               </div>
               <button
@@ -345,17 +382,27 @@ const ExamManagement = () => {
                 className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 flex items-center gap-2"
               >
                 <Save size={20} />
-                {uploadingMarks ? 'Uploading...' : 'Upload Marks'}
+                {uploadingMarks ? "Uploading..." : "Upload Marks"}
               </button>
             </div>
 
             {/* Exam Details */}
             <div className="bg-blue-50 p-4 rounded-lg">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div><strong>Total Marks:</strong> {currentExam?.totalMarks}</div>
-                <div><strong>Passing Marks:</strong> {currentExam?.passingMarks}</div>
-                <div><strong>Total Questions:</strong> {currentExam?.totalQuestions}</div>
-                <div><strong>Duration:</strong> {currentExam?.examDurationMinutes} mins</div>
+                <div>
+                  <strong>Total Marks:</strong> {currentExam?.totalMarks}
+                </div>
+                <div>
+                  <strong>Passing Marks:</strong> {currentExam?.passingMarks}
+                </div>
+                <div>
+                  <strong>Total Questions:</strong>{" "}
+                  {currentExam?.totalQuestions}
+                </div>
+                <div>
+                  <strong>Duration:</strong> {currentExam?.examDurationMinutes}{" "}
+                  mins
+                </div>
               </div>
             </div>
 
@@ -393,9 +440,18 @@ const ExamManagement = () => {
                           min="0"
                           max={currentExam?.totalMarks}
                           value={student.marks}
-                          onChange={(e) => handleMarksChange(student.rollNumber, e.target.value)}
+                          onChange={(e) =>
+                            handleMarksChange(
+                              student.rollNumber,
+                              e.target.value
+                            )
+                          }
                           className="w-20 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder={student.existingMarks ? student.existingMarks.toString() : "0"}
+                          placeholder={
+                            student.existingMarks
+                              ? student.existingMarks.toString()
+                              : "0"
+                          }
                         />
                         {student.existingMarks && (
                           <span className="ml-2 text-xs text-green-600">
@@ -404,12 +460,21 @@ const ExamManagement = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {student.marks && parseInt(student.marks) >= currentExam?.passingMarks ? (
-                          <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Pass</span>
-                        ) : student.marks && parseInt(student.marks) < currentExam?.passingMarks ? (
-                          <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">Fail</span>
+                        {student.marks &&
+                        parseInt(student.marks) >= currentExam?.passingMarks ? (
+                          <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                            Pass
+                          </span>
+                        ) : student.marks &&
+                          parseInt(student.marks) <
+                            currentExam?.passingMarks ? (
+                          <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+                            Fail
+                          </span>
                         ) : (
-                          <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">Pending</span>
+                          <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
+                            Pending
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -428,12 +493,10 @@ const ExamManagement = () => {
       </div>
     );
   }
-
   // Main Exam Management Page
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-md">
-
         {/* Success Message */}
         {showSuccessMessage && (
           <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
@@ -448,20 +511,24 @@ const ExamManagement = () => {
             <div className="flex gap-2">
               <div className="flex border rounded-lg overflow-hidden">
                 <button
-                  onClick={() => setMode('online')}
+                  onClick={() => setMode("online")}
                   className={`px-4 py-2 flex items-center gap-2 ${
-                    mode === 'online' ? 'bg-blue-50 text-blue-600' : 'text-gray-600'
+                    mode === "online"
+                      ? "bg-blue-50 text-blue-600"
+                      : "text-gray-600"
                   }`}
                 >
                   <Globe size={20} />
                   Online Exams
                 </button>
                 <button
-                  onClick={() => setMode('offline')}
+                  onClick={() => setMode("offline")}
                   className={`px-4 py-2 flex items-center gap-2 ${
-                    mode === 'offline' ? 'bg-blue-50 text-blue-600' : 'text-gray-600'
+                    mode === "offline"
+                      ? "bg-blue-50 text-blue-600"
+                      : "text-gray-600"
                   }`}
-                > 
+                >
                   <Book size={20} />
                   Offline Exams
                 </button>
@@ -475,6 +542,7 @@ const ExamManagement = () => {
               </button>
               <button
                 className="px-4 py-2 flex items-center gap-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                onClick={() => navigate("/institute/AddExam")}
               >
                 <Plus size={20} />
                 Add Exam
@@ -492,10 +560,9 @@ const ExamManagement = () => {
 
           {/* Mode specific note */}
           <div className="text-blue-600 font-medium text-sm bg-blue-50 p-4 rounded-lg">
-            {mode === 'online' 
+            {mode === "online"
               ? "Online exams are conducted through the digital platform. Students can take exams remotely."
-              : "Offline exams require physical presence. Upload marks after evaluation for inactive exams."
-            }
+              : "Offline exams require physical presence. Upload marks after evaluation for inactive exams."}
           </div>
 
           {/* Filters */}
@@ -503,7 +570,10 @@ const ExamManagement = () => {
             <div className="bg-gray-50 p-4 rounded-lg space-y-4">
               <div className="flex gap-4 items-center">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <Search
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={20}
+                  />
                   <input
                     type="text"
                     placeholder="Search by exam ID or course code..."
@@ -519,11 +589,19 @@ const ExamManagement = () => {
                     onChange={(e) => setSelectedCourse(e.target.value)}
                   >
                     <option value="all">All Courses</option>
-                    {courses.map(course => (
-                      <option key={course.id} value={course.id === 1 ? "BCA12H" : "MCA34P"}>{course.name}</option>
+                    {courses.map((course) => (
+                      <option
+                        key={course.id}
+                        value={course.id === 1 ? "BCA12H" : "MCA34P"}
+                      >
+                        {course.name}
+                      </option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <ChevronDown
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={20}
+                  />
                 </div>
               </div>
             </div>
@@ -533,31 +611,31 @@ const ExamManagement = () => {
           <div className="border-b">
             <div className="flex space-x-8">
               <button
-                onClick={() => setActiveTab('all')}
+                onClick={() => setActiveTab("all")}
                 className={`py-2 px-1 ${
-                  activeTab === 'all'
-                    ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
-                    : 'text-gray-500 hover:text-gray-700'
+                  activeTab === "all"
+                    ? "border-b-2 border-blue-500 text-blue-600 font-medium"
+                    : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 All Exams ({tabCounts.all})
               </button>
               <button
-                onClick={() => setActiveTab('active')}
+                onClick={() => setActiveTab("active")}
                 className={`py-2 px-1 ${
-                  activeTab === 'active'
-                    ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
-                    : 'text-gray-500 hover:text-gray-700'
+                  activeTab === "active"
+                    ? "border-b-2 border-blue-500 text-blue-600 font-medium"
+                    : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 Active ({tabCounts.active})
               </button>
               <button
-                onClick={() => setActiveTab('inactive')}
+                onClick={() => setActiveTab("inactive")}
                 className={`py-2 px-1 ${
-                  activeTab === 'inactive'
-                    ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
-                    : 'text-gray-500 hover:text-gray-700'
+                  activeTab === "inactive"
+                    ? "border-b-2 border-blue-500 text-blue-600 font-medium"
+                    : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 Inactive ({tabCounts.inactive})
@@ -570,31 +648,58 @@ const ExamManagement = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Exam ID
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Exam ID 
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Course
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Course Code
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Batch
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date & Time
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Date
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Duration
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Questions
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Total/Passing Marks
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Status
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Actions
                   </th>
                 </tr>
@@ -610,7 +715,7 @@ const ExamManagement = () => {
                         {exam.courseCode}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {exam.batch}
+                        {exam.batch.timings}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {exam.examDate}
@@ -625,20 +730,22 @@ const ExamManagement = () => {
                         {exam.totalMarks}/{exam.passingMarks}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          exam.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                        {exam.status}
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            exam.status === "Active"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {exam.daysLeft > 0 ? exam.daysLeft : `No days left`}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
-                          <button
-                            className="text-blue-600 hover:text-blue-900"
-                          >
+                          <button className="text-blue-600 hover:text-blue-900">
                             Edit
                           </button>
-                          {exam.status === 'Inactive' && (
+                          {exam.status === "Inactive" && (
                             <button
                               onClick={() => handleUploadMarks(exam.id)}
                               className="text-green-600 hover:text-green-900 flex items-center gap-1"
@@ -651,10 +758,8 @@ const ExamManagement = () => {
                               ✓ Marks Uploaded ({exam.results?.length || 0})
                             </span>
                           )}
-                          {mode === 'online' && exam.results?.length > 0 && (
-                            <button
-                              className="text-purple-600 hover:text-purple-900"
-                            >
+                          {mode === "online" && exam.results?.length > 0 && (
+                            <button className="text-purple-600 hover:text-purple-900">
                               View Results ({exam.results?.length || 0})
                             </button>
                           )}
@@ -664,7 +769,10 @@ const ExamManagement = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="9" className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td
+                      colSpan="9"
+                      className="px-6 py-4 text-center text-sm text-gray-500"
+                    >
                       No exams found matching the current filters
                     </td>
                   </tr>
@@ -686,9 +794,6 @@ const ExamManagement = () => {
 };
 
 export default ExamManagement;
-
-
-
 
 // // having fetch working
 // import React, { useState, useEffect } from 'react';
@@ -739,7 +844,7 @@ export default ExamManagement;
 
 //       const result = await response.json();
 //       console.log('Exam status updated:', result);
-      
+
 //       return result;
 //     } catch (err) {
 //       console.error('Error updating exam status:', err);
@@ -752,7 +857,7 @@ export default ExamManagement;
 //     try {
 //       setLoading(true);
 //       setError(null);
-      
+
 //       const response = await fetch('http://localhost:8000/api/v1/institute_exam/exams', {
 //         method: 'GET',
 //         headers: {
@@ -766,12 +871,12 @@ export default ExamManagement;
 
 //       const data = await response.json();
 //       console.log("Fetched exams:", data);
-      
+
 //       // Transform API data and check for expired exams
 //       const transformedExams = await Promise.all(
 //         data.map(async (exam) => {
 //           const daysLeft = getDaysLeft(exam.examDate);
-          
+
 //           // If exam date has passed and status is still Active, update it to Inactive
 //           if (daysLeft <= 0 && exam.status === 'Active') {
 //             try {
@@ -781,7 +886,7 @@ export default ExamManagement;
 //               console.error(`Failed to update status for exam ${exam.ExamID}:`, err);
 //             }
 //           }
-          
+
 //           return {
 //             id: exam.ExamID,
 //             courseCode: exam.courseCode,
@@ -838,8 +943,6 @@ export default ExamManagement;
 //     setShowUploadDialog(true);
 //   };
 
-
-
 //   function getDaysLeft(targetDateStr) {
 //   const today = new Date(); // current date
 //   const targetDate = new Date(targetDateStr); // target date (e.g. "2025-12-31")
@@ -875,7 +978,7 @@ export default ExamManagement;
 //     const matchesTab = activeTab === 'all' ||
 //                       (activeTab === 'active' && exam.status === 'Active') ||
 //                       (activeTab === 'inactive' && exam.status === 'Inactive');
-    
+
 //     return matchesMode && matchesSearch && matchesCourse && matchesTab;
 //   });
 //   console.log("Filtered Exams:", filteredExams);
@@ -954,7 +1057,7 @@ export default ExamManagement;
 //                   className={`px-4 py-2 flex items-center gap-2 ${
 //                     mode === 'offline' ? 'bg-blue-50 text-blue-600' : 'text-gray-600'
 //                   }`}
-//                 > 
+//                 >
 //                   <Book size={20} />
 //                   Offline Exams
 //                 </button>
@@ -986,7 +1089,7 @@ export default ExamManagement;
 
 //           {/* Mode specific note */}
 //           <div className="text-blue-600 font-medium text-sm bg-blue-50 p-4 rounded-lg">
-//             {mode === 'online' 
+//             {mode === 'online'
 //               ? "Online exams are conducted through the digital platform. Students can take exams remotely."
 //               : "Offline exams require physical presence. Don't forget to upload marks after evaluation."
 //             }
@@ -1193,7 +1296,7 @@ export default ExamManagement;
 //                 )}
 //               </div>
 //               <div className="flex justify-end gap-4">
-//                 <button 
+//                 <button
 //                   onClick={() => {
 //                     setShowUploadDialog(false);
 //                     setSelectedFile(null);
@@ -1202,7 +1305,7 @@ export default ExamManagement;
 //                 >
 //                   Cancel
 //                 </button>
-//                 <button 
+//                 <button
 //                   onClick={confirmUpload}
 //                   className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
 //                   disabled={!selectedFile}
@@ -1226,5 +1329,3 @@ export default ExamManagement;
 // };
 
 // export default ExamManagement;
-
-

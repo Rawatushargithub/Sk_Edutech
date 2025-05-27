@@ -16,7 +16,6 @@ const registerStudent = asyncHandler(async (req, res) => {
     fatherHusbandName,
     surnameName,
     motherName,
-    courseInterested,
     studentMobile,
     alternateMobile,
     email,
@@ -31,11 +30,12 @@ const registerStudent = asyncHandler(async (req, res) => {
     occupation,
     admissionDate,
     displayAdmissionOptions,
+    courseInterested,
 
     // Fee details
     courseFees,
     discountType,
-    discountAmount,
+    discountAmount, 
     totalFees,
     feesReceived,
     balance,
@@ -46,28 +46,41 @@ const registerStudent = asyncHandler(async (req, res) => {
     installments = [],
   } = req.body;
 
-//   for(const installment of installments){
-//     console.log("installments array values :: " , installment)
-// }
+
+   // Parse courseInterested if it's a JSON string
+  if (typeof courseInterested === 'string') {
+    try {
+      courseInterested = JSON.parse(courseInterested);
+    } catch (error) {
+      throw new ApiError(400, "Invalid courseInterested format");
+    }
+  }
+  
+   console.log("courseInterested value :: ", courseInterested.courseName);
+   console.log("Selected Batch value :: ", selectedBatch);
+
+
   // Validate required fields
-  // if ([rollNumber, studentName, relationType, courseInterested, studentMobile, dob, gender, admissionDate].some(field => !field?.trim())) {
-  //     throw new ApiError(400, "All required fields must be provided");
-  // }
+  if ([rollNumber, studentName, relationType, studentMobile, dob, gender, admissionDate].some(field => !field?.trim())) {
+      throw new ApiError(400, "All required fields must be provided");
+  }
+
 
   // Validate batch selection
   if (!selectedBatch) {
     throw new ApiError(400, "Batch selection is required");
   }
   console.log(selectedBatch);
+  
   // Find the batch by its timing or name
   const batch = await BatchModel.findOne({
     $or: [
       { batchTiming: selectedBatch },
       { batchName: selectedBatch },
-      { id: selectedBatch }, // In case an ID is actually sent
+      // { _id: selectedBatch }, // Use _id instead of id for MongoDB ObjectId
     ],
   });
-
+console.log("batch value :: ", batch);
   if (!batch) {
     throw new ApiError(404, "Selected batch not found");
   }
@@ -80,7 +93,7 @@ const registerStudent = asyncHandler(async (req, res) => {
   // Check for student photo & signature
   const studentPhotoLocalPath = req.files?.studentPhoto?.[0]?.path;
   const studentSignatureLocalPath = req.files?.studentSignature?.[0]?.path;
-
+console.log(req.files)
   if (!studentPhotoLocalPath || !studentSignatureLocalPath) {
     throw new ApiError(400, "Student Photo and Signature are required");
   }
@@ -114,7 +127,7 @@ const registerStudent = asyncHandler(async (req, res) => {
           fatherHusbandName,
           surnameName,
           motherName,
-          courseInterested,
+          courseInterested, // Now properly structured as an object
           studentMobile,
           alternateMobile,
           email,
@@ -134,9 +147,11 @@ const registerStudent = asyncHandler(async (req, res) => {
       ],
       { session }
     );
+    
     console.log("student id", student[0]._id);
     const studentId = student[0]._id;
     console.log("variable studentId", studentId);
+    
     // Create fee record
     const fee = await Fees_studentModel.create(
       [
@@ -159,6 +174,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     for(const installment of installments){
         console.log("installments array values :: " , installment)
     }
+    
     if (installments && installments.length > 0) {
       for (const installment of installments) {
         // Validate installment data before creating

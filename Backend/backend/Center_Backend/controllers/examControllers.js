@@ -1,5 +1,7 @@
 import Exam from "../models/Exam.models.js"
+import Student from "../models/Student/Student_Detais.model.js";
 import { asyncHandler } from "../utils/asynchanlder.js";
+import mongoose from "mongoose";
 
 // export const createExam = asyncHandler(async (req, res) => {
 //   try {
@@ -101,7 +103,7 @@ export const createExam = asyncHandler(async (req, res) => {
         message: "Batch must be provided as an array"
       });
     }
-  
+  console.log("Batch:", batch);
     // Extract day from the examDate
     const examDay = new Date(examDate).getDate();
     
@@ -134,15 +136,16 @@ export const createExam = asyncHandler(async (req, res) => {
     // For each batch, create a separate exam document
     for (const batchItem of batch) {
       // Extract the batch code from the name (e.g., "BATCH 3" to "B3")
+      console.log("Batch Item:", batchItem);
       const batchCode = getBatchCode(batchItem.name);
-      console.log("Batch Code:", batchCode);
+
       // Generate ExamID in the format: courseCode + batchCode + day (e.g., BCA01B312)
       const examID = `${courseCode}_${batchCode}_${examDay}`;
       
       const newExam = new Exam({
         ExamID: examID,
         courseCode,
-        batch: JSON.stringify(batchItem.timings), // Store complete batch object as JSON string
+        batch: batchItem, // Store complete batch object as JSON string
         examDate,
         examDurationMinutes,
         totalQuestions,
@@ -159,10 +162,9 @@ export const createExam = asyncHandler(async (req, res) => {
       createdExams.push(newExam);
     }
 
-    console.log(`Added ${createdExams.length} exams successfully to database`);
     res.status(201).json({ 
       message: `${createdExams.length} exams added successfully`, 
-      exams: createdExams 
+      exams: createdExams  
     });
 
   } catch (error) {
@@ -177,7 +179,7 @@ export const createExam = asyncHandler(async (req, res) => {
 // Fetch all exams
 export const getAllExams = asyncHandler(async (req, res) => {
   try {
-    const exams = await Exam.find().limit(5);;
+    const exams = await Exam.find().limit(10);;
     
     res.status(200).json(exams);
   } catch (error) {
@@ -237,3 +239,43 @@ export const updateExamStatus = asyncHandler(async (req, res) => {
     });
   }
 });
+
+
+export const getStudentsByCourseAndBatch = async (req, res) => {
+  try {
+    const { courseCode, batch } = req.query;
+
+    console.log("Course Code:", courseCode);
+    console.log("Batch ID:", batch);
+
+    if (!courseCode || !batch) {
+      return res.status(400).json({ message: 'courseName and batch are required' });
+    }
+
+   if (!mongoose.Types.ObjectId.isValid(batch)) {
+  return res.status(400).json({ message: 'Invalid batch ID' });
+}
+const batchObjectId = new mongoose.Types.ObjectId(batch);
+
+console.log("Batch Object ID:", batchObjectId);
+    const students = await Student.find({
+      courseInterested: courseCode,
+      selectedBatch: batchObjectId,
+    });
+console.log("Students Found:", students);
+    const formatted = {
+      timings: students[0]?.selectedBatch?.timings || '',
+      name: students[0]?.selectedBatch?.name || '',
+      id: students[0]?.selectedBatch?._id || '',
+      students: students.map(student => ({
+        rollNumber: student.rollNumber,
+        studentName: student.studentName
+      }))
+    };
+
+    res.status(200).json(formatted);
+  } catch (err) {
+    console.error('Error fetching students:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};

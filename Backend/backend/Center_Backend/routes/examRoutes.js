@@ -1,12 +1,12 @@
 import express from "express"
-import { createExam, getAllExams, deleteExam, updateExamStatus } from "../controllers/examControllers.js"
+import { createExam, getAllExams, deleteExam, updateExamStatus ,getStudentsByCourseAndBatch } from "../controllers/examControllers.js"
 
 const router = express.Router();
 
 router.post("/exams", createExam);
+router.get("/students", getStudentsByCourseAndBatch); // ✅ Ensure this exists!
 
-// Route to fetch all exams
-router.get("/exams", getAllExams);
+router.get("/exams", getAllExams); 
 router.patch("/exams/:examId/status", updateExamStatus); // ✅ Ensure this exists!
 router.delete("/exams/:id", deleteExam); // ✅ Ensure this exists!
 

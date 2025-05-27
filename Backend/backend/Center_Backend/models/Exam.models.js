@@ -3,10 +3,14 @@ import mongoose from "mongoose";
 const ExamSchema = new mongoose.Schema({
   ExamID: { type: String, required: true }, // course name + batch + date
   courseCode: { type: String, required: true },
-  batch: { type: String, required: true }
-  , // Array of batches
+   batch: 
+    {
+      timings: { type: String, required: true },
+      name: { type: String, required: true },
+      id: { type: String, required: true },
+    }
+  , // Array of batch objects with timings and name
   examDate: { type: String, required: true },
-  
   examDurationMinutes: { type: Number, required: true }, // New field
   totalQuestions: { type: Number, required: true },
   totalMarks: { type: Number, required: true },
@@ -14,7 +18,7 @@ const ExamSchema = new mongoose.Schema({
   examMode: { type: String, required: true }, // Online or Offline
   status: { type: String, default: "Active" },
   createdAt: { type: Date, default: Date.now },
-
+ 
   results: [
     {
       rollNumber: { type: String, required: true },

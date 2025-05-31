@@ -78,6 +78,7 @@ import mongoose from "mongoose";
 
 export const createExam = asyncHandler(async (req, res) => {
   try {
+    console.log("I am working createxam");
     const {
       courseCode,
       batch,
@@ -89,7 +90,7 @@ export const createExam = asyncHandler(async (req, res) => {
       examMode = "Offline", // Default to Offline mode
       status = "Active", // Default to Active status
     } = req.body;
-
+console.log("Request Body:", req.body);
     // Validate required fields
     if (!courseCode || !batch || !examDate || !examDurationMinutes || !totalQuestions || !passingMarks || !totalMarks) {
       return res.status(400).json({ 
@@ -249,33 +250,142 @@ export const getStudentsByCourseAndBatch = async (req, res) => {
     console.log("Batch ID:", batch);
 
     if (!courseCode || !batch) {
-      return res.status(400).json({ message: 'courseName and batch are required' });
+      return res.status(400).json({ message: 'courseCode and batch are required' });
     }
 
-   if (!mongoose.Types.ObjectId.isValid(batch)) {
-  return res.status(400).json({ message: 'Invalid batch ID' });
-}
-const batchObjectId = new mongoose.Types.ObjectId(batch);
+    if (!mongoose.Types.ObjectId.isValid(batch)) {
+      return res.status(400).json({ message: 'Invalid batch ID' });
+    }
+    
+    const batchObjectId = new mongoose.Types.ObjectId(batch);
+    console.log("Batch Object ID:", batchObjectId);
 
-console.log("Batch Object ID:", batchObjectId);
+    // Find students by both courseCode and selectedBatch
     const students = await Student.find({
-      courseInterested: courseCode,
+      'courseInterested.courseCode': courseCode,
       selectedBatch: batchObjectId,
-    });
-console.log("Students Found:", students);
+    }).populate('selectedBatch'); // Populate batch details
+
+    console.log("Students Found:", students);
+
+    if (students.length === 0) {
+      return res.status(404).json({   
+        message: 'No students found for the given course and batch combination' 
+      });
+    }
+
+    // Format the response with batch details and student list
     const formatted = {
-      timings: students[0]?.selectedBatch?.timings || '',
-      name: students[0]?.selectedBatch?.name || '',
-      id: students[0]?.selectedBatch?._id || '',
+      totalStudents: students.length,
       students: students.map(student => ({
+        id: student._id,
         rollNumber: student.rollNumber,
-        studentName: student.studentName
+        studentName: student.studentName,
       }))
     };
 
     res.status(200).json(formatted);
+    
   } catch (err) {
     console.error('Error fetching students:', err);
     res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Upload marks for a specific exam
+export const uploadMarks = async (req, res) => {
+  try {
+    console.log("upload is working")
+    const { selectedExam } = req.params;
+    const { results } = req.body;
+
+    // Validate input
+    if (!results || !Array.isArray(results) || results.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Results array is required and cannot be empty"
+      });
+    }
+
+    // Validate each result entry
+    for (const result of results) {
+      if (!result.rollNumber || result.marksObtained === undefined || result.marksObtained === null) {
+        return res.status(400).json({
+          success: false,
+          message: "Each result must have rollNumber and marksObtained"
+        });
+      }
+      
+      if (typeof result.marksObtained !== 'number' || result.marksObtained < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "marksObtained must be a non-negative number"
+        });
+      }
+    }
+
+    // Find the exam
+    const exam = await Exam.findOne({ ExamID: selectedExam });
+    if (!exam) {
+      return res.status(404).json({
+        success: false,
+        message: "Exam not found"
+      });
+    }
+
+    // Process each result
+    const updatedResults = [];
+    const newResults = [];
+
+    for (const newResult of results) {
+      // Determine pass/fail status
+      const status = newResult.marksObtained >= exam.passingMarks ? "Passed" : "Failed";
+      
+      // Check if result already exists for this roll number
+      const existingResultIndex = exam.results.findIndex(
+        result => result.rollNumber === newResult.rollNumber
+      );
+
+      if (existingResultIndex !== -1) {
+        // Update existing result
+        exam.results[existingResultIndex].marksObtained = newResult.marksObtained;
+        exam.results[existingResultIndex].status = status;
+        exam.results[existingResultIndex].createdAt = new Date();
+        updatedResults.push(newResult.rollNumber);
+      } else {
+        // Add new result
+        exam.results.push({
+          rollNumber: newResult.rollNumber,
+          marksObtained: newResult.marksObtained,
+          status: status,
+          createdAt: new Date()
+        });
+        newResults.push(newResult.rollNumber);
+      }
+    }
+
+    // Save the updated exam
+    await exam.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Marks uploaded successfully",
+      data: {
+        examId: exam.ExamID,
+        totalResultsProcessed: results.length,
+        newResults: newResults.length,
+        updatedResults: updatedResults.length,
+        newResultsRollNumbers: newResults,
+        updatedResultsRollNumbers: updatedResults
+      }
+    });
+
+  } catch (error) {
+    console.error("Error uploading marks:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
   }
 };

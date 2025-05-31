@@ -43,22 +43,33 @@ const registerStudent = asyncHandler(async (req, res) => {
     // Batch selection
     selectedBatch,
     // Installment details
-    installments = [],
+    installments,
   } = req.body;
 
-
-   // Parse courseInterested if it's a JSON string
-  if (typeof courseInterested === 'string') {
-    try {
-      courseInterested = JSON.parse(courseInterested);
-    } catch (error) {
-      throw new ApiError(400, "Invalid courseInterested format");
-    }
-  }
   
-   console.log("courseInterested value :: ", courseInterested.courseName);
-   console.log("Selected Batch value :: ", selectedBatch);
+let parsedCourseInterested;
 
+try {
+  parsedCourseInterested = JSON.parse(courseInterested);
+} catch (err) {
+  return res.status(400).json({ message: "Invalid courseInterested format" });
+}
+
+console.log("Parsed courseInterested:", parsedCourseInterested);  
+
+let parsedInstallments = [];
+
+try {
+  if (typeof installments === "string") {
+    parsedInstallments = JSON.parse(installments);
+  } else if (Array.isArray(installments)) {
+    parsedInstallments = installments;
+  }
+} catch (err) {
+  console.error("Failed to parse installments", err);
+}
+
+ 
 
   // Validate required fields
   if ([rollNumber, studentName, relationType, studentMobile, dob, gender, admissionDate].some(field => !field?.trim())) {
@@ -127,7 +138,7 @@ console.log(req.files)
           fatherHusbandName,
           surnameName,
           motherName,
-          courseInterested, // Now properly structured as an object
+          courseInterested: parsedCourseInterested, // Now properly structured as an object
           studentMobile,
           alternateMobile,
           email,
@@ -171,11 +182,11 @@ console.log(req.files)
 
     // Create installment records if any
     const installmentRecords = [];
-    for(const installment of installments){
+    for(const installment of parsedInstallments){
         console.log("installments array values :: " , installment)
     }
-    
-    if (installments && installments.length > 0) {
+   
+    if (parsedInstallments && parsedInstallments.length > 0) {
       for (const installment of installments) {
         // Validate installment data before creating
         if (!installment.name) {
@@ -266,6 +277,8 @@ console.log(req.files)
       error.message || "Something went wrong while registering the student"
     );
   }
+// return res.status(200)
+
 });
 
 const getStudents = asyncHandler(async (req, res) => {

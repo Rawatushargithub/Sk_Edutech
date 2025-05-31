@@ -46,7 +46,7 @@ const Sidebar = () => {
       icon: <BookOpenCheck className="w-5 h-5" />,
       submenu: [
         { title: "Exam", icon: <PiExam className="w-5 h-5" />, link: "/institute/exam" },
-        { title: "Question Bank", icon: <MdOutlineCommentBank className="w-5 h-5" />, link: "/institute/question-bank" },
+        { title: "Question Bank", icon: <MdOutlineCommentBank className="w-5 h-5" />, link: "/institute/Question-bank" },
       ],
       stateKey: "examination",
     },

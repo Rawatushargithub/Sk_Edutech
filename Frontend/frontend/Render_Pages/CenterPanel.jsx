@@ -32,6 +32,8 @@ import AddExam from "../Center_frontend/pages/Exam/AddExam.jsx"
 
 import Enquiries from "../Center_frontend/pages/Enquiry/EnquiryList.jsx"
 import Certificate from "../Center_frontend/pages/Certificate/Certificate.jsx"
+
+import QuestionBankSystem from "../Center_frontend/pages/QuestionBank/QuestionBankSystem.jsx";
 function App() {
   return (
     <StudentProvider>
@@ -72,6 +74,7 @@ function App() {
               <Route path="AddExam" element={<AddExam />} />
               <Route path="apply-certificate" element={<Certificate />} />
               <Route path="Enquiries" element={< Enquiries/>} />
+              <Route path="Question-bank" element={<QuestionBankSystem/>} />
               
 
             </Routes>

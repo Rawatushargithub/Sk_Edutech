@@ -12,7 +12,7 @@ import fs from "fs" // fs is file system library provided by node js
     });
 
     console.log("Cloudinary Config:", {
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "Not Set",
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "Not Set", 
         api_key: process.env.CLOUDINARY_API_KEY || "Not Set",
         api_secret: process.env.CLOUDINARY_API_SECRET ? "Set" : "Not Set" // We won't log the secret itself for security
       });

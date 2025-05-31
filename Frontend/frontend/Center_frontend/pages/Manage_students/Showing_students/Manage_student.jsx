@@ -210,7 +210,7 @@ const StudentAdmissionList = () => {
                     </button>
                   </td>
                   <td className="p-2 border">
-                    <button
+                    <button 
                       onClick={() => handleStatusToggle(student.id)}
                       className={`px-2 py-1 rounded text-white ${
                         student.status ? "bg-green-500" : "bg-red-500"
@@ -233,7 +233,7 @@ const StudentAdmissionList = () => {
                     {student.studentName}
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
-                    {student.courseInterested}
+                    {student.courseInterested.courseName}
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
                     {student.username}

@@ -163,7 +163,7 @@ const ExamManagement = () => {
       const studentsData = await response.json();
       console.log("Fetched students for exam:", studentsData);
       // Transform student data and add marks field
-      const transformedStudents = studentsData.map((student) => ({
+      const transformedStudents = studentsData.students.map((student) => ({
         rollNumber: student.rollNumber,
         studentName: student.studentName,
         marks: "", // Empty field for input
@@ -214,7 +214,7 @@ const ExamManagement = () => {
         alert("Please enter marks for at least one student.");
         return;
       }
-
+console.log("Marks data to upload:", marksData);
       const response = await fetch(
         `http://localhost:8000/api/v1/institute_exam/exams/${selectedExam}/marks`,
         {

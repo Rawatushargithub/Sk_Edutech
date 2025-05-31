@@ -99,10 +99,11 @@ import institute_notesRoutes from "./backend/Center_Backend/routes/notesRoutes.j
 import institute_examRoutes from "./backend/Center_Backend/routes/examRoutes.js"
 import institute_walletRoutes from "./backend/Center_Backend/routes/payment.routes.js"
 import institute_EnquiryRoutes from "./backend/Center_Backend/routes/enquiryStudent.route.js";
+import institute_questionBankRoutes from "./backend/Center_Backend/routes/questionBankroutes.js";
 
 
 app.use("/api/v1/institute_student" , studentRouter);
-app.use("/api/v1/institute_courses" , courseRouter);
+app.use("/api/v1/institute_courses" , courseRouter); 
 app.use("/api/v1/institute_fees" , feesRouter)
 app.use("/api/v1/institute_batche" , batchRouter); 
 app.use("/api/v1/institute_videos" , videoRouter)
@@ -110,3 +111,5 @@ app.use("/api/v1/institute_note", institute_notesRoutes);
 app.use("/api/v1/institute_exam", institute_examRoutes);
 app.use("/api/v1/institute_wallet", institute_walletRoutes);
 app.use("/api/v1/institute_enquiry", institute_EnquiryRoutes);
+app.use("/api/v1/institute_question_bank", institute_questionBankRoutes);
+console.log("Center Routes Loaded");

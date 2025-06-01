@@ -54,8 +54,9 @@ function App() {
 
 
               <Route path="Courses" element={< CourseList/>} />
-              <Route path="CourseForm" element={< CourseForm/>} />
-              <Route path="updatecourse" element={< CourseUpdateForm/>} />
+              <Route path="CourseForm" element={< CourseForm mode="add" />} /> {/* Explicitly add mode */}
+              {/* <Route path="updatecourse" element={< CourseUpdateForm/>} />  Old update route, CourseForm will handle edit */}
+              <Route path="updatecourse/:courseId" element={< CourseForm mode="edit" />} /> {/* Parameterized route for edit */}
 
               <Route path="Notes" element={<NotesDashboard />} />
               <Route path="AddNote" element={<AddNote />} />

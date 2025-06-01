@@ -89,6 +89,7 @@ export const createExam = asyncHandler(async (req, res) => {
       passingMarks,
       examMode = "Offline", // Default to Offline mode
       status = "Active", // Default to Active status
+      selectedQuestions // This is expected from frontend for online exams
     } = req.body;
 console.log("Request Body:", req.body);
     // Validate required fields
@@ -139,14 +140,13 @@ console.log("Request Body:", req.body);
       // Extract the batch code from the name (e.g., "BATCH 3" to "B3")
       console.log("Batch Item:", batchItem);
       const batchCode = getBatchCode(batchItem.name);
-
-      // Generate ExamID in the format: courseCode + batchCode + day (e.g., BCA01B312)
       const examID = `${courseCode}_${batchCode}_${examDay}`;
-      
-      const newExam = new Exam({
+
+      // Prepare exam object
+      const examObj = {
         ExamID: examID,
         courseCode,
-        batch: batchItem, // Store complete batch object as JSON string
+        batch: batchItem,
         examDate,
         examDurationMinutes,
         totalQuestions,
@@ -155,17 +155,24 @@ console.log("Request Body:", req.body);
         examMode,
         status,
         createdAt: new Date(),
-        results: [] // Initialize with empty results array
-      });
+        results: []
+      };
+
+      // If online, add questions array (from selectedQuestions, which should be array of qNo)
+      if (examMode === "Online" && Array.isArray(selectedQuestions)) {
+        examObj.questions = selectedQuestions.map(q => Number(q));
+      }
+
+      const newExam = new Exam(examObj);
 
       // Save the exam to the database
       await newExam.save();
       createdExams.push(newExam);
     }
 
-    res.status(201).json({ 
-      message: `${createdExams.length} exams added successfully`, 
-      exams: createdExams  
+    res.status(201).json({
+      message: `${createdExams.length} exams added successfully`,
+      exams: createdExams
     });
 
   } catch (error) {
@@ -261,7 +268,7 @@ export const getStudentsByCourseAndBatch = async (req, res) => {
     console.log("Batch Object ID:", batchObjectId);
 
     // Find students by both courseCode and selectedBatch
-    const students = await Student.find({
+    const students = await Student.find({ 
       'courseInterested.courseCode': courseCode,
       selectedBatch: batchObjectId,
     }).populate('selectedBatch'); // Populate batch details

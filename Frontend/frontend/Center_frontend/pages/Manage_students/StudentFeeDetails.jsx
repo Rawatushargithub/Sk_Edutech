@@ -58,7 +58,7 @@ const StudentFeeDetails = () => {
     axios.post(`http://localhost:8000/api/v1/institute_fees/${studentId}/update-fee`, paymentData)
       .then(response => {
         if (response.data.success) {
-          console.log(response.data.data)
+          console.log("Student data coming:: " , response)
           // Update the local state with the updated student data
           const updatedStudents = students.map(student => {
             if (student.id === studentId) {
@@ -175,7 +175,7 @@ const StudentFeeDetails = () => {
                 >
                   <td className="py-3 px-4 border-b">{index + 1}</td>
                   <td className="py-3 px-4 border-b">{student.studentName}</td>
-                  <td className="py-3 px-4 border-b">{student.course}</td>
+                  <td className="py-3 px-4 border-b">{student.course.courseName}</td>
                   <td className="py-3 px-4 border-b">₹{student.courseFee}</td>
                   <td className="py-3 px-4 border-b">₹{student.paidFee}</td>
                   <td className="py-3 px-4 border-b">₹{student.dueFee}</td>

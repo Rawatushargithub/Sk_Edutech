@@ -696,12 +696,15 @@ console.log("Marks data to upload:", marksData);
                   >
                     Status
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Actions
-                  </th>
+                  {/* Only show Actions column for offline exams */}
+                  {mode === "offline" && (
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -740,37 +743,36 @@ console.log("Marks data to upload:", marksData);
                           {exam.daysLeft > 0 ? exam.daysLeft : `No days left`}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <button className="text-blue-600 hover:text-blue-900">
-                            Edit
-                          </button>
-                          {exam.status === "Inactive" && (
-                            <button
-                              onClick={() => handleUploadMarks(exam.id)}
-                              className="text-green-600 hover:text-green-900 flex items-center gap-1"
-                            >
-                              <Upload size={16} /> Upload Marks
+                      {/* Only show Actions column for offline exams */}
+                      {mode === "offline" && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <button className="text-blue-600 hover:text-blue-900">
+                              Edit
                             </button>
-                          )}
-                          {exam.marksUploaded && (
-                            <span className="text-green-600 flex items-center gap-1">
-                              ✓ Marks Uploaded ({exam.results?.length || 0})
-                            </span>
-                          )}
-                          {mode === "online" && exam.results?.length > 0 && (
-                            <button className="text-purple-600 hover:text-purple-900">
-                              View Results ({exam.results?.length || 0})
-                            </button>
-                          )}
-                        </div>
-                      </td>
+                            {exam.status === "Inactive" && (
+                              <button
+                                onClick={() => handleUploadMarks(exam.id)}
+                                className="text-green-600 hover:text-green-900 flex items-center gap-1"
+                              >
+                                <Upload size={16} /> Upload Marks
+                              </button>
+                            )}
+                            {exam.marksUploaded && (
+                              <span className="text-green-600 flex items-center gap-1">
+                                ✓ Marks Uploaded ({exam.results?.length || 0})
+                              </span>
+                            )}
+                            {/* Remove View Results for online exams from Actions */}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))
                 ) : (
                   <tr>
                     <td
-                      colSpan="9"
+                      colSpan={mode === "offline" ? 9 : 8}
                       className="px-6 py-4 text-center text-sm text-gray-500"
                     >
                       No exams found matching the current filters

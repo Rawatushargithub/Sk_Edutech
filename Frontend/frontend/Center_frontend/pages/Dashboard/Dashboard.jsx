@@ -93,10 +93,10 @@ const Dashboard = () => {
             {/* Action Buttons */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {[
-                    { label: "Add Student", link: "/Registration" },
-                    { label: "Fees Details", link: "/fees" },
-                    { label: "Batch Details", link: "/batch" },
-                    { label: "Student Enquiry", link: "/enquiry" },
+                    { label: "Add Student", link: "/institute/Registration" },
+                    { label: "Fees Details", link: "/institute/fees" },
+                    { label: "Batch Details", link: "/institute/Batch" },
+                    { label: "Student Enquiry", link: "/institute/enquiry" },
                 ].map((btn, index) => (
                     <button
                         key={index}

@@ -23,6 +23,7 @@ const QuestionBankSystem = () => {
   });
   const [loading, setLoading] = useState(false);
   const [coursesLoading, setCoursesLoading] = useState(true);
+  const [nextQNo, setNextQNo] = useState(1);
 
   const [formData, setFormData] = useState({
     qNo: "",
@@ -68,7 +69,7 @@ const QuestionBankSystem = () => {
   useEffect(() => {
     if (selectedCourseCode) {
       loadQuestions();
-    } else {
+    } else { 
       setQuestions([]);
     }
   }, [selectedCourseCode]);
@@ -90,11 +91,20 @@ const QuestionBankSystem = () => {
     try {
       setLoading(true);
       const response = await apiCall(`/institute_question_bank/${selectedCourseCode}/questions`);
-      console.log("Questions loaded:", response);
-      setQuestions(response.data || []);
+      const loadedQuestions = response.data || [];
+      setQuestions(loadedQuestions);
+
+      // Find max qNo for auto-increment
+      if (loadedQuestions.length > 0) {
+        const maxQNo = Math.max(...loadedQuestions.map(q => Number(q.qNo) || 0));
+        setNextQNo(maxQNo + 1);
+      } else {
+        setNextQNo(1);
+      }
     } catch (error) {
       showNotification("Error loading questions: " + error.message, "error");
       setQuestions([]);
+      setNextQNo(1);
     } finally {
       setLoading(false);
     }
@@ -133,17 +143,18 @@ const QuestionBankSystem = () => {
       setLoading(true);
 
       if (editingQuestion) {
-        // Only send allowed fields
+        // Edit question in the course's question bank
         const { qNo, question, options, answer } = formData;
-        console.log("Editing question with data:", { qNo, question, options, answer });
-        const questionId = editingQuestion._id;
-        await apiCall(`/institute_question_bank/${selectedCourseCode}/questions/${questionId}`, {
-          method: "PUT",
-          body: JSON.stringify({ qNo, question, options, answer }),
-        });
+        await apiCall(
+          `/institute_question_bank/${selectedCourseCode}/questions/${editingQuestion._id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({ qNo, question, options, answer }),
+          }
+        );
         showNotification("Question updated successfully!", "success");
       } else {
-        // Add courseCode and courseName to the payload, only allowed fields
+        // Add question to the course's question bank
         const course = courses.find((c) => c.courseCode === selectedCourseCode);
         const { qNo, question, options, answer } = formData;
         await apiCall(`/institute_question_bank/create-question`, {
@@ -162,7 +173,7 @@ const QuestionBankSystem = () => {
 
       setShowAddForm(false);
       resetForm();
-      await loadQuestions(); // Reload questions
+      await loadQuestions();
     } catch (error) {
       showNotification("Error saving question: " + error.message, "error");
     } finally {
@@ -185,11 +196,14 @@ const QuestionBankSystem = () => {
     if (window.confirm("Are you sure you want to delete this question?")) {
       try {
         setLoading(true);
-        await apiCall(`/institute_question_bank/${selectedCourseCode}/questions/${questionId}`, {
-          method: "DELETE",
-        });
+        await apiCall(
+          `/institute_question_bank/${selectedCourseCode}/questions/${questionId}`,
+          {
+            method: "DELETE",
+          }
+        );
         showNotification("Question deleted successfully!", "success");
-        await loadQuestions(); // Reload questions
+        await loadQuestions();
       } catch (error) {
         showNotification("Error deleting question: " + error.message, "error");
       } finally {
@@ -201,6 +215,18 @@ const QuestionBankSystem = () => {
   const getSelectedCourseName = () => {
     const course = courses.find((c) => c.courseCode === selectedCourseCode);
     return course ? course.courseName : "";
+  };
+
+  // When Add Question is clicked, auto-fill qNo
+  const handleAddQuestionClick = () => {
+    setFormData({
+      qNo: nextQNo,
+      question: "",
+      options: { a: "", b: "", c: "", d: "" },
+      answer: "",
+    });
+    setEditingQuestion(null);
+    setShowAddForm(true);
   };
 
   return (
@@ -238,7 +264,7 @@ const QuestionBankSystem = () => {
 
             {selectedCourseCode && (
               <button
-                onClick={() => setShowAddForm(true)}
+                onClick={handleAddQuestionClick}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
                 <Plus size={20} />
@@ -282,7 +308,6 @@ const QuestionBankSystem = () => {
             <h3 className="text-xl font-bold text-gray-800 mb-4">
               {editingQuestion ? "Edit Question" : "Add New Question"}
             </h3>
-
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -297,6 +322,7 @@ const QuestionBankSystem = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   placeholder="Enter question number"
                   required
+                  min={1}
                 />
               </div>
               <div>
@@ -340,7 +366,6 @@ const QuestionBankSystem = () => {
                   </div>
                 ))}
               </div>
-
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Correct Answer *

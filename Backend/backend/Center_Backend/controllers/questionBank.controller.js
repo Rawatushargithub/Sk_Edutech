@@ -1,27 +1,29 @@
 import QuestionBank from '../models/Questionbank.model.js';
 
-// Create a new question
+// Add a new question to a course's question bank
 export const createQuestionBank = async (req, res) => {
   try {
-    const { courseCode, courseName, question, options, answer, qNo } = req.body;
-    // Validate required fields
-    if (!courseCode || !courseName || !question || !options || !answer || !qNo) {
+    const { courseCode, courseName, qNo, question, options, answer } = req.body;
+    if (!courseCode || !courseName || !qNo || !question || !options || !answer) {
       return res.status(400).json({ message: 'All fields are required.' });
     }
 
-    const newQuestion = new QuestionBank({
-      courseCode,
-      courseName,
-      question: {
-        qNo,
-        question,
-        options,
-        answer
-      }
-    });
+    // Find or create the course's question bank
+    let qb = await QuestionBank.findOne({ courseCode });
+    if (!qb) {
+      qb = new QuestionBank({
+        courseCode,
+        courseName,
+        questions: [],
+      });
+    }
 
-    await newQuestion.save();
-    res.status(201).json({ message: 'Question created successfully', data: newQuestion });
+    qb.courseName = courseName; // update courseName if changed
+
+    qb.questions.push({ qNo, question, options, answer });
+    await qb.save();
+
+    res.status(201).json({ message: 'Question added successfully', data: qb });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -29,14 +31,14 @@ export const createQuestionBank = async (req, res) => {
 
 // Get all questions for a particular course
 export const getQuestionsByCourse = async (req, res) => {
-  try {
+  try { 
     const { selectedCourseCode } = req.params;
-    const questions = await QuestionBank.find({ courseCode: selectedCourseCode });
-    if (!questions || questions.length === 0) {
+    const qb = await QuestionBank.findOne({ courseCode: selectedCourseCode });
+    if (!qb) {
       return res.status(404).json({ message: 'No questions found for this course' });
     }
-    // Return array of question objects
-    res.json({ data: questions.map(q => ({ _id: q._id, ...q.question })) });
+    // Return array of question objects with their _id
+    res.json({ data: qb.questions.map(q => ({ ...q.toObject(), _id: q._id })) });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -45,27 +47,22 @@ export const getQuestionsByCourse = async (req, res) => {
 // Edit a question for a course
 export const editQuestion = async (req, res) => {
   try {
-    console.log("Editing question with params:", req.params);
-    console.log("Request body:", req.body);
     const { selectedCourseCode, questionId } = req.params;
-    const { question, options, answer, qNo } = req.body;
+    const { qNo, question, options, answer } = req.body;
 
-    const updated = await QuestionBank.findOneAndUpdate(
-      { courseCode:selectedCourseCode , _id: questionId },
-      {
-        $set: {
-          'question.qNo': qNo,
-          'question.question': question,
-          'question.options': options,
-          'question.answer': answer
-        }
-      },
-      { new: true }
-    );
+    const qb = await QuestionBank.findOne({ courseCode: selectedCourseCode });
+    if (!qb) return res.status(404).json({ message: 'Course not found' });
 
-    if (!updated) return res.status(404).json({ message: 'Question not found' });
+    const q = qb.questions.id(questionId);
+    if (!q) return res.status(404).json({ message: 'Question not found' });
 
-    res.json({ message: 'Question updated successfully', data: updated });
+    q.qNo = qNo;
+    q.question = question;
+    q.options = options;
+    q.answer = answer;
+
+    await qb.save();
+    res.json({ message: 'Question updated successfully', data: q });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -74,13 +71,21 @@ export const editQuestion = async (req, res) => {
 // Delete a question for a course
 export const deleteQuestion = async (req, res) => {
   try {
-    const { courseCode, questionId } = req.params;
+    const { selectedCourseCode, questionId } = req.params;
 
-    const deleted = await QuestionBank.findOneAndDelete({ courseCode, _id: questionId });
-    if (!deleted) return res.status(404).json({ message: 'Question not found' });
+    const qb = await QuestionBank.findOne({ courseCode: selectedCourseCode });
+    if (!qb) return res.status(404).json({ message: 'Course not found' });
+
+    const q = qb.questions.id(questionId);
+    if (!q) return res.status(404).json({ message: 'Question not found' });
+
+    q.remove();
+    await qb.save();
 
     res.json({ message: 'Question deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
+
+// No changes needed for this feature

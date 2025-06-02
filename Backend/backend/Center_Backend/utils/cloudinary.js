@@ -23,7 +23,7 @@ import fs from "fs" // fs is file system library provided by node js
         try {
             console.log("Uploading file to Cloudinary:", localfilepath);
             const response = await cloudinary.uploader.upload(localfilepath, {
-                resource_type: "image", // Automatically detect file type (e.g., image, video)
+                resource_type: "raw", // Automatically detect file type (e.g., image, video)
             });
     
             console.log("File successfully uploaded to Cloudinary:", response);

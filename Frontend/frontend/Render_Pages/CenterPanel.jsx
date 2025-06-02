@@ -17,11 +17,12 @@ import { StudentProvider } from "../Center_frontend/context/StudentContext.jsx";
 import Center_wallet from "../Center_frontend/pages/Dashboard/Wallet.jsx";
 
 import Batches from "../Center_frontend/pages/Batches/Batche.jsx"
-import UploadCourseVideo1 from "../Center_frontend/pages/video.jsx"
+import UploadCourseVideo1 from "../Center_frontend/pages/video.jsx" // This is the Video Dashboard
+import AddVideoLink from "../Center_frontend/pages/AddVideoLink.jsx"; // New page for adding video links
 
 import CourseList from "../Center_frontend/pages/Courses/CourseList.jsx";
 import CourseForm from "../Center_frontend/pages/Courses/CourseForm.jsx";
-import CourseUpdateForm from "../Center_frontend/pages/Courses/CourseForm.jsx";
+// import CourseUpdateForm from "../Center_frontend/pages/Courses/CourseForm.jsx"; // Redundant, CourseForm handles edit
 
 import NotesDashboard from "../Center_frontend/pages/Notes/NotesDashboard.jsx"
 import AddNote from "../Center_frontend/pages/Notes/AddNote.jsx"
@@ -64,7 +65,8 @@ function App() {
 
               <Route path="Batch" element={< Batches/>} />
 
-              <Route path="videos" element={<UploadCourseVideo1 />} />
+              <Route path="videos" element={<UploadCourseVideo1 />} /> 
+              <Route path="AddVideoLink" element={<AddVideoLink />} /> {/* Route for new AddVideoLink page */}
 
               <Route path="Exam" element={<ExamManagement />} />
               <Route path="AddExam" element={<AddExam />} />

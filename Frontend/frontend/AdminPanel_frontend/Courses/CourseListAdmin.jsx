@@ -1,11 +1,93 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, CheckCircle, XCircle, RefreshCw } from 'lucide-react'; // Added RefreshCw for pending
+import { Eye, CheckCircle, XCircle, RefreshCw, Info, X as ModalCloseIcon } from 'lucide-react';
+
+// Modal Component for Course Details
+const CourseDetailsModal = ({ course, onClose }) => {
+  if (!course) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 transition-opacity duration-300 ease-in-out">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative transform transition-all duration-300 ease-in-out scale-95 opacity-0 animate-modalShow">
+        <button 
+          onClick={onClose} 
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          aria-label="Close modal"
+        >
+          <ModalCloseIcon size={28} />
+        </button>
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2 pr-8">{course.courseName}</h2>
+        <p className="text-sm text-gray-500 mb-6">Code: {course.courseCode}</p>
+        
+        <div className="space-y-5">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-700 mb-1 border-b pb-1">Course Syllabus:</h3>
+            <pre className="bg-gray-50 p-3 rounded-md text-sm text-gray-700 whitespace-pre-wrap break-words max-h-40 overflow-y-auto">{course.courseSyllabus || 'Not provided'}</pre>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-slate-700 mb-1 border-b pb-1">Course Eligibility:</h3>
+            <pre className="bg-gray-50 p-3 rounded-md text-sm text-gray-700 whitespace-pre-wrap break-words max-h-40 overflow-y-auto">{course.courseEligibility || 'Not provided'}</pre>
+          </div>
+          
+          {course.courseVideoLinks && course.courseVideoLinks.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-slate-700 mb-1 border-b pb-1">Video Links:</h3>
+              <ul className="list-disc list-inside bg-gray-50 p-3 rounded-md text-sm space-y-1 max-h-40 overflow-y-auto">
+                {course.courseVideoLinks.map((video, index) => (
+                  <li key={index}>
+                    <strong className="font-medium">{video.title || 'Untitled Video'}:</strong> <a href={video.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">{video.link}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {course.courseMaterials && course.courseMaterials.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-slate-700 mb-1 border-b pb-1">Notes/Materials:</h3>
+              <ul className="list-disc list-inside bg-gray-50 p-3 rounded-md text-sm space-y-1 max-h-40 overflow-y-auto">
+                {course.courseMaterials.map((material, index) => (
+                  <li key={index}>
+                    <strong className="font-medium">{material.title || 'Untitled Material'}</strong> ({material.type}): 
+                    {material.type === 'file' && material.fileName && ` ${material.fileName} - `}
+                    <a href={material.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">
+                      {material.type === 'file' ? 'View/Download' : 'Open Link'}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+        <div className="mt-8 text-right">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const CourseListAdmin = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filterStatus, setFilterStatus] = useState(''); // '', 'pending', 'approved', 'rejected'
+  const [filterStatus, setFilterStatus] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCourseForDetails, setSelectedCourseForDetails] = useState(null);
+
+  const openDetailsModal = (course) => {
+    setSelectedCourseForDetails(course);
+    setIsModalOpen(true);
+  };
+
+  const closeDetailsModal = () => {
+    setIsModalOpen(false);
+    setSelectedCourseForDetails(null);
+  };
 
   const fetchCoursesAdmin = async () => {
     setLoading(true);
@@ -15,13 +97,13 @@ const CourseListAdmin = () => {
       if (filterStatus) {
         url += `?status=${filterStatus}`;
       }
-      const response = await fetch(url); // Assuming admin auth is handled (e.g., via cookies/headers)
+      const response = await fetch(url);
       if (!response.ok) {
         const errData = await response.json();
         throw new Error(errData.message || `Error: ${response.status}`);
       }
       const data = await response.json();
-      setCourses(data.data || []); // Assuming API response is { statusCode, data, message }
+      setCourses(data.data || []); 
     } catch (err) {
       setError(err.message);
       console.error("Failed to fetch courses for admin:", err);
@@ -50,7 +132,6 @@ const CourseListAdmin = () => {
         const errData = await response.json();
         throw new Error(errData.message || `Error: ${response.status}`);
       }
-      // Refresh course list
       fetchCoursesAdmin();
       alert(`Course status updated to ${newStatus}.`);
     } catch (err) {
@@ -70,8 +151,8 @@ const CourseListAdmin = () => {
   };
 
   const inputStyle = "rounded-md border-gray-300 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm";
-  const buttonStyle = "px-3 py-1.5 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-offset-1";
-
+  // Updated button base style for consistent padding and text size
+  const buttonActionStyle = "px-3 py-2 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-offset-1 flex items-center justify-center leading-4"; 
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
@@ -109,7 +190,7 @@ const CourseListAdmin = () => {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Institute Status</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin Approval</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 z-10">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -119,7 +200,7 @@ const CourseListAdmin = () => {
                     </tr>
                   )}
                   {courses.map((course) => (
-                    <tr key={course._id} className="hover:bg-gray-50">
+                    <tr key={course._id} className="hover:bg-gray-50 group">
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">{course.courseCode}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{course.courseName}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{course.courseSubject}</td>
@@ -134,37 +215,43 @@ const CourseListAdmin = () => {
                           {course.adminApprovalStatus}
                         </span>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium space-x-2">
-                        {course.adminApprovalStatus !== 'approved' && (
+                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium sticky right-0 bg-white group-hover:bg-gray-50 z-10 border-l">
+                        <div className="flex items-center space-x-2">
                           <button
-                            onClick={() => handleUpdateStatus(course._id, 'approved')}
-                            className={`${buttonStyle} bg-green-500 text-white hover:bg-green-600 focus:ring-green-400 flex items-center`}
-                            title="Approve Course"
-                          >
-                            <CheckCircle size={14} className="mr-1" /> Approve
+                              onClick={() => openDetailsModal(course)}
+                              className={`${buttonActionStyle} bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-500`}
+                              title="View Details"
+                            >
+                            <Info size={14} className="mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Details</span>
                           </button>
-                        )}
-                        {course.adminApprovalStatus !== 'rejected' && (
-                          <button
-                            onClick={() => handleUpdateStatus(course._id, 'rejected')}
-                            className={`${buttonStyle} bg-red-500 text-white hover:bg-red-600 focus:ring-red-400 flex items-center`}
-                            title="Reject Course"
-                          >
-                            <XCircle size={14} className="mr-1" /> Reject
-                          </button>
-                        )}
-                         {course.adminApprovalStatus !== 'pending' && ( // Option to revert to pending
-                          <button
-                            onClick={() => handleUpdateStatus(course._id, 'pending')}
-                            className={`${buttonStyle} bg-yellow-500 text-white hover:bg-yellow-600 focus:ring-yellow-400 flex items-center`}
-                            title="Set to Pending"
-                          >
-                            <RefreshCw size={14} className="mr-1" /> Pending
-                          </button>
-                        )}
-                        {/* <button className={`${buttonStyle} bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-500 flex items-center`} title="View Details">
-                           <Eye size={14} className="mr-1" /> View 
-                        </button> */}
+                          {course.adminApprovalStatus !== 'approved' && (
+                            <button
+                              onClick={() => handleUpdateStatus(course._id, 'approved')}
+                              className={`${buttonActionStyle} bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500`}
+                              title="Approve Course"
+                            >
+                              <CheckCircle size={14} className="mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Approve</span>
+                            </button>
+                          )}
+                          {course.adminApprovalStatus !== 'rejected' && (
+                            <button
+                              onClick={() => handleUpdateStatus(course._id, 'rejected')}
+                              className={`${buttonActionStyle} bg-rose-700 text-white hover:bg-rose-800 focus:ring-rose-600`}
+                              title="Reject Course"
+                            >
+                              <XCircle size={14} className="mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Reject</span>
+                            </button>
+                          )}
+                          {course.adminApprovalStatus !== 'pending' && ( 
+                            <button
+                              onClick={() => handleUpdateStatus(course._id, 'pending')}
+                              className={`${buttonActionStyle} bg-amber-600 text-white hover:bg-amber-700 focus:ring-amber-500`}
+                              title="Set to Pending"
+                            >
+                              <RefreshCw size={14} className="mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Pending</span>
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -174,6 +261,16 @@ const CourseListAdmin = () => {
           )}
         </div>
       </div>
+      {isModalOpen && <CourseDetailsModal course={selectedCourseForDetails} onClose={closeDetailsModal} />}
+      <style jsx global>{`
+        @keyframes modalShow {
+          0% { transform: scale(0.95); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-modalShow {
+          animation: modalShow 0.2s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };

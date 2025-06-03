@@ -159,7 +159,7 @@ const TabMenu = () => {
                     <div className="flex-1">
                       <p className="font-medium">{student.name}</p>
                       <div className="flex justify-between">
-                        <p className="text-sm text-gray-600">Course: {student.course}</p>
+                        <p className="text-sm text-gray-600">Course: {student?.course?.courseName}</p>
                         <p className="text-xs text-gray-500">Added: {formatDate(student.addedOn)}</p>
                       </div>
                       <p className="text-xs text-gray-500">Roll No: {student.rollNumber}</p>

@@ -30,40 +30,35 @@ const Wallet = () => {
     };
 
     fetchWalletData();
-  }, []);
+  }, []); 
 
   // Handle add money form submission
   const handleAddMoney = async (e) => {
     e.preventDefault();
-    
     if (!amount || parseFloat(amount) <= 0) {
       alert("Please enter a valid amount");
       return;
     }
-    
+    const referenceId = document.getElementById("referenceId").value;
+    if (!referenceId) {
+      alert("Please enter the payment reference/transaction ID");
+      return;
+    }
     setTransactionStatus("processing");
-    
     try {
-      // Step 1: Create a pending transaction in your backend
-      const createTransaction = await axios.post("http://localhost:8000/api/v1/institute_wallet/transaction", {
+      // Submit deposit request to backend
+      await axios.post("http://localhost:8000/api/v1/institute_wallet/deposit", {
         amount: parseFloat(amount),
-        type: "deposit",
-        status: "pending"
-      });
-      
-      const transactionId = createTransaction.data.transactionId;
-      
-      // Step 2: Generate UPI deep link
-      // For now we'll use a simple UPI deep link approach
-      const upiLink = `upi://pay?pa=${upiId}&pn=Institute%20Portal&am=${amount}&cu=INR&tr=${transactionId}`;
-      
-      // Open the UPI link in a new window
-      window.open(upiLink, "_blank");
-      
-      // Show confirmation form after payment
-      setTransactionStatus("confirm");
+        referenceId
+      }, { withCredentials: true });
+      setTransactionStatus("success");
+      setTimeout(() => {
+        setShowAddMoney(false);
+        setAmount("");
+        setTransactionStatus(null);
+        fetchWalletData();
+      }, 2000);
     } catch (error) {
-      console.error("Error initiating transaction:", error);
       setTransactionStatus("failed");
     }
   };
@@ -123,7 +118,7 @@ const Wallet = () => {
       {/* Header with back button */}
       <div className="flex items-center mb-6">
         <button 
-          onClick={() => navigate("/")} 
+          onClick={() => navigate("/institute")} 
           className="mr-4 p-2 rounded-full hover:bg-gray-200"
         >
           <FaArrowLeft className="text-gray-700" />
@@ -176,7 +171,16 @@ const Wallet = () => {
                     required
                   />
                 </div>
-                
+                <div className="mb-4">
+                  <label className="block text-gray-700 mb-2">Bank Reference/Transaction ID</label>
+                  <input
+                    id="referenceId"
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    placeholder="Enter payment reference/transaction ID"
+                    required
+                  />
+                </div>
                 <div className="flex justify-end space-x-2">
                   <button
                     type="button"
@@ -189,7 +193,7 @@ const Wallet = () => {
                     type="submit"
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
                   >
-                    Proceed to Pay
+                    Submit Request
                   </button>
                 </div>
               </form>

@@ -21,7 +21,7 @@ router.post('/transactions/:transactionId/approve', async (req, res) => {
         await session.abortTransaction();
         return res.status(400).json({ error: 'Transaction cannot be approved' });
       }
-       
+      
       // Update transaction status
       transaction.status = 'approved';
       await transaction.save();
@@ -53,6 +53,30 @@ router.post('/transactions/:transactionId/approve', async (req, res) => {
     } finally {
       // End the session
       session.endSession();
+    }
+  });
+
+// Reject transaction
+router.post('/transactions/:transactionId/reject', async (req, res) => {
+    try {
+      const transaction = await Transaction.findById(req.params.transactionId);
+      
+      if (!transaction) {
+        return res.status(404).json({ error: 'Transaction not found' });
+      }
+      
+      if (transaction.status !== 'pending_approval') {
+        return res.status(400).json({ error: 'Transaction cannot be rejected' });
+      }
+      
+      // Update transaction status to rejected
+      transaction.status = 'rejected';
+      await transaction.save();
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error rejecting transaction:', error);
+      res.status(500).json({ error: 'Server error' });
     }
   });
 

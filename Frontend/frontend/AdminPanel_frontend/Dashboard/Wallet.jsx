@@ -27,7 +27,6 @@ const AdminWalletApproval = () => {
   const handleApprove = async (transactionId) => {
     try {
       await axios.post(`http://localhost:8000/api/v1/adminwallet/transactions/${transactionId}/approve`);
-      // Update the transaction in the list
       setTransactions(
         transactions.map((transaction) =>
           transaction._id === transactionId
@@ -36,15 +35,13 @@ const AdminWalletApproval = () => {
         )
       );
     } catch (error) {
-      console.error("Error approving transaction:", error);
       alert("Failed to approve transaction");
     }
   };
 
   const handleReject = async (transactionId) => {
     try {
-      await axios.post(`http://localhost:8000/api/v1/admin/transactions/${transactionId}/reject`);
-      // Update the transaction in the list
+      await axios.post(`http://localhost:8000/api/v1/adminwallet/transactions/${transactionId}/reject`);
       setTransactions(
         transactions.map((transaction) =>
           transaction._id === transactionId
@@ -53,7 +50,6 @@ const AdminWalletApproval = () => {
         )
       );
     } catch (error) {
-      console.error("Error rejecting transaction:", error);
       alert("Failed to reject transaction");
     }
   };

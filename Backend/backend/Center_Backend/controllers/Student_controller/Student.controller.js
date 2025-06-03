@@ -7,6 +7,8 @@ import mongoose from "mongoose"; // Make sure to import mongoose for the transac
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../../utils/cloudinary.js";
+import Wallet from "../../models/Payment/Wallet.js";
+import Transaction from "../../models/Payment/Transaction.js";
  
 const registerStudent = asyncHandler(async (req, res) => {
   const {
@@ -260,6 +262,27 @@ console.log(req.files)
         "Something went wrong while registering the student"
       );
     }
+
+    // Add wallet deduction logic before registration
+    // const instituteId = req.user._id; // assuming authentication middleware sets req.user
+    const registrationFee = 300; // or get from config
+
+    let wallet = await Wallet.findOne();
+    if (!wallet || wallet.balance < registrationFee) {
+      throw new ApiError(400, "Insufficient wallet balance. Please add money.");
+    }
+    wallet.balance -= registrationFee;
+    await wallet.save();
+
+    // Record the deduction as a transaction
+    await Transaction.create({
+      // wallet: wallet._id,
+      amount: registrationFee,
+      type: "debit",
+      status: "approved",
+      referenceId: "Student Registration",
+      timestamp: new Date(),
+    });
 
     return res
       .status(201)

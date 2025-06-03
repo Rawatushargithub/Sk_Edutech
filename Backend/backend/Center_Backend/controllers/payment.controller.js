@@ -124,7 +124,7 @@ export const getbalance = asyncHandler( async (req, res) => {
     
     if (!wallet) {
       wallet = await Wallet.create({
-        user: userId,
+        // user: userId,
         balance: 0
       });
     }
@@ -170,4 +170,43 @@ export const deductWalletBalance = asyncHandler(async (req, res) => {
       error.message || "Error processing wallet deduction"
     );
   }
+});
+
+// Institute submits a deposit transaction (manual transfer to admin)
+export const submitDepositRequest = asyncHandler(async (req, res) => {
+  const { amount, referenceId } = req.body;
+  // const instituteId = req.user._id; // assuming authentication middleware sets req.user
+
+  if (!amount || amount <= 0 || !referenceId) {
+    throw new ApiError(400, "Amount and referenceId are required");
+  }
+
+  // Find or create wallet for this institute
+  let wallet = await Wallet.find();
+  if (!wallet) {
+    wallet = await Wallet.create({  balance: 0 });
+  }
+
+  // Create a pending transaction
+  const transaction = await Transaction.create({
+    // wallet: wallet._id,
+    amount,
+    type: "deposit",
+    status: "pending_approval",
+    referenceId,
+    timestamp: new Date(),
+  });
+
+  res.status(201).json({ success: true, transactionId: transaction._id });
+});
+
+// Fetch wallet balance and transactions
+export const getWalletBalance = asyncHandler(async (req, res) => {
+  // const instituteId = req.user._id; // assuming authentication middleware sets req.user
+  const wallet = await Wallet.findOne();
+  if (!wallet) {
+    return res.json({ balance: 0, transactions: [] });
+  }
+  const transactions = await Transaction.find().sort({ timestamp: -1 });
+  res.json({ balance: wallet.balance, transactions });
 });

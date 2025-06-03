@@ -29,7 +29,7 @@ app.use(cors({
 
 // Database Connection
 const PORT = process.env.PORT || 8000; // Adjusted to reflect your running port
-const DB_NAME = "sk_edutech"; // Changed to lowercase to match existing DB
+const DB_NAME = "SK_Edutech"; // Changed to lowercase to match existing DB
 
 // Construct MongoDB URI more safely
 let mongoURI = process.env.MONOGODB_URI;

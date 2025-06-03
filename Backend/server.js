@@ -3,10 +3,24 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Helper to get __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
 const app = express();
+
+// Ensure public/temp directory exists for multer uploads
+const tempDir = path.join(__dirname, 'public/temp');
+if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+    console.log(`Created temporary directory for uploads: ${tempDir}`);
+}
 app.use(express.json());
 app.use(cors());
 app.use(cors({
@@ -14,12 +28,20 @@ app.use(cors({
 }));
 
 // Database Connection
-const PORT = process.env.PORT || 5000;
-const DB_NAME = "SK_Edutech";
+const PORT = process.env.PORT || 8000; // Adjusted to reflect your running port
+const DB_NAME = "sk_edutech"; // Changed to lowercase to match existing DB
 
-mongoose.connect(`${process.env.MONOGODB_URI}/${DB_NAME}`, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
+// Construct MongoDB URI more safely
+let mongoURI = process.env.MONOGODB_URI;
+if (mongoURI && mongoURI.endsWith('/')) {
+  mongoURI = mongoURI.slice(0, -1); // Remove trailing slash if present
+}
+const finalMongoURI = `${mongoURI}/${DB_NAME}`;
+console.log("Attempting to connect to MongoDB with URI:", finalMongoURI); // Log the URI
+
+mongoose.connect(finalMongoURI, {
+  // useNewUrlParser and useUnifiedTopology are deprecated and can be removed
+  // mongoose.connect(finalMongoURI) is enough for modern Mongoose versions
 })
 .then(() => console.log("MongoDB Connected"))
 .catch(err => console.log(err));
@@ -54,6 +76,7 @@ import achieversRouter from './backend/Admin_Backend/routes/Achievers/achievemen
 import eventBoxRouter from './backend/Admin_Backend/routes/Achievers/eventBox.routes.js'
 import franchiseRouter from "./backend/Admin_Backend/routes/franchise/franchise.routes.js"; // Import franchise router
 import galleryRouter from "./backend/Admin_Backend/routes/Gallery/galleryRoutes.js"; // Import franchise router
+import adminCourseRouter from "./backend/Admin_Backend/routes/courses.routes.js"; // Import admin course router
 
 // admin routes
 app.use("/api/v1/mainSliderImages",mainSliderRouter)
@@ -65,6 +88,7 @@ app.use("/api/v1/eventBoxImages",eventBoxRouter)
 // app.use("/api/v1/adminwallet" , adminRouter)
 app.use("/api/v1/franchises", franchiseRouter); 
 app.use("/api/v1/gallery", galleryRouter);
+app.use("/api/v1/admin/courses", adminCourseRouter); // Add admin course routes
 
 
 

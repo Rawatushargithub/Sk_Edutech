@@ -14,6 +14,7 @@ import FranchiseListPage from "../AdminPanel_frontend/fracnhise/pages/FranchiseL
 import AddFranchisePage from "../AdminPanel_frontend/fracnhise/pages/AddFranchisePage";
 import RequestStackPage from "../AdminPanel_frontend/fracnhise/pages/RequestStackPage";
 import EditFranchisePage from "../AdminPanel_frontend/fracnhise/pages/EditFranchisePage";
+import CourseListAdmin from "../AdminPanel_frontend/Courses/CourseListAdmin"; // Import Admin Course List
 
 
 const AdminPanel = () => {
@@ -46,6 +47,8 @@ const AdminPanel = () => {
               <Route path="franchises/requests" element={<RequestStackPage />} /> {/* Shows franchises needing action */}
               <Route path="franchises/edit/:franchiseId" element={<EditFranchisePage />} /> {/* Edit a specific franchise */}
 
+              {/* Admin Course Management Route */}
+              <Route path="courses" element={<CourseListAdmin />} />
             </Routes>
           </div>
         </div>

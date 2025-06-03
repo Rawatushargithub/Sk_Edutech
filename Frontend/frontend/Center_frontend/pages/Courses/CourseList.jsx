@@ -5,6 +5,8 @@ import { Pencil, Trash2, Plus } from 'lucide-react';
  
 const CourseList = () => {
   const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [displayCount, setDisplayCount] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
@@ -42,19 +44,18 @@ const CourseList = () => {
     fetchCourses(); 
   }, []);
 
-  const handleEdit = (index) => {
-    localStorage.setItem('editCourseIndex', index);
-    localStorage.setItem('editCourseData', JSON.stringify(courses[index]));
-    navigate('/institute/updatecourse');
+  const handleEdit = (courseId) => {
+    // We'll pass the courseId to the route, the form will fetch the course data
+    navigate(`/institute/updatecourse/${courseId}`);
   };
  
-  const handleDelete = (index) => {
-    if (window.confirm('Are you sure you want to delete this course?')) {
-      const updatedCourses = courses.filter((_, i) => i !== index);
-      localStorage.setItem('courses', JSON.stringify(updatedCourses));
-      setCourses(updatedCourses);
-    }
-  };
+  // const handleDelete = (index) => { // Delete functionality removed
+  //   if (window.confirm('Are you sure you want to delete this course?')) {
+  //     const updatedCourses = courses.filter((_, i) => i !== index);
+  //     localStorage.setItem('courses', JSON.stringify(updatedCourses));
+  //     setCourses(updatedCourses);
+  //   }
+  // };
  
   const filteredCourses = courses.filter(course =>
     Object.values(course).some(value =>
@@ -72,10 +73,10 @@ const CourseList = () => {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900">Course List</h1>
             <button
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500"
               onClick={() => navigate("/institute/CourseForm")}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-5 h-5" />
               Add Course
             </button>
           </div>
@@ -115,46 +116,50 @@ const CourseList = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fees</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MRP</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Fees</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exam Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QB Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration (Months)</th>
+                  {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exam Status</th> */}
+                  {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QB Status</th> */}
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Institute Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin Approval</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {displayedCourses.map((course, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
+                  <tr key={course._id || index} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.courseCode}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.courseName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.courseFees}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.courseMRP}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.minFeePayable}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.courseDuration}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.examStatus}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.questionBankStatus}</td>
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.examStatus || 'N/A'}</td> */}
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{course.questionBankStatus || 'N/A'}</td> */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        course.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        course.instituteStatus === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}>
-                        {course.status}
+                        {course.instituteStatus}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        course.adminApprovalStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                        course.adminApprovalStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800' // for 'pending'
+                      }`}>
+                        {course.adminApprovalStatus}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
-                        onClick={() => handleEdit(index)}
+                        onClick={() => handleEdit(course._id)} // Pass course._id
                         className="text-blue-600 hover:text-blue-900 mr-4"
+                        title="Edit Course"
                       >
-                        <Pencil className="w-4 h-4" />
+                        <Pencil className="w-5 h-5" />
                       </button>
-                      <button
-                        onClick={() => handleDelete(index)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {/* Delete button removed */}
                     </td>
                   </tr>
                 ))}

@@ -1,16 +1,20 @@
 import express from 'express';
-import {  getCourses , createCourse , getCoursesCount , getRecentCourses } from '../controllers/courses.controller.js';
-//import upload from '../middlewares/multer.js'; // Multer for file uploads
+import {  getCourses , createCourse , getCoursesCount , getRecentCourses, updateCourseById, getCourseById, addNoteToCourse, addVideoLinkToCourse } from '../controllers/courses.controller.js';
+import { uploadCourseFiles, uploadSingleNoteFile } from '../middlewares/course.multer.middleware.js'; 
 
 const router = express.Router();
 
 // Routes
-router.post('/createCourses', createCourse);
+router.post('/createCourses', uploadCourseFiles, createCourse); 
 router.get('/getCourses', getCourses);
-router.get('/count' , getCoursesCount)
+router.get('/count' , getCoursesCount);
 router.get('/recent', getRecentCourses);
-// router.get('/:id', getCourseById);
-// router.put('/:id', updateCourse);
+router.get('/course/:courseId', getCourseById); 
+router.put('/update/:courseId', uploadCourseFiles, updateCourseById); 
+
+router.post('/:courseId/notes', uploadSingleNoteFile, addNoteToCourse); 
+router.post('/:courseId/videos', addVideoLinkToCourse); // New route to add a video link to a course
+
 // router.delete('/:id', deleteCourse);
 
 export default router;

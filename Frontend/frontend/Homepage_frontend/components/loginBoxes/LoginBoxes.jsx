@@ -5,8 +5,11 @@ import {
   FaCheckCircle,
   FaFolderPlus,
 } from "react-icons/fa";
-import { useNavigate} from "react-router-dom";
-import { useState} from "react";
+import { useSwipeable } from "react-swipeable";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import Login from "../../../Student_Frontend/pages/Login";
+import centerLogin from "../../../Student_Frontend/pages/centerLogin";
 
 
 const LoginBoxes = () => {
@@ -16,67 +19,120 @@ const LoginBoxes = () => {
   };
 
   const [isOpen, setIsOpen] = useState(false);
-    const [certificateId, setCertificateId] = useState("");
-    const [verificationResult, setVerificationResult] = useState(null);
-    const [loading, setLoading] = useState(false);
-  
-     const studentLogin = () => {
-    navigate("/student/login"); // or whatever your login route is
-  };
-    // Mock function to simulate API call
-    const verifyCertificate = async () => {
-      setLoading(true);
-      
-      try {
-        // Replace with actual API call
-        const response = await fetch(`/api/verify-certificate/${certificateId}`);
-        const data = await response.json();
-        
-        if (data.valid) {
-          setVerificationResult({ success: true, message: "Certificate is valid!" });
-        } else {
-          setVerificationResult({ success: false, message: "Certificate not found!" });
-        }
-      } catch (error) {
-        setVerificationResult({ success: false, message: "Error verifying certificate!" });
-      }
-  
-      setLoading(false);
-    };
+  const [certificateId, setCertificateId] = useState("");
+  const [verificationResult, setVerificationResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-    
+  const [activeSlide, setActiveSlide] = useState(0); // 0 for Student, 1 for Center login
+
+  // Mock function to simulate API call
+  const verifyCertificate = async () => {
+    setLoading(true);
+
+    try {
+      // Replace with actual API call
+      const response = await fetch(`/api/verify-certificate/${certificateId}`);
+      const data = await response.json();
+
+      if (data.valid) {
+        setVerificationResult({ success: true, message: "Certificate is valid!" });
+      } else {
+        setVerificationResult({ success: false, message: "Certificate not found!" });
+      }
+    } catch (error) {
+      setVerificationResult({ success: false, message: "Error verifying certificate!" });
+    }
+
+    setLoading(false);
+  };
+
+  const [showModal, setShowModal] = useState(false);
+
+  const handlers = useSwipeable({
+    onSwipedLeft: () => setActiveSlide((prev) => (prev + 1) % 2),
+    onSwipedRight: () => setActiveSlide((prev) => (prev - 1 + 2) % 2),
+    trackTouch: true,
+    trackMouse: false,
+  });
+
+
+  // This will toggle modal visibility
+  const studentLogin = () => {
+    setShowModal(true);
+  };
+
 
   return (
     // Parent div - Responsive grid layout
     <div className="grid grid-cols-1 sm:grid-cols-5 lg:grid-cols-5 gap-6 p-4 mx-4 md:mx-12 mb-10">
       {/* Student Login */}
-      <div onClick={studentLogin} className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-6 py-8 flex items-center justify-center flex-col lg:flex-row gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer">
-        <FaGraduationCap className="text-[#003366] group-hover:text-white transition duration-300" size={50} />
-        <div  className="text-xl group-hover:text-white transition duration-300 text-center lg:text-left mt-2">
-          Student <br /> Login
+      <div
+        onClick={studentLogin}
+        className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 lg:h-auto"
+      >
+        <FaGraduationCap
+          className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]"
+        />
+        <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left">
+          Student <br className="hidden sm:block" /> Login
         </div>
       </div>
+
+      {showModal && (
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+        >
+
+          <div className="relative max-w-sm w-full">
+            {/* Close Button just outside top-right */}
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute -top-10 right-0 text-[#003366] hover:text-violet-800 text-4xl font-bold z-50"
+              aria-label="Close modal"
+            >
+              &times;
+            </button>
+
+            {/* Modal Card */}
+            <div className="bg-white border-2 border-[#003366] text-[#003366] rounded-2xl shadow-lg max-w-sm w-full relative max-h-[90vh] overflow-y-auto transition-all duration-500"
+              {...handlers}>
+              {/* <Login /> */}
+              {activeSlide === 0 ? <Login /> : <centerLogin />}
+            </div>
+          </div>
+        </div>
+      )}
+
+
 
       {/* Center Login */}
-      <div className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-6 py-8 flex items-center justify-center flex-col lg:flex-row gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer">
-        <FaBuilding className="text-[#003366] group-hover:text-white transition duration-300" size={50} />
-        <div className="text-xl group-hover:text-white transition duration-300 text-center lg:text-left mt-2"
-        onClick={() => navigate("/institute")}>
-          Center <br /> Login
+      <div
+        // onClick={centerLogin}
+        className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-3 sm:gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 sm:h-auto"
+      >
+        <FaBuilding
+          className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]"
+        />
+        <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left">
+          Center <br className="hidden sm:block" /> Login
         </div>
       </div>
 
-      
+
+
 
       {/* Certificate Verification */}
-      <div className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-6 py-8 flex items-center justify-center flex-col  lg:flex-row gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer"
-      onClick={() => setIsOpen(true)}
+      <div
+        className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-3 sm:gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 sm:h-auto"
+        onClick={() => setIsOpen(true)}
       >
-        <FaFileSignature className="text-[#003366] group-hover:text-white transition duration-300" size={50} />
-        <div className="text-xl group-hover:text-white transition duration-300 text-center lg:text-left mt-2">
-          Certificate <br /> Verification
+        <FaFileSignature className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]" />
+        <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left">
+          Certificate <br className="hidden sm:block" /> Verification
         </div>
       </div>
+
 
       {/* Popup Modal */}
       {isOpen && (
@@ -113,151 +169,45 @@ const LoginBoxes = () => {
             {/* Display Verification Result */}
             {verificationResult && (
               <div
-                className={`mt-4 p-2 rounded-lg text-center ${
-                  verificationResult.success ? "bg-green-200 text-green-700" : "bg-red-200 text-red-700"
-                }`}
+                className={`mt-4 p-2 rounded-lg text-center ${verificationResult.success ? "bg-green-200 text-green-700" : "bg-red-200 text-red-700"
+                  }`}
               >
                 {verificationResult.message}
               </div>
             )}
           </div>
         </div>
-        )}
+      )}
 
-      
+
 
 
       {/* Center Verification */}
-      <div className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-6 py-8 flex items-center justify-center flex-col  lg:flex-row gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer">
-        <FaCheckCircle className="text-[#003366] group-hover:text-white transition duration-300" size={50} />
-        <div className="text-xl group-hover:text-white transition duration-300 text-center lg:text-left mt-2">
-          Center <br /> Verification
+      <div
+        onClick={() => setIsOpen(true)}
+        className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-3 sm:gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 sm:h-auto"
+      >
+        <FaCheckCircle className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]" />
+        <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left">
+          Center <br className="hidden sm:block" /> Verification
         </div>
       </div>
+
 
       {/* Apply for Franchise */}
       <div
         onClick={ApplyFranchise}
-        className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-6 py-8 flex items-center justify-center flex-col  lg:flex-row gap-2 transition duration-500 hover:bg-sky-950 cursor-pointer"
+        className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-3 sm:gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 sm:h-auto"
       >
-        <FaFolderPlus className="text-[#003366] group-hover:text-white transition duration-300" size={50} />
-        <div className="text-xl group-hover:text-white transition duration-300 text-left lg:text-center mt-2">
-          Apply for <br /> Franchise
+        <FaFolderPlus className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]" />
+        <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left">
+          Apply for <br className="hidden sm:block" /> Franchise
         </div>
       </div>
+
     </div>
   );
 };
 
 export default LoginBoxes;
-
-
-
-
-// import {
-//     FaApple,
-//     FaCheckCircle,
-//     FaFileSignature,
-//     FaFolderPlus,
-//     FaGraduationCap,
-//   } from "react-icons/fa";
-//   import { FaBuilding } from "react-icons/fa";
-  
-//   // import { FontAwesomeIcon } from "react";
-  
-//   const LoginBoxes = () => {
-//     return (
-//       // Parent div responsive which contains 5 divs inside
-//       <div 
-      
-//       className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 p-4 mx-4 md:mx-12 mb-10"
-      
-//       >
-//         {/* Single div which contains two div: icon and text */}
-  
-//         <div className="flex-1 group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-10 py-10 transition duration-500 hover:bg-sky-950">
-//           <div className="flex items-center">
-//             <div className="px-1 mr-4 ">
-//               {/* Graduation Cap Icon with group-hover effect */}
-//               <FaGraduationCap
-//                 className="text-[#003366] group-hover:text-white transition duration-300"
-//                 size={50}
-//               />
-//             </div>
-//             <div className="text-xl group-hover:text-white transition duration-300">
-//               Student <br />
-//               Login
-//             </div>
-//           </div>
-//         </div>
-  
-//         <div className="flex-1 group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-10 py-10 transition duration-500 hover:bg-sky-950">
-//           <div className="flex items-center">
-//             <div className="px-1 mr-4">
-//               {/* Graduation Cap Icon with group-hover effect */}
-//               <FaBuilding
-//                 className="text-[#003366] group-hover:text-white transition duration-300"
-//                 size={50}
-//               />
-//             </div>
-//             <div className="text-xl group-hover:text-white transition duration-300">
-//               Center <br />
-//               Login
-//             </div>
-//           </div>
-//         </div>
-  
-//         <div className="flex-1 group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-10 py-10 transition duration-500 hover:bg-sky-950">
-//           <div className="flex items-center">
-//             <div className="px-1 mr-4">
-//               {/* Graduation Cap Icon with group-hover effect */}
-//               <FaFileSignature
-//                 className="text-[#003366] group-hover:text-white transition duration-300"
-//                 size={50}
-//               />
-//             </div>
-//             <div className="text-xl group-hover:text-white transition duration-300">
-//               Certificate <br />
-//               Verification
-//             </div>
-//           </div>
-//         </div>
-  
-//         <div className="flex-1 group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-10 py-10 transition duration-500 hover:bg-sky-950">
-//           <div className="flex items-center">
-//             <div className="px-1 mr-4">
-//               {/* Graduation Cap Icon with group-hover effect */}
-//               <FaCheckCircle
-//                 className="text-[#003366] group-hover:text-white transition duration-300"
-//                 size={50}
-//               />
-//             </div>
-//             <div className="text-xl group-hover:text-white transition duration-300">
-//               Center <br />
-//               Verification
-//             </div>
-//           </div>
-//         </div>
-  
-//         <div className="flex-1 group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-10 py-10 transition duration-500 hover:bg-sky-950">
-//           <div className="flex items-center">
-//             <div className="px-1 mr-4">
-//               {/* Graduation Cap Icon with group-hover effect */}
-//               <FaFolderPlus
-//                 className="text-[#003366] group-hover:text-white transition duration-300"
-//                 size={50}
-//               />
-//             </div>
-//             <div className="text-xl group-hover:text-white transition duration-300">
-//               Apply for <br />
-//               Franchise
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     );
-//   };
-//   export default LoginBoxes;
-  
-
 

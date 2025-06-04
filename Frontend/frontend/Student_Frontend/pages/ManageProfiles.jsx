@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { User, Phone, Mail, MapPin, Calendar, Award, FileText } from "lucide-react";
-import API_BASE_URL from "../../config"; // Adjust the import path as necessary
+import API_BASE_URL from "../../config.js"
+
 const ManageProfile = () => {
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,7 +19,6 @@ const ManageProfile = () => {
         }
 
         const data = await response.json();
-        console.log(data)
         setStudent(data.student);
       } catch (error) {
         console.error("Error fetching student details:", error);
@@ -39,7 +39,7 @@ const ManageProfile = () => {
       <div className="flex items-center justify-center h-screen bg-gray-100">
         <div className="p-6 text-center">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-blue-600">Loading student profile...</p>
+          <p className="text-blue-950">Loading student profile...</p>
         </div>
       </div>
     );
@@ -65,9 +65,9 @@ const ManageProfile = () => {
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Form Header */}
-        <div className="bg-blue-600 text-white p-4 rounded-t-lg">
+        <div className="bg-blue-950 text-white p-4 rounded-t-lg">
           <h1 className="text-2xl font-bold text-center">STUDENT PROFILE</h1>
-          <p className="text-center text-blue-100 text-sm">Roll Number: {student.rollNumber}</p>
+          <p className="text-center text-blue-100 font-bold text-sm">Roll Number: {student.rollNumber}</p>
         </div>
         
         {/* Main Form Container */}
@@ -78,10 +78,10 @@ const ManageProfile = () => {
             <div className="w-full md:w-1/2 p-6 border-b md:border-b-0 md:border-r border-gray-200">
               <div className="flex flex-col items-center">
                 <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
-                  <User className="mr-2 text-blue-600" size={18} />
+                  <User className="mr-2 text-blue-950" size={18} />
                   Student Photo
                 </h3>
-                <div className="border-2 border-blue-200 p-1 rounded-md">
+                <div className="border-2 border-blue-950 p-1 rounded-md">
                   <img
                     src={student.studentPhoto || "/api/placeholder/200/240"}
                     alt="Student"
@@ -95,10 +95,10 @@ const ManageProfile = () => {
             <div className="w-full md:w-1/2 p-6">
               <div className="flex flex-col items-center">
                 <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
-                  <FileText className="mr-2 text-blue-600" size={18} />
+                  <FileText className="mr-2 text-blue-950" size={18} />
                   Student Signature
                 </h3>
-                <div className="border-2 border-blue-200 p-2 rounded-md w-64">
+                <div className="border-2 border-blue-950 p-2 rounded-md w-64">
                   <img
                     src={student.studentSignature || "/api/placeholder/240/80"}
                     alt="Signature"
@@ -112,7 +112,7 @@ const ManageProfile = () => {
           {/* Student Details Section */}
           <div className="p-6">
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-blue-800 border-b border-blue-200 pb-2 mb-4">
+              <h3 className="text-lg font-semibold text-blue-950 border-b border-blue-200 pb-2 mb-4">
                 Personal Information
               </h3>
               
@@ -143,7 +143,7 @@ const ManageProfile = () => {
             </div>
             
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-blue-800 border-b border-blue-200 pb-2 mb-4">
+              <h3 className="text-lg font-semibold text-blue-950 border-b border-blue-200 pb-2 mb-4">
                 Contact Information
               </h3>
               
@@ -188,7 +188,7 @@ const ManageProfile = () => {
             </div>
             
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-blue-800 border-b border-blue-200 pb-2 mb-4">
+              <h3 className="text-lg font-semibold text-blue-950 border-b border-blue-200 pb-2 mb-4">
                 Family Information
               </h3>
               
@@ -211,15 +211,21 @@ const ManageProfile = () => {
             </div>
             
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-blue-800 border-b border-blue-200 pb-2 mb-4">
+              <h3 className="text-lg font-semibold text-blue-950 border-b border-blue-200 pb-2 mb-4">
                 Academic Information
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500">Course Interested</span>
-                  <p className="font-medium">{student.courseInterested}</p>
+                  <p className="font-medium">{student.courseInterested.courseName}</p>
                 </div>
+
+                <div className="border border-gray-200 rounded p-3 bg-gray-50">
+                  <span className="text-xs text-gray-500">Course Interested</span>
+                  <p className="font-medium">{student.courseInterested.courseCode}</p>
+                </div>
+                
                 
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500">Admission Date</span>
@@ -248,11 +254,11 @@ const ManageProfile = () => {
           </div>
           
           {/* Form Footer */}
-          <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 text-center">
+          {/* <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 text-center">
             <p className="text-sm text-gray-500">
-              Student ID: <span className="font-medium text-blue-600">{studentId}</span>
+              Student ID: <span className="font-medium text-blue-950">{studentId}</span>
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Phone, LogIn, AlertCircle } from "lucide-react";
-import API_BASE_URL from "../../config"; // Adjust the import path as necessary
+import API_BASE_URL from "../../config";
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [studentMobile, setStudentMobile] = useState("");
@@ -49,7 +50,8 @@ const Login = () => {
           JSON.stringify({
             name: studentName,
             age: age,
-            course: courseInterested,
+            courseName: courseInterested?.courseName || "N/A",
+    courseCode: courseInterested?.courseCode || "N/A",
             email: email,
             phone: studentMobile,
             studentId: _id,

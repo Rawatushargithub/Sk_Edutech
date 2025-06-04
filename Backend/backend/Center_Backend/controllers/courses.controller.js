@@ -208,7 +208,7 @@ export const updateCourseById = asyncHandler(async (req, res) => {
         }
     } else if (req.body.existingCourseImage) { // If frontend signals to keep existing image
         updates.courseImage = req.body.existingCourseImage;
-    } else if (isEditMode && !req.body.existingCourseImage && !req.files?.courseImage) { 
+    } else if (!req.body.existingCourseImage && !req.files?.courseImage) { 
       // If it's edit mode, no existing image was sent to be kept, and no new one uploaded, means remove.
       updates.courseImage = ""; // Set to empty string to remove
     }

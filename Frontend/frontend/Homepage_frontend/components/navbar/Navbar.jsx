@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSwipeable } from "react-swipeable";
+import Login from "../../../Student_Frontend/pages/Login";
+import centerLogin from "../../../Student_Frontend/pages/centerLogin";
 
 const Navbar = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -8,7 +11,7 @@ const Navbar = () => {
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
-
+  const [activeSlide, setActiveSlide] = useState(0); 
   const navigate = useNavigate();
 
   const handleLinkClick = (link) => {
@@ -17,9 +20,19 @@ const Navbar = () => {
     }
   };
 
-  const handleLoginClick = () => {
-    navigate("/student/login");
+  const [showModal, setShowModal] = useState(false);
+
+  const studentLogin = () => {
+    setShowModal(true);
   };
+
+
+  const handlers = useSwipeable({
+      onSwipedLeft: () => setActiveSlide((prev) => (prev + 1) % 2),
+      onSwipedRight: () => setActiveSlide((prev) => (prev - 1 + 2) % 2),
+      trackTouch: true,
+      trackMouse: false,
+    });
 
   const navItems = [
     {
@@ -204,11 +217,38 @@ const Navbar = () => {
         </nav>
 
         <button 
-          onClick={handleLoginClick} 
+         onClick={studentLogin}
           className="hidden lg:block ml-auto mr-6 bg-transparent hover:bg-[#003366] text-[#003366] font-semibold text-xl hover:text-white py-2 px-8 m border border-[#003366] hover:border-transparent rounded-md duration-300"
         >
           Login
         </button>
+
+        {showModal && (
+                <div
+                  className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm"
+                  style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+                >
+        
+                  <div className="relative max-w-sm w-full">
+                    {/* Close Button just outside top-right */}
+                    <button
+                      onClick={() => setShowModal(false)}
+                      className="absolute -top-10 right-0 text-[#003366] hover:text-violet-800 text-4xl font-bold z-50"
+                      aria-label="Close modal"
+                    >
+                      &times;
+                    </button>
+        
+                    {/* Modal Card */}
+                    <div className="bg-white border-2 border-[#003366] text-[#003366] rounded-2xl shadow-lg max-w-sm w-full relative max-h-[90vh] overflow-y-auto transition-all duration-500"
+                      {...handlers}>
+                      {/* <Login /> */}
+                      {activeSlide === 0 ? <Login /> : <centerLogin />}
+                    </div>
+                  </div>
+                </div>
+              )}
+        
         
         {/* Mobile Menu Button */}
         <button
@@ -299,13 +339,40 @@ const Navbar = () => {
             <li className="px-6 mt-4">
               <button
                 onClick={() => {
-                  handleLoginClick();
+                 onClick={studentLogin}
                   setIsMenuOpen(false);
                 }}
                 className="w-full bg-[#003366] text-white font-semibold text-xl py-2 px-4 text-center border rounded-md"
               >
                 Login
               </button>
+
+              {showModal && (
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+        >
+
+          <div className="relative max-w-sm w-full">
+            {/* Close Button just outside top-right */}
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute -top-10 right-0 text-[#003366] hover:text-violet-800 text-4xl font-bold z-50"
+              aria-label="Close modal"
+            >
+              &times;
+            </button>
+
+            {/* Modal Card */}
+            <div className="bg-white border-2 border-[#003366] text-[#003366] rounded-2xl shadow-lg max-w-sm w-full relative max-h-[90vh] overflow-y-auto transition-all duration-500"
+              {...handlers}>
+              {/* <Login /> */}
+              {activeSlide === 0 ? <Login /> : <centerLogin />}
+            </div>
+          </div>
+        </div>
+      )}
+
             </li>
           </ul>
         </div>
@@ -406,11 +473,38 @@ const Navbar = () => {
         </nav>
 
         <button 
-          onClick={handleLoginClick} 
+          onClick={studentLogin}
           className="hidden lg:block ml-auto mr-6 bg-transparent hover:bg-[#003366] text-[#003366] font-semibold text-xl hover:text-white py-2 px-8 m border border-[#003366] hover:border-transparent rounded-md duration-300"
         >
           Login
         </button>
+
+        {showModal && (
+                <div
+                  className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm"
+                  style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+                >
+        
+                  <div className="relative max-w-sm w-full">
+                    {/* Close Button just outside top-right */}
+                    <button
+                      onClick={() => setShowModal(false)}
+                      className="absolute -top-10 right-0 text-[#003366] hover:text-violet-800 text-4xl font-bold z-50"
+                      aria-label="Close modal"
+                    >
+                      &times;
+                    </button>
+        
+                    {/* Modal Card */}
+                    <div className="bg-white border-2 border-[#003366] text-[#003366] rounded-2xl shadow-lg max-w-sm w-full relative max-h-[90vh] overflow-y-auto transition-all duration-500"
+                      {...handlers}>
+                      {/* <Login /> */}
+                      {activeSlide === 0 ? <Login /> : <centerLogin />}
+                    </div>
+                  </div>
+                </div>
+              )}
+        
         
         {/* Mobile Menu Button */}
         <button

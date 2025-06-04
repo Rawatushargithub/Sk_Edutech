@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Dashboard from "./Dashbaord";
 import ManageProfile from "../pages/ManageProfiles";
-import Fees from "../pages/Fees";
+// import Fees from "../pages/Fees";
 import Notes from "../pages/Notes";
 import Videos from "../pages/CourseVideos";
-import Exam from "../pages/Exam";
+import ExamDetails from "../pages/ExamPage";
 // import CertificatePage from "../pages/Certificate";
 import FeesDetails from "../pages/Fees";
 import FeedbackForm from "../pages/FeedbackForm";
@@ -42,7 +42,7 @@ const MainContent = () => {
       case "Course Videos":
         return <Videos student={student} />;
       case "Exam":
-        return <Exam student={student} />;
+        return <ExamDetails student={student} />;
       case "Certificate":
         return <CertificatePage student={student} />;
       case "Feedback":

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import API_BASE_URL from "../../config"; // Adjust the import path as necessary
 const StudentList = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -7,7 +7,7 @@ const StudentList = () => {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/v1/student/all");
+        const response = await fetch(`${API_BASE_URL}/api/v1/student/all`);
         const data = await response.json();
         console.log("📢 Students fetched:", data);
         setStudents(data);

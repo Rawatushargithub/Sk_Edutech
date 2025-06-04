@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-
+import API_BASE_URL from "../../../config"; // Adjust the import path as necessary
 const AchieverSlider = () => {
   const [achievers, setAchievers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +19,7 @@ const AchieverSlider = () => {
     const fetchAchievers = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:8000/api/v1/achievements/");
+        const response = await axios.get(`${API_BASE_URL}/api/v1/achievements/`);
         console.log("raw response", response);
         console.log(response.data[0].studentPhoto); // ✅ This is correct
         setAchievers(response.data);

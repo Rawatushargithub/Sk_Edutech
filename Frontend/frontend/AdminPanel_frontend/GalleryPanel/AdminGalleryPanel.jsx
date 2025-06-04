@@ -1,7 +1,7 @@
 // AdminGalleryPanel.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
+import API_BASE_URL from "../../config"
 const AdminGalleryPanel = () => {
   const [media, setMedia] = useState([]);
   const [title, setTitle] = useState('');
@@ -28,7 +28,7 @@ const AdminGalleryPanel = () => {
 
   const fetchMedia = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/v1/gallery/');
+      const response = await axios.get(`${API_BASE_URL}/api/v1/gallery/`);
       setMedia(response.data);
     } catch (error) {
       console.error('Error fetching media:', error);
@@ -79,7 +79,7 @@ const AdminGalleryPanel = () => {
       });
       formData.append('title', title);
 
-      await axios.post('http://localhost:8000/api/v1/gallery/upload', formData, {
+      await axios.post(`'${API_BASE_URL}/api/v1/gallery/upload'`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
@@ -110,7 +110,7 @@ const AdminGalleryPanel = () => {
     if (!window.confirm('Are you sure you want to delete this item?')) return;
 
     try {
-      await axios.delete(`http://localhost:8000/api/v1/gallery/${id}`);
+      await axios.delete(`${API_BASE_URL}/api/v1/gallery/${id}`);
       setMessage('Item deleted successfully');
       fetchMedia(); // Refresh the gallery
     } catch (error) {

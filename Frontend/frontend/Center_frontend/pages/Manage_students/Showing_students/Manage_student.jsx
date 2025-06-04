@@ -6,6 +6,7 @@ import StudentProfile from "./StudentProfile"; // Import the new component
 import FormView from "./FormView";
 import IdCardView from "./IdCardView";
 import SharePopup from "./SharePopup";
+import API_BASE_URL from "../../../../config";
 
 const StudentAdmissionList = () => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const StudentAdmissionList = () => {
     const fetchStudents = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8000/api/v1/institute_student/get_students"
+          `${API_BASE_URL}/api/v1/institute_student/get_students`
         );
         console.log("students data :: ", response.data);
 

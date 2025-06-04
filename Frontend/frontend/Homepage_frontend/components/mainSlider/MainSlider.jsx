@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
+import API_BASE_URL from '../../../config';
 
 const mainSlider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -15,7 +16,7 @@ const mainSlider = () => {
       try {
         setLoading(true);
         // Replace with your actual API endpoint
-        const response = await axios.get('http://localhost:8000/api/v1/mainSliderImages/');
+        const response = await axios.get(`${API_BASE_URL}/api/v1/mainSliderImages/`);
         
         // Axios automatically throws errors for non-2xx responses
         // and puts the response data in response.data

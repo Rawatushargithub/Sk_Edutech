@@ -3,6 +3,7 @@ import { Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from "axios"
 import { useStudentContext } from '../../context/StudentContext.jsx';
+import API_BASE_URL from "../../../config";
 
 const EnquiryForm = () => {
   const { addStudent } = useStudentContext();
@@ -29,7 +30,7 @@ const EnquiryForm = () => {
 
   const navigate = useNavigate();
   // API base URL - replace with your actual backend URL
-  const API_URL = 'http://localhost:8000/api/v1';
+  // const API_URL = 'http://localhost:8000/api/v1';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -123,7 +124,7 @@ const EnquiryForm = () => {
     try {
       setLoading(true);
       // Send data to backend
-      const response = await axios.post(`${API_URL}/enquiry`, studentData);
+      const response = await axios.post(`${API_BASE_URL}/api/v1/enquiry`, studentData);
       console.log(response)
       // Add to local context
       addStudent(response);

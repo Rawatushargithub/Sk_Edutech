@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import API_BASE_URL from "../../../config"; // Adjust the import path as necessary
 
 const AddExam = () => {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ const AddExam = () => {
     const fetchCourses = async () => {
       try {
         const response = await fetch(
-          "http://localhost:8000/api/v1/institute_courses/getCourses"
+          `${API_BASE_URL}/api/v1/institute_courses/getCourses`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch courses");
@@ -38,7 +39,7 @@ const AddExam = () => {
     const fetchBatches = async () => {
       try {
         const response = await fetch(
-          "http://localhost:8000/api/v1/institute_batche/allBatches"
+          `${API_BASE_URL}/api/v1/institute_batche/allBatches`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch batches");
@@ -75,7 +76,7 @@ const AddExam = () => {
         try {
           const selectedCourseCode = newExam.courseCode;
           const response = await fetch(
-            `http://localhost:8000/api/v1/institute_question_bank/${selectedCourseCode}/questions`
+            `${API_BASE_URL}/api/v1/institute_question_bank/${selectedCourseCode}/questions`
           );
           if (!response.ok) {
             throw new Error("Failed to fetch questions");
@@ -134,7 +135,7 @@ const AddExam = () => {
       console.log("Exam data being sent:", examData);
 
       const response = await fetch(
-        "http://localhost:8000/api/v1/institute_exam/exams",
+          `${API_BASE_URL}/api/v1/institute_exam/exams`,
         {
           method: "POST",
           headers: {

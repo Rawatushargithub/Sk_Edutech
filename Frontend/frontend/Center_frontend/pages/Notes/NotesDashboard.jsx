@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from 'react-hot-toast';
 import { FileText, Link as LinkIcon, Search, PlusCircle, Edit3 } from 'lucide-react';
+import API_BASE_URL from "../../../config";
 
 const NotesDashboard = () => { 
   const navigate = useNavigate();
@@ -13,13 +14,15 @@ const NotesDashboard = () => {
   const [loadingNotes, setLoadingNotes] = useState(false);
 
   // Fetch active and approved courses for the filter dropdown
-  useEffect(() => {
+  useEffect(() => { 
     const fetchCoursesForFilter = async () => {
       setLoadingCourses(true);
       try {
-        const response = await fetch('http://localhost:8000/api/v1/institute_courses/getCourses');
+        const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
         if (!response.ok) throw new Error('Failed to fetch courses for filter');
+        
         const data = await response.json();
+        console.log("Fetched courses ", data);
         const activeApprovedCourses = data.filter(
           c => c.instituteStatus === 'active' && c.adminApprovalStatus === 'approved'
         );

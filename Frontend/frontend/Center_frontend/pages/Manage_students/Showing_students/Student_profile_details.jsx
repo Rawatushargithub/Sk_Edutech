@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+import API_BASE_URL from "../../../../config";
 
 const StudentProfileDetails = () => {
   // State to manage the form data
@@ -114,7 +115,7 @@ useEffect(() => {
       
       // Update student data in the backend
       const response = await axios.put(
-        `http://localhost:8000/api/v1/student/update/${studentId}`, 
+        `${API_BASE_URL}/api/v1/student/update/${studentId}`, 
         formData
       );
       

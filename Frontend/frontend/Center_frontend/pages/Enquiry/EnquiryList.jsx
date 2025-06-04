@@ -4,6 +4,7 @@ import { ReceiptText } from 'lucide-react';
 import { Trash2 } from 'lucide-react';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import API_BASE_URL from "../../../config";
 
 const EnquiryList = () => {
   const [enquiries, setEnquiries] = useState([]);
@@ -12,7 +13,7 @@ const EnquiryList = () => {
   // Fetch enquiries from backend
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/v1/institute_enquiry")
+      .get(`${API_BASE_URL}/api/v1/institute_enquiry`)
       .then((response) => {
         const sortedEnquiries = response.data.sort(
           (a, b) => new Date(b.enquiryDate) - new Date(a.enquiryDate) // Sorting by latest
@@ -35,7 +36,7 @@ const EnquiryList = () => {
   // Handle delete
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/institute_enquiry/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/institute_enquiry/${id}`, {
         method: 'DELETE',
       });
 

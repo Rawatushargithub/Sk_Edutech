@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-
+import API_BASE_URL from "../../config"; // Adjust the import path as necessary
 const Videos = ({ student }) => {
   const [videos, setVideos] = useState([]);
   const [filteredVideos, setFilteredVideos] = useState([]);
@@ -18,7 +18,7 @@ const Videos = ({ student }) => {
     if (!course) return;
 
     setLoading(true);
-    fetch(`http://localhost:8000/api/videos/${course}`)
+    fetch(`${API_BASE_URL}/api/videos/${course}`)
       .then((res) => res.json())
       .then((data) => {
         setVideos(data);

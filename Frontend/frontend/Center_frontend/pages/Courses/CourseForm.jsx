@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { X, Plus, UploadCloud, Link2, FileText } from 'lucide-react'; // Added icons
 import toast, { Toaster } from 'react-hot-toast';
+import API_BASE_URL from '../../../config'; // Adjust the import path as necessary
 
 const CourseForm = ({ mode }) => {
   const { courseId } = useParams();
@@ -27,7 +28,7 @@ const CourseForm = ({ mode }) => {
   useEffect(() => {
     if (isEditMode && courseId) {
       setLoading(true);
-      fetch(`http://localhost:8000/api/v1/institute_courses/course/${courseId}`) 
+      fetch(`${API_BASE_URL}/api/v1/institute_courses/course/${courseId}`) 
         .then(res => {
           if (!res.ok) {
             // Try to parse error message from backend if available
@@ -178,8 +179,8 @@ const CourseForm = ({ mode }) => {
     materialFilesToUpload.forEach(file => submissionData.append('courseMaterialFiles', file));
     
     const url = isEditMode 
-      ? `http://localhost:8000/api/v1/institute_courses/update/${courseId}`
-      : 'http://localhost:8000/api/v1/institute_courses/createCourses';
+      ? `${API_BASE_URL}/api/v1/institute_courses/update/${courseId}`
+      : `${API_BASE_URL}/api/v1/institute_courses/createCourses`;
     const method = isEditMode ? 'PUT' : 'POST';
 
     try {

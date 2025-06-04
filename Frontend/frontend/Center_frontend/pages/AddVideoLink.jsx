@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from 'react-hot-toast';
 import { MdVideoLibrary } from "react-icons/md";
-
+import API_BASE_URL from "../../config"
 const AddVideoLink = () => { 
   const navigate = useNavigate();
   const [videoData, setVideoData] = useState({
@@ -18,16 +18,16 @@ const AddVideoLink = () => {
     const fetchActiveCourses = async () => {
       setLoadingCourses(true);
       try {
-        const response = await fetch('http://localhost:8000/api/v1/institute_courses/getCourses');
+        const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
         if (!response.ok) {
           const errData = await response.json().catch(() => ({ message: 'Failed to fetch courses' }));
           throw new Error(errData.message || `Error ${response.status}`);
         }
         const fetchedCourses = await response.json();
-        const activeAndApprovedCourses = fetchedCourses.filter(
-          c => c.instituteStatus === 'active' && c.adminApprovalStatus === 'approved'
-        );
-        setCourses(activeAndApprovedCourses);
+        // const activeAndApprovedCourses = fetchedCourses.filter(
+        //   c => c.instituteStatus === 'active' && c.adminApprovalStatus === 'approved'
+        // );
+        setCourses(fetchedCourses);
       } catch (err) {
         toast.error(`Failed to fetch courses: ${err.message}`);
         console.error("Failed to fetch courses:", err);
@@ -58,7 +58,7 @@ const AddVideoLink = () => {
     const toastId = toast.loading('Adding video link...');
     
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/institute_courses/${videoData.selectedCourseId}/videos`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/${videoData.selectedCourseId}/videos`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

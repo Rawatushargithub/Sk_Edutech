@@ -1067,6 +1067,7 @@ import axios from "axios";
 import Fees_table from "./Fees_table";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import API_BASE_URL  from "../../../config"
 
 const AddNewStudent = () => { 
   const [formData, setFormData] = useState({
@@ -1124,7 +1125,7 @@ const AddNewStudent = () => {
     // Fetch courses from the backend
     const fetchCourses = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/v1/institute_courses/getCourses');
+        const response = await axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
         console.log("course fetching :: " , response)
         setCourses(response.data); // Assuming the response is an array of course objects
       } catch (error) {
@@ -1215,7 +1216,7 @@ const AddNewStudent = () => {
 console.log("formDataToSend before sending:: ", formDataToSend.installments );
      try {
       const response = await axios.post( 
-        "http://localhost:8000/api/v1/institute_student/register_student",
+        `${API_BASE_URL}/api/v1/institute_student/register_student`,
         formDataToSend,
         {
           headers: { "Content-Type": "multipart/form-data" },

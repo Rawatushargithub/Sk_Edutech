@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Phone, LogIn, AlertCircle } from "lucide-react";
-
+import API_BASE_URL from "../../config"; // Adjust the import path as necessary
 const Login = () => {
   const [email, setEmail] = useState("");
   const [studentMobile, setStudentMobile] = useState("");
@@ -23,7 +23,7 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/student/login", {
+      const response = await fetch(`${API_BASE_URL}/api/v1/student/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, studentMobile }),

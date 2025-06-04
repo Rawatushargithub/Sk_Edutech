@@ -2,6 +2,7 @@ import React, { useState,useEffect } from 'react';
 // import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from "../../../config";
 
 const Profile_details = () => {
   const navigate = useNavigate();
@@ -174,7 +175,7 @@ const Profile_details = () => {
     });
 
     try {
-      const response = await axios.post('/api/institute/profile', formDataToSubmit, {
+      const response = await axios.post(`${API_BASE_URL}/api/institute/profile`, formDataToSubmit, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       

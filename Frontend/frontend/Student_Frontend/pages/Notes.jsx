@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Search, Eye, X, ZoomIn, ZoomOut, Maximize, FileText, Filter } from "lucide-react";
-
+import API_BASE_URL from "../../config"; // Adjust the import path as necessary
 const Notes = ({ student }) => {
   const [notes, setNotes] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -18,7 +18,7 @@ const Notes = ({ student }) => {
     if (!course) return;
 
     setLoading(true);
-    fetch(`http://localhost:8000/api/notes/${course}`)
+    fetch(`${API_BASE_URL}/api/notes/${course}`)
       .then((res) => res.json())
       .then((data) => {
         // Sort by date if available

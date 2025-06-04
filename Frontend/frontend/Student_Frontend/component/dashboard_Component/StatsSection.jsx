@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { BookOpen, CreditCard, Calendar, User, Clock, Disc, Loader } from "lucide-react";
+import API_BASE_URL from "../../../config"; // Adjust the import path as necessary
 
 const StatsSection = () => {
   const [balanceFees, setBalanceFees] = useState(null);
@@ -19,7 +20,7 @@ const StatsSection = () => {
     const fetchFees = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`http://localhost:8000/api/v1/fees/student/${studentId}`);
+        const res = await axios.get(`${API_BASE_URL}/api/v1/fees/student/${studentId}`);
         setBalanceFees(res.data.balance);
         setError(null);
       } catch (error) {

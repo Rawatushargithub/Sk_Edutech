@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import API_BASE_URL from "../../../config";
 
 const StudentFeeDetails = () => {
   const [search, setSearch] = useState("");
@@ -55,7 +56,7 @@ const StudentFeeDetails = () => {
     };
   
     // Make the API call to update fees
-    axios.post(`http://localhost:8000/api/v1/institute_fees/${studentId}/update-fee`, paymentData)
+    axios.post(`${API_BASE_URL}/api/v1/institute_fees/${studentId}/update-fee`, paymentData)
       .then(response => {
         if (response.data.success) {
           console.log("Student data coming:: " , response)
@@ -103,7 +104,7 @@ const StudentFeeDetails = () => {
     const limit = 15;
     const page = 1;
     axios
-      .get(`http://localhost:8000/api/v1/institute_fees/students?limit=${limit}&page=${page}`)
+      .get(`${API_BASE_URL}/api/v1/institute_fees/students?limit=${limit}&page=${page}`)
       .then((response) => {
         console.log(response)
         const updatedStudents = response.data.data.map((student) => ({

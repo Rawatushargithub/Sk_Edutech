@@ -4,6 +4,7 @@ import { IoPerson } from "react-icons/io5";
 import { FaBookOpen } from "react-icons/fa";
 import { BiSortAlt2 } from "react-icons/bi";
 import { format } from "date-fns"; // Import date-fns for date formatting
+import API_BASE_URL from "../../config"; // Adjust the import path as necessary
 
 const TabMenu = () => {
   const tabs = [
@@ -34,7 +35,7 @@ const TabMenu = () => {
     
     try {
       console.log(API_ENDPOINTS[tabName]);
-      const response = await fetch(`http://localhost:8000${API_ENDPOINTS[tabName]}`);
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS[tabName]}`);
       if (!response.ok) throw new Error(`Failed to fetch ${tabName.toLowerCase()}`);
       
       const fetchedData = await response.json();

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { CreditCard, DollarSign, Percent, Receipt, AlertCircle, Clock, CheckCircle } from "lucide-react";
+import API_BASE_URL from "../../config";
 
 const FeesDetails = () => {
   const [fees, setFees] = useState(null);
@@ -12,7 +13,7 @@ const FeesDetails = () => {
   useEffect(() => {
     const fetchFees = async () => {
       try {
-        const res = await axios.get(`http://localhost:8000/api/v1/fees/student/${studentId}`);
+        const res = await axios.get(`${API_BASE_URL}/api/v1/fees/student/${studentId}`);
         setFees(res.data);
       } catch (error) {
         console.error("Failed to fetch fees:", error);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react"; 
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from 'react-hot-toast';
+import API_BASE_URL from "../../../config";
 
 const AddNote = () => { 
   const navigate = useNavigate();
@@ -19,16 +20,16 @@ const AddNote = () => {
     const fetchActiveCourses = async () => {
       setLoadingCourses(true);
       try {
-        const response = await fetch('http://localhost:8000/api/v1/institute_courses/getCourses');
+        const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
         if (!response.ok) {
           const errData = await response.json().catch(() => ({ message: 'Failed to fetch courses' }));
           throw new Error(errData.message || `Error ${response.status}`);
         }
         const fetchedCourses = await response.json();
-        const activeAndApprovedCourses = fetchedCourses.filter(
-          c => c.instituteStatus === 'active' && c.adminApprovalStatus === 'approved'
-        );
-        setCourses(activeAndApprovedCourses);
+        // const activeAndApprovedCourses = fetchedCourses.filter(
+        //   c => c.instituteStatus === 'active' && c.adminApprovalStatus === 'approved'
+        // );
+        setCourses(fetchedCourses);
       } catch (err) {
         toast.error(`Failed to fetch courses: ${err.message}`);
         console.error("Failed to fetch courses:", err);
@@ -81,7 +82,7 @@ const AddNote = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/institute_courses/${noteData.selectedCourseId}/notes`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/${noteData.selectedCourseId}/notes`, {
         method: 'POST',
         body: formDataToSend, 
       });

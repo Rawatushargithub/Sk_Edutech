@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from "../../config";
 
 const MainSliderUploadPage = () => {
   // State for storing image data
@@ -25,7 +26,7 @@ const MainSliderUploadPage = () => {
   // Fetch images from database
   const fetchImagesFromDatabase = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/v1/mainSliderImages/');
+      const response = await axios.get(`${API_BASE_URL}/api/v1/mainSliderImages/`);
       setSliderImages(response.data);
     } catch (error) {
       console.error('Error fetching images from database:', error);
@@ -38,7 +39,7 @@ const MainSliderUploadPage = () => {
     if (temporaryServerImages.length === 0) return;
     
     try {
-      await axios.post('http://localhost:8000/api/v1/mainSliderImages/cleanup-temp', {
+      await axios.post(`${API_BASE_URL}/api/v1/mainSliderImages/cleanup-temp`, {
         tempImages: temporaryServerImages
       });
       setTemporaryServerImages([]);
@@ -97,7 +98,7 @@ const MainSliderUploadPage = () => {
         formData.append('images', file);
       });
       
-      const response = await axios.post('http://localhost:8000/api/v1/mainSliderImages/upload', formData, {
+      const response = await axios.post(`${API_BASE_URL}/api/v1/mainSliderImages/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -130,7 +131,7 @@ const MainSliderUploadPage = () => {
       const updatedTempServerImages = [...temporaryServerImages];
       if (updatedTempServerImages[pendingIndex]) {
         // Delete just this specific temporary file
-        axios.post('http://localhost:8000/api/v1/mainSliderImages/cleanup-temp', {
+        axios.post(`${API_BASE_URL}/api/v1/mainSliderImages/cleanup-temp`, {
           tempImages: [updatedTempServerImages[pendingIndex]]
         }).catch(error => {
           console.error('Error cleaning up temporary file:', error);
@@ -149,7 +150,7 @@ const MainSliderUploadPage = () => {
   // Handle image deletion - for uploaded images
   const handleDeleteImage = async (id) => {
     try {
-      await axios.delete(`http://localhost:8000/api/v1/mainSliderImages/${id}`);
+      await axios.delete(`${API_BASE_URL}/api/v1/mainSliderImages/${id}`);
       
       // Fetch updated images after deletion
       await fetchImagesFromDatabase();
@@ -199,7 +200,7 @@ const MainSliderUploadPage = () => {
     } else {
       // Reorder uploaded images via API
       try {
-        await axios.put(`http://localhost:8000/api/v1/mainSliderImages/reorder`, {
+        await axios.put(`${API_BASE_URL}/api/v1/mainSliderImages/reorder`, {
           imageId: id,
           direction: direction
         });
@@ -223,7 +224,7 @@ const MainSliderUploadPage = () => {
     try {
       // If there are pending images, publish them with upload
       if (temporaryServerImages.length > 0) {
-        const response = await axios.post('http://localhost:8000/api/v1/mainSliderImages/publish-with-upload', {
+        const response = await axios.post(`${API_BASE_URL}/api/v1/mainSliderImages/publish-with-upload`, {
           tempImages: temporaryServerImages
         });
         
@@ -235,7 +236,7 @@ const MainSliderUploadPage = () => {
         setSliderImages(response.data.allImages);
       } else {
         // Just publish existing images
-        await axios.put('http://localhost:8000/api/v1/mainSliderImages/publish');
+        await axios.put(`${API_BASE_URL}/api/v1/mainSliderImages/publish`);
         
         // Refresh the list of images
         await fetchImagesFromDatabase();

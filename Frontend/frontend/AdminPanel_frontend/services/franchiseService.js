@@ -1,7 +1,5 @@
 import axios from 'axios';
-
-
-const API_BASE_URL = 'http://localhost:8000/api/v1'; // <-- UPDATED PORT TO 8002 based on backend logs
+import API_BASE_URL from "../../config";
 
 const franchiseApi = axios.create({
     baseURL: `${API_BASE_URL}/franchises`,

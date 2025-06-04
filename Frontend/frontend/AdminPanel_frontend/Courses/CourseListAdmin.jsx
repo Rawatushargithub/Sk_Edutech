@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, CheckCircle, XCircle, RefreshCw, Info, X as ModalCloseIcon } from 'lucide-react';
+import API_BASE_URL from "../../config";
 
 // Modal Component for Course Details
 const CourseDetailsModal = ({ course, onClose }) => {
@@ -93,7 +94,7 @@ const CourseListAdmin = () => {
     setLoading(true);
     setError(null);
     try {
-      let url = 'http://localhost:8000/api/v1/admin/courses';
+      let url = `${API_BASE_URL}/api/v1/admin/courses`;
       if (filterStatus) {
         url += `?status=${filterStatus}`;
       }
@@ -121,7 +122,7 @@ const CourseListAdmin = () => {
       return;
     }
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/admin/courses/${courseId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/courses/${courseId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

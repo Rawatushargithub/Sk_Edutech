@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaWallet, FaHistory, FaArrowLeft, FaRupeeSign } from "react-icons/fa";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import API_BASE_URL from "../../../config";
 
 const Wallet = () => {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ const Wallet = () => {
     const fetchWalletData = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get("http://localhost:8000/api/v1/institute_wallet/balance");
+        const response = await axios.get(`${API_BASE_URL}/api/v1/institute_wallet/balance`);
         setWalletData(response.data);
       } catch (error) {
         console.error("Error fetching wallet data:", error);
@@ -47,7 +48,7 @@ const Wallet = () => {
     setTransactionStatus("processing");
     try {
       // Submit deposit request to backend
-      await axios.post("http://localhost:8000/api/v1/institute_wallet/deposit", {
+      await axios.post(`${API_BASE_URL}/api/v1/institute_wallet/deposit`, {
         amount: parseFloat(amount),
         referenceId
       }, { withCredentials: true });
@@ -76,7 +77,7 @@ const Wallet = () => {
     
     try {
       // Update the transaction with the UPI ID
-      await axios.put("http://localhost:8000/api/v1/institute_wallet/transaction/confirm", {
+      await axios.put(`${API_BASE_URL}/api/v1/institute_wallet/transaction/confirm`, {
         upiTransactionId
       });
       
@@ -100,7 +101,7 @@ const Wallet = () => {
   // Helper function to fetch wallet data
   const fetchWalletData = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/api/v1/institute_wallet/balance");
+      const response = await axios.get(`${API_BASE_URL}/api/v1/institute_wallet/balance`);
       setWalletData(response.data);
     } catch (error) {
       console.error("Error fetching wallet data:", error);

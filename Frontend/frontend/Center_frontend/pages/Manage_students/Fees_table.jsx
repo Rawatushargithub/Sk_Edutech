@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import API_BASE_URL from "../../../config";
 
 const Fees_table = ({ 
   handleSubmit,
@@ -30,7 +31,7 @@ const Fees_table = ({
   const fetchBatches = async () => {
     try {
       const response = await fetch(
-        "http://localhost:8000/api/v1/institute_batche/allBatches"
+        `${API_BASE_URL}/api/v1/institute_batche/allBatches`
       );
       if (!response.ok) throw new Error("Failed to fetch batches");
       console.log("Response:: ", response);
@@ -46,7 +47,7 @@ const Fees_table = ({
   const fetchRemainingSeats = async (batchId) => { 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/v1/institute_batche/${batchId}/seats`
+        `${API_BASE_URL}/api/v1/institute_batche/${batchId}/seats`
       );
       if (!response.ok) throw new Error("Failed to fetch remaining seats");
       const data = await response.json();

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pencil, Trash2, Plus } from 'lucide-react';
+import API_BASE_URL from "../../../config";
 
- 
 const CourseList = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,7 +15,7 @@ const CourseList = () => {
     const fetchCourses = async () => {
       try {
         // Replace with your actual API endpoint
-        const response = await fetch('http://localhost:8000/api/v1/institute_courses/getCourses');
+        const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
        
         if (!response.ok) {
           throw new Error(`Error: ${response.status} ${response.statusText}`);

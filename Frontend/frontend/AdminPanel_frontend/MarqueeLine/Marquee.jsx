@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
+import API_BASE_URL from "../../config"
 const MarqueeManager = () => {
   const [marquees, setMarquees] = useState([]);
   const [formData, setFormData] = useState({
@@ -21,7 +21,7 @@ const MarqueeManager = () => {
   const fetchMarquees = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:8000/api/v1/marquee/');
+      const res = await axios.get(`${API_BASE_URL}/api/v1/marquee/`);
       setMarquees(res.data);
       setError(null);
     } catch (err) {
@@ -46,9 +46,9 @@ const MarqueeManager = () => {
     
     try {
       if (editMode) {
-        await axios.put(`http://localhost:8000/api/v1/marquee/${currentId}`, formData);
+        await axios.put(`${API_BASE_URL}/api/v1/marquee/${currentId}`, formData);
       } else {
-        await axios.post('http://localhost:8000/api/v1/marquee/', formData);
+        await axios.post(`${API_BASE_URL}/api/v1/marquee/`, formData);
       }
       
       // Reset form
@@ -82,7 +82,7 @@ const MarqueeManager = () => {
     
     setLoading(true);
     try {
-      await axios.delete(`http://localhost:8000/api/v1/marquee/${id}`);
+      await axios.delete(`${API_BASE_URL}/api/v1/marquee/${id}`);
       fetchMarquees();
       setError(null);
     } catch (err) {
@@ -102,7 +102,7 @@ const MarqueeManager = () => {
   const handleToggleActive = async (marquee) => {
     setLoading(true);
     try {
-      await axios.put(`http://localhost:8000/api/v1/marquee/${marquee._id}`, {
+      await axios.put(`${API_BASE_URL}/api/v1/marquee/${marquee._id}`, {
         ...marquee,
         isActive: !marquee.isActive
       });

@@ -1,5 +1,6 @@
 import React , { useEffect, useState }from 'react';
 import axios from "axios";
+import API_BASE_URL from "../../../config";
 // center wala container jisme left right scrolling images hain
 const EducationSection = () => {
 
@@ -29,7 +30,7 @@ const EducationSection = () => {
   useEffect(() => {
     const fetchStudentsImages = async() => {
         try {
-          const response = await axios.get("http://localhost:8000/api/v1/eduSection/recentStudentImg")
+          const response = await axios.get(`${API_BASE_URL}/api/v1/eduSection/recentStudentImg`)
 
           console.log("studentsimage" , response.data.data);
           const studentsdataarray = response.data.data;
@@ -46,7 +47,7 @@ const EducationSection = () => {
   useEffect(() => {
     const fetchCenterImages = async() => {
         try {
-          const response = await axios.get("http://localhost:8000/api/v1/eduSection/recentCenterImg")
+          const response = await axios.get(`${API_BASE_URL}/api/v1/eduSection/recentCenterImg`)
 
           console.log("centerImages" , response.data.data);
           const centerImgArray = response.data.data;

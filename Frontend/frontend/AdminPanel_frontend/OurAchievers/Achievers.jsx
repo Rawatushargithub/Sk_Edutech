@@ -4,6 +4,7 @@ import React, { useState, useEffect} from 'react';
 import { Plus, Trash2, Save, Check, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import  API_BASE_URL  from '../../config'; // Adjust the import based on your project structure
 
 export default function StudentAchievementsPanel() {
   // Temporary entries that haven't been saved yet
@@ -20,7 +21,7 @@ export default function StudentAchievementsPanel() {
   const [error, setError] = useState(null);
   const [remainingSlots, setRemainingSlots] = useState(10);
 
-  const API_URL = "http://localhost:8000/api/v1/achievers";
+  const API_URL = `${API_BASE_URL}/api/v1/achievers`;
 
   // Fetch saved achievements when component mounts
   useEffect(() => {

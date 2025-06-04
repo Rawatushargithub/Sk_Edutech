@@ -5,6 +5,7 @@ import { toast, ToastContainer } from "react-toastify"; // Using react-hot-toast
 import "react-toastify/dist/ReactToastify.css"; // Keep for now if styles are used, but prefer react-hot-toast styling
 import toastHot from 'react-hot-toast'; // Renamed to avoid conflict if ToastContainer from react-toastify is used
 import { Toaster as HotToaster } from 'react-hot-toast';
+import API_BASE_URL from "../../config";
 
 
 import { MdDelete, MdVideoLibrary, MdEdit } from "react-icons/md";
@@ -32,12 +33,13 @@ const UploadCourseVideo1 = () => {
     const fetchCoursesForFilter = async () => {
       setLoadingCourses(true);
       try {
-        const response = await fetch('http://localhost:8000/api/v1/institute_courses/getCourses');
+        const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
         if (!response.ok) throw new Error('Failed to fetch courses');
         const data = await response.json();
         const activeApprovedCourses = data.filter(
           c => c.instituteStatus === 'active' && c.adminApprovalStatus === 'approved'
         );
+        console.log("Fetched courses ", data);
         setAllCourses(activeApprovedCourses);
       } catch (error) {
         toastHot.error(`Error fetching courses: ${error.message}`);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import API_BASE_URL from "../../../config";
 
 const Batches = () => {
   const [batches, setBatches] = useState([]);
@@ -11,7 +12,7 @@ const Batches = () => {
 
   const fetchBatches = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/api/v1/institute_batche/allBatches");
+      const response = await axios.get(`${API_BASE_URL}/api/v1/institute_batche/allBatches`);
       console.log(response.data.data)
 
       setBatches(response.data.data);
@@ -36,7 +37,7 @@ const Batches = () => {
 
     try {
       console.log(batch)
-      await axios.post("http://localhost:8000/api/v1/batche/createBatch", batch);
+      await axios.post(`${API_BASE_URL}/api/v1/batche/createBatch`, batch);
       
       fetchBatches();
       setBatch({ batchName: "", batchTiming: "", batchLimit: "" });
@@ -49,7 +50,7 @@ const Batches = () => {
 
   const deleteBatch = async (batchId) => {
     try {
-      await axios.delete(`http://localhost:8000/api/v1/batche/${batchId}`);
+      await axios.delete(`${API_BASE_URL}/api/v1/batche/${batchId}`);
       alert("Successfully deleted");
       // Refresh the batches list after deletion
       fetchBatches();

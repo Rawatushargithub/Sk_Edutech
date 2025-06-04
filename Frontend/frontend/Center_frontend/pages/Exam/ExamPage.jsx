@@ -12,6 +12,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import API_BASE_URL from "../../../config";
 
 const ExamManagement = () => {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const ExamManagement = () => {
   const updateExamStatus = async (examId) => {
     try {
       const response = await fetch(
-        `http://localhost:8000/api/v1/institute_exam/exams/${examId}/status`,
+        `${API_BASE_URL}/api/v1/institute_exam/exams/${examId}/status`,
         {
           method: "PATCH",
           headers: {
@@ -77,7 +78,7 @@ const ExamManagement = () => {
       setError(null);
 
       const response = await fetch(
-        "http://localhost:8000/api/v1/institute_exam/exams",
+        `${API_BASE_URL}/api/v1/institute_exam/exams`,
         {
           method: "GET",
           headers: {
@@ -147,7 +148,7 @@ const ExamManagement = () => {
       if (!exam) return;
 
       const response = await fetch(
-        `http://localhost:8000/api/v1/institute_exam/students?courseCode=${exam.courseCode}&batch=${exam.batch.id}`,
+        `${API_BASE_URL}/api/v1/institute_exam/students?courseCode=${exam.courseCode}&batch=${exam.batch.id}`,
         {
           method: "GET",
           headers: {
@@ -216,7 +217,7 @@ const ExamManagement = () => {
       }
 console.log("Marks data to upload:", marksData);
       const response = await fetch(
-        `http://localhost:8000/api/v1/institute_exam/exams/${selectedExam}/marks`,
+        `${API_BASE_URL}/api/v1/institute_exam/exams/${selectedExam}/marks`,
         {
           method: "POST",
           headers: {
@@ -696,7 +697,7 @@ console.log("Marks data to upload:", marksData);
                   >
                     Status
                   </th>
-                  {/* Only show Actions column for offline exams */}
+                  {/* Conditionally render Actions column for offline exams */}
                   {mode === "offline" && (
                     <th
                       scope="col"
@@ -732,16 +733,18 @@ console.log("Marks data to upload:", marksData);
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {exam.totalMarks}/{exam.passingMarks}
                       </td>
+                      {/* Status cell: show green "Active" if active, else tick icon if inactive */}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            exam.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {exam.daysLeft > 0 ? exam.daysLeft : `No days left`}
-                        </span>
+                        {exam.status === "Active" ? (
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center justify-center text-green-600 text-lg">
+                            {/* Unicode tick icon */}
+                            &#10003;
+                          </span>
+                        )}
                       </td>
                       {/* Only show Actions column for offline exams */}
                       {mode === "offline" && (
@@ -772,7 +775,11 @@ console.log("Marks data to upload:", marksData);
                 ) : (
                   <tr>
                     <td
-                      colSpan={mode === "offline" ? 9 : 8}
+                      colSpan={
+                        7 +
+                        (filteredExams.some(exam => exam.status === "Active") ? 1 : 0) +
+                        (mode === "offline" ? 1 : 0)
+                      }
                       className="px-6 py-4 text-center text-sm text-gray-500"
                     >
                       No exams found matching the current filters

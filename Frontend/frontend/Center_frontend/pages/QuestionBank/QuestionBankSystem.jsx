@@ -9,6 +9,7 @@ import {
   Eye,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
+import API_BASE_URL from "../../../config"; // Adjust the import path as necessary
 
 const QuestionBankSystem = () => {
   const [courses, setCourses] = useState([]);
@@ -33,13 +34,13 @@ const QuestionBankSystem = () => {
   });
 
   // API configuration
-  const API_BASE_URL =
-    "http://localhost:8000/api/v1";
+  const API_BASE_URL2 =
+    `${API_BASE_URL}/api/v1`;
 
   // API helper function
   const apiCall = async (endpoint, options = {}) => {
     try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      const response = await fetch(`${API_BASE_URL2}${endpoint}`, {
         headers: {
           "Content-Type": "application/json",
           ...options.headers,

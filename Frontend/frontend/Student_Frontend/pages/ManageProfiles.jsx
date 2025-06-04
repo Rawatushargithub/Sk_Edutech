@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { User, Phone, Mail, MapPin, Calendar, Award, FileText } from "lucide-react";
-
+import API_BASE_URL from "../../config"; // Adjust the import path as necessary
 const ManageProfile = () => {
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -11,13 +11,14 @@ const ManageProfile = () => {
     const fetchStudentDetails = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:8000/api/v1/student/${studentId}`);
+        const response = await fetch(`${API_BASE_URL}/api/v1/student/${studentId}`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch student details");
         }
 
         const data = await response.json();
+        console.log(data)
         setStudent(data.student);
       } catch (error) {
         console.error("Error fetching student details:", error);

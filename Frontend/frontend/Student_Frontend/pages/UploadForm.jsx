@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import API_BASE_URL from "../../config"; // Adjust the import path as necessary
 
 const UploadForm = () => {
   const [name, setName] = useState("");
@@ -13,7 +14,7 @@ const UploadForm = () => {
     formData.append("image", image);
 
     try {
-      const res = await axios.post("http://localhost:8000/api/upload", formData, {
+      const res = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setMessage(res.data.message);

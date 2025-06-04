@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FaStar } from "react-icons/fa";
-
+import API_BASE_URL from "../../config"; // Adjust the import path as necessary
 const Feedback = () => {
   const student = JSON.parse(localStorage.getItem("student"));
   const studentId = student?.studentId;
@@ -17,7 +17,7 @@ const Feedback = () => {
   useEffect(() => {
     const fetchFeedback = async () => {
       try {
-        const res = await axios.get(`http://localhost:8000/api/v1/feedback/${studentId}`);
+        const res = await axios.get(`${API_BASE_URL}/api/v1/feedback/${studentId}`);
         setFeedbackList(res.data);
       } catch (error) {
         console.error("Failed to load feedbacks", error);

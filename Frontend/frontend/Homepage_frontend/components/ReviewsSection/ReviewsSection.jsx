@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FaStar, FaArrowRight, FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from "axios"; // Import axios to make API requests
+import API_BASE_URL from "../../../config"; // Adjust the import path as necessary
 
 const ReviewsSection = () => {
   const [reviews, setReviews] = useState([]);
@@ -12,7 +13,7 @@ const ReviewsSection = () => {
     // Fetch reviews from your backend API
     const fetchReviews = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/api/v1/feedbacks"); 
+        const response = await axios.get(`${API_BASE_URL}/api/v1/feedbacks`); 
         console.log(response.data); 
         setReviews(response.data); // Set the fetched reviews data to state
       } catch (error) {

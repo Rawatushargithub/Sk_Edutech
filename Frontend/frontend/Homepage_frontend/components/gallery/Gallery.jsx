@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Navbar from '../navbar/Navbar';
+import API_BASE_URL from "../../../config"
 // import Navbart2 from '../Navbart2';
 
 const GalleryHomepage = () => {
@@ -24,7 +25,7 @@ const GalleryHomepage = () => {
   const fetchGalleryItems = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:8000/api/v1/gallery/');
+      const response = await axios.get(`${API_BASE_URL}/api/v1/gallery/`);
       setMedia(response.data);
       setError(null);
     } catch (err) {

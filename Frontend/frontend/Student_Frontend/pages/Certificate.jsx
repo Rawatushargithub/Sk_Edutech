@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
-
+import API_BASE_URL from "../../config"; // Adjust the import path as necessary
 const CertificatePage = () => {
   const [student, setStudent] = useState(null);
   const certificateRef = useRef();
@@ -11,7 +11,7 @@ const CertificatePage = () => {
   useEffect(() => {
     const fetchStudent = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/v1/student/${studentId}`);
+        const res = await fetch(`${API_BASE_URL}/api/v1/student/${studentId}`);
         const data = await res.json();
         setStudent(data.student);
       } catch (err) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+import API_BASE_URL from "../../../config";
 const TopMarquee = () => {
   const [marqueeData, setMarqueeData] = useState([]);
   const [isBlinking, setIsBlinking] = useState(false);
@@ -8,7 +8,7 @@ const TopMarquee = () => {
   useEffect(() => {
     const fetchMarqueeData = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/v1/marquee/active'); // Replace with your actual API endpoint
+        const response = await fetch(`${API_BASE_URL}/api/v1/marquee/active`); // Replace with your actual API endpoint
         const data = await response.json();
         
         // Filter for active top marquees only

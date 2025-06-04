@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaCheckCircle, FaTimesCircle, FaWallet, FaSearch } from "react-icons/fa";
 import axios from "axios";
+import API_BASE_URL from "../../config";
 
 const AdminWalletApproval = () => {
   const [transactions, setTransactions] = useState([]);
@@ -15,7 +16,7 @@ const AdminWalletApproval = () => {
   const fetchTransactions = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`http://localhost:8000/api/v1/adminwallet/transactions?status=${filter}`);
+      const response = await axios.get(`${API_BASE_URL}/api/v1/adminwallet/transactions?status=${filter}`);
       setTransactions(response.data);
     } catch (error) {
       console.error("Error fetching transactions:", error);
@@ -26,7 +27,7 @@ const AdminWalletApproval = () => {
 
   const handleApprove = async (transactionId) => {
     try {
-      await axios.post(`http://localhost:8000/api/v1/adminwallet/transactions/${transactionId}/approve`);
+      await axios.post(`${API_BASE_URL}/api/v1/adminwallet/transactions/${transactionId}/approve`);
       // Update the transaction in the list
       setTransactions(
         transactions.map((transaction) =>
@@ -43,7 +44,7 @@ const AdminWalletApproval = () => {
 
   const handleReject = async (transactionId) => {
     try {
-      await axios.post(`http://localhost:8000/api/v1/admin/transactions/${transactionId}/reject`);
+      await axios.post(`${API_BASE_URL}/api/v1/admin/transactions/${transactionId}/reject`);
       // Update the transaction in the list
       setTransactions(
         transactions.map((transaction) =>

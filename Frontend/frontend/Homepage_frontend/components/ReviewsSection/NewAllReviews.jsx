@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { FaStar, FaSearch } from "react-icons/fa";
 import Navbart2 from "../navbar/Navbar2";
-
+import API_BASE_URL from "../../../config"; // Adjust the import path as necessary
 const NAllReviewsPage = () => {
   const [reviews, setReviews] = useState([]);
   const [filteredReviews, setFilteredReviews] = useState([]);
@@ -24,7 +24,7 @@ const NAllReviewsPage = () => {
       try {
         setLoading(true);
         // Replace with your actual API endpoint
-        const response = await fetch("http://localhost:8000/api/v1/feedbacks");
+        const response = await fetch(`${API_BASE_URL}/api/v1/feedbacks`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);

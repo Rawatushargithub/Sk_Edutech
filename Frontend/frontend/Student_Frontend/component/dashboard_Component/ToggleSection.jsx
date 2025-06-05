@@ -16,7 +16,7 @@ const ToggleSection = ({ student }) => {
     if (!course) return;
 
     // Fetch Notes (sorted by timestamp)
-    fetch(`${API_BASE_URL}/api/notes/${course}`)
+    fetch(`${API_BASE_URL}/api/notes/${course.courseCode}`)
       .then((res) => res.json())
       .then((data) => {
         const sortedNotes = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -25,7 +25,7 @@ const ToggleSection = ({ student }) => {
       .catch((err) => console.error("Error fetching notes:", err));
 
     // Fetch Videos (sorted by timestamp)
-    fetch(`${API_BASE_URL}/api/videos/${course}`)
+    fetch(`${API_BASE_URL}/api/videos/${course.courseCode}`)
       .then((res) => res.json())
       .then((data) => {
         const sortedVideos = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

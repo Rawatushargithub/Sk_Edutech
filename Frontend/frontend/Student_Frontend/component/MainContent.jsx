@@ -6,7 +6,7 @@ import Fees from "../pages/Fees";
 import Notes from "../pages/Notes";
 import Videos from "../pages/CourseVideos";
 import Exam from "../pages/Exam";
-// import CertificatePage from "../pages/Certificate";
+import CertificatePage from "../pages/Certificate";
 import FeesDetails from "../pages/Fees";
 import FeedbackForm from "../pages/FeedbackForm";
 import HelpSupport from "../pages/HelpSupport";

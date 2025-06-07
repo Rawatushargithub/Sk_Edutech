@@ -114,7 +114,9 @@ const LoginBoxes = () => {
         <FaBuilding
           className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]"
         />
-        <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left">
+        <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left"
+        onClick={() => navigate("/institute")}
+        >
           Center <br className="hidden sm:block" /> Login
         </div>
       </div>

@@ -15,8 +15,7 @@ import AddFranchisePage from "../AdminPanel_frontend/fracnhise/pages/AddFranchis
 import RequestStackPage from "../AdminPanel_frontend/fracnhise/pages/RequestStackPage";
 import EditFranchisePage from "../AdminPanel_frontend/fracnhise/pages/EditFranchisePage";
 import CourseListAdmin from "../AdminPanel_frontend/Courses/CourseListAdmin"; // Import Admin Course List
-
-
+import AdminWallet from "../AdminPanel_frontend/Dashboard/Admin_Wallet"; // Import Admin Wallet
 const AdminPanel = () => {
   return (
     <StudentProvider>
@@ -33,6 +32,7 @@ const AdminPanel = () => {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="achievers" element={<StudentAchievementsPanel />} />
               <Route path="mainslider" element={<MainSliderUploadPage />} />
+              <Route path="wallet" element={<AdminWallet />} />
 
               <Route path="gallery" element={<AdminGalleryPanel />} />
 

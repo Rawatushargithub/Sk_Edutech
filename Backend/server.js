@@ -60,7 +60,7 @@ import marqueeLineRouter from './backend/Admin_Backend/routes/MarqueeLine/marque
 
 // Homepage Routes
 // app.use("/api/v1/gallery", galleryRoutes)
-app.use("/api/v1/mainSliderImages", mainSliderRoutes)
+app.use("/api/v1/mainSliderImages", mainSliderRoutes) 
 app.use("/api/v1/marquee", marqueeRoutes)
 app.use("/api/v1", FeedbackRoutes);
 app.use("/api/v1/achievements",AchieverSliderRoutes );
@@ -77,6 +77,7 @@ import eventBoxRouter from './backend/Admin_Backend/routes/Achievers/eventBox.ro
 import franchiseRouter from "./backend/Admin_Backend/routes/franchise/franchise.routes.js"; // Import franchise router
 import galleryRouter from "./backend/Admin_Backend/routes/Gallery/galleryRoutes.js"; // Import franchise router
 import adminCourseRouter from "./backend/Admin_Backend/routes/courses.routes.js"; // Import admin course router
+import paymentRouter from "./backend/Admin_Backend/routes/admin.routes.js"; // Import payment router
 
 // admin routes
 app.use("/api/v1/mainSliderImages",mainSliderRouter)
@@ -84,8 +85,7 @@ app.use("/api/v1/marquee",marqueeRoutes)
 // app.use("/api/v1/gallery", galleryRoutes)
 app.use("/api/v1/achievers", achieversRouter)
 app.use("/api/v1/eventBoxImages",eventBoxRouter)
-// app.use("/api/v1/payment" , paymentRouter)
-// app.use("/api/v1/adminwallet" , adminRouter)
+app.use("/api/v1/adminwallet", paymentRouter)
 app.use("/api/v1/franchises", franchiseRouter); 
 app.use("/api/v1/gallery", galleryRouter);
 app.use("/api/v1/admin/courses", adminCourseRouter); // Add admin course routes

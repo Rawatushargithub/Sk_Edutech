@@ -114,6 +114,80 @@ const Wallet = () => {
     return new Date(dateString).toLocaleDateString('en-IN', options);
   };
 
+  // Function to dynamically load Razorpay checkout.js
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (document.getElementById('razorpay-checkout-js')) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.id = 'razorpay-checkout-js';
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => {
+        resolve(true);
+      };
+      script.onerror = () => {
+        resolve(false);
+      };
+      document.body.appendChild(script);
+    });
+  };
+
+  // Function to verify Razorpay payment
+  const verifyRazorpayPayment = async (response, amount) => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/v1/institute_wallet/razorpay/verify-payment`, {
+        razorpayPaymentId: response.razorpay_payment_id,
+        razorpayOrderId: response.razorpay_order_id,
+        razorpaySignature: response.razorpay_signature,
+        amount: amount
+      });
+      alert('Payment verified and submitted for admin approval!');
+      navigate("/institute");
+      fetchWalletData();
+    } catch (error) {
+      alert('Payment verification failed. Please contact support.');
+    }
+  };
+
+  // Function to initiate Razorpay payment by hitting backend endpoint
+  const handleRazorpayPayment = async (amount) => {
+    const scriptLoaded = await loadRazorpayScript();
+    if (!scriptLoaded) {
+      alert('Failed to load Razorpay SDK. Please try again.');
+      return;
+    }
+    try {
+      // Call your backend endpoint to create a Razorpay order
+      const data  = await axios.post(`${API_BASE_URL}/api/v1/institute_wallet/razorpay/create-order`, { amount });
+      console.log(data, "data from backend");
+      const options = {
+        key: data.data.razorpay_key_id, // Razorpay key_id from backend
+        amount: amount,
+        currency: "INR",
+        order_id: data.data.order_id,
+        name: 'SK Edutech',
+        description: 'Wallet Topup',
+        handler: async function (response) {
+          // Call verify payment after successful payment
+          await verifyRazorpayPayment(response, amount);
+        },
+        prefill: {
+          // Optionally add user info
+        },
+        theme: {
+          color: '#3399cc'
+        }
+      };
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.log(error.message , "message of error")
+      alert('Error initiating payment.');
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       {/* Header with back button */}
@@ -157,47 +231,63 @@ const Wallet = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
             <h2 className="text-2xl font-bold mb-4">Add Money to Wallet</h2>
-            
             {transactionStatus === null && (
-              <form onSubmit={handleAddMoney}>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Amount (₹)</label>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded"
-                    placeholder="Enter amount"
-                    min="1"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Bank Reference/Transaction ID</label>
-                  <input
-                    id="referenceId"
-                    type="text"
-                    className="w-full p-2 border border-gray-300 rounded"
-                    placeholder="Enter payment reference/transaction ID"
-                    required
-                  />
-                </div>
-                <div className="flex justify-end space-x-2">
+              <>
+                <form onSubmit={handleAddMoney}>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 mb-2">Amount (₹)</label>
+                    <input
+                      type="number"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded"
+                      placeholder="Enter amount"
+                      min="1"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 mb-2">Bank Reference/Transaction ID</label>
+                    <input
+                      id="referenceId"
+                      type="text"
+                      className="w-full p-2 border border-gray-300 rounded"
+                      placeholder="Enter payment reference/transaction ID"
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddMoney(false)}
+                      className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                    >
+                      Submit Request
+                    </button>
+                  </div>
+                </form>
+                <div className="mt-4 text-center">
+                  <span className="text-gray-500">OR</span>
                   <button
-                    type="button"
-                    onClick={() => setShowAddMoney(false)}
-                    className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
+                    className="mt-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+                    onClick={async () => {
+                      if (!amount || parseFloat(amount) <= 0) {
+                        alert("Please enter a valid amount");
+                        return;
+                      }
+                      await handleRazorpayPayment(amount * 100); // Razorpay expects paise
+                    }}
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                  >
-                    Submit Request
+                    Pay with Razorpay
                   </button>
                 </div>
-              </form>
+              </>
             )}
             
             {transactionStatus === "processing" && (

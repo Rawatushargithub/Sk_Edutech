@@ -30,7 +30,7 @@ export const create_order = asyncHandler (async (req, res) => {
         receipt: `rcpt_${Date.now()}`,
         payment_capture: 1 // Auto-capture payment
       };
-      
+       
       const order = await razorpay.orders.create(options);
       
       // Store pending transaction
@@ -44,7 +44,6 @@ export const create_order = asyncHandler (async (req, res) => {
       await Transaction.create({
         amount: amount / 100, // Convert paise to rupees
         type: 'deposit',
-        status: 'pending',
         orderId: order.id,
         timestamp: new Date(),
         wallet:wallet._id
@@ -63,7 +62,7 @@ export const create_order = asyncHandler (async (req, res) => {
   export const verify_payment  = asyncHandler (async (req, res) => {
     console.log("yes verify is working ")
   try {
-    const {
+    const { 
       razorpayPaymentId,
       razorpayOrderId,
       razorpaySignature,
@@ -106,7 +105,7 @@ export const create_order = asyncHandler (async (req, res) => {
     transaction.paymentId = razorpayPaymentId;
     transaction.status = 'pending_approval'; // Pending admin approval
     await transaction.save();
-
+ 
     console.log("Success")
     res.json({ success: true });
   } catch (error) {
@@ -172,41 +171,3 @@ export const deductWalletBalance = asyncHandler(async (req, res) => {
   }
 });
 
-// Institute submits a deposit transaction (manual transfer to admin)
-export const submitDepositRequest = asyncHandler(async (req, res) => {
-  const { amount, referenceId } = req.body;
-  // const instituteId = req.user._id; // assuming authentication middleware sets req.user
-
-  if (!amount || amount <= 0 || !referenceId) {
-    throw new ApiError(400, "Amount and referenceId are required");
-  }
-
-  // Find or create wallet for this institute
-  let wallet = await Wallet.find();
-  if (!wallet) {
-    wallet = await Wallet.create({  balance: 0 });
-  }
-
-  // Create a pending transaction
-  const transaction = await Transaction.create({
-    // wallet: wallet._id,
-    amount,
-    type: "deposit",
-    status: "pending_approval",
-    referenceId,
-    timestamp: new Date(),
-  });
-
-  res.status(201).json({ success: true, transactionId: transaction._id });
-});
-
-// Fetch wallet balance and transactions
-export const getWalletBalance = asyncHandler(async (req, res) => {
-  // const instituteId = req.user._id; // assuming authentication middleware sets req.user
-  const wallet = await Wallet.findOne();
-  if (!wallet) {
-    return res.json({ balance: 0, transactions: [] });
-  }
-  const transactions = await Transaction.find().sort({ timestamp: -1 });
-  res.json({ balance: wallet.balance, transactions });
-});

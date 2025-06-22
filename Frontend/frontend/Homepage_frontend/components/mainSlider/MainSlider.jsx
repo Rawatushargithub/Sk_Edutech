@@ -16,7 +16,7 @@ const mainSlider = () => {
       try {
         setLoading(true);
         // Replace with your actual API endpoint
-        const response = await axios.get(`${API_BASE_URL}/api/v1/mainSliderImages/`);
+        const response = await axios.get(`${API_BASE_URL}/api/v1/mainSliderImages`);
         
         // Axios automatically throws errors for non-2xx responses
         // and puts the response data in response.data

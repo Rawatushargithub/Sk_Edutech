@@ -29,6 +29,7 @@ const AdminPanel = () => {
           {/* Content Area */}
           <div className="flex-1 bg-gray-100 p-6 overflow-y-auto">
             <Routes>
+              <Route path="" element={<Dashboard />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="achievers" element={<StudentAchievementsPanel />} />
               <Route path="mainslider" element={<MainSliderUploadPage />} />

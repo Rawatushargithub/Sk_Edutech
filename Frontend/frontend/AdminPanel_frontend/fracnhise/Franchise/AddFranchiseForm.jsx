@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { addFranchiseByAdmin } from '../../services/franchiseService'; // Updated import
-import INDFlag from '../../../../assets/india-flag-icon.png';
+import INDFlag from '/assets/india-flag-icon.png';
 
 
 // Predefined data

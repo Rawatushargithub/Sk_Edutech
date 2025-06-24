@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getFranchiseById, updateFranchise } from '../../services/franchiseService';
-import INDFlag from '../../../../assets/india-flag-icon.png';
+import INDFlag from '/assets/india-flag-icon.png';
 
 // Predefined data (can be shared or re-imported)
 const designations = ['Teacher', 'Entrepreneur', 'Institute Owner'];

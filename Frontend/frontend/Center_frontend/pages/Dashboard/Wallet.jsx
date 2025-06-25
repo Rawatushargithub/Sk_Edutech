@@ -184,6 +184,10 @@ const Wallet = () => {
       rzp.open();
     } catch (error) {
       console.log(error.message , "message of error")
+      console.log('Full error object:', error);
+      console.log('Error response:', error.response?.data);
+      console.log('Error status:', error.response?.status);
+  alert('Error initiating payment.');
       alert('Error initiating payment.');
     }
   };

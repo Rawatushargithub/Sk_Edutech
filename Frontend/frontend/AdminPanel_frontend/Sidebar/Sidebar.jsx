@@ -36,7 +36,7 @@ const Sidebar = () => {
       icon: <BiSolidInstitution className="w-5 h-5 " />,
       submenu: [
         { title: "Franchise List", icon: <PiStudentBold className="w-5 h-5" />, link: "/admin/franchises" },
-        { title: "Students List", icon: <PiUserListBold className="w-5 h-5" />, link: "/admin/student_list" },
+        { title: "Students List", icon: <PiUserListBold className="w-5 h-5" />, link: "/admin/Student-list" },
         { title: "Wallet approval", icon: <FaMoneyBill1Wave className="w-5 h-5" />, link: "/admin/wallet" },
         { title: "Courses", icon: <RiBookShelfLine className="w-5 h-5" />, link: "/admin/courses" },
         { title: "Certificates", icon: <PiUserListBold className="w-5 h-5" />, link: "/admin/Certificates" },

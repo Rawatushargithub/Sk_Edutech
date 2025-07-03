@@ -33,10 +33,10 @@ const Sidebar = () => {
     
     {
       title: "Institute Portal",
-      icon: <BiSolidInstitution className="w-5 h-5" />,
+      icon: <BiSolidInstitution className="w-5 h-5 " />,
       submenu: [
-        { title: "Franchise List", icon: <PiStudentBold className="w-5 h-5" />, link: "/admin/franchises" },
-        { title: "Students List", icon: <PiUserListBold className="w-5 h-5" />, link: "/admin/student_list" },
+        { title: "Franchises", icon: <PiStudentBold className="w-5 h-5" />, link: "/admin/franchises" },
+        { title: "Students", icon: <PiUserListBold className="w-5 h-5" />, link: "/admin/student_list" },
         { title: "Wallet approval", icon: <FaMoneyBill1Wave className="w-5 h-5" />, link: "/admin/wallet" },
         { title: "Courses", icon: <RiBookShelfLine className="w-5 h-5" />, link: "/admin/courses" },
         { title: "Certificates", icon: <PiUserListBold className="w-5 h-5" />, link: "/admin/Certificates" },
@@ -44,7 +44,7 @@ const Sidebar = () => {
       stateKey: "manageStudent",
     },
     {
-      title: "Website Update",
+      title: "Website Portal",
       icon: <CgWebsite className="w-5 h-5" />,
       submenu: [
         { title: "MainSlider", icon: <TbHomePlus className="w-5 h-5" />, link: "/admin/mainslider" },
@@ -75,7 +75,11 @@ const Sidebar = () => {
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         } md:block`}
       >
-        <h2 className="text-xl font-semibold p-4">SKEDUTECH</h2>
+        {/* Logo */}
+        <div className="py-4 w-44 mx-auto">
+          <img src="/assets/Logo.jpg" alt="Logo" className="cursor-pointer" />
+        </div>
+        <i className="text-lg text-neutral-400 px-4 ml-4">Admin Panel</i>
         <ul className="space-y-3.5 p-4">
           {menuItems.map((item, index) => (
             <li key={index}>
@@ -96,7 +100,7 @@ const Sidebar = () => {
                     onClick={() => toggleSection(item.stateKey)}
                     className="w-full flex justify-between items-center py-2 px-4 rounded hover:bg-gray-200 text-left"
                   >
-                    <span className="flex items-center gap-2">{item.icon} {item.title}</span>
+                    <span className="flex font-bold items-center gap-2">{item.icon} {item.title}</span>
                     {openSections[item.stateKey] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
                   {openSections[item.stateKey] && (

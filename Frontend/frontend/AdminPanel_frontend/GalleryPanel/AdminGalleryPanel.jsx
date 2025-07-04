@@ -79,7 +79,7 @@ const AdminGalleryPanel = () => {
       });
       formData.append('title', title);
 
-      await axios.post(`'${API_BASE_URL}/api/v1/gallery/upload'`, formData, {
+      await axios.post(`${API_BASE_URL}/api/v1/gallery/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },

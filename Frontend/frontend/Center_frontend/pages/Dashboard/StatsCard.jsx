@@ -65,12 +65,12 @@ const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textCo
 
         {/* Card Content */}
         <div
-          className="relative rounded-lg stat_container p-8 text-center transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl "
+          className=" cursor-pointer relative rounded-lg stat_container p-8 text-center transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl w-64 h-64 "
           style={{ backgroundColor: bgColor }}
           onClick={handleWalletClick}
         >
           {Icon && <Icon className="mx-auto mb-4 text-4xl" style={{ color: textColor }} />}
-          {isWallet && <FaPlus className=" ml-5 text-2xl" style={{ color: textColor }} />}
+          {/* {isWallet && <FaPlus className=" ml-5 text-2xl" style={{ color: textColor }} />} */}
           <h2 className="text-2xl font-semibold mb-2" style={{ color: textColor }}>
             {title}
           </h2>
@@ -78,14 +78,14 @@ const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textCo
 
           {/* Dynamic Value or Default Fallback */}
           {loading ? (
-            <p className="text-6xl mt-3 font-extrabold animate-pulse" style={{ color: textColor }}>
+            <p className="text-5xl mt-3 font-extrabold animate-pulse" style={{ color: textColor }}>
               ...
             </p>
           ) : error ? (
             <p className="text-lg mt-3 font-extrabold text-gray-500">N/A</p>
           ) : (
             <div>
-              <p className="text-6xl mt-3 font-extrabold" style={{ color: textColor }}>
+              <p className="text-5xl mt-3 font-extrabold" style={{ color: textColor }}>
                 {isWallet ? `₹${value}` : value}
               </p>
               {isWallet && (
@@ -103,7 +103,7 @@ const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textCo
 
 const DashboardStats = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 ">
       {/* Default Fallback Boxes */}
       <StatsCard 
       title="Total Students"

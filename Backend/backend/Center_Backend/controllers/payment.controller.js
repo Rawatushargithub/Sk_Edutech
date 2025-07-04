@@ -11,6 +11,9 @@ const razorpay = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET
   });
 
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    console.error("Razorpay keys are missing! Check your environment variables.");
+}
   // 25/march/2025
   // the issure arrising it will create the new order id and update the wallet amount with same amount as previous 
  

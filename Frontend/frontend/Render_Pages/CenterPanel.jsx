@@ -49,7 +49,7 @@ useEffect(() => {
     const centerToken = localStorage.getItem("centerToken");
     if (centerToken) {
       // Redirect to /institute if token exists
-      navigate("/institute");
+      // navigate("/institute");
     } else {
       // Otherwise go to homepage
       navigate("/");

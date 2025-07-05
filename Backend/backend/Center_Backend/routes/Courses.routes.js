@@ -7,8 +7,8 @@ const router = express.Router();
 // Routes
 router.post('/createCourses', uploadCourseFiles, createCourse); 
 router.get('/getCourses', getCourses);
-router.get('/count' , getCoursesCount);
-router.get('/recent', getRecentCourses);
+router.get('/count' , getCoursesCount); 
+router.get('/recent', getRecentCourses); 
 router.get('/course/:courseId', getCourseById); 
 router.put('/update/:courseId', uploadCourseFiles, updateCourseById); 
 

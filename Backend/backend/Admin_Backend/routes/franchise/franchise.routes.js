@@ -50,6 +50,25 @@ router.route('/:franchiseId')
 // Route for ADMIN to resend credentials
 router.route('/:franchiseId/resend-credentials').post(resendFranchiseCredentials);
 
+// --- Franchise Self Info Route ---
+// This endpoint returns the franchise info for the currently logged-in franchise user
+router.route('/me').get(
+    // requireFranchiseAuth, // Uncomment if you have authentication middleware
+    async (req, res, next) => {
+        try {
+            // You must have authentication middleware that sets req.user._id to the franchise's MongoDB _id
+            const franchiseId = req.user?._id;
+            if (!franchiseId) {
+                return res.status(401).json({ statusCode: 401, message: "Unauthorized: Franchise not logged in" });
+            }
+            // Reuse the getFranchiseById controller logic
+            req.params.franchiseId = franchiseId;
+            return getFranchiseById(req, res, next);
+        } catch (err) {
+            next(err);
+        }
+    }
+);
 
 // --- Franchise Application Route (Future Implementation) ---
 // router.route('/apply').post(

@@ -22,9 +22,9 @@ const TabMenu = () => {
 
    // Update API URLs
    const API_ENDPOINTS = {
-    Student: "/api/v1/student/recent",
+    Student: "/api/v1/admin_student/recent",
     Franchise: "/api/v1/franchises/recent",
-    Courses: "/api/v1/courses/recent"
+    Courses: "/api/v1/admin_courses/courses/recent"
   };
 
    // Generic fetch function for all tabs
@@ -160,7 +160,7 @@ const TabMenu = () => {
                     <div className="flex-1">
                       <p className="font-medium">{student.name}</p>
                       <div className="flex justify-between">
-                        <p className="text-sm text-gray-600">Course: {student.course}</p>
+                        <p className="text-sm text-gray-600">Course: {student.course.courseName}</p>
                         <p className="text-xs text-gray-500">Added: {formatDate(student.addedOn)}</p>
                       </div>
                       <p className="text-xs text-gray-500">Roll No: {student.rollNumber}</p>

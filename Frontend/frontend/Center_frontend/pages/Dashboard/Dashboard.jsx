@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+
 import { LogOut } from "lucide-react";
+
+import React, { useState, useEffect } from "react";
+
 import { useNavigate } from "react-router-dom";
 import TabMenu from "./RecentlyAdded"
 import StatsCard from "./StatsCard";
 import { FaBell, FaUserCircle } from "react-icons/fa";
-
 import Header from "./Header";
+// import { getFranchiseById } from "../../services/franchiseService"; // <-- Add this import
 
 
 const Dashboard = () => {
@@ -42,14 +45,54 @@ const Dashboard = () => {
         setShowNotifications(false); // Close notifications when profile menu is toggled
       }; 
 
+    // Franchise (owner) state
+    const [franchise, setFranchise] = useState(null);
+    const [franchiseLoading, setFranchiseLoading] = useState(true);
+
+//     useEffect(() => {
+//         // Replace with actual logic to get franchiseId (from auth, context, or localStorage)
+//         const dummyy_franchiseId = "68283fdd42cd5a57ce8b8b8c"; // Replace with actual franchiseId logic
+//         const franchiseId = localStorage.getItem("franchiseId"); // Or get from JWT/context
+//         if (!dummyy_franchiseId) {
+//             setFranchiseLoading(false);
+//             return;
+//         }
+       
+        
+//         getFranchiseById(dummyy_franchiseId)
+//             .then(res => {
+//                 if (res && res.statusCode === 200) {
+//                   console.log("Franchise data fetched successfully:", res.data);
+//                     setFranchise(res.data);
+//                 }
+//             })
+//             .catch(() => setFranchise(null))
+//             .finally(() => setFranchiseLoading(false));
+//     }, []);
+// console.log("Franchise data:", franchise);
     return ( 
         <div className="px-6 space-y-8">
           <div className=" text-black flex items-center justify-between top-0 px-4 py-2">
-             {/* <Header /> */}
-           {/* Welcome Text */}
-                 <div className="text-lg font-semibold">
-                   Welcome, <span className="text-blue-400">Owner Name</span>
-                 </div>
+            {/* Franchise Owner Info */}
+            <div className="flex items-center space-x-4">
+                {franchiseLoading ? (
+                    <span>Loading owner info...</span>
+                ) : franchise ? (
+                    <>
+                        {franchise.ownerPhotoUrl && (
+                            <img src={franchise.ownerPhotoUrl} alt="Owner" className="h-10 w-10 rounded-full object-cover border" />
+                        )}
+                        <div>
+                            <div className="text-lg font-semibold">
+                                Welcome, <span className="text-blue-400">{franchise.ownerName}</span>
+                            </div>
+                            <div className="text-sm text-gray-600">{franchise.email}</div>
+                        </div>
+                    </>
+                ) : (
+                    <span>Owner info not found</span>
+                )}
+            </div>
            
                  {/* Right Section */}
                  <div className="relative flex items-center space-x-6">
@@ -60,7 +103,7 @@ const Dashboard = () => {
                        onClick={toggleNotifications}
                      />
                      {showNotifications && (
-                       <div className="absolute right-0 mt-2 w-64 bg-white text-black shadow-lg rounded-lg p-4">
+                       <div className="absolute right-0 mt-2 w-64 bg-white text-black shadow-lg rounded-lg p-4 z-20">
                          <h3 className="text-sm font-semibold mb-2">Notifications</h3>
                          <ul className="space-y-2">
                            <li className="text-sm border-b pb-1">New student registered.</li>
@@ -110,7 +153,7 @@ const Dashboard = () => {
                 ].map((btn, index) => (
                     <button
                         key={index}
-                        className="bg-gray-800 text-white py-3 rounded-lg shadow-lg hover:bg-gray-700 transition"
+                        className="bg-gray-800 text-white py-3 rounded-lg shadow-lg hover:bg-gray-700 cursor-pointer transition"
                         onClick={() => navigate(btn.link)}
                     >
                         {btn.label}

@@ -9,7 +9,7 @@ const ContactUsSection = () => {
         <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-3">Get In Touch</h2>
         <div className="w-20 h-1 bg-blue-600 mx-auto mb-4"></div>
         <p className="text-gray-600 max-w-xl mx-auto">
-          Have questions or need assistance? Reach out to us using any of the following options.
+          Have questions or need assistance? Reach out to us.
         </p>
       </div>
 

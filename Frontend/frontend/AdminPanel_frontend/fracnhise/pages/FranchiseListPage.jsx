@@ -83,7 +83,7 @@ function FranchiseListPage() {
                         <Link
                             // onClick={() => navigate('/admin/franchises/requests')}
                             to="/admin/franchises/requests"
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded text-base transition duration-300 ease-in-out"
+                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded text-base transition duration-300 ease-in-out"
                         >
                             See All Requests
                         </Link>

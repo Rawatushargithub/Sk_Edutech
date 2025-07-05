@@ -18,6 +18,7 @@ import AddFranchisePage from "../AdminPanel_frontend/fracnhise/pages/AddFranchis
 import RequestStackPage from "../AdminPanel_frontend/fracnhise/pages/RequestStackPage";
 import EditFranchisePage from "../AdminPanel_frontend/fracnhise/pages/EditFranchisePage";
 import CourseListAdmin from "../AdminPanel_frontend/Courses/CourseListAdmin"; // Import Admin Course List
+
 import AdminWallet from "../AdminPanel_frontend/Dashboard/Admin_Wallet"; // Import Admin Wallet
 import StudentAdmissionList from "../AdminPanel_frontend/Showing_students/Manage_student";
 
@@ -49,6 +50,7 @@ const AdminPanel = () => {
               <Route path="achievers" element={<StudentAchievementsPanel />} />
               <Route path="mainslider" element={<MainSliderUploadPage />} />
               <Route path="wallet" element={<AdminWallet />} />
+              <Route path="Student_list" element={<StudentAdmissionList />} />
 
               <Route path="gallery" element={<AdminGalleryPanel />} />
 
@@ -56,6 +58,7 @@ const AdminPanel = () => {
 
               <Route path="MM" element={<MarqueeManager />} />
               <Route path="EventBox" element={<EventBox />} />
+
               <Route path="Student-list" element={<StudentAdmissionList />} />
 
               <Route path="franchises" element={<FranchiseListPage />} /> {/* Lists ACTIVE & VERIFIED franchises */}

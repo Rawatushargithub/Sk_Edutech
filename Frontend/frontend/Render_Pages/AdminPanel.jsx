@@ -18,7 +18,6 @@ import CourseListAdmin from "../AdminPanel_frontend/Courses/CourseListAdmin"; //
 import AdminWallet from "../AdminPanel_frontend/Dashboard/Admin_Wallet"; // Import Admin Wal
 import StudentAdmissionList from "../AdminPanel_frontend/Showing_students/Manage_student"; // Import Student Admission List
 
-import StudentAdmissionList from "../AdminPanel_frontend/Showing_students/Manage_student"
 const AdminPanel = () => {
   return (
     <StudentProvider>

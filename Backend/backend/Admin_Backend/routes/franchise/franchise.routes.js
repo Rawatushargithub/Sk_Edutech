@@ -11,7 +11,7 @@ import {
     resendFranchiseCredentials, // New
     loginFranchise, // New
     verificationCheck,
-    updateFranchiseStatusOnly // New 
+    updateFranchiseStatusOnly, // New 
     getRecentFranchises,
     getFranchiseCount,
 

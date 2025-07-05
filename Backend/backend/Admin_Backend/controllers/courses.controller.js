@@ -49,6 +49,7 @@ export const updateCourseAdminStatus = asyncHandler(async (req, res) => {
 
 // Get a single course by ID (for admin to view details)
 export const getCourseByIdAdmin = asyncHandler(async (req, res) => {
+    console.log(req.params)
     const { courseId } = req.params;
     const course = await Course.findById(courseId);
 
@@ -60,3 +61,46 @@ export const getCourseByIdAdmin = asyncHandler(async (req, res) => {
         new ApiResponse(200, course, "Course details retrieved successfully")
     );
 });
+
+//Get courses count
+export const getCoursesCount = async (req , res) => {
+    try {
+        const count = await Course.countDocuments();
+       console.log(count)
+        res.status(200).json({ count });
+      } catch (error) {
+        res.status(500).json({ message: "Error fetching course count", error });
+      }
+}
+
+export const getRecentCourses = async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit) || 5;
+      
+      const courses = await Course.find()
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .select("courseName courseCode courseDuration courseSubject courseMRP instituteStatus adminApprovalStatus courseImage createdAt");
+      
+      if (courses.length === 0) {
+        return res.status(404).json({ message: "No courses found" });
+      }
+       
+      const formattedCourses = courses.map(course => ({
+        id: course._id,
+        name: course.courseName,
+        code: course.courseCode,
+        subject: course.courseSubject,
+        duration: course.courseDuration, 
+        price: course.courseMRP,
+        instituteStatus: course.instituteStatus,
+        adminApprovalStatus: course.adminApprovalStatus,
+        imageUrl: course.courseImage,
+        addedOn: course.createdAt
+      }));
+      
+      res.status(200).json(formattedCourses);
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
+    }
+  };

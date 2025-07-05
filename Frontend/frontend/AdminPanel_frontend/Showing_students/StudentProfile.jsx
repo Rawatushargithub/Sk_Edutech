@@ -141,6 +141,7 @@ const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard ,
               Reset Password
             </button> */}
                 
+
           <div className="flex">
           <button
               className="bg-yellow-500 text-white p-2 rounded mr-2 hover:bg-yellow-600"

@@ -52,7 +52,7 @@ router.get('/', async (req, res) => {
 
 // POST upload new gallery items
 router.post('/upload', upload.array('files'), async (req, res) => {
-  try {
+  try { 
     const files = req.files;
     const title = req.body.title;
 

@@ -100,7 +100,7 @@ const Dashboard = () => {
                 ].map((btn, index) => (
                     <button
                         key={index}
-                        className="bg-gray-800 text-white py-3 rounded-lg shadow-lg hover:bg-gray-700 transition"
+                        className="bg-gray-800 text-white py-3 rounded-lg shadow-lg hover:bg-gray-700 cursor-pointer transition"
                         onClick={() => navigate(btn.link)}
                     >
                         {btn.label}

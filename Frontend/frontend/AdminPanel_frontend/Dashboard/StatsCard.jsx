@@ -3,6 +3,7 @@ import { FaUserGraduate, FaBook, FaWallet , FaPlus } from "react-icons/fa";
 import axios from "axios"
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../config"; // Adjust the import path as necessary
+import { FaHandshake } from "react-icons/fa6";
 
 const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textColor = "#09182a" , isWallet=false }) => {
   const API_URL = `${API_BASE_URL}/api/v1/${apiEndpoint}`; // Replace with actual API
@@ -65,12 +66,11 @@ const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textCo
 
         {/* Card Content */}
         <div
-          className="relative rounded-lg stat_container p-8 text-center transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl "
+          className="relative rounded-lg stat_container p-8 text-center transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl cursor-pointer "
           style={{ backgroundColor: bgColor }}
           onClick={handleWalletClick}
         >
           {Icon && <Icon className="mx-auto mb-4 text-4xl" style={{ color: textColor }} />}
-          {isWallet && <FaPlus className=" ml-5 text-2xl" style={{ color: textColor }} />}
           <h2 className="text-2xl font-semibold mb-2" style={{ color: textColor }}>
             {title}
           </h2>
@@ -120,8 +120,8 @@ const DashboardStats = () => {
       textColor = "#09182a"
       />
       <StatsCard 
-      title="Wallet" 
-      icon={FaWallet} 
+      title="Total Franchises" 
+      icon={FaHandshake} 
       apiEndpoint="payment/balance"
       bgColor="#E4E8ED"
       textColor = "#09182a"

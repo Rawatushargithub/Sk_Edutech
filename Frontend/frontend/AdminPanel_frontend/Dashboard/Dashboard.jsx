@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TabMenu from "./RecentlyAdded"
 import StatsCard from "./StatsCard";
-import Header from "./Header";
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -25,14 +24,14 @@ const Dashboard = () => {
             {/* Action Buttons */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {[
-                    { label: "Add Student", link: "/Registration" },
-                    { label: "Fees Details", link: "/fees" },
-                    { label: "Batch Details", link: "/batch" },
-                    { label: "Student Enquiry", link: "/enquiry" },
+                    { label: "Franshises", link: "/admin/franchises" },
+                    { label: "Certificates", link: "/admin/Certificates" },
+                    { label: "Wallet Approval", link: "/admin/wallet" },
+                    { label: "Main Slider", link: "/admin/mainslider" },
                 ].map((btn, index) => (
                     <button
                         key={index}
-                        className="bg-gray-800 text-white py-3 rounded-lg shadow-lg hover:bg-gray-700 transition"
+                        className="bg-gray-800 text-white py-3 rounded-lg shadow-lg hover:bg-gray-700 cursor-pointer transition"
                         onClick={() => navigate(btn.link)}
                     >
                         {btn.label}

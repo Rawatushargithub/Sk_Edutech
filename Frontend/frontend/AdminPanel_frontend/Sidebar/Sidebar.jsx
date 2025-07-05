@@ -10,8 +10,8 @@ import {
 import { TbCertificate, TbLadder, TbUserQuestion } from "react-icons/tb";
 import { MdOutlineCommentBank } from "react-icons/md";
 import { PiExam, PiStudentBold, PiUserListBold } from "react-icons/pi";
-import { FaMoneyBill1Wave } from "react-icons/fa6";
-import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
+import { FaCertificate, FaHandshake, FaMoneyBill1Wave } from "react-icons/fa6";
+import { AiOutlineMenu, AiOutlineClose, AiFillSafetyCertificate } from "react-icons/ai";
 import { CgWebsite } from "react-icons/cg";
 import { BiSolidInstitution } from "react-icons/bi";
 import { GrAchievement, GrGallery } from "react-icons/gr";
@@ -35,11 +35,14 @@ const Sidebar = () => {
       title: "Institute Portal",
       icon: <BiSolidInstitution className="w-5 h-5 " />,
       submenu: [
+
+   
         { title: "Franchise List", icon: <PiStudentBold className="w-5 h-5" />, link: "/admin/franchises" },
         { title: "Students List", icon: <PiUserListBold className="w-5 h-5" />, link: "/admin/Student-list" },
+
         { title: "Wallet approval", icon: <FaMoneyBill1Wave className="w-5 h-5" />, link: "/admin/wallet" },
         { title: "Courses", icon: <RiBookShelfLine className="w-5 h-5" />, link: "/admin/courses" },
-        { title: "Certificates", icon: <PiUserListBold className="w-5 h-5" />, link: "/admin/Certificates" },
+        { title: "Certificates", icon: <TbCertificate className="w-5 h-5" />, link: "/admin/Certificates" },
       ],
       stateKey: "manageStudent",
     },
@@ -51,6 +54,8 @@ const Sidebar = () => {
         { title: "Marquee Line", icon: <TbLadder className="w-5 h-5" />, link: "/admin/MM" },
         { title: "Gallery", icon: <GrGallery className="w-5 h-5" />, link: "/admin/gallery" },
         { title: "Achievers", icon: <GrAchievement className="w-5 h-5" />, link: "/admin/achievers" },
+        { title: "EventBox", icon: <GrGallery className="w-5 h-5" />, link: "/admin/EventBox" },
+
 
       ],
       stateKey: "examination",

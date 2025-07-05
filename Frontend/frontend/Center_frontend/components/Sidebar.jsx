@@ -103,15 +103,25 @@ const Sidebar = () => {
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         } md:block`}
       >
-        <h2 className="text-xl font-semibold p-4">SKEDUTECH</h2>
+        {/* Logo */}
+        <div className="py-4 w-44 mx-auto ">
+          <img src="/assets/Logo.jpg" alt="Logo" className="cursor-pointer rounded-2xl" />
+        </div>
+        <i className="text-xl p-4 mx-4 ">SK EDUTECH</i>
         <ul className="space-y-3.5 p-4">
           {menuItems.map((item, index) => (
             <li key={index}>
               {item.link ? (
                 <NavLink
                   to={item.link}
+                  // className={({ isActive }) =>
+                  //   `flex items-center gap-3 py-2 px-4 rounded text-lg transition-colors ${
+                  //     isActive ? "bg-gray-700" : "hover:bg-gray-700"
+                  //   }`
+                  // }
+
                   className={({ isActive }) =>
-                    `flex items-center gap-3 py-2 px-4 rounded text-lg font-medium transition-colors ${
+                    `flex items-center gap-3 py-2 px-4 rounded text-lg transition-colors ${
                       isActive ? "bg-gray-700" : "hover:bg-gray-700"
                     }`
                   }
@@ -124,7 +134,7 @@ const Sidebar = () => {
                     onClick={() => toggleSection(item.stateKey)}
                     className="w-full flex justify-between items-center py-2 px-4 rounded hover:bg-gray-700 text-left"
                   >
-                    <span className="flex items-center gap-2">{item.icon} {item.title}</span>
+                    <span className="flex items-center text-lg gap-2">{item.icon} {item.title}</span>
                     {openSections[item.stateKey] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
                   {openSections[item.stateKey] && (
@@ -134,8 +144,8 @@ const Sidebar = () => {
                           <NavLink
                             to={subItem.link}
                             className={({ isActive }) =>
-                              `flex items-center gap-2 py-2 px-4 rounded transition-colors ${
-                                isActive ? "bg-blue-600" : "hover:bg-gray-700"
+                              `flex items-center font-medium gap-2 py-2 px-4 rounded transition-colors ${
+                                isActive ? "bg-gray-700" : "hover:bg-gray-700"
                               }`
                             }
                           >
@@ -149,7 +159,7 @@ const Sidebar = () => {
               ) : (
                 <div
                   onClick={item.action}
-                  className="cursor-pointer flex items-center gap-3 py-2 px-4 rounded hover:bg-gray-700"
+                  className="cursor-pointer flex items-center text-lg gap-3 py-2 px-4 rounded hover:bg-gray-700"
                 >
                   {item.icon} {item.title}
                 </div>

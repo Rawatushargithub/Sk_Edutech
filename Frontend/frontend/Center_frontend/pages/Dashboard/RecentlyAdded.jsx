@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { MdHomeWork } from "react-icons/md";
 import { IoPerson } from "react-icons/io5"; 
 import { FaBookOpen } from "react-icons/fa";
-import { BiSortAlt2 } from "react-icons/bi";
+import { BiSort, BiSortAlt2, BiSortUp } from "react-icons/bi";
 import { format } from "date-fns"; // Import date-fns for date formatting
 import API_BASE_URL from "../../../config";
 
@@ -110,10 +110,10 @@ const TabMenu = () => {
           <button
             key={tab.name}
             onClick={() => handleTabClick(tab.name)}
-            className={`px-6 py-2 w-5/12 rounded-md flex justify-center items-center transition-all duration-300 ease-in-out ${
+            className={`px-6 py-2 w-5/12 flex justify-center items-center transition-all duration-300 ease-in-out ${
               selectedTab === tab.name
                 ? "bg-gray-200 text-regal-voilet border-b-4 border-[#09182a] shadow-md scale-105"
-                : "bg-white text-regal-voilet hover:bg-gray-100"
+                : "bg-white text-regal-voilet "
             }`}
           >
             <div className="text-xl">{tab.icon}</div>
@@ -124,10 +124,11 @@ const TabMenu = () => {
          <div className="w-full flex items-center justify-end">
           <button 
             onClick={toggleSortOrder}
-            className="w-3/12 flex justify-center items-center gap-1 hover:text-regal-voilet"
+            className="w-3/12 flex font-bold justify-center items-center gap-1 hover:text-regal-voilet"
           >
-            <p>Sort by {sortOrder === "newest" ? "Newest" : "Oldest"}</p>
-            <BiSortAlt2 className={sortOrder === "oldest" ? "transform rotate-180" : ""} />
+            <p>Sort by {sortOrder === "newest" ? "Newest" : "Oldest"} </p>
+            <BiSortAlt2 className={`cursor-pointer w-8 h-8 ${sortOrder === "oldest" ? "transform rotate-180" : ""}`}              
+            />
           </button>
         </div>
       </div>

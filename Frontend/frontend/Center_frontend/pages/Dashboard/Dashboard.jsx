@@ -90,7 +90,7 @@ const Dashboard = () => {
                        onClick={toggleNotifications}
                      />
                      {showNotifications && (
-                       <div className="absolute right-0 mt-2 w-64 bg-white text-black shadow-lg rounded-lg p-4">
+                       <div className="absolute right-0 mt-2 w-64 bg-white text-black shadow-lg rounded-lg p-4 z-20">
                          <h3 className="text-sm font-semibold mb-2">Notifications</h3>
                          <ul className="space-y-2">
                            <li className="text-sm border-b pb-1">New student registered.</li>
@@ -140,7 +140,7 @@ const Dashboard = () => {
                 ].map((btn, index) => (
                     <button
                         key={index}
-                        className="bg-gray-800 text-white py-3 rounded-lg shadow-lg hover:bg-gray-700 transition"
+                        className="bg-gray-800 text-white py-3 rounded-lg shadow-lg hover:bg-gray-700 cursor-pointer transition"
                         onClick={() => navigate(btn.link)}
                     >
                         {btn.label}

@@ -2,7 +2,7 @@ import axios from 'axios';
 import API_BASE_URL from "../../config";
 
 const franchiseApi = axios.create({
-    baseURL: `${API_BASE_URL}/franchises`,
+    baseURL: `${API_BASE_URL}/api/v1/franchises`,
     // Add headers or configurations if needed, e.g., for authentication
 });
 

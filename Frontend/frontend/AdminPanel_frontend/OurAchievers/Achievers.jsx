@@ -197,7 +197,7 @@ export default function StudentAchievementsPanel() {
           <p className="text-gray-600 mt-2">Add and manage student achievements (maximum 10)</p>
         </header>
         <button 
-        className='bg-black rounded-md text-white font-bold p-2 mb-4'
+        className='hover:cursor-pointer bg-black rounded-md text-white font-bold p-2 mb-4'
         onClick={EventBox}
         >
           Switch to Event Box</button>

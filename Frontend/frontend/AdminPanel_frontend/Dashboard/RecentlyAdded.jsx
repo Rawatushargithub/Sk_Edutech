@@ -105,32 +105,33 @@ const TabMenu = () => {
       </div>
 
       {/* Tab Buttons */}
-      <div className="flex mb-1 transition-all duration-300">
-        {tabs.map((tab) => (
-          <button
-            key={tab.name}
-            onClick={() => handleTabClick(tab.name)}
-            className={`px-6 py-2 w-5/12 rounded-md flex justify-center items-center transition-all duration-300 ease-in-out ${
-              selectedTab === tab.name
-                ? "bg-gray-200 text-regal-voilet border-b-4 border-[#09182a] shadow-md scale-105"
-                : "bg-white text-regal-voilet hover:bg-gray-100"
-            }`}
-          >
-            <div className="text-xl">{tab.icon}</div>
-            <span className="ml-2">{tab.name}</span>
-          </button>
-        ))}
-         {/* Sort Button */}
-         <div className="w-full flex items-center justify-end">
-          <button 
-            onClick={toggleSortOrder}
-            className="w-3/12 flex justify-center items-center gap-1 hover:text-regal-voilet"
-          >
-            <p>Sort by {sortOrder === "newest" ? "Newest" : "Oldest"}</p>
-            <BiSortAlt2 className={sortOrder === "oldest" ? "transform rotate-180" : ""} />
-          </button>
-        </div>
-      </div>
+            <div className="flex mb-1 transition-all duration-300">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.name}
+                  onClick={() => handleTabClick(tab.name)}
+                  className={`px-6 py-2 w-5/12 flex justify-center items-center transition-all duration-300 ease-in-out ${
+                    selectedTab === tab.name
+                      ? "bg-gray-200 text-regal-voilet border-b-4 border-[#09182a] shadow-md scale-105"
+                      : "bg-white text-regal-voilet "
+                  }`}
+                >
+                  <div className="text-xl">{tab.icon}</div>
+                  <span className="ml-2">{tab.name}</span>
+                </button>
+              ))}
+               {/* Sort Button */}
+               <div className="w-full flex items-center justify-end">
+                <button 
+                  onClick={toggleSortOrder}
+                  className="w-3/12 flex font-bold justify-center items-center gap-1 hover:text-regal-voilet"
+                >
+                  <p>Sort by {sortOrder === "newest" ? "Newest" : "Oldest"} </p>
+                  <BiSortAlt2 className={`cursor-pointer w-8 h-8 ${sortOrder === "oldest" ? "transform rotate-180" : ""}`}              
+                  />
+                </button>
+              </div>
+            </div>
  
       {/* Tab Content Section */}
       <div className="mt-4 p-4 bg-white rounded-lg shadow-md transition-all duration-500 ease-in-out min-h-[300px]">

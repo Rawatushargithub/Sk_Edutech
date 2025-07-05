@@ -155,7 +155,6 @@ const StudentAdmissionList = () => {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">List Student Admission</h1>
           <div>
-            
             <button className="bg-red-500 text-white px-4 py-2 rounded-2xl">
               Export
             </button>

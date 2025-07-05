@@ -4,7 +4,7 @@ import TabMenu from "./RecentlyAdded"
 import StatsCard from "./StatsCard";
 import { FaBell, FaUserCircle } from "react-icons/fa";
 import Header from "./Header";
-import { getFranchiseById } from "../../services/franchiseService"; // <-- Add this import
+// import { getFranchiseById } from "../../services/franchiseService"; // <-- Add this import
 
 
 const Dashboard = () => {
@@ -36,27 +36,27 @@ const Dashboard = () => {
     const [franchise, setFranchise] = useState(null);
     const [franchiseLoading, setFranchiseLoading] = useState(true);
 
-    useEffect(() => {
-        // Replace with actual logic to get franchiseId (from auth, context, or localStorage)
-        const dummyy_franchiseId = "68283fdd42cd5a57ce8b8b8c"; // Replace with actual franchiseId logic
-        const franchiseId = localStorage.getItem("franchiseId"); // Or get from JWT/context
-        if (!dummyy_franchiseId) {
-            setFranchiseLoading(false);
-            return;
-        }
+//     useEffect(() => {
+//         // Replace with actual logic to get franchiseId (from auth, context, or localStorage)
+//         const dummyy_franchiseId = "68283fdd42cd5a57ce8b8b8c"; // Replace with actual franchiseId logic
+//         const franchiseId = localStorage.getItem("franchiseId"); // Or get from JWT/context
+//         if (!dummyy_franchiseId) {
+//             setFranchiseLoading(false);
+//             return;
+//         }
        
         
-        getFranchiseById(dummyy_franchiseId)
-            .then(res => {
-                if (res && res.statusCode === 200) {
-                  console.log("Franchise data fetched successfully:", res.data);
-                    setFranchise(res.data);
-                }
-            })
-            .catch(() => setFranchise(null))
-            .finally(() => setFranchiseLoading(false));
-    }, []);
-console.log("Franchise data:", franchise);
+//         getFranchiseById(dummyy_franchiseId)
+//             .then(res => {
+//                 if (res && res.statusCode === 200) {
+//                   console.log("Franchise data fetched successfully:", res.data);
+//                     setFranchise(res.data);
+//                 }
+//             })
+//             .catch(() => setFranchise(null))
+//             .finally(() => setFranchiseLoading(false));
+//     }, []);
+// console.log("Franchise data:", franchise);
     return ( 
         <div className="px-6 space-y-8">
           <div className=" text-black flex items-center justify-between top-0 px-4 py-2">

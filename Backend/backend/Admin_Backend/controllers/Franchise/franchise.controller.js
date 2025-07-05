@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import jwt from "jsonwebtoken";
 import { Franchise } from '../../models/franchise/franchise.models.js';
 import { asyncHandler } from '../../utils/asynchanlder.js';
 import { ApiError } from '../../utils/ApiError.js';
@@ -6,6 +7,7 @@ import { ApiResponse } from '../../utils/ApiResponse.js';
 import { uploadOnCloudinary } from '../../utils/cloudinary.js';
 import { sendEmail } from '../../utils/mailer.js'; // Import the email utility
 
+const JWT_SECRET = process.env.JWT_SECRET;
 // Helper function to generate Franchise ID (Example: SK + 6 random digits)
 const generateFranchiseId = async () => {
     let uniqueId = false;
@@ -71,6 +73,7 @@ const addFranchiseByAdmin = asyncHandler(async (req, res) => {
     // Generate Franchise ID and Password
     const franchiseId = await generateFranchiseId();
     const rawPassword = generatePassword();
+    console.log(`Generated Franchise ID: ${franchiseId}, Raw Password: ${rawPassword}`);
     const hashedPassword = await bcrypt.hash(rawPassword, 10); // Hash the password
 
     // Create new franchise instance - Admin Created = Pending Status & Verification by default
@@ -338,16 +341,13 @@ const updateFranchiseStatusVerification = asyncHandler(async (req, res) => {
 
 
 // Controller to get all ACTIVE & VERIFIED franchises (for the main list)
-const getAllActiveFranchises = asyncHandler(async (req, res) => {
-    // Fetch franchises that are both Active and Verified
+const getAllFranchises = asyncHandler(async (req, res) => {
+    // Fetch all franchises without filtering
     // TODO: Add pagination, sorting, filtering features later
-    const franchises = await Franchise.find({
-        status: 'Active',
-        verificationStatus: 'Verified'
-    }).sort({ franchiseName: 1 }); // Sort by name
+    const franchises = await Franchise.find({}).sort({ franchiseName: 1 }); // Sort by name
 
     if (!franchises) {
-        throw new ApiError(500, "Error retrieving active & verified franchises");
+        throw new ApiError(500, "Error retrieving franchises");
     }
 
     // Exclude password from the response data
@@ -357,20 +357,22 @@ const getAllActiveFranchises = asyncHandler(async (req, res) => {
         return franchiseObj;
     });
 
-
     return res.status(200).json(
-        new ApiResponse(200, responseData, "Active & Verified franchises retrieved successfully")
+        new ApiResponse(200, responseData, "All franchises retrieved successfully")
     );
 });
 
+
 // Controller to get a single franchise by its MongoDB _id
 const getFranchiseById = asyncHandler(async (req, res) => {
+    console.log("Fetching franchise by ID:", req.params.franchiseId);
     const { franchiseId } = req.params;
     if (!franchiseId) {
         throw new ApiError(400, "Franchise ID is required.");
     }
 
     const franchise = await Franchise.findById(franchiseId);
+
     if (!franchise) {
         throw new ApiError(404, "Franchise not found.");
     }
@@ -391,47 +393,75 @@ const updateFranchiseById = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Franchise ID is required.");
     }
 
-    // Extract allowed fields for update. Exclude sensitive fields like password, franchiseId (system-generated), status, verificationStatus (managed separately)
     const {
-        franchiseName, ownerName, designation, dob, email, mobile, address, state, city, country, postalCode,
-        planValidityDays, gstNumber, atcCode, totalComputers, totalStudents
+        franchiseName, ownerName, designation, dob, email, mobile, address,
+        state, city, country, postalCode, planValidityDays, gstNumber,
+        atcCode, totalComputers, totalStudents, status
     } = req.body;
 
     const updateData = {
-        franchiseName, ownerName, designation, dob, email, mobile, address, state, city, country, postalCode,
-        planValidityDays, gstNumber, atcCode, totalComputers, totalStudents
+        franchiseName,
+        ownerName,
+        designation,
+        dob,
+        email,
+        mobile,
+        address,
+        state,
+        city,
+        country,
+        postalCode,
+        planValidityDays,
+        gstNumber,
+        atcCode,
+        totalComputers,
+        totalStudents
     };
 
-    // Remove undefined fields so they don't overwrite existing data with null
-    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
-
-    if (Object.keys(updateData).length === 0) {
-        throw new ApiError(400, "No valid fields provided for update.");
+    // ✅ Handle status if provided
+    if (status !== undefined) {
+        const allowedStatuses = ["Active", "Inactive", "Pending", "Rejected"];
+        if (!allowedStatuses.includes(status)) {
+            throw new ApiError(400, "Invalid status. Allowed values: 'Active', 'Inactive', 'Pending', 'Rejected'");
+        }
+        updateData.status = status;
     }
 
-    // Handle file uploads if new files are provided
+    // ✅ Remove undefined fields (clean update object)
+    Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined || updateData[key] === null) {
+            delete updateData[key];
+        }
+    });
+
+    if (Object.keys(updateData).length === 0 && (!req.files || Object.keys(req.files).length === 0)) {
+        throw new ApiError(400, "No valid fields or files provided for update.");
+    }
+
+    // ✅ Handle file uploads
     if (req.files) {
-        if (req.files.ownerPhoto && req.files.ownerPhoto[0]) {
+        if (req.files.ownerPhoto?.[0]) {
             const photoUploadResult = await uploadOnCloudinary(req.files.ownerPhoto[0].path);
-            if (!photoUploadResult) throw new ApiError(500, "Failed to upload new owner photo");
+            if (!photoUploadResult) throw new ApiError(500, "Failed to upload owner photo");
             updateData.ownerPhotoUrl = photoUploadResult.url;
         }
-        if (req.files.franchiseSignature && req.files.franchiseSignature[0]) {
+
+        if (req.files.franchiseSignature?.[0]) {
             const signatureUploadResult = await uploadOnCloudinary(req.files.franchiseSignature[0].path);
-            if (!signatureUploadResult) throw new ApiError(500, "Failed to upload new franchise signature");
+            if (!signatureUploadResult) throw new ApiError(500, "Failed to upload franchise signature");
             updateData.franchiseSignatureUrl = signatureUploadResult.url;
         }
     }
-    
-    // If email is being updated, check for duplicates (excluding the current franchise)
+
+    // ✅ Email uniqueness check (excluding current ID)
     if (email) {
-        const existingFranchiseWithEmail = await Franchise.findOne({ email, _id: { $ne: franchiseId } });
-        if (existingFranchiseWithEmail) {
+        const existingFranchise = await Franchise.findOne({ email, _id: { $ne: franchiseId } });
+        if (existingFranchise) {
             throw new ApiError(409, "Another franchise with this email already exists.");
         }
     }
 
-
+    // ✅ Perform the update
     const updatedFranchise = await Franchise.findByIdAndUpdate(
         franchiseId,
         { $set: updateData },
@@ -449,6 +479,38 @@ const updateFranchiseById = asyncHandler(async (req, res) => {
         new ApiResponse(200, responseData, "Franchise updated successfully")
     );
 });
+
+
+export const updateFranchiseStatusOnly = asyncHandler(async (req, res) => {
+    const { franchiseId } = req.params;
+    const { status } = req.body;
+
+    const allowedStatuses = ["Pending", "Active", "Inactive", "Rejected"];
+
+    if (!franchiseId) {
+        throw new ApiError(400, "Franchise ID is required.");
+    }
+
+    if (!status || !allowedStatuses.includes(status)) {
+        throw new ApiError(400, `Invalid status. Allowed values: ${allowedStatuses.join(", ")}`);
+    }
+
+    const updatedFranchise = await Franchise.findByIdAndUpdate(
+        franchiseId,
+        { status },
+        { new: true, runValidators: true }
+    );
+
+    if (!updatedFranchise) {
+        throw new ApiError(404, "Franchise not found.");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, { status: updatedFranchise.status }, "Franchise status updated successfully.")
+    );
+});
+
+
 
 // Controller to delete a franchise by its MongoDB _id
 const deleteFranchiseById = asyncHandler(async (req, res) => {
@@ -502,6 +564,7 @@ const resendFranchiseCredentials = asyncHandler(async (req, res) => {
     try {
         await sendEmail(recipientEmail, subject, textBody, htmlBody);
         console.log(`--- Credentials Resent Successfully for ${recipientEmail} ---`);
+        console.log("Frenchise password", newRawPassword); // Log the new password for debugging (remove in production)
         return res.status(200).json(
             new ApiResponse(200, {}, "Credentials resent successfully via email.")
         );
@@ -516,13 +579,85 @@ const resendFranchiseCredentials = asyncHandler(async (req, res) => {
 
 // TODO: Add controller for checking and updating status based on expiry date (could be a scheduled job or checked on login/access)
 
+
+
+export const loginFranchise = async (req, res) => {
+  const { identifier, password } = req.body; // identifier = email or mobile
+
+  try {
+    const franchise = await Franchise.findOne({
+      $or: [{ email: identifier }, { mobile: identifier }],
+    });
+
+    if (!franchise) {
+      return res.status(404).json({ message: "Franchise not found" });
+    }
+
+    if (franchise.status !== "Active" || franchise.verificationStatus !== "Verified") {
+      return res.status(403).json({
+        message: "Franchise is not verified or active",
+      });
+    }
+
+    if (!franchise.password) {
+      return res.status(400).json({ message: "Franchise has no password set" });
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, franchise.password);
+
+    if (!isPasswordCorrect) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    const token = jwt.sign(
+      { id: franchise._id, franchiseId: franchise.franchiseId },
+      JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    return res.status(200).json({
+      message: "Login successful",
+      token,
+      franchise: {
+        id: franchise._id,
+        email: franchise.email,
+        mobile: franchise.mobile,
+        franchiseName: franchise.franchiseName,
+        franchiseId: franchise.franchiseId,
+      },
+    });
+  } catch (err) {
+    console.error("[Login Error]", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const verificationCheck = async (req, res) => {
+  try {
+    const { franchiseId } = req.params;
+
+    const franchise = await Franchise.findOne({ franchiseId: franchiseId }); // ✅ NOT _id
+
+    if (!franchise) {
+      return res.status(404).json({ message: "Franchise not found" });
+    }
+
+    // You can also filter out sensitive data like password here:
+    const { password, ...franchiseData } = franchise.toObject();
+
+    res.status(200).json(franchiseData);
+  } catch (error) {
+    console.error("Error fetching franchise by franchiseId:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 // Export controllers
 export {
     addFranchiseByAdmin, // Renamed from createFranchise
     applyForFranchise, // New placeholder
     getFranchiseRequests, // New
     updateFranchiseStatusVerification, // New
-    getAllActiveFranchises, // Renamed from getAllFranchises
+    getAllFranchises, // Renamed from getAllFranchises
     getFranchiseById,    // New
     updateFranchiseById, // New
     deleteFranchiseById,  // New

@@ -9,6 +9,7 @@ function FranchiseListPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate(); // Hook for navigation
+    const [statusFilter, setStatusFilter] = useState('');
 
     // Define fetchFranchises using useCallback
     const fetchFranchises = useCallback(async () => {
@@ -50,24 +51,23 @@ function FranchiseListPage() {
 
     // Filter franchises based on search term (client-side)
     const filteredFranchises = useMemo(() => {
-        if (!searchTerm) {
-            return franchises; // Return all if no search term
-        }
-        const lowerCaseSearchTerm = searchTerm.toLowerCase();
-        return franchises.filter(franchise => {
-            // Check against relevant fields (adjust as needed)
-            // Ensure franchiseId is checked instead of username
-            return (
-                franchise.franchiseName?.toLowerCase().includes(lowerCaseSearchTerm) ||
-                franchise.ownerName?.toLowerCase().includes(lowerCaseSearchTerm) ||
-                franchise.city?.toLowerCase().includes(lowerCaseSearchTerm) ||
-                franchise.state?.toLowerCase().includes(lowerCaseSearchTerm) ||
-                franchise.franchiseId?.toLowerCase().includes(lowerCaseSearchTerm) || // Changed from username
-                franchise.atcCode?.toLowerCase().includes(lowerCaseSearchTerm) ||
-                franchise.mobile?.includes(searchTerm) // Direct check for numbers
-            );
-        });
-    }, [franchises, searchTerm]);
+  return franchises.filter(franchise => {
+    const matchesSearch = !searchTerm || (
+      franchise.franchiseName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      franchise.ownerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      franchise.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      franchise.state?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      franchise.franchiseId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      franchise.atcCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      franchise.mobile?.includes(searchTerm)
+    );
+
+    const matchesStatus = !statusFilter || franchise.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+}, [franchises, searchTerm, statusFilter]);
+
 
     // Handler for search input change
     const handleSearchChange = (event) => {
@@ -97,20 +97,37 @@ function FranchiseListPage() {
                 </div>
 
                 {/* Search remains */}
-                <div className="flex justify-start items-center mb-4"> {/* Changed justify-between to justify-start */}
+                <div className="flex justify-start items-center mb-4 gap-4">
                     {/* Search Input */}
-                    <div className="w-full md:w-1/3"> {/* Control width */}
-                         <label htmlFor="search-franchise" className="sr-only">Search</label> {/* Screen reader label */}
+                    <div className="w-full md:w-1/3">
+                        <label htmlFor="search-franchise" className="sr-only">Search</label>
                         <input
                             type="text"
                             id="search-franchise"
                             placeholder="Search..."
-                            className="border rounded px-3 py-1.5 text-base w-full" // Added w-full
-                            value={searchTerm} // Controlled input
-                            onChange={handleSearchChange} // Update state on change
+                            className="border rounded px-3 py-1.5 text-base w-full"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+
+                    {/* Filter Dropdown */}
+                    <div className="w-full md:w-1/4">
+                        <label htmlFor="status-filter" className="sr-only">Status</label>
+                        <select
+                            id="status-filter"
+                            className="border rounded px-3 py-1.5 text-base w-full"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                            <option value="">All Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
                 </div>
+
+
 
 
                 {/* Conditional Rendering based on state */}
@@ -122,20 +139,20 @@ function FranchiseListPage() {
                     <FranchiseTable franchises={filteredFranchises} onActionComplete={fetchFranchises} />
                 )}
 
-                 <div className="flex justify-between items-center mt-6 text-base text-gray-600">
-                     {/* Update showing entries info based on filtered results */}
-                     {!loading && (
+                <div className="flex justify-between items-center mt-6 text-base text-gray-600">
+                    {/* Update showing entries info based on filtered results */}
+                    {!loading && (
                         <span>
                             Showing {filteredFranchises.length > 0 ? 1 : 0} to {filteredFranchises.length} of {filteredFranchises.length} entries
                             {searchTerm && ` (filtered from ${franchises.length} total)`}
                         </span>
-                     )}
-                      <div className="space-x-2">
-                         <button className="border border-gray-300 rounded px-4 py-1.5 hover:bg-gray-100 text-gray-700 text-base">Previous</button>
-                         <span className="bg-black text-white rounded px-4 py-1.5 text-base">1</span>
-                         <button className="border border-gray-300 rounded px-4 py-1.5 hover:bg-gray-100 text-gray-700 text-base">Next</button>
-                      </div>
-                 </div>
+                    )}
+                    <div className="space-x-2">
+                        <button className="border border-gray-300 rounded px-4 py-1.5 hover:bg-gray-100 text-gray-700 text-base">Previous</button>
+                        <span className="bg-black text-white rounded px-4 py-1.5 text-base">1</span>
+                        <button className="border border-gray-300 rounded px-4 py-1.5 hover:bg-gray-100 text-gray-700 text-base">Next</button>
+                    </div>
+                </div>
             </div>
         </div>
     );

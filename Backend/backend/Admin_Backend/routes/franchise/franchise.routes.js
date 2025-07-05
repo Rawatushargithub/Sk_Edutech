@@ -4,11 +4,14 @@ import {
     // applyForFranchise, // Placeholder for future use
     getFranchiseRequests,
     updateFranchiseStatusVerification,
-    getAllActiveFranchises,
+    getAllFranchises,
     getFranchiseById,    // New
     updateFranchiseById, // New
     deleteFranchiseById,  // New
-    resendFranchiseCredentials // New
+    resendFranchiseCredentials, // New
+    loginFranchise, // New
+    verificationCheck,
+    updateFranchiseStatusOnly // New 
 } from '../../controllers/Franchise/franchise.controller.js';
 import { upload } from '../../middlewares/franchise.multer.middleware.js'; // Assuming multer middleware is configured here
 
@@ -17,7 +20,7 @@ const router = Router();
 // --- Super Admin Routes ---
 
 // Route to get all ACTIVE franchises (for general listing)
-router.route('/').get(getAllActiveFranchises);
+router.route('/').get(getAllFranchises);
 
 // Route for ADMIN to create a new, active franchise
 router.route('/').post(
@@ -50,6 +53,9 @@ router.route('/:franchiseId')
 // Route for ADMIN to resend credentials
 router.route('/:franchiseId/resend-credentials').post(resendFranchiseCredentials);
 
+router.post("/login", loginFranchise);
+router.get("/verify/:franchiseId", verificationCheck);
+router.patch("/:franchiseId/status", updateFranchiseStatusOnly);
 
 // --- Franchise Application Route (Future Implementation) ---
 // router.route('/apply').post(

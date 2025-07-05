@@ -1,4 +1,5 @@
 import { Route,Routes } from 'react-router-dom'
+import { useState } from 'react';
 
 // importing all components one by one
 import Navbar from "../Homepage_frontend/components/navbar/Navbar";
@@ -13,7 +14,7 @@ import Footer from '../Homepage_frontend/components/footer/Footer';
 import TopMarquee from '../Homepage_frontend/components/marqueeLine/TopMarquee';
 import BottomMarquee from '../Homepage_frontend/components/marqueeLine/BottomMarquee';
 import NAllReviewsPage from '../Homepage_frontend/components/ReviewsSection/NewAllReviews'
-
+import ApplyFranchiseModal from '../Homepage_frontend/ApplyFranchiseModal';
 // import EducationSection from "../componenets/EducationSection";
 // import OurAchievers from "../componenets/OurAchievers";
 // import ContactUsSection from "../componenets/ContactUsSection";
@@ -22,19 +23,36 @@ import NAllReviewsPage from '../Homepage_frontend/components/ReviewsSection/NewA
 
 
 function HomePage() {
+
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false); // State for modal visibility
+
+    const handleOpenApplyModal = () => {
+        setIsApplyModalOpen(true);
+    };
+
+    const handleCloseApplyModal = () => {
+        setIsApplyModalOpen(false);
+    };
+
+
     return (
       <div>
         <Navbar/>
        
         <MainSlider/>
         <TopMarquee />
-        <LoginBoxes/>
+        <LoginBoxes onApplyClick={handleOpenApplyModal}/>
         <EducationSection/>
         <BottomMarquee />
         <OurAchievers/>
         <ReviewsSection />
         <ContactUsSection />
         <Footer/>
+
+        {/* Render the modal conditionally */}
+        {isApplyModalOpen && (
+            <ApplyFranchiseModal isOpen={isApplyModalOpen} onClose={handleCloseApplyModal} />
+        )}
 
       <Routes>
         <Route path="/gallery" element={<GalleryHomepage/>} />

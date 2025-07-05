@@ -71,9 +71,8 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-sky-50 to-white">
-      <div className="w-full max-w-md px-4">
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-sky-100">
+    <div className="w-full max-w-md pb-1">
+        <div className="bg-white rounded-xl  overflow-hidden ">
           {/* Header */}
           <div className="bg-sky-500 p-6 text-white text-center">
             <div className="flex justify-center mb-3">
@@ -169,7 +168,6 @@ const Login = () => {
           © {new Date().getFullYear()} Student Learning Portal. All rights reserved.
         </div>
       </div>
-    </div>
   );
 };
 

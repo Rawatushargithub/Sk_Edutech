@@ -30,7 +30,7 @@ function FranchiseTable({ franchises = [], onActionComplete }) { // Added onActi
     }
 
     const handleEdit = (franchiseId) => {
-        navigate(`/franchises/edit/${franchiseId}`);
+        navigate(`/admin/franchises/edit/${franchiseId}`);
     };
 
     const handleDelete = async (franchiseId, franchiseName) => {
@@ -67,7 +67,7 @@ function FranchiseTable({ franchises = [], onActionComplete }) { // Added onActi
             }
         }
     };
-    
+
     // const handleToggleStatus = async (franchise) => { // REMOVED
     //     const newStatus = franchise.status === 'Active' ? 'Inactive' : 'Active';
     //     const action = newStatus === 'Active' ? 'activate' : 'deactivate';
@@ -100,8 +100,9 @@ function FranchiseTable({ franchises = [], onActionComplete }) { // Added onActi
         { header: 'Mobile', accessor: 'mobile', width: 'w-32' },
         // { header: 'Status', accessor: 'status', width: 'w-24'}, // REMOVED Status column
         { header: 'Expire Date', accessor: 'expireDate', width: 'w-32' },
+        { header: 'Status', accessor: 'status', width: 'w-32' },
     ];
-    
+
     // Helper function to render cell content based on column accessor
     // Moved inside component to access navigate, handleDelete etc.
     const renderCellContent = (column, franchise, index) => {
@@ -137,7 +138,13 @@ function FranchiseTable({ franchises = [], onActionComplete }) { // Added onActi
             case 'Registered Date':
                 return formatDate(value);
             case 'No Of Student':
-                 return value !== undefined ? value : 'N/A';
+                return value !== undefined ? value : 'N/A';
+            case 'Status':
+                return (
+                    <span className={`font-semibold ${value === 'Active' ? 'text-green-600' : value === 'Inactive' ? 'text-red-600' : 'text-gray-500'}`}>
+                        {value}
+                    </span>
+                );
             default:
                 return value !== null && value !== undefined ? String(value) : 'N/A';
         }

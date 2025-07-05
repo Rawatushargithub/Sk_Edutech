@@ -57,6 +57,7 @@ import FeedbackRoutes from './backend/Homepage_backend/routes/feedbackRoutes.js'
 import AchieverSliderRoutes from './backend/Homepage_backend/routes/achieverSliderRoutes.js'
 import eduSectionRouter from './backend/Homepage_backend/routes/EduSectionImageRoutes.js'
 import marqueeLineRouter from './backend/Admin_Backend/routes/MarqueeLine/marquee.routes.js'
+import homepageFranchiseRoutes from './backend/Homepage_backend/routes/homepageFranchise.routes.js'
 
 // Homepage Routes
 // app.use("/api/v1/gallery", galleryRoutes)
@@ -66,6 +67,7 @@ app.use("/api/v1", FeedbackRoutes);
 app.use("/api/v1/achievements",AchieverSliderRoutes );
 app.use("/api/v1/eduSection",eduSectionRouter );
 app.use("/api/v1/marquee",marqueeLineRouter );
+app.use("/api/v1/homepage-franchises", homepageFranchiseRoutes);
 
 
 
@@ -78,6 +80,7 @@ import franchiseRouter from "./backend/Admin_Backend/routes/franchise/franchise.
 import galleryRouter from "./backend/Admin_Backend/routes/Gallery/galleryRoutes.js"; // Import franchise router
 import adminCourseRouter from "./backend/Admin_Backend/routes/courses.routes.js"; // Import admin course router
 import paymentRouter from "./backend/Admin_Backend/routes/admin.routes.js"; // Import payment router
+import adminRoutes from "./backend/Admin_Backend/routes/AdminPanel/admin.panel.js"; // Import admin routes
 
 // admin routes
 app.use("/api/v1/mainSliderImages",mainSliderRouter)
@@ -89,6 +92,7 @@ app.use("/api/v1/adminwallet", paymentRouter)
 app.use("/api/v1/franchises", franchiseRouter); 
 app.use("/api/v1/gallery", galleryRouter);
 app.use("/api/v1/admin/courses", adminCourseRouter); // Add admin course routes
+app.use("/api/v1/admin", adminRoutes);
 
 
 

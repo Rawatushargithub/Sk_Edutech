@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Dashboard from "../Center_frontend/pages/Dashboard/Dashboard";
 import Sidebar from "../Center_frontend/components/Sidebar";
 
@@ -35,7 +37,27 @@ import Enquiries from "../Center_frontend/pages/Enquiry/EnquiryList.jsx"
 import Certificate from "../Center_frontend/pages/Certificate/Certificate.jsx"
 
 import QuestionBankSystem from "../Center_frontend/pages/QuestionBank/QuestionBankSystem.jsx";
+
+
+
 function App() {
+
+  
+const navigate = useNavigate();
+
+useEffect(() => {
+    const centerToken = localStorage.getItem("centerToken");
+    if (centerToken) {
+      // Redirect to /institute if token exists
+      navigate("/institute");
+    } else {
+      // Otherwise go to homepage
+      navigate("/");
+    }
+  }, [navigate]);
+
+
+
   return (
     <StudentProvider>
       <div className="h-screen flex flex-col"> 

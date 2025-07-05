@@ -13,6 +13,7 @@ import MainSliderUploadPage from './frontend/AdminPanel_frontend/MainSlider/Main
 import AdminGalleryPanel from './frontend/AdminPanel_frontend/GalleryPanel/AdminGalleryPanel';
 import MarqueeManager from './frontend/AdminPanel_frontend/MarqueeLine/Marquee';
 import EventBox from './frontend/AdminPanel_frontend/OurAchievers/EventBox';
+import AdminLogin from './frontend/AdminPanel_frontend/Admin.Login';
 
 
 
@@ -37,6 +38,7 @@ function App() {
 
 
         {/* Admin Routes */}
+        <Route path='/admin/login' element={<AdminLogin />} />
         <Route path="/admin/*" element={<AdminPanel />} />
         <Route path="/student/*" element={<StudentPanel />} />
     

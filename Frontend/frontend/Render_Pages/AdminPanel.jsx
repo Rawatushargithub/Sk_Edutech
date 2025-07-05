@@ -1,5 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 import { StudentProvider } from "../AdminPanel_frontend/context/StudentContext";
 
@@ -17,7 +20,18 @@ import EditFranchisePage from "../AdminPanel_frontend/fracnhise/pages/EditFranch
 import CourseListAdmin from "../AdminPanel_frontend/Courses/CourseListAdmin"; // Import Admin Course List
 import AdminWallet from "../AdminPanel_frontend/Dashboard/Admin_Wallet"; // Import Admin Wallet
 import StudentAdmissionList from "../AdminPanel_frontend/Showing_students/Manage_student";
+
 const AdminPanel = () => {
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
+      navigate("/admin/login"); // Redirect to login if token is missing
+    }
+  }, [navigate]);
+
   return (
     <StudentProvider>
       <div className="h-screen flex flex-col">

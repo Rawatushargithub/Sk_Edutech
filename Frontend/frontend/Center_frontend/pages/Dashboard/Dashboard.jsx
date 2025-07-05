@@ -1,4 +1,8 @@
+
+import { LogOut } from "lucide-react";
+
 import React, { useState, useEffect } from "react";
+
 import { useNavigate } from "react-router-dom";
 import TabMenu from "./RecentlyAdded"
 import StatsCard from "./StatsCard";
@@ -8,6 +12,15 @@ import Header from "./Header";
 
 
 const Dashboard = () => {
+
+   const handleLogout = () => {
+    // Clear stored center data
+    localStorage.removeItem("centerToken");
+    localStorage.removeItem("franchiseName");
+
+    // Redirect to login/home page
+    navigate("/");
+  };
 
     // Mock Data
     const totalStudents = 120; 
@@ -117,7 +130,7 @@ const Dashboard = () => {
                             className="cursor-pointer hover:bg-gray-200 p-2 rounded">
                              Profile
                            </li>
-                           <li className="cursor-pointer hover:bg-gray-200 p-2 rounded">
+                           <li onClick={handleLogout} className="cursor-pointer hover:bg-gray-200 p-2 rounded">
                              Log Out
                            </li>
                          </ul>

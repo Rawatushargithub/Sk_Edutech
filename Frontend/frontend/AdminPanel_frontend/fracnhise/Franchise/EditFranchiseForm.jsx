@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getFranchiseById, updateFranchise } from '../../services/franchiseService';
+import { getFranchiseById, updateFranchise, updateFranchiseStatusOnly } from '../../services/franchiseService';
 import INDFlag from '/assets/india-flag-icon.png';
 
 // Predefined data (can be shared or re-imported)
@@ -55,11 +55,11 @@ function EditFranchiseForm() {
                 });
             } else {
                 toast.error(response.message || "Failed to fetch franchise details.");
-                navigate('/franchises'); // Redirect if not found or error
+                navigate('/admin/franchises'); // Redirect if not found or error
             }
         } catch (error) {
             toast.error(error.message || "An error occurred while fetching franchise details.");
-            navigate('/franchises');
+            navigate('/admin/franchises');
         } finally {
             setIsFetching(false);
         }
@@ -79,21 +79,22 @@ function EditFranchiseForm() {
 
         // Append only editable fields
         const editableFields = [
-            'franchiseName', 'ownerName', 'designation', 'dob', 'email', 'mobile',
-            'address', 'state', 'city', 'postalCode', 'country',
-            'planValidityDays', 'gstNumber', 'atcCode',
-            'totalComputers', 'totalStudents'
-        ];
+    'franchiseName', 'ownerName', 'designation', 'dob', 'email', 'mobile',
+    'address', 'state', 'city', 'postalCode', 'country',
+    'planValidityDays', 'gstNumber', 'atcCode',
+    'totalComputers', 'totalStudents', 'status' // ✅ include status here
+];
+
 
         editableFields.forEach(key => {
             if (data[key] !== undefined && data[key] !== null) {
-                 // Check if the field was actually changed to avoid sending unchanged values
+                // Check if the field was actually changed to avoid sending unchanged values
                 if (data[key] !== franchiseData[key]) { // franchiseData holds original values
                     formData.append(key, data[key]);
                 }
             }
         });
-        
+
         // Handle file uploads only if new files are selected
         if (data.ownerPhoto && data.ownerPhoto[0]) {
             formData.append('ownerPhoto', data.ownerPhoto[0]);
@@ -101,7 +102,7 @@ function EditFranchiseForm() {
         if (data.franchiseSignature && data.franchiseSignature[0]) {
             formData.append('franchiseSignature', data.franchiseSignature[0]);
         }
-        
+
         // If no actual data changed (including files), inform user
         let hasChanges = false;
         for (const _ of formData.entries()) { // Iterate to check if formData has any entries
@@ -119,24 +120,24 @@ function EditFranchiseForm() {
             const response = await updateFranchise(franchiseId, formData);
             if (response.statusCode === 200) {
                 toast.success(response.message || "Franchise updated successfully!");
-                navigate('/franchises'); // Or back to the request stack if it came from there
+                navigate('/admin/franchises'); // Or back to the request stack if it came from there
             } else {
                 throw new Error(response.message || "Failed to update franchise.");
             }
         } catch (error) {
             console.error("Error updating franchise:", error);
             let errorMessage = "An unexpected error occurred.";
-             if (error.response) {
-                 const backendMessage = error.response.data?.message || error.response.data?.error || '';
-                 errorMessage = (typeof backendMessage === 'string' && backendMessage.length > 0 ? backendMessage : null) || `Server Error: ${error.response.status}`;
-                 if (error.response.status === 409 && errorMessage.toLowerCase().includes('email')) {
-                     setError('email', { type: 'manual', message: errorMessage });
-                 }
-             } else if (error.request) {
-                 errorMessage = "Could not connect to the server.";
-             } else {
-                 errorMessage = error.message;
-             }
+            if (error.response) {
+                const backendMessage = error.response.data?.message || error.response.data?.error || '';
+                errorMessage = (typeof backendMessage === 'string' && backendMessage.length > 0 ? backendMessage : null) || `Server Error: ${error.response.status}`;
+                if (error.response.status === 409 && errorMessage.toLowerCase().includes('email')) {
+                    setError('email', { type: 'manual', message: errorMessage });
+                }
+            } else if (error.request) {
+                errorMessage = "Could not connect to the server.";
+            } else {
+                errorMessage = error.message;
+            }
             toast.error(errorMessage);
         } finally {
             setIsLoading(false);
@@ -152,7 +153,7 @@ function EditFranchiseForm() {
         return <div className="text-center p-10">Loading franchise details...</div>;
     }
     if (!franchiseData) {
-         return <div className="text-center p-10 text-red-500">Could not load franchise data.</div>;
+        return <div className="text-center p-10 text-red-500">Could not load franchise data.</div>;
     }
 
     return (
@@ -160,8 +161,8 @@ function EditFranchiseForm() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                 {/* Franchise & Owner Details */}
                 <section>
-                     <h3 className={sectionTitleClass}>Franchise & Owner Details</h3>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+                    <h3 className={sectionTitleClass}>Franchise & Owner Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
                         <div>
                             <label htmlFor="franchiseName" className={labelClass}>Franchise Name <span className="text-red-500">*</span></label>
                             <input type="text" id="franchiseName" {...register("franchiseName", { required: "Franchise Name is required" })} className={inputClass} />
@@ -194,20 +195,20 @@ function EditFranchiseForm() {
                             <label htmlFor="mobile" className={labelClass}>Mobile <span className="text-red-500">*</span></label>
                             <div className="flex mt-1 rounded-md shadow-sm border border-gray-300 focus-within:ring-1 focus-within:ring-black focus-within:border-black overflow-hidden">
                                 <div className="flex-shrink-0 inline-flex items-center pl-3 pr-2 border-r border-gray-300 bg-gray-50 text-gray-600 text-base">
-                                    <img src={INDFlag} alt="IN" className="h-5 w-auto mr-2 flex-shrink-0"/>
+                                    <img src={INDFlag} alt="IN" className="h-5 w-auto mr-2 flex-shrink-0" />
                                     <span className="whitespace-nowrap">+91</span>
                                 </div>
-                                <input type="tel" id="mobile" {...register("mobile", { required: "Mobile number is required", pattern: { value: /^[6-9]\d{9}$/, message: "Enter a valid 10-digit Indian mobile number" }})} className="block w-full flex-1 px-3 py-2 border-none focus:outline-none text-base placeholder-gray-400" />
+                                <input type="tel" id="mobile" {...register("mobile", { required: "Mobile number is required", pattern: { value: /^[6-9]\d{9}$/, message: "Enter a valid 10-digit Indian mobile number" } })} className="block w-full flex-1 px-3 py-2 border-none focus:outline-none text-base placeholder-gray-400" />
                             </div>
-                             {errors.mobile && <p className={errorClass}>{errors.mobile.message}</p>}
+                            {errors.mobile && <p className={errorClass}>{errors.mobile.message}</p>}
                         </div>
                     </div>
                 </section>
 
                 {/* Address Details */}
-                 <section>
-                     <h3 className={sectionTitleClass}>Address Details</h3>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+                <section>
+                    <h3 className={sectionTitleClass}>Address Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
                         <div className="md:col-span-3">
                             <label htmlFor="address" className={labelClass}>Address <span className="text-red-500">*</span></label>
                             <textarea id="address" {...register("address", { required: "Address is required" })} rows="3" className={inputClass}></textarea>
@@ -228,7 +229,7 @@ function EditFranchiseForm() {
                         </div>
                         <div>
                             <label htmlFor="postalCode" className={labelClass}>Postal Code <span className="text-red-500">*</span></label>
-                            <input type="text" id="postalCode" {...register("postalCode", { required: "Postal Code is required", pattern: { value: /^\d{6}$/, message: "Enter a valid 6-digit postal code" }})} className={inputClass} />
+                            <input type="text" id="postalCode" {...register("postalCode", { required: "Postal Code is required", pattern: { value: /^\d{6}$/, message: "Enter a valid 6-digit postal code" } })} className={inputClass} />
                             {errors.postalCode && <p className={errorClass}>{errors.postalCode.message}</p>}
                         </div>
                         <div>
@@ -240,9 +241,9 @@ function EditFranchiseForm() {
 
                 {/* Infrastructure Details */}
                 <section>
-                     <h3 className={sectionTitleClass}>Infrastructure Details</h3>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
-                         <div>
+                    <h3 className={sectionTitleClass}>Infrastructure Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+                        <div>
                             <label htmlFor="totalComputers" className={labelClass}>No. of Computers</label>
                             <input type="number" id="totalComputers" {...register("totalComputers", { valueAsNumber: true, min: { value: 0, message: "Cannot be negative" } })} className={inputClass} />
                             {errors.totalComputers && <p className={errorClass}>{errors.totalComputers.message}</p>}
@@ -252,14 +253,14 @@ function EditFranchiseForm() {
                             <input type="number" id="totalStudents" {...register("totalStudents", { valueAsNumber: true, min: { value: 0, message: "Cannot be negative" } })} className={inputClass} />
                             {errors.totalStudents && <p className={errorClass}>{errors.totalStudents.message}</p>}
                         </div>
-                     </div>
-                 </section>
+                    </div>
+                </section>
 
                 {/* Plan & Other Details */}
-                 <section>
-                     <h3 className={sectionTitleClass}>Plan & Other Details</h3>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
-                         <div>
+                <section>
+                    <h3 className={sectionTitleClass}>Plan & Other Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+                        <div>
                             <label htmlFor="planValidityDays" className={labelClass}>Select Plan <span className="text-red-500">*</span></label>
                             <select id="planValidityDays" {...register("planValidityDays", { required: "Plan is required" })} className={inputClass}>
                                 <option value="">-- Select Plan --</option>
@@ -267,14 +268,14 @@ function EditFranchiseForm() {
                             </select>
                             {errors.planValidityDays && <p className={errorClass}>{errors.planValidityDays.message}</p>}
                         </div>
-                         <div>
+                        <div>
                             <label htmlFor="gstNumber" className={labelClass}>GST Number</label>
                             <input type="text" id="gstNumber" {...register("gstNumber")} className={inputClass} />
-                         </div>
-                         <div>
+                        </div>
+                        <div>
                             <label htmlFor="atcCode" className={labelClass}>ATC Code</label>
                             <input type="text" id="atcCode" {...register("atcCode")} className={inputClass} />
-                         </div>
+                        </div>
                     </div>
                 </section>
 
@@ -284,12 +285,12 @@ function EditFranchiseForm() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label htmlFor="ownerPhoto" className={labelClass}>Owner Photo</label>
-                            <input type="file" id="ownerPhoto" {...register("ownerPhoto")} accept="image/*" className="mt-1 block w-full text-base text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-base file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer"/>
+                            <input type="file" id="ownerPhoto" {...register("ownerPhoto")} accept="image/*" className="mt-1 block w-full text-base text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-base file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer" />
                             {franchiseData?.ownerPhotoUrl && !watch('ownerPhoto')?.[0] && <a href={franchiseData.ownerPhotoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1 block">View current photo</a>}
                         </div>
                         <div>
                             <label htmlFor="franchiseSignature" className={labelClass}>Franchise Signature</label>
-                            <input type="file" id="franchiseSignature" {...register("franchiseSignature")} accept="image/*" className="mt-1 block w-full text-base text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-base file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer"/>
+                            <input type="file" id="franchiseSignature" {...register("franchiseSignature")} accept="image/*" className="mt-1 block w-full text-base text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-base file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer" />
                             {franchiseData?.franchiseSignatureUrl && !watch('franchiseSignature')?.[0] && <a href={franchiseData.franchiseSignatureUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1 block">View current signature</a>}
                         </div>
                     </div>
@@ -297,21 +298,38 @@ function EditFranchiseForm() {
 
                 {/* System Information (Read-only) */}
                 <section>
-                     <h3 className={sectionTitleClass}>System Information (Read-only)</h3>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+                    <h3 className={sectionTitleClass}>System Information (Read-only)</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
                         <div>
                             <label className={labelClass}>Franchise ID</label>
                             <input type="text" value={franchiseData?.franchiseId || 'N/A'} readOnly className={`${inputClass} bg-gray-100`} />
                         </div>
                         <div>
-                            <label className={labelClass}>Status</label>
-                            <input type="text" value={franchiseData?.status || 'N/A'} readOnly className={`${inputClass} bg-gray-100`} />
-                        </div>
+    <label htmlFor="status" className={labelClass}>
+        Status <span className="text-red-500">*</span>
+    </label>
+    <select
+        id="status"
+        {...register("status", { required: "Status is required" })}
+        className={inputClass}
+    >
+        <option value="">-- Select Status --</option>
+        <option value="Pending">Pending</option>
+        <option value="Active">Active</option>
+        <option value="Inactive">Inactive</option>
+        <option value="Rejected">Rejected</option>
+    </select>
+    {errors.status && <p className={errorClass}>{errors.status.message}</p>}
+</div>
+
+
+
+
                         <div>
                             <label className={labelClass}>Verification Status</label>
                             <input type="text" value={franchiseData?.verificationStatus || 'N/A'} readOnly className={`${inputClass} bg-gray-100`} />
                         </div>
-                     </div>
+                    </div>
                 </section>
 
                 <div className="flex justify-end space-x-4 pt-8 border-t border-gray-200 mt-10">

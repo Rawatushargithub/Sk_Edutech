@@ -1,4 +1,4 @@
-import Feedback from "../models/Feedback.js";
+import Feedback from "../../Student_backend/models/Feedback.js";
 
 export const getAllFeedbacks = (req, res) => {
   Feedback.find()

@@ -8,7 +8,9 @@ import {
     getFranchiseById,    // New
     updateFranchiseById, // New
     deleteFranchiseById,  // New
-    resendFranchiseCredentials // New
+    resendFranchiseCredentials, // New
+    getRecentFranchises,
+    getFranchiseCount,
 } from '../../controllers/Franchise/franchise.controller.js';
 import { upload } from '../../middlewares/franchise.multer.middleware.js'; // Assuming multer middleware is configured here
 
@@ -34,6 +36,12 @@ router.route('/requests').get(getFranchiseRequests);
 // Route for ADMIN to update status/verification of a specific franchise (using MongoDB _id)
 // Using PATCH as it's a partial update
 router.route('/:franchiseId/manage').patch(updateFranchiseStatusVerification);
+
+// Route to get recently added franchises
+router.get('/recent', getRecentFranchises);
+
+// Route to get count of franchises
+router.get('/count', getFranchiseCount);
 
 // --- Routes for specific franchise CRUD operations ---
 router.route('/:franchiseId')

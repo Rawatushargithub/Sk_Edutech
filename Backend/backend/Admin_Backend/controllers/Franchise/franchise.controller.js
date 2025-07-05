@@ -513,6 +513,44 @@ const resendFranchiseCredentials = asyncHandler(async (req, res) => {
     }
 });
 
+// Get recently added franchises (limit, sorted by createdAt desc)
+const getRecentFranchises = asyncHandler(async (req, res) => {
+    const limit = parseInt(req.query.limit) || 5;
+    const franchises = await Franchise.find()
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .select("franchiseName ownerName email status verificationStatus ownerPhotoUrl createdAt atcCode city state franchiseId mobile expireDate"); // Add more fields as needed
+
+    if (!franchises || franchises.length === 0) {
+        return res.status(200).json([]);
+    }
+
+    // Format output similar to student/courses recent
+    const formatted = franchises.map(f => ({
+        id: f._id,
+        name: f.franchiseName,
+        ownerName: f.ownerName,
+        email: f.email,
+        status: f.status,
+        verificationStatus: f.verificationStatus,
+        ownerPhotoUrl: f.ownerPhotoUrl,
+        atcCode: f.atcCode,
+        city: f.city,
+        state: f.state,
+        franchiseId: f.franchiseId,
+        mobile: f.mobile,
+        expireDate: f.expireDate,
+        addedOn: f.createdAt
+    }));
+
+    res.status(200).json(formatted);
+});
+
+// Get count of all franchises
+const getFranchiseCount = asyncHandler(async (req, res) => {
+    const count = await Franchise.countDocuments();
+    res.status(200).json({ count });
+});
 
 // TODO: Add controller for checking and updating status based on expiry date (could be a scheduled job or checked on login/access)
 
@@ -526,5 +564,7 @@ export {
     getFranchiseById,    // New
     updateFranchiseById, // New
     deleteFranchiseById,  // New
-    resendFranchiseCredentials // New
+    resendFranchiseCredentials, // New
+    getRecentFranchises,
+    getFranchiseCount,
 };

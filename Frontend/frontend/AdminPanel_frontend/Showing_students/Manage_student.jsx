@@ -171,7 +171,7 @@ const StudentAdmissionList = () => {
                 </th>
                  <th className="border border-gray-300 px-4 py-2">Student ID</th>
                 <th className="border border-gray-300 px-4 py-2">
-                  Course Interested
+                  Course Name
                 </th>
                  <th className="border border-gray-300 px-4 py-2">
                   Course ID

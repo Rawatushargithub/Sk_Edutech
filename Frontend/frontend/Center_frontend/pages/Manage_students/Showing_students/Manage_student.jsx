@@ -175,12 +175,11 @@ const StudentAdmissionList = () => {
                 <th className="border border-gray-300 px-4 py-2">S/N</th>
                 <th className="border border-gray-300 px-4 py-2">Action</th>
                 <th className="border border-gray-300 px-4 py-2">Status</th>
-                <th className="border border-gray-300 px-4 py-2">Photo</th>
                 <th className="border border-gray-300 px-4 py-2">Batch</th>
                 <th className="border border-gray-300 px-4 py-2">Student Name</th>
                 <th className="border border-gray-300 px-4 py-2">StudentID</th>
                 <th className="border border-gray-300 px-4 py-2">
-                  Course Interested
+                  Course Name
                 </th>
                 <th className="border border-gray-300 px-4 py-2">
                   Course ID
@@ -220,13 +219,6 @@ const StudentAdmissionList = () => {
                     >
                       {student.status ? "Active" : "Inactive"}
                     </button>
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    <img
-                      src={student.studentPhoto}
-                      alt="student"
-                      className="w-10 h-10 rounded-full mx-auto"
-                    />
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
                     {student.batch}

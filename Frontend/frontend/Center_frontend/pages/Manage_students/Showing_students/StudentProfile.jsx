@@ -82,7 +82,7 @@ const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard ,
 
             <div className="flex">
               <div className="w-1/2 font-semibold">Course:</div>
-              <div className="w-1/2">{student.courseInterested || "N/A"}</div>
+              <div className="w-1/2">{student.courseInterested.courseName || "N/A"}</div>
             </div>
 
             <div className="flex">

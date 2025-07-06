@@ -165,16 +165,17 @@ const StudentAdmissionList = () => {
               <tr>
                 <th className="border border-gray-300 px-4 py-2">S/N</th>
                 <th className="border border-gray-300 px-4 py-2">Action</th>
-                <th className="border border-gray-300 px-4 py-2">Status</th>
-               
-                <th className="border border-gray-300 px-4 py-2">Student ID</th>
+                <th className="border border-gray-300 px-4 py-2">Status</th> 
                 <th className="border border-gray-300 px-4 py-2">
                   Student Name
                 </th>
+                 <th className="border border-gray-300 px-4 py-2">Student ID</th>
                 <th className="border border-gray-300 px-4 py-2">
                   Course Interested
                 </th>
-                
+                 <th className="border border-gray-300 px-4 py-2">
+                  Course ID
+                </th>
                 <th className="border border-gray-300 px-4 py-2">Mobile</th>
                 <th className="border border-gray-300 px-4 py-2">
                   Referral Code
@@ -208,18 +209,19 @@ const StudentAdmissionList = () => {
                     >
                       {student.status ? "Active" : "Inactive"}
                     </button>
-                  </td>
-                  
-                  <td className="border border-gray-300 px-4 py-2">
-                    {student.rollNumber}
-                  </td>
+                  </td>                
                   <td className="border border-gray-300 px-4 py-2">
                     {student.studentName}
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
+                    {student.rollNumber}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
                     {student.courseInterested.courseName}
                   </td>
-                
+                  <td className="border border-gray-300 px-4 py-2">
+                    {student.courseInterested.courseCode}
+                  </td>
                   <td className="border border-gray-300 px-4 py-2">
                     {student.studentMobile}
                   </td>

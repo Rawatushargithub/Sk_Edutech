@@ -9,10 +9,11 @@ import { useSwipeable } from "react-swipeable";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Login from "../../../Student_Frontend/pages/Login";
-import centerLogin from "../../../Student_Frontend/pages/centerLogin";
+import CenterLoginModal from "../../../Student_Frontend/pages/centerLogin";
+import FranchiseVerificationModal from "./FranchiseVerificationModal";
 
 
-const LoginBoxes = () => {
+const LoginBoxes = ({ onApplyClick }) => {
   const navigate = useNavigate();
   const ApplyFranchise = () => {
     navigate("/ApplyforFranchise");
@@ -47,6 +48,23 @@ const LoginBoxes = () => {
   };
 
   const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState(""); // "student" or "center"
+
+  const studentLogin = () => {
+    setModalType("student");
+    setShowModal(true);
+  };
+
+  const CenterLogin = () => {
+    setModalType("center");
+    setShowModal(true);
+  };
+
+  const verificationShow = () => {
+    setModalType("verification");
+    setShowModal(true);
+  }
+
 
   const handlers = useSwipeable({
     onSwipedLeft: () => setActiveSlide((prev) => (prev + 1) % 2),
@@ -56,10 +74,7 @@ const LoginBoxes = () => {
   });
 
 
-  // This will toggle modal visibility
-  const studentLogin = () => {
-    setShowModal(true);
-  };
+
 
 
   return (
@@ -83,22 +98,24 @@ const LoginBoxes = () => {
           className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm"
           style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
         >
-
           <div className="relative max-w-sm w-full">
-            {/* Close Button just outside top-right */}
+            {/* Close Button */}
             <button
               onClick={() => setShowModal(false)}
-              className="absolute -top-10 right-0 text-[#003366] hover:text-violet-800 text-4xl font-bold z-50"
+              className="absolute -top-10 right-0 text-white hover:text-violet-800 text-4xl font-bold z-50"
               aria-label="Close modal"
             >
               &times;
             </button>
 
-            {/* Modal Card */}
-            <div className="bg-white border-2 border-[#003366] text-[#003366] rounded-2xl shadow-lg max-w-sm w-full relative max-h-[90vh] overflow-y-auto transition-all duration-500"
-              {...handlers}>
-              {/* <Login /> */}
-              {activeSlide === 0 ? <Login /> : <centerLogin />}
+            {/* Modal Content */}
+            <div
+              className="bg-white border-2 border-[#003366] text-[#003366] rounded-2xl shadow-lg max-w-sm w-full relative max-h-[90vh] overflow-y-auto transition-all duration-500"
+              {...handlers}
+            >
+              {modalType === "student" && <Login />}
+              {modalType === "center" && <CenterLoginModal />}
+              {modalType === "verification" && <FranchiseVerificationModal onClose={() => setShowModal(false)} />}
             </div>
           </div>
         </div>
@@ -106,16 +123,17 @@ const LoginBoxes = () => {
 
 
 
+
       {/* Center Login */}
       <div
-        // onClick={centerLogin}
+        onClick={CenterLogin}
         className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-3 sm:gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 sm:h-auto"
       >
         <FaBuilding
           className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]"
         />
         <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left"
-        onClick={() => navigate("/institute")}
+        // onClick={CenterLogin}
         >
           Center <br className="hidden sm:block" /> Login
         </div>
@@ -127,7 +145,7 @@ const LoginBoxes = () => {
       {/* Certificate Verification */}
       <div
         className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-3 sm:gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 sm:h-auto"
-        onClick={() => setIsOpen(true)}
+      
       >
         <FaFileSignature className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]" />
         <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left">
@@ -186,7 +204,7 @@ const LoginBoxes = () => {
 
       {/* Center Verification */}
       <div
-        onClick={() => setIsOpen(true)}
+        onClick={verificationShow}
         className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-3 sm:gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 sm:h-auto"
       >
         <FaCheckCircle className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]" />
@@ -198,7 +216,7 @@ const LoginBoxes = () => {
 
       {/* Apply for Franchise */}
       <div
-        onClick={ApplyFranchise}
+        onClick={onApplyClick}
         className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-3 sm:gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 sm:h-auto"
       >
         <FaFolderPlus className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]" />

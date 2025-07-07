@@ -53,7 +53,7 @@ const Feedback = () => {
         await axios.put(`${API_BASE_URL}/api/v1/feedback/${editId}`, { rating, comment });
         setEditId(null);
       } else {
-        await axios.post("${API_BASE_URL}/api/v1/feedback", feedbackData);
+        await axios.post(`${API_BASE_URL}/api/v1/feedback`, feedbackData);
       }
 
       const res = await axios.get(`${API_BASE_URL}/api/v1/feedback/${studentId}`);

@@ -10,7 +10,7 @@ const TopBar = () => {
     // Fetch student data from localStorage (or backend if using JWT)
     const storedStudent = JSON.parse(localStorage.getItem("student"));
     if (!storedStudent) {
-      navigate("/student/login"); // Redirect to login if no student data
+      navigate("/"); // Redirect to login if no student data
     } else {
       setStudent(storedStudent);
     }
@@ -18,7 +18,7 @@ const TopBar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("student"); // Clear student data
-    navigate("/student/login"); // Redirect to login page
+    navigate("/"); // Redirect to login page
   };
 
   return (

@@ -57,6 +57,7 @@ import FeedbackRoutes from './backend/Homepage_backend/routes/feedbackRoutes.js'
 import AchieverSliderRoutes from './backend/Homepage_backend/routes/achieverSliderRoutes.js'
 import eduSectionRouter from './backend/Homepage_backend/routes/EduSectionImageRoutes.js'
 import marqueeLineRouter from './backend/Admin_Backend/routes/MarqueeLine/marquee.routes.js'
+import homepageFranchiseRoutes from './backend/Homepage_backend/routes/homepageFranchise.routes.js'
 
 // Homepage Routes
 // app.use("/api/v1/gallery", galleryRoutes)
@@ -66,6 +67,7 @@ app.use("/api/v1", FeedbackRoutes);
 app.use("/api/v1/achievements",AchieverSliderRoutes );
 app.use("/api/v1/eduSection",eduSectionRouter );
 app.use("/api/v1/marquee",marqueeLineRouter );
+app.use("/api/v1/homepage-franchises", homepageFranchiseRoutes);
 
 
 
@@ -79,18 +81,23 @@ import galleryRouter from "./backend/Admin_Backend/routes/Gallery/galleryRoutes.
 import adminCourseRouter from "./backend/Admin_Backend/routes/courses.routes.js"; // Import admin course router
 import paymentRouter from "./backend/Admin_Backend/routes/admin.routes.js"; // Import payment router
 
+import adminRoutes from "./backend/Admin_Backend/routes/AdminPanel/admin.panel.js"; // Import admin routes
+
+import adminstudentRouter from "./backend/Admin_Backend/routes/student.routes.js"; // Import student router
+
+
 // admin routes
 app.use("/api/v1/mainSliderImages",mainSliderRouter)
 app.use("/api/v1/marquee",marqueeRoutes)
-// app.use("/api/v1/gallery", galleryRoutes)
+app.use("/api/v1/admin_student", adminstudentRouter)
 app.use("/api/v1/achievers", achieversRouter)
 app.use("/api/v1/eventBoxImages",eventBoxRouter)
 app.use("/api/v1/adminwallet", paymentRouter)
 app.use("/api/v1/franchises", franchiseRouter); 
 app.use("/api/v1/gallery", galleryRouter);
-app.use("/api/v1/admin/courses", adminCourseRouter); // Add admin course routes
 
-
+app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/admin_courses", adminCourseRouter); // Add admin course routes
 
 
 //Student Routes
@@ -125,7 +132,7 @@ import institute_examRoutes from "./backend/Center_Backend/routes/examRoutes.js"
 import institute_walletRoutes from "./backend/Center_Backend/routes/payment.routes.js"
 import institute_EnquiryRoutes from "./backend/Center_Backend/routes/enquiryStudent.route.js";
 import institute_questionBankRoutes from "./backend/Center_Backend/routes/questionBankroutes.js";
-
+// import institute_detailsRoutes from "../Backend/backend/Center_Backend/routes/";
 
 app.use("/api/v1/institute_student" , studentRouter);
 app.use("/api/v1/institute_courses" , courseRouter); 
@@ -137,4 +144,5 @@ app.use("/api/v1/institute_exam", institute_examRoutes);
 app.use("/api/v1/institute_wallet", institute_walletRoutes);
 app.use("/api/v1/institute_enquiry", institute_EnquiryRoutes);
 app.use("/api/v1/institute_question_bank", institute_questionBankRoutes);
+// app.use("/api/v1/institute_details", institute_questionBankRoutes);
 console.log("Center Routes Loaded");

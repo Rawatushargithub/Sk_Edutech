@@ -1,5 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 import { StudentProvider } from "../AdminPanel_frontend/context/StudentContext";
 
@@ -15,10 +18,21 @@ import AddFranchisePage from "../AdminPanel_frontend/fracnhise/pages/AddFranchis
 import RequestStackPage from "../AdminPanel_frontend/fracnhise/pages/RequestStackPage";
 import EditFranchisePage from "../AdminPanel_frontend/fracnhise/pages/EditFranchisePage";
 import CourseListAdmin from "../AdminPanel_frontend/Courses/CourseListAdmin"; // Import Admin Course List
+
 import AdminWallet from "../AdminPanel_frontend/Dashboard/Admin_Wallet"; // Import Admin Wallet
-import StudentAdmissionList from "../AdminPanel_frontend/Showing_students/Manage_student"; // Import Student Admission List
+import StudentAdmissionList from "../AdminPanel_frontend/Showing_students/Manage_student";
 
 const AdminPanel = () => {
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
+      navigate("/admin/login"); // Redirect to login if token is missing
+    }
+  }, [navigate]);
+
   return (
     <StudentProvider>
       <div className="h-screen flex flex-col">
@@ -44,6 +58,8 @@ const AdminPanel = () => {
 
               <Route path="MM" element={<MarqueeManager />} />
               <Route path="EventBox" element={<EventBox />} />
+
+              <Route path="Student-list" element={<StudentAdmissionList />} />
 
               <Route path="franchises" element={<FranchiseListPage />} /> {/* Lists ACTIVE & VERIFIED franchises */}
               <Route path="franchises/add" element={<AddFranchisePage />} /> {/* Admin adds a NEW franchise (starts Pending) */}

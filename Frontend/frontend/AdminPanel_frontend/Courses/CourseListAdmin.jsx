@@ -94,7 +94,7 @@ const CourseListAdmin = () => {
     setLoading(true);
     setError(null);
     try {
-      let url = `${API_BASE_URL}/api/v1/admin/courses`;
+      let url = `${API_BASE_URL}/api/v1/admin_courses`;
       if (filterStatus) {
         url += `?status=${filterStatus}`;
       }
@@ -122,7 +122,7 @@ const CourseListAdmin = () => {
       return;
     }
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/courses/${courseId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin_courses/${courseId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

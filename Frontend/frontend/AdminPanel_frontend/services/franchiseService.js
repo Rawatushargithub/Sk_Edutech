@@ -102,19 +102,38 @@ export const getFranchiseById = async (franchiseId) => {
 export const updateFranchise = async (franchiseId, formData) => {
     const url = `/${franchiseId}`; // PUT /api/v1/franchises/{franchiseId}
     console.log(`[FranchiseService] Attempting to update franchise ${franchiseId} at: ${franchiseApi.defaults.baseURL}${url}`);
+    
     try {
         const response = await franchiseApi.put(url, formData, {
             headers: {
-                'Content-Type': 'multipart/form-data', // Important if files are part of the update
+                'Content-Type': 'multipart/form-data',
             },
         });
+
         console.log(`[FranchiseService] Raw response from updateFranchise for ${franchiseId}:`, response);
         return response.data;
     } catch (error) {
-        console.error(`[FranchiseService] Error updating franchise ${franchiseId}:`, error.response?.data || error.message);
-        throw error.response?.data || new Error(`Failed to update franchise ${franchiseId}`);
+        const errorData = error.response?.data || error.message;
+        console.error(`[FranchiseService] Error updating franchise ${franchiseId}:`, errorData);
+        throw errorData;
     }
 };
+
+export const updateFranchiseStatusOnly = async (franchiseId, status) => {
+    const url = `/${franchiseId}/status`; // Backend should handle this route specifically for status
+    console.log(`[FranchiseService] Updating ONLY status for ${franchiseId} to ${status}`);
+
+    try {
+        const response = await franchiseApi.patch(url, { status }); // Send JSON payload
+        console.log(`[FranchiseService] Status update response for ${franchiseId}:`, response);
+        return response.data;
+    } catch (error) {
+        console.error(`[FranchiseService] Error updating status for ${franchiseId}:`, error.response?.data || error.message);
+        throw error.response?.data || new Error(`Failed to update status for franchise ${franchiseId}`);
+    }
+};
+
+
 
 // Function to delete a franchise by its ID
 export const deleteFranchise = async (franchiseId) => {

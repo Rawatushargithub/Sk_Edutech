@@ -95,7 +95,6 @@ app.use("/api/v1/eventBoxImages",eventBoxRouter)
 app.use("/api/v1/adminwallet", paymentRouter)
 app.use("/api/v1/franchises", franchiseRouter); 
 app.use("/api/v1/gallery", galleryRouter);
-
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/admin_courses", adminCourseRouter); // Add admin course routes
 

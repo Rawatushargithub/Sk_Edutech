@@ -7,6 +7,7 @@ import FormView from "./FormView";
 import IdCardView from "./IdCardView";
 import SharePopup from "./SharePopup";
 import API_BASE_URL from "../../../../config";
+import { FaUser } from "react-icons/fa"; // Importing icon for user profile
 
 const StudentAdmissionList = () => {
   const navigate = useNavigate();
@@ -156,13 +157,13 @@ const StudentAdmissionList = () => {
           <h1 className="text-2xl font-bold">List Student Admission</h1>
           <div>
             <button
-              className="bg-green-500 text-white px-4 py-2 rounded-2xl mr-2"
+              className="bg-sky-900 text-white px-4 py-2 rounded-2xl mr-2"
               onClick={() => navigate("/institute/Registration")}
             >
               Add New Student
             </button>
-            <button className="bg-red-500 text-white px-4 py-2 rounded-2xl">
-              Export
+            <button className="bg-sky-900 flex-col text-white font-medium px-4 py-2 rounded-md cursor-pointer">
+              Export <span className="text-md ml-1">▲</span>
             </button>
           </div>
         </div>
@@ -174,16 +175,15 @@ const StudentAdmissionList = () => {
                 <th className="border border-gray-300 px-4 py-2">S/N</th>
                 <th className="border border-gray-300 px-4 py-2">Action</th>
                 <th className="border border-gray-300 px-4 py-2">Status</th>
-                <th className="border border-gray-300 px-4 py-2">Photo</th>
                 <th className="border border-gray-300 px-4 py-2">Batch</th>
+                <th className="border border-gray-300 px-4 py-2">Student Name</th>
+                <th className="border border-gray-300 px-4 py-2">StudentID</th>
                 <th className="border border-gray-300 px-4 py-2">
-                  Student Name
+                  Course Name
                 </th>
                 <th className="border border-gray-300 px-4 py-2">
-                  Course Interested
+                  Course ID
                 </th>
-                <th className="border border-gray-300 px-4 py-2">Username</th>
-                <th className="border border-gray-300 px-4 py-2">Password</th>
                 <th className="border border-gray-300 px-4 py-2">Mobile</th>
                 <th className="border border-gray-300 px-4 py-2">
                   Referral Code
@@ -204,28 +204,21 @@ const StudentAdmissionList = () => {
                   </td>
                   <td className="border-gray-500 px-4 py-2 flex justify-center gap-2">
                     <button
-                      className="bg-blue-500 text-white p-2 rounded"
+                      className="bg-sky-800 text-white p-2 rounded-md text-sm font-medium"
                       onClick={() => handleViewProfile(student)}
                     >
-                      👤 Profile
+                      <FaUser className="w-8 h-8 items-center" />
                     </button>
                   </td>
                   <td className="p-2 border">
                     <button 
                       onClick={() => handleStatusToggle(student.id)}
-                      className={`px-2 py-1 rounded text-white ${
-                        student.status ? "bg-green-500" : "bg-red-500"
+                      className={`px-2 py-1 rounded-full text-sm font-medium  ${
+                        student.status ? "bg-green-200 text-green-800 " : "bg-red-200 text-red-800"
                       }`}
                     >
                       {student.status ? "Active" : "Inactive"}
                     </button>
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    <img
-                      src={student.studentPhoto}
-                      alt="student"
-                      className="w-10 h-10 rounded-full mx-auto"
-                    />
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
                     {student.batch}
@@ -234,13 +227,13 @@ const StudentAdmissionList = () => {
                     {student.studentName}
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
+                    {student.rollNumber}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
                     {student.courseInterested.courseName}
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
-                    {student.username}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {student.password}
+                    {student.courseInterested.courseCode}
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
                     {student.studentMobile}
@@ -287,7 +280,7 @@ const StudentAdmissionList = () => {
           >
             Next
           </button>
-        </div> 
+        </div>
       </div>
       {/* Student Profile Popup */}
       {showProfilePopup && selectedStudent && (
@@ -302,22 +295,13 @@ const StudentAdmissionList = () => {
       )}
 
       {showFormPopup && (
-        <FormView 
-        student={selectedStudent} 
-        onClose={closePopup} 
-        />
+        <FormView student={selectedStudent} onClose={closePopup} />
       )}
       {showIdCardPopup && (
-        <IdCardView 
-        student={selectedStudent} 
-        onClose={closePopup} 
-        />
+        <IdCardView student={selectedStudent} onClose={closePopup} />
       )}
       {showSharePopup && (
-        <SharePopup 
-        student={selectedStudent} 
-        onClose={closePopup} 
-        />
+        <SharePopup student={selectedStudent} onClose={closePopup} />
       )}
     </div>
   );

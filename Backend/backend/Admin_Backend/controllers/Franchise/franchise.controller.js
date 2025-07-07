@@ -621,7 +621,6 @@ const getFranchiseCount = asyncHandler(async (req, res) => {
 
 export const loginFranchise = async (req, res) => {
   const { identifier, password } = req.body; // identifier = email or mobile
-
   try {
     const franchise = await Franchise.findOne({
       $or: [{ email: identifier }, { mobile: identifier }],

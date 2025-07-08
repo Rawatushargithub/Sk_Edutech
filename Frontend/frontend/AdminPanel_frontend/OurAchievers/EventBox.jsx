@@ -10,7 +10,10 @@ const EventBox = () => {
   const [uploading, setUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   // Load existing images on component mount
   useEffect(() => {
     fetchImagesFromDatabase();
@@ -154,18 +157,46 @@ const EventBox = () => {
       
       // Fetch updated images after deletion
       await fetchImagesFromDatabase();
-      
+      closeDeleteModal();
       setSuccessMessage('Image deleted successfully!');
       
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccessMessage('');
-      }, 3000);
+      }, 5000);
     } catch (error) {
       console.error('Error deleting image:', error);
       setErrorMessage('Failed to delete image. Please try again.');
     }
   };
+
+  
+   // Single delete functions
+  const openDeleteModal = (item) => {
+    setLoading(false);
+    setItemToDelete(item);
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setItemToDelete(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+
+    setLoading(true);
+    try {
+      
+      handleDeleteImage(itemToDelete);
+      
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      setMessage("Failed to delete item");
+    }
+  };
+
 
   // Handle reordering of images
   const handleReorder = async (id, direction, isPending) => {
@@ -399,7 +430,7 @@ const EventBox = () => {
                         </div>
                         
                         <button 
-                          onClick={() => handleDeleteImage(image._id)}
+                          onClick={() => openDeleteModal(image._id)}
                           className="p-1 text-red-600 hover:bg-red-50 rounded"
                           title="Delete"
                         >
@@ -502,6 +533,34 @@ const EventBox = () => {
               )}
             </button>
           </div>
+          {/* Single Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete ? This
+              action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={closeDeleteModal}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={loading}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:text-red-600 cursor-pointer hover:bg-gray-100"
+              >
+                {loading ? "Deleting..." : "Delete"}
+                
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
         </div>
         
         

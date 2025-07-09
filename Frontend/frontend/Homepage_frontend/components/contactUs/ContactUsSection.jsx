@@ -20,7 +20,7 @@ const ContactUsSection = () => {
           href="https://www.google.com/maps?q=First+floor,+Link+Road+NH-48,+Narsinghpur,+Gurgaon+HR"
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-white rounded-xl shadow-md p-6 transition duration-300 hover:shadow-lg hover:translate-y-1 flex flex-col items-center text-center group"
+          className="bg-white rounded-xl shadow-md p-6 transition duration-300 hover:shadow-lg hover:translate-y-1 flex flex-col items-center text-center group w-full max-w-xs"
         >
           <div className="bg-blue-100 p-4 rounded-full mb-4 group-hover:bg-blue-600 transition-colors duration-300">
             <MapPin className="text-blue-600 group-hover:text-white w-6 h-6" />
@@ -34,7 +34,7 @@ const ContactUsSection = () => {
         {/* Call Us Card */}
         <a
           href="tel:+918700810876"
-          className="bg-white rounded-xl shadow-md p-6 transition duration-300 hover:shadow-lg hover:translate-y-1 flex flex-col items-center text-center group"
+          className="bg-white rounded-xl shadow-md p-6 transition duration-300 hover:shadow-lg hover:translate-y-1 flex flex-col items-center text-center group w-full max-w-xs"
         >
           <div className="bg-green-100 p-4 rounded-full mb-4 group-hover:bg-green-600 transition-colors duration-300">
             <PhoneCall className="text-green-600 group-hover:text-white w-6 h-6" />
@@ -47,19 +47,19 @@ const ContactUsSection = () => {
         {/* Email Card */}
         <a
           href="mailto:skcoachingclasses722@gmail.com"
-          className="bg-white rounded-xl shadow-md p-6 transition duration-300 hover:shadow-lg hover:translate-y-1 flex flex-col items-center text-center group"
+          className="bg-white rounded-xl shadow-md p-6 transition duration-300 hover:shadow-lg hover:translate-y-1 flex flex-col items-center text-center group  w-full max-w-xs"
         >
-          <div className="bg-red-100 p-4 rounded-full mb-4 group-hover:bg-red-600 transition-colors duration-300">
+          <div className="bg-red-100 p-4 rounded-full mb-4 group-hover:bg-red-600 transition-colors duration-300 ">
             <Mail className="text-red-600 group-hover:text-white w-6 h-6" />
           </div>
           <h3 className="font-semibold text-gray-800 text-lg mb-2">Email Us</h3>
-          <p className="text-gray-600 text-sm">
+          <p className="text-gray-600 text-sm break-words w-full">
             skcoachingclasses722@gmail.com
           </p>
         </a>
 
         {/* Opening Hours Card */}
-        <div className="bg-white rounded-xl shadow-md p-6 transition duration-300 hover:shadow-lg hover:translate-y-1 flex flex-col items-center text-center group">
+        <div className="bg-white rounded-xl shadow-md p-6 transition duration-300 hover:shadow-lg hover:translate-y-1 flex flex-col items-center text-center group w-full max-w-xs">
           <div className="bg-purple-100 p-4 rounded-full mb-4 group-hover:bg-purple-600 transition-colors duration-300">
             <Clock className="text-purple-600 group-hover:text-white w-6 h-6" />
           </div>

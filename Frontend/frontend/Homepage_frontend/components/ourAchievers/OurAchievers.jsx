@@ -96,12 +96,12 @@ const OurAchievers = () => {
   return (
     <div className="mx-auto my-6 justify-center p-8 flex flex-col lg:flex-row gap-8 ">
       {/* Left div for images from API */}
-      {/* Also called as EVENT BOX */}
-      <div className="max-w-[550px] max-h-[500px] relative rounded-3xl overflow-hidden bg-gray-100">
+      {/* EventBox slider*/}
+      <div className="max-w-[550px] max-h-[500px] relative rounded-3xl overflow-hidden bg-gray-100 sm:object-cover">
 
         {/* Images */}
       <div 
-        className="flex transition-transform duration-500 ease-out h-full"
+        className="flex transition-transform duration-500 ease-out h-full "
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
         {sliderImages.map((image, index) => (

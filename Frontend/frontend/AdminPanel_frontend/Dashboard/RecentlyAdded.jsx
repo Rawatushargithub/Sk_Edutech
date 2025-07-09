@@ -105,14 +105,14 @@ const TabMenu = () => {
       <div className="text-2xl text-regal-voilet mb-6 mt-14">
         <h1>Recently Added</h1>
       </div>
-
+      
       {/* Tab Buttons */}
-      <div className="flex mb-1 transition-all duration-300">
+      <div className="flex mb-1 transition-all duration-300 flex-col sm:flex-row">
         {tabs.map((tab) => (
           <button
             key={tab.name}
             onClick={() => handleTabClick(tab.name)}
-            className={`px-6 py-2 w-5/12 flex justify-center items-center transition-all duration-300 ease-in-out ${
+            className={`px-6 py-2 w-full sm:w-5/12 flex justify-center items-center transition-all duration-300 ease-in-out ${
               selectedTab === tab.name
                 ? "bg-gray-200 text-regal-voilet border-b-4 border-[#09182a] shadow-md scale-105"
                 : "bg-white text-regal-voilet "
@@ -126,9 +126,9 @@ const TabMenu = () => {
         <div className="w-full flex items-center justify-end">
           <button
             onClick={toggleSortOrder}
-            className="w-3/12 flex font-bold justify-center items-center gap-1 hover:text-regal-voilet"
+            className="w-full sm:w-3/12 flex font-bold justify-center items-center gap-1 hover:text-regal-voilet"
           >
-            <p>Sort by {sortOrder === "newest" ? "Newest" : "Oldest"} </p>
+            <p className="bg-black text-white rounded-sm px-2 py-1 ">Sort by {sortOrder === "newest" ? "Newest" : "Oldest"} </p>
             <BiSortAlt2
               className={`cursor-pointer w-8 h-8 ${
                 sortOrder === "oldest" ? "transform rotate-180" : ""
@@ -146,69 +146,72 @@ const TabMenu = () => {
             <h2 className="text-xl font-semibold text-regal-voilet mb-3">
               Recently Added Franchises
             </h2>
-            {loading ? (
-              <div className="flex justify-center items-center h-40">
-                <p className="text-gray-600 animate-pulse">
-                  Loading franchises...
-                </p>
-              </div>
-            ) : error ? (
-              <p className="text-red-500">{error}</p>
-            ) : data.length > 0 ? (
-              <div className="space-y-4">
-                {data.map((franchise) => (
-                  <div
-                    key={franchise._id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
-                  >
-                    <div className="flex items-start space-x-4">
-                      {/* Owner Photo */}
-                      <div className="flex-shrink-0">
-                        {franchise.ownerPhotoUrl ? (
-                          <img
-                            src={franchise.ownerPhotoUrl}
-                            alt={franchise.ownerName}
-                            className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src =
-                                "https://via.placeholder.com/64?text=Owner";
-                            }}
-                          />
-                        ) : (
-                          <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
-                            <span className="text-gray-500 text-sm">
-                              No Photo
-                            </span>
-                          </div>
-                        )}
-                      </div>
 
-                      {/* Franchise Details */}
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="text-lg font-bold text-regal-voilet">
-                              {franchise.franchiseName}
-                            </h3>
-                            <p className="text-sm text-gray-700">
-                              Owner:{" "}
-                              <span className="font-medium">
-                                {franchise.ownerName}
+            {/* scroll box */}
+            <div className="max-h-96 overflow-y-auto ">
+              {loading ? (
+                <div className="flex justify-center items-center h-40">
+                  <p className="text-gray-600 animate-pulse">
+                    Loading franchises...
+                  </p>
+                </div>
+              ) : error ? (
+                <p className="text-red-500">{error}</p>
+              ) : data.length > 0 ? (
+                <div className="space-y-4">
+                  {data.map((franchise) => (
+                    <div
+                      key={franchise._id}
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
+                    >
+                      <div className="flex items-start space-x-4 ">
+                        {/* Owner Photo */}
+                        <div className="flex-shrink-0">
+                          {franchise.ownerPhotoUrl ? (
+                            <img
+                              src={franchise.ownerPhotoUrl}
+                              alt={franchise.ownerName}
+                              className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src =
+                                  "https://via.placeholder.com/64?text=Owner";
+                              }}
+                            />
+                          ) : (
+                            <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+                              <span className="text-gray-500 text-sm">
+                                No Photo
                               </span>
-                            </p>
-                            <div className="space-y-1">
-                              {franchise.franchiseId && (
-                                <p className="text-sm text-gray-600">
-                                  <span className="font-medium">
-                                    Franchise ID:
-                                  </span>{" "}
-                                  {franchise.franchiseId}
-                                </p>
-                              )}
                             </div>
-                          </div>
-                         
+                          )}
+                        </div>
+
+                        {/* Franchise Details */}
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="text-lg font-bold text-regal-voilet">
+                                {franchise.franchiseName}
+                              </h3>
+                              <p className="text-sm text-gray-700">
+                                Owner:{" "}
+                                <span className="font-medium">
+                                  {franchise.ownerName}
+                                </span>
+                              </p>
+                              <div className="space-y-1">
+                                {franchise.franchiseId && (
+                                  <p className="text-sm text-gray-600">
+                                    <span className="font-medium">
+                                      Franchise ID:
+                                    </span>{" "}
+                                    {franchise.franchiseId}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
                             {/* Date Information */}
                             <div className="flex flex-row gap-2 pt-2 border-t border-gray-100">
                               <div className="text-xs text-gray-500">
@@ -240,34 +243,34 @@ const TabMenu = () => {
                                 {franchise.status}
                               </span>
                             </div>
-                        
-                        </div>
+                          </div>
 
-                        {/* Contact Information */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                          <div className="space-y-1">
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Email:</span>{" "}
-                              {franchise.email}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Mobile:</span>{" "}
-                              {franchise.mobile}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Location:</span>{" "}
-                              {franchise.state}
-                            </p>
+                          {/* Contact Information */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                            <div className="space-y-1">
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium">Email:</span>{" "}
+                                {franchise.email}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium">Mobile:</span>{" "}
+                                {franchise.mobile}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium">Location:</span>{" "}
+                                {franchise.state}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-600">No franchises found.</p>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600">No franchises found.</p>
+              )}
+            </div>
           </div>
         )}
 
@@ -277,47 +280,50 @@ const TabMenu = () => {
             <h2 className="text-xl font-semibold text-regal-voilet mb-3">
               Recently Added Students
             </h2>
-            {loading ? (
-              <div className="flex justify-center items-center h-40">
-                <p className="text-gray-600 animate-pulse">
-                  Loading students...
-                </p>
-              </div>
-            ) : error ? (
-              <p className="text-red-500">{error}</p>
-            ) : data.length > 0 ? (
-              <ul className="divide-y divide-gray-200">
-                {data.map((student) => (
-                  <li key={student.id} className="py-3 flex items-center">
-                    {student.photoUrl && (
-                      <div className="mr-4 w-12 h-12 rounded-full overflow-hidden">
-                        <img
-                          src={student.photoUrl}
-                          alt={student.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <p className="font-medium">{student.name}</p>
-                      <div className="flex justify-between">
-                        <p className="text-sm text-gray-600">
-                          Course: {student.course.courseName}
-                        </p>
+
+            <div className="max-h-96 overflow-y-auto ">
+              {loading ? (
+                <div className="flex justify-center items-center h-40">
+                  <p className="text-gray-600 animate-pulse">
+                    Loading students...
+                  </p>
+                </div>
+              ) : error ? (
+                <p className="text-red-500">{error}</p>
+              ) : data.length > 0 ? (
+                <ul className="divide-y divide-gray-200">
+                  {data.map((student) => (
+                    <li key={student.id} className="py-3 flex items-center">
+                      {student.photoUrl && (
+                        <div className="mr-4 w-12 h-12 rounded-full overflow-hidden">
+                          <img
+                            src={student.photoUrl}
+                            alt={student.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <p className="font-medium">{student.name}</p>
+                        <div className="flex justify-between">
+                          <p className="text-sm text-gray-600">
+                            Course: {student.course.courseName}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Added: {formatDate(student.addedOn)}
+                          </p>
+                        </div>
                         <p className="text-xs text-gray-500">
-                          Added: {formatDate(student.addedOn)}
+                          Roll No: {student.rollNumber}
                         </p>
                       </div>
-                      <p className="text-xs text-gray-500">
-                        Roll No: {student.rollNumber}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-600">No students found.</p>
-            )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-600">No students found.</p>
+              )}
+            </div>
           </div>
         )}
 
@@ -327,71 +333,74 @@ const TabMenu = () => {
             <h2 className="text-xl font-semibold text-regal-voilet mb-3">
               Recently Added Courses
             </h2>
-            {loading ? (
-              <div className="flex justify-center items-center h-40">
-                <p className="text-gray-600 animate-pulse">
-                  Loading courses...
-                </p>
-              </div>
-            ) : error ? (
-              <p className="text-red-500">{error}</p>
-            ) : data.length > 0 ? (
-              <ul className="divide-y divide-gray-200">
-                {data.map((course) => (
-                  <li key={course.id} className="py-3 flex items-start">
-                    {course.imageUrl && (
-                      <div className="mr-4 w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-                        <img
-                          src={course.imageUrl}
-                          alt={course.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src =
-                              "https://via.placeholder.com/100?text=Course";
-                          }}
-                        />
+
+            <div className="max-h-96 overflow-y-auto ">
+              {loading ? (
+                <div className="flex justify-center items-center h-40">
+                  <p className="text-gray-600 animate-pulse">
+                    Loading courses...
+                  </p>
+                </div>
+              ) : error ? (
+                <p className="text-red-500">{error}</p>
+              ) : data.length > 0 ? (
+                <ul className="divide-y divide-gray-200">
+                  {data.map((course) => (
+                    <li key={course.id} className="py-3 flex items-start">
+                      {course.imageUrl && (
+                        <div className="mr-4 w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
+                          <img
+                            src={course.imageUrl}
+                            alt={course.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src =
+                                "https://via.placeholder.com/100?text=Course";
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <p className="font-medium">{course.name}</p>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ${
+                              course.status === "active"
+                                ? "bg-green-100 text-green-800"
+                                : course.status === "inactive"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {course.status}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 mt-1">
+                          <p className="text-sm text-gray-600">
+                            Code: {course.code}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Subject: {course.subject}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Duration: {course.duration}
+                          </p>
+                          <p className="text-sm font-medium text-regal-voilet">
+                            {formatPrice(course.price)}
+                          </p>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 text-right">
+                          Added: {formatDate(course.addedOn)}
+                        </p>
                       </div>
-                    )}
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <p className="font-medium">{course.name}</p>
-                        <span
-                          className={`text-xs px-2 py-1 rounded-full ${
-                            course.status === "active"
-                              ? "bg-green-100 text-green-800"
-                              : course.status === "inactive"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {course.status}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1 mt-1">
-                        <p className="text-sm text-gray-600">
-                          Code: {course.code}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Subject: {course.subject}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Duration: {course.duration}
-                        </p>
-                        <p className="text-sm font-medium text-regal-voilet">
-                          {formatPrice(course.price)}
-                        </p>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1 text-right">
-                        Added: {formatDate(course.addedOn)}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-600">No courses found.</p>
-            )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-600">No courses found.</p>
+              )}{" "}
+            </div>
           </div>
         )}
       </div>

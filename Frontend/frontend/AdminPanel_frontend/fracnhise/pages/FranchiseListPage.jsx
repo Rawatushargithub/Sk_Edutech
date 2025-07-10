@@ -77,8 +77,8 @@ function FranchiseListPage() {
     return (
         <div className="container mx-auto p-4 md:p-6 lg:p-8">
             <div className="bg-white p-6 rounded-lg shadow-lg">
-                <div className="flex justify-between items-center mb-6 gap-4"> {/* Added gap */}
-                    <h1 className="text-3xl font-semibold text-black">Active Franchises</h1> {/* Updated Title */}
+                <div className="flex justify-between items-center mb-6 gap-4 flex-col sm:flex-row "> {/* Added gap */}
+                    <h1 className="text-2xl font-semibold text-black">Active Franchises</h1> {/* Updated Title */}
                     <div className="flex space-x-3"> {/* Group buttons */}
                         <Link
                             // onClick={() => navigate('/admin/franchises/requests')}

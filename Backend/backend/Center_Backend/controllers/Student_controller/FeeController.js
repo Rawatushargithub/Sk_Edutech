@@ -6,13 +6,24 @@ import mongoose from "mongoose";
 export const getAllStudentsFeeDetails = async (req, res) => {
     try {
       // Query parameters for filtering and pagination
-      const { page = 1, limit = 10, search = "", course = "" } = req.query;
+      const { page = 1, limit = 10, search = "", course = "" , franchiseId } = req.query;
       const pageNumber = parseInt(page);
       const limitNumber = parseInt(limit);
       
       // Build the filter query
       const query = {};
-      
+      console.log("franchiseId value :: ", franchiseId);
+      // Add franchiseId filter - this is mandatory
+    if (franchiseId) {
+      query.franchiseId = franchiseId;
+    } else {
+      // If no franchiseId is provided, return an error
+      return res.status(400).json({
+        success: false,
+        message: "FranchiseID is required"
+      });
+    }
+
       // Add search functionality
       if (search) {
         query.studentName = { $regex: search, $options: 'i' };
@@ -31,7 +42,7 @@ export const getAllStudentsFeeDetails = async (req, res) => {
         .sort({ createdAt: -1 });
         if(students)
           {
-            console.log("student data get fetched")
+            console.log("student data get fetched" , students)
           }
       // Count total documents for pagination
       const totalStudents = await Student.countDocuments(query);
@@ -157,6 +168,15 @@ export const getAllStudentsFeeDetails = async (req, res) => {
     try {
       const { studentId } = req.params;
       const { amount, date, paymentMode } = req.body;
+      const { franchiseId } = req.query;
+
+      // Add franchiseId validation if needed
+    if (!franchiseId) {
+      return res.status(400).json({
+        success: false,
+        message: "FranchiseID is required"
+      });
+    }
       
       // Validate required fields
       if (!amount || !date || !paymentMode) {
@@ -176,8 +196,7 @@ export const getAllStudentsFeeDetails = async (req, res) => {
       }
       
      
-     
-      const feeDetails = await Fee.findOne({studentId});
+      const feeDetails = await Fee.findOne({studentId ,franchiseId: franchiseId});
       if (!feeDetails) {
         return res.status(404).json({
           success: false,

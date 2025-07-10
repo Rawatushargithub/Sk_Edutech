@@ -14,8 +14,8 @@ const CourseList = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        // Replace with your actual API endpoint
-        const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
+         const franchiseId = localStorage.getItem('franchiseID');
+        const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`);
        
         if (!response.ok) {
           throw new Error(`Error: ${response.status} ${response.statusText}`);

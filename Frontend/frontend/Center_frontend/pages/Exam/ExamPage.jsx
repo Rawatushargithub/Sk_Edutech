@@ -34,12 +34,6 @@ const ExamManagement = () => {
   const [students, setStudents] = useState([]);
   const [uploadingMarks, setUploadingMarks] = useState(false);
 
-  // Sample data for courses
-  const courses = [
-    { id: 1, name: "BCA12H (Bachelor of Computer Application)" },
-    { id: 2, name: "MCA34P (Master of Computer Application)" },
-  ];
-
   // Exam data from API
   const [exams, setExams] = useState([]);
 
@@ -72,13 +66,13 @@ const ExamManagement = () => {
   };
 
   // Fetch exams from API with automatic status update
-  const fetchExams = async () => {
+  const fetchExams = async (examMode = mode) => {
     try {
       setLoading(true);
       setError(null);
-
+ const franchiseId = localStorage.getItem('franchiseID');
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/institute_exam/exams`,
+        `${API_BASE_URL}/api/v1/institute_exam/exams?examMode=${examMode === 'online' ? 'Online' : 'Offline'}&franchiseId=${franchiseId}`, 
         {
           method: "GET",
           headers: {
@@ -92,11 +86,10 @@ const ExamManagement = () => {
       }
 
       const data = await response.json();
-      console.log("Fetched exams:", data);
 
       // Transform API data and check for expired exams
       const transformedExams = await Promise.all(
-        data.map(async (exam) => {
+        data.exams.map(async (exam) => {
           const daysLeft = getDaysLeft(exam.examDate);
 
           // If exam date has passed and status is still Active, update it to Inactive
@@ -264,7 +257,7 @@ console.log("Marks data to upload:", marksData);
   // Fetch exams on component mount
   useEffect(() => {
     fetchExams();
-  }, []);
+  }, [mode]);
 
   function getDaysLeft(targetDateStr) {
     const today = new Date();

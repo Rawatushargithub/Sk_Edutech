@@ -28,7 +28,8 @@ const courseSchema = new mongoose.Schema({
         }
     ],
     instituteStatus: { type: String, enum: ['active', 'inactive'], default: 'active' }, // Status set by the institute
-    adminApprovalStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' } // Status set by Admin
+    adminApprovalStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' }, // Status set by Admin
+    franchiseId: { type: String, required: true } // Add this line
 }, { timestamps: true });
 
 const Course = mongoose.model('Course', courseSchema);

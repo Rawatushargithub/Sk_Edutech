@@ -10,9 +10,10 @@ const Batches = () => {
     fetchBatches();
   }, []);
 
-  const fetchBatches = async () => {
+  const fetchBatches = async () => { 
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/v1/institute_batche/allBatches`);
+       const franchiseId = localStorage.getItem('franchiseID');
+      const response = await axios.get(`${API_BASE_URL}/api/v1/institute_batche/allBatches?franchiseId=${franchiseId}`);
       console.log(response.data.data)
 
       setBatches(response.data.data);

@@ -6,5 +6,6 @@ export const loginFranchise = async (identifier, password) => {
     identifier,
     password,
   });
+  
   return response.data;
 };

@@ -661,6 +661,11 @@ export const loginFranchise = async (req, res) => {
         mobile: franchise.mobile,
         franchiseName: franchise.franchiseName,
         franchiseId: franchise.franchiseId,
+        address: franchise.address,
+        ownerName: franchise.ownerName,
+        dob: franchise.dob,
+        state: franchise.state,
+        city: franchise.city,
       },
     });
   } catch (err) {

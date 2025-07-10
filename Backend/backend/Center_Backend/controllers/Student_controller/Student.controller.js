@@ -311,11 +311,21 @@ const getStudents = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   // Get filter parameters if any
-  const { course, batch, searchTerm } = req.query;
+  const { course, batch, searchTerm ,franchiseId } = req.query;
 
   // Build filter object
   let filter = {};
-
+console.log("franchiseId value :: ", franchiseId)
+// Add franchiseID filter - this is the key change
+  if (franchiseId) {
+    filter.franchiseId = franchiseId;
+  } else {
+    // If no franchiseID is provided, return an error or empty result
+    return res.status(400).json(
+      new ApiResponse(400, [], "FranchiseID is required")
+    );
+  }
+console.log("filter value :: ", filter)
   if (course) {
     filter.courseInterested = course;
   }
@@ -346,7 +356,7 @@ const getStudents = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(limit)
     .sort({ admissionDate: -1 }); // Sort by admission date, newest first
-
+console.log("students value :: ", students)
      // Format the results to include the batch name in a new field
   const formattedStudents = students.map(student => {
     // Convert to plain JavaScript object
@@ -364,18 +374,18 @@ const getStudents = asyncHandler(async (req, res) => {
 
     return studentObj;
   });
-
+ 
   // Get total count for pagination
   const totalStudents = await Student.countDocuments(filter);
 
   // Check if students were found
-  if (!formattedStudents || formattedStudents.length === 0) {
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(200, [], "No students found with the given criteria")
-      );
-  }
+    if (!formattedStudents || formattedStudents.length === 0) {
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(200, [], "No students found for this franchise")
+        );
+    }
 
 
   // Return the student data

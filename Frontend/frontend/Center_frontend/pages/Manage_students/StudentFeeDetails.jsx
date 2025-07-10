@@ -54,12 +54,12 @@ const StudentFeeDetails = () => {
       paymentMode: newPayment.mode,
       date: newPayment.date,
     };
-  
+  const franchiseId = localStorage.getItem('franchiseID');
     // Make the API call to update fees
-    axios.post(`${API_BASE_URL}/api/v1/institute_fees/${studentId}/update-fee`, paymentData)
+    axios.post(`${API_BASE_URL}/api/v1/institute_fees/${studentId}/update-fee?franchiseId=${franchiseId}`, paymentData)
       .then(response => {
         if (response.data.success) {
-          console.log("Student data coming:: " , response)
+          console.log("Student data coming:: " , response.json())
           // Update the local state with the updated student data
           const updatedStudents = students.map(student => {
             if (student.id === studentId) {
@@ -103,8 +103,9 @@ const StudentFeeDetails = () => {
   useEffect(() => {
     const limit = 15;
     const page = 1;
+    const franchiseId = localStorage.getItem('franchiseID');
     axios
-      .get(`${API_BASE_URL}/api/v1/institute_fees/students?limit=${limit}&page=${page}`)
+      .get(`${API_BASE_URL}/api/v1/institute_fees/students?limit=${limit}&page=${page}&franchiseId=${franchiseId}`)
       .then((response) => {
         console.log(response)
         const updatedStudents = response.data.data.map((student) => ({

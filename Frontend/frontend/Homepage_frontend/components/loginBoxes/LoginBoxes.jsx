@@ -9,7 +9,7 @@ import { useSwipeable } from "react-swipeable";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Login from "../../../Student_Frontend/pages/Login";
-import CenterLoginModal from "../../../Student_Frontend/pages/centerLogin";
+import CenterLoginModal from "../../../Center_frontend/pages/centerLogin.jsx";
 import FranchiseVerificationModal from "./FranchiseVerificationModal";
 
 

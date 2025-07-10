@@ -22,8 +22,11 @@ const StudentAdmissionList = () => {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
+        // Get franchiseID from localStorage
+        const franchiseId = localStorage.getItem('franchiseID');
+
         const response = await axios.get(
-          `${API_BASE_URL}/api/v1/institute_student/get_students`
+          `${API_BASE_URL}/api/v1/institute_student/get_students?franchiseId=${franchiseId}`
         );
         console.log("students data :: ", response.data);
 

@@ -23,7 +23,7 @@ const CenterLoginModal = () => {
     try {
       const { token, franchise } = await loginFranchise(identifier, password);
       localStorage.setItem("centerToken", token);
-      localStorage.setItem("franchiseName", franchise.franchiseName);
+      localStorage.setItem("franchiseID", franchise.franchiseId);
       navigate("/institute");
     } catch (err) {
       setErrorMsg(err?.response?.data?.message || "Login failed");

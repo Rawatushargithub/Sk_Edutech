@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
 import Login from "../../../Student_Frontend/pages/Login";
-import centerLogin from "../../../Student_Frontend/pages/centerLogin";
+import centerLogin from "../../../Center_frontend/pages/centerLogin";
 
 const Navbar = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);

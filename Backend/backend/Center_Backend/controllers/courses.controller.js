@@ -1,62 +1,105 @@
 import Course from '../models/Courses/Courses.models.js';
+import  Institute from '../models/Franchise.model.js'; // Import Institute model for validation
 import { uploadOnCloudinary } from "../utils/cloudinary.js"; 
 import { asyncHandler } from "../utils/asynchanlder.js";
 
 // Create a new course
-export const createCourse = asyncHandler( async (req, res) => {
+export const createCourse = asyncHandler(async (req, res) => {
     try {
         const {
             courseCode, courseName, courseSubject, courseFees, courseMRP,
             courseDuration, // Expected as number (months)
-            // institutePlans, // Removed
             courseVideoLinks, // Expected as JSON string of [{title, link}]
             courseSyllabus, courseEligibility,
             instituteStatus // Renamed from status
         } = req.body;
 
-        console.log("In Controller :: ", req.body);
+        console.log("In Controller 2nd time:: ", req.body);
+
+        // Get franchiseId from req.user (preferred) or req.body (fallback)
+        let franchiseId = req.user?.franchiseId || req.body.franchiseId;
+        
+        // If franchiseId is not found, try to get instituteID from req.user
+        if (!franchiseId && req.user?.instituteID) {
+            franchiseId = req.user.instituteID;
+        }
+
+        if (!franchiseId) {
+            return res.status(400).json({ 
+                success: false,
+                error: "Franchise ID is required. Please ensure you are properly authenticated." 
+            });
+        }
+
+        // Validate that the franchise/institute exists
+        const institute = await Institute.findOne({ 
+             franchiseId: franchiseId ,
+        });
+
+        if (!institute) {
+            return res.status(404).json({ 
+                success: false,
+                error: "Institute not found. Please check your franchise ID." 
+            });
+        }
+
+        // Check if course code already exists for this franchise
+        const existingCourse = await Course.findOne({ 
+            courseCode: courseCode,
+            franchiseId: institute.instituteID // Use instituteID for consistency
+        });
+
+        if (existingCourse) {
+            return res.status(400).json({ 
+                success: false,
+                error: "Course code already exists for this institute." 
+            });
+        }
 
         // Upload course image if provided
         let courseImageCloudinaryUrl = '';
-        if (req.files && req.files.courseImage && req.files.courseImage[0]) { // Assuming courseImage is sent via req.files
+        if (req.files && req.files.courseImage && req.files.courseImage[0]) {
             const imageFile = req.files.courseImage[0];
             const uploadedImage = await uploadOnCloudinary(imageFile.path);
             if (uploadedImage && uploadedImage.url) {
                 courseImageCloudinaryUrl = uploadedImage.url;
             } else {
                 console.error("Cloudinary image upload failed or URL not found", uploadedImage);
+                return res.status(500).json({ 
+                    success: false,
+                    error: "Failed to upload course image. Please try again." 
+                });
             }
         } else if (req.file) { // Fallback if sent as req.file (single upload)
-             const uploadedImage = await uploadOnCloudinary(req.file.path);
-             if (uploadedImage && uploadedImage.url) {
+            const uploadedImage = await uploadOnCloudinary(req.file.path);
+            if (uploadedImage && uploadedImage.url) {
                 courseImageCloudinaryUrl = uploadedImage.url;
             } else {
                 console.error("Cloudinary image upload failed (req.file) or URL not found", uploadedImage);
+                return res.status(500).json({ 
+                    success: false,
+                    error: "Failed to upload course image. Please try again." 
+                });
             }
         }
 
-        // Upload course materials (PDFs) to Cloudinary
-        // Frontend will send courseMaterials as a JSON string array of objects:
-        // [{ title, type ('file' or 'link'), url (if link), originalFileName (if file for matching) }]
-        // And actual files in req.files.courseMaterialFiles (ensure frontend names this field for multer)
-        
+        // Process course materials
         let processedCourseMaterials = [];
         const courseMaterialsInput = req.body.courseMaterials ? JSON.parse(req.body.courseMaterials) : [];
         let fileUploadIndex = 0;
 
         for (const material of courseMaterialsInput) {
             if (material.type === 'link') {
-                if (material.url && material.title) { // Ensure link and title are provided
+                if (material.url && material.title) {
                     processedCourseMaterials.push({
                         title: material.title,
                         type: 'link',
                         url: material.url,
-                        fileType: 'external-link', // Or derive from URL if possible
-                        // thumbnailUrl: generateThumbnailForLink(material.url) // Optional
+                        fileType: 'external-link',
                     });
                 }
-            } else if (material.type === 'file') { // This was 'file' in the input from frontend
-                 if (material.isNewFile && req.files && req.files.courseMaterialFiles && req.files.courseMaterialFiles[fileUploadIndex]) {
+            } else if (material.type === 'file') {
+                if (material.isNewFile && req.files && req.files.courseMaterialFiles && req.files.courseMaterialFiles[fileUploadIndex]) {
                     const materialFile = req.files.courseMaterialFiles[fileUploadIndex];
                     const uploadedMaterial = await uploadOnCloudinary(materialFile.path);
                     if (uploadedMaterial && uploadedMaterial.url) {
@@ -69,9 +112,10 @@ export const createCourse = asyncHandler( async (req, res) => {
                         });
                     } else {
                         console.error("Cloudinary material upload failed for file:", materialFile.originalname, uploadedMaterial);
+                        // Continue processing other files instead of failing completely
                     }
                     fileUploadIndex++;
-                } else if (!material.isNewFile && material.url) { // Existing file to keep
+                } else if (!material.isNewFile && material.url) {
                     processedCourseMaterials.push(material);
                 } else {
                     console.warn("Mismatch or issue with course material file data at index", fileUploadIndex, material);
@@ -82,6 +126,15 @@ export const createCourse = asyncHandler( async (req, res) => {
         // Parse JSON string fields
         const parsedCourseVideoLinks = courseVideoLinks ? JSON.parse(courseVideoLinks) : [];
 
+        // Validate required fields
+        if (!courseCode || !courseName || !courseSubject || !courseFees || !courseMRP || !courseDuration) {
+            return res.status(400).json({ 
+                success: false,
+                error: "All required fields must be filled." 
+            });
+        }
+
+        // Create new course with franchise information
         const newCourse = new Course({
             courseCode,
             courseName,
@@ -93,29 +146,111 @@ export const createCourse = asyncHandler( async (req, res) => {
             courseSyllabus,
             courseEligibility,
             courseImage: courseImageCloudinaryUrl,
-            courseMaterials: processedCourseMaterials, // Use the processed materials
+            courseMaterials: processedCourseMaterials,
             instituteStatus: instituteStatus || 'active',
+            franchiseId: institute.instituteID, // Use instituteID for consistency
+            franchiseName: institute.instituteName, // Store franchise name for easier queries
             // adminApprovalStatus will default to 'pending' as per schema
         });
 
         await newCourse.save();
-        res.status(201).json({ message: 'Course created successfully. Pending admin approval.', course: newCourse });
+
+        // Return success response with course details
+        res.status(201).json({ 
+            success: true,
+            message: 'Course created successfully. Pending admin approval.',
+            course: {
+                ...newCourse.toObject(),
+                franchiseInfo: {
+                    franchiseId: institute.instituteID,
+                    franchiseName: institute.instituteName,
+                    ownerName: institute.ownerName
+                }
+            }
+        });
 
     } catch (error) {
         console.error("Error creating course:", error);
-        res.status(500).json({ error: error.message });
+        
+        // Handle specific MongoDB errors
+        if (error.code === 11000) {
+            return res.status(400).json({ 
+                success: false,
+                error: "Course with this code already exists." 
+            });
+        }
+        
+        // Handle validation errors
+        if (error.name === 'ValidationError') {
+            const validationErrors = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({ 
+                success: false,
+                error: "Validation failed: " + validationErrors.join(', ') 
+            });
+        }
+        
+        res.status(500).json({ 
+            success: false,
+            error: "An error occurred while creating the course. Please try again." 
+        });
     }
 });
 
-// Get all courses
+// Additional helper function to validate franchise access
+export const validateFranchiseAccess = async (franchiseId, courseId = null) => {
+    try {
+        // Validate franchise exists
+        const institute = await Institute.findOne({ 
+            $or: [
+                { instituteID: franchiseId },
+                { _id: franchiseId }
+            ]
+        });
+
+        if (!institute) {
+            return { valid: false, error: "Institute not found." };
+        }
+
+        // If courseId is provided, validate that the course belongs to this franchise
+        if (courseId) {
+            const course = await Course.findOne({ 
+                _id: courseId,
+                franchiseId: institute.instituteID 
+            });
+
+            if (!course) {
+                return { valid: false, error: "Course not found or you don't have access to this course." };
+            }
+
+            return { valid: true, institute, course };
+        }
+
+        return { valid: true, institute };
+    } catch (error) {
+        console.error("Error validating franchise access:", error);
+        return { valid: false, error: "Error validating access." };
+    }
+};
+
+// Get all courses filtered by franchiseId
 export const getCourses = async (req, res) => {
     try { 
-        const courses = await Course.find().select(
-            'courseName courseCode courseFees courseMRP courseDuration instituteStatus adminApprovalStatus courseImage courseSubject createdAt updatedAt courseMaterials courseVideoLinks' // Added courseMaterials & courseVideoLinks
+        const { franchiseId } = req.query;
+        
+        // Build the query object
+        let query = {};
+        if (franchiseId) {
+            query.franchiseId = franchiseId;
+        }
+        
+        const courses = await Course.find(query).select(
+            'courseName courseCode courseFees courseMRP courseDuration instituteStatus adminApprovalStatus courseImage courseSubject createdAt updatedAt courseMaterials courseVideoLinks franchiseId' // Added franchiseId to selection
         );
-        console.log("courses data" , courses); 
+        
+        console.log("courses data for franchiseId:", franchiseId, courses); 
         res.status(200).json(courses);
     } catch (error) {
+        console.error("Error fetching courses:", error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -164,21 +299,30 @@ export const getRecentCourses = async (req, res) => {
     }
   };
 
-// Update an existing course by ID
+// Update an existing course by ID (with franchise validation)
 export const updateCourseById = asyncHandler(async (req, res) => {
     const { courseId } = req.params;
     const {
         courseFees, courseMRP, courseDuration, courseVideoLinks,
         courseSyllabus, courseEligibility, instituteStatus,
+        franchiseId, // Add franchiseId to destructuring
         // existingCourseImage, // Handled by checking if new courseImage is uploaded
     } = req.body; // courseCode, courseName, courseSubject are not updatable from form
 
     console.log("Updating course :: ", courseId, "Body:", req.body);
     console.log("Files received for update :: ", req.files);
 
-    const courseToUpdate = await Course.findById(courseId);
+    // Build query to find course by ID and optionally by franchiseId for security
+    let findQuery = { _id: courseId };
+    if (franchiseId) {
+        findQuery.franchiseId = franchiseId;
+    }
+
+    const courseToUpdate = await Course.findOne(findQuery);
     if (!courseToUpdate) {
-        return res.status(404).json({ error: "Course not found" });
+        return res.status(404).json({ 
+            error: franchiseId ? "Course not found or you don't have permission to update this course" : "Course not found" 
+        });
     }
 
     const updates = {};
@@ -188,6 +332,9 @@ export const updateCourseById = asyncHandler(async (req, res) => {
     if (courseSyllabus !== undefined) updates.courseSyllabus = courseSyllabus;
     if (courseEligibility !== undefined) updates.courseEligibility = courseEligibility;
     if (instituteStatus !== undefined) updates.instituteStatus = instituteStatus;
+    
+    // Don't allow updating franchiseId through this endpoint for security
+    // if (franchiseId !== undefined) updates.franchiseId = franchiseId;
     
     if (courseVideoLinks !== undefined) {
         try {
@@ -261,11 +408,17 @@ export const updateCourseById = asyncHandler(async (req, res) => {
     }
     updates.courseMaterials = finalProcessedCourseMaterials;
 
-    const updatedCourse = await Course.findByIdAndUpdate(courseId, { $set: updates }, { new: true, runValidators: true });
+    // Use the same query for update to ensure franchise ownership
+    const updatedCourse = await Course.findOneAndUpdate(
+        findQuery, 
+        { $set: updates }, 
+        { new: true, runValidators: true }
+    );
 
     if (!updatedCourse) {
         return res.status(404).json({ error: "Course not found or update failed" });
     }
+    
     const message = 'Course updated successfully.';
     res.status(200).json({ message, course: updatedCourse });
 });

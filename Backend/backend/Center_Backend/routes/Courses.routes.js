@@ -5,7 +5,7 @@ import { uploadCourseFiles, uploadSingleNoteFile } from '../middlewares/course.m
 const router = express.Router();
 
 // Routes
-router.post('/createCourses', uploadCourseFiles, createCourse); 
+router.post('/createCourse', uploadCourseFiles, createCourse); 
 router.get('/getCourses', getCourses);
 router.get('/count' , getCoursesCount); 
 router.get('/recent', getRecentCourses); 

@@ -184,16 +184,130 @@ console.log("Request Body:", req.body);
   }
 });
 
-// Fetch all exams
+
+
 export const getAllExams = asyncHandler(async (req, res) => {
   try {
-    const exams = await Exam.find().limit(10);;
+    const { examMode, franchiseId } = req.query; // Get examMode and franchiseId from query parameters
     
-    res.status(200).json(exams);
+    // Build filter object
+    let filter = {};
+    
+    // Filter by examMode if provided
+    if (examMode && (examMode === 'Online' || examMode === 'Offline')) {
+      filter.examMode = examMode;
+    }
+    
+    // Filter by franchiseId if provided
+    if (franchiseId) {
+      filter.franchiseId = franchiseId;
+    }
+    
+  
+    // Fetch exams based on filter
+    const exams = await Exam.find(filter).limit(10);
+    
+    // Get counts for both modes with franchise filtering
+    const countFilter = franchiseId ? { franchiseId } : {};
+    const onlineCount = await Exam.countDocuments({ ...countFilter, examMode: 'Online' });
+    const offlineCount = await Exam.countDocuments({ ...countFilter, examMode: 'Offline' });
+    const totalCount = await Exam.countDocuments(countFilter);
+    
+    res.status(200).json({
+      exams,
+      counts: {
+        online: onlineCount,
+        offline: offlineCount,
+        total: totalCount
+      },
+      currentFilter: examMode || 'all',
+      franchiseId: franchiseId || 'all'
+    });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    console.error("Error fetching exams:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
-})
+});
+
+// Alternative: Separate endpoints for online and offline exams
+export const getOnlineExams = asyncHandler(async (req, res) => {
+  try {
+    const { franchiseId } = req.query;
+    
+    // Build filter object
+    let filter = { examMode: 'Online' };
+    if (franchiseId) {
+      filter.franchiseId = franchiseId;
+    }
+    
+    const exams = await Exam.find(filter).limit(10);
+    const count = await Exam.countDocuments(filter);
+    
+    res.status(200).json({
+      exams,
+      count,
+      mode: 'Online',
+      franchiseId: franchiseId || 'all'
+    });
+  } catch (error) {
+    console.error("Error fetching online exams:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+export const getOfflineExams = asyncHandler(async (req, res) => {
+  try {
+    const { franchiseId } = req.query;
+    
+    // Build filter object
+    let filter = { examMode: 'Offline' };
+    if (franchiseId) {
+      filter.franchiseId = franchiseId;
+    }
+    
+    const exams = await Exam.find(filter).limit(10);
+    const count = await Exam.countDocuments(filter);
+    
+    res.status(200).json({
+      exams,
+      count,
+      mode: 'Offline',
+      franchiseId: franchiseId || 'all'
+    });
+  } catch (error) {
+    console.error("Error fetching offline exams:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// Get exam counts only
+export const getExamCounts = asyncHandler(async (req, res) => {
+  try {
+    const { franchiseId } = req.query;
+    
+    // Build filter object
+    let filter = {};
+    if (franchiseId) {
+      filter.franchiseId = franchiseId;
+    }
+    
+    const onlineCount = await Exam.countDocuments({ ...filter, examMode: 'Online' });
+    const offlineCount = await Exam.countDocuments({ ...filter, examMode: 'Offline' });
+    const totalCount = await Exam.countDocuments(filter);
+    
+    res.status(200).json({
+      counts: {
+        online: onlineCount,
+        offline: offlineCount,
+        total: totalCount
+      },
+      franchiseId: franchiseId || 'all'
+    });
+  } catch (error) {
+    console.error("Error fetching exam counts:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
 
 export const deleteExam = asyncHandler(async (req, res) => {
   try {
@@ -251,10 +365,11 @@ export const updateExamStatus = asyncHandler(async (req, res) => {
 
 export const getStudentsByCourseAndBatch = async (req, res) => {
   try {
-    const { courseCode, batch } = req.query;
+    const { courseCode, batch, franchiseId } = req.query;
 
     console.log("Course Code:", courseCode);
     console.log("Batch ID:", batch);
+    console.log("Franchise ID:", franchiseId);
 
     if (!courseCode || !batch) {
       return res.status(400).json({ message: 'courseCode and batch are required' });
@@ -267,11 +382,19 @@ export const getStudentsByCourseAndBatch = async (req, res) => {
     const batchObjectId = new mongoose.Types.ObjectId(batch);
     console.log("Batch Object ID:", batchObjectId);
 
-    // Find students by both courseCode and selectedBatch
-    const students = await Student.find({ 
+    // Build filter object
+    let filter = { 
       'courseInterested.courseCode': courseCode,
       selectedBatch: batchObjectId,
-    }).populate('selectedBatch'); // Populate batch details
+    };
+    
+    // Add franchise filter if provided
+    if (franchiseId) {
+      filter.franchiseId = franchiseId;
+    }
+
+    // Find students by courseCode, selectedBatch, and optionally franchiseId
+    const students = await Student.find(filter).populate('selectedBatch'); // Populate batch details
 
     console.log("Students Found:", students);
 
@@ -288,7 +411,8 @@ export const getStudentsByCourseAndBatch = async (req, res) => {
         id: student._id,
         rollNumber: student.rollNumber,
         studentName: student.studentName,
-      }))
+      })),
+      franchiseId: franchiseId || 'all'
     };
 
     res.status(200).json(formatted);

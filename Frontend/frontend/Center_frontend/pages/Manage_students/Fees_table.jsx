@@ -30,8 +30,9 @@ const Fees_table = ({
   // Fetch all batches
   const fetchBatches = async () => {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/institute_batche/allBatches`
+          const franchiseId = localStorage.getItem('franchiseID');
+      const response = await fetch(   
+        `${API_BASE_URL}/api/v1/institute_batche/allBatches?franchiseId=${franchiseId}`
       );
       if (!response.ok) throw new Error("Failed to fetch batches");
       console.log("Response:: ", response);
@@ -41,13 +42,14 @@ const Fees_table = ({
     } catch (error) {
       console.error("Error fetching batches:", error);
     }
-  };
+  }; 
 
   // Fetch remaining seats for selected batch
   const fetchRemainingSeats = async (batchId) => { 
     try {
+      const franchiseId = localStorage.getItem('franchiseID');
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/institute_batche/${batchId}/seats`
+        `${API_BASE_URL}/api/v1/institute_batche/${batchId}/seats?franchiseId=${franchiseId}`
       );
       if (!response.ok) throw new Error("Failed to fetch remaining seats");
       const data = await response.json();

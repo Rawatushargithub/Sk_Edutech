@@ -9,7 +9,7 @@ const AddNewStudent = () => {
   const [formData, setFormData] = useState({
     // Personal Details
     studentPhoto: null,
-    studentSignature: null,
+    studentSignature: null, 
     rollNumber: "",
     abbreviation: "Mr.",
     studentName: "",
@@ -72,56 +72,228 @@ const AddNewStudent = () => {
     fetchCourses();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
-  };
+const validateForm = (formData) => {
+  const errors = {};
+  
+  // Required field validation
+  if (!formData.rollNumber?.trim()) {
+    errors.rollNumber = "Roll number is required";
+  }
+  
+  if (!formData.studentName?.trim()) {
+    errors.studentName = "Student name is required";
+  }
+  
+  if (!formData.studentMobile?.trim()) {
+    errors.studentMobile = "Mobile number is required";
+  } else if (!/^[6-9]\d{9}$/.test(formData.studentMobile)) {
+    errors.studentMobile = "Please enter a valid 10-digit mobile number";
+  }
+  
+  if (!formData.dob) {
+    errors.dob = "Date of birth is required";
+  }
+  
+  if (!formData.admissionDate) {
+    errors.admissionDate = "Admission date is required";
+  }
+  
+  if (!formData.courseInterested.courseName) {
+    errors.courseInterested = "Course selection is required";
+  }
+  
+  if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    errors.email = "Please enter a valid email address";
+  }
+  
+  if (!formData.studentPhoto) {
+    errors.studentPhoto = "Student photo is required";
+  }
+  
+  if (!formData.studentSignature) {
+    errors.studentSignature = "Student signature is required";
+  }
+  
+  // Fee validation
+  if (formData.courseFees < 0) {
+    errors.courseFees = "Course fees cannot be negative";
+  }
+  
+  if (formData.totalFees < 0) {
+    errors.totalFees = "Total fees cannot be negative";
+  }
+  
+  if (formData.feesReceived > formData.totalFees) {
+    errors.feesReceived = "Fees received cannot be greater than total fees";
+  }
+  
+  return errors;
+};
+
+const getErrorMessage = (error) => {
+  if (error.response?.data?.success === false) {
+    const errorData = error.response.data;
+    
+    switch (errorData.code) {
+      case 'MISSING_REQUIRED_FIELDS':
+        return `Missing required fields: ${errorData.missingFields?.join(', ')}`;
+      case 'INVALID_MOBILE_FORMAT':
+        return "Please enter a valid 10-digit mobile number";
+      case 'INVALID_EMAIL_FORMAT':
+        return "Please enter a valid email address";
+      case 'DUPLICATE_ROLL_NUMBER':
+        return "A student with this roll number already exists";
+      case 'DUPLICATE_EMAIL':
+        return "A student with this email already exists";
+      case 'INVALID_COURSE_SELECTION':
+        return "Please select a valid course";
+      case 'BATCH_REQUIRED':
+        return "Please select a batch";
+      case 'BATCH_NOT_FOUND':
+        return "Selected batch not found";
+      case 'BATCH_FULL':
+        return "Selected batch has no available seats";
+      case 'PHOTO_REQUIRED':
+        return "Student photo is required";
+      case 'SIGNATURE_REQUIRED':
+        return "Student signature is required";
+      case 'INVALID_COURSE_FEES':
+        return "Please enter valid course fees";
+      case 'INVALID_TOTAL_FEES':
+        return "Please enter valid total fees";
+      case 'INVALID_FEES_RECEIVED':
+        return "Fees received cannot be greater than total fees";
+      case 'INSUFFICIENT_BALANCE':
+        return `Insufficient wallet balance. Required: ₹${errorData.requiredAmount}, Current: ₹${errorData.currentBalance}`;
+      case 'PHOTO_UPLOAD_FAILED':
+        return "Failed to upload student photo. Please try again.";
+      case 'SIGNATURE_UPLOAD_FAILED':
+        return "Failed to upload student signature. Please try again.";
+      case 'DUPLICATE_ENTRY':
+        return "Duplicate entry detected. Please check roll number and email.";
+      case 'TRANSACTION_FAILED':
+        return "Database transaction failed. Please try again.";
+      default:
+        return errorData.message || "An error occurred while registering the student";
+    }
+  }
+  
+  return error.response?.data?.message || error.message || "An unexpected error occurred";
+};
+
+
+  
+// Enhanced handleChange with validation
+const handleChange = (e) => {
+  const { name, value, type, checked } = e.target;
+  
+  let processedValue = type === "checkbox" ? checked : value;
+  
+  // Real-time validation for specific fields
+  if (name === 'studentMobile' || name === 'alternateMobile') {
+    // Allow only numbers and limit to 10 digits
+    processedValue = value.replace(/\D/g, '').slice(0, 10);
+  }
+  
+  if (name === 'email') {
+    // Basic email format check
+    if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      // You can add visual feedback here if needed
+    }
+  }
+  
+  if (name === 'rollNumber') {
+    // Remove any special characters except alphanumeric
+    processedValue = value.replace(/[^a-zA-Z0-9]/g, '');
+  }
+  
+  if (name === 'postCode') {
+    // Allow only numbers and limit to 6 digits
+    processedValue = value.replace(/\D/g, '').slice(0, 6);
+  }
+  
+  // Update form data
+  setFormData({
+    ...formData,
+    [name]: processedValue,
+  });
+};
+
 
   // New handler for course selection
-  const handleCourseChange = (e) => {
-    const selectedCourseId = e.target.value;
-    const selectedCourse = courses.find(course => course._id === selectedCourseId);
-    
-    if (selectedCourse) {
-      setFormData({
-        ...formData,
-        courseInterested: {
-          courseName: selectedCourse.courseName,
-          courseCode: selectedCourse.courseCode
-        }
-      });
-    } else {
-      // Reset if no course selected
-      setFormData({
-        ...formData,
-        courseInterested: {
-          courseName: "",
-          courseCode: ""
-        }
-      });
-    }
-    
-  };
-
-  const handleFileChange = (e) => {
-    console.log(e);
-    const { name, files } = e.target;
+ const handleCourseChange = (e) => {
+  const selectedCourseId = e.target.value;
+  console.log("Selected course ID:", selectedCourseId);
+  if (selectedCourseId) {
     setFormData({
       ...formData,
-      [name]: files[0]
+      courseInterested: {
+        courseName: "",
+        courseCode: ""
+      }
     });
-  };
+    const selectedCourse = courses.find(course => course._id === selectedCourseId);
+    console.log("Selected course:", selectedCourse);
+  
+  if (selectedCourse) {
+    setFormData({
+      ...formData,
+      courseInterested: {
+        courseName: selectedCourse.courseName,
+        courseCode: selectedCourse.courseCode
+      }
+    });
+  } else {
+    toast.error("Invalid course selection");
+  }
+};
+    return;
+  }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+ const handleFileChange = (e) => {
+  const { name, files } = e.target;
+  const file = files[0];
+  
+  if (file) {
+    // File size validation (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(`${name === 'studentPhoto' ? 'Photo' : 'Signature'} file size should be less than 5MB`);
+      return;
+    }
     
+    // File type validation
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error(`${name === 'studentPhoto' ? 'Photo' : 'Signature'} must be a JPEG, PNG, or JPG file`);
+      return;
+    }
+    
+    setFormData({
+      ...formData,
+      [name]: file
+    });
+  }
+};
+
+
+  // Updated handleSubmit function
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  // Client-side validation
+  const validationErrors = validateForm(formData);
+  if (Object.keys(validationErrors).length > 0) {
+    const firstError = Object.values(validationErrors)[0];
+    toast.error(firstError);
+    return;
+  }
+  
+  setIsSubmitting(true);
+  
+  try {
     const formDataToSend = new FormData();
     
-    // Append files separately
+    // Append files
     if (formData.studentPhoto) {
       formDataToSend.append("studentPhoto", formData.studentPhoto); 
     }
@@ -129,40 +301,34 @@ const AddNewStudent = () => {
       formDataToSend.append("studentSignature", formData.studentSignature);
     }
 
-    // console.log("courseInterested in the formdata:: ", formData.courseInterested);
-    // Append other fields (excluding files and courseInterested as it's handled above)
+    // Append other fields
     Object.entries(formData).forEach(([key, value]) => {
       if (key !== "studentPhoto" && key !== "studentSignature" && key !== "courseInterested" && value !== null && value !== undefined) {
-        // Handle arrays and objects by stringifying them
         if (typeof value === 'object' && !Array.isArray(value)) {
           formDataToSend.append(key, JSON.stringify(value));
         } else if (Array.isArray(value)) {
           formDataToSend.append(key, JSON.stringify(value));
         } else {
           formDataToSend.append(key, value);
-        }
+        } 
       }
     }); 
-     // Handle courseInterested as a nested object - send as JSON string
-  formDataToSend.append("courseInterested", JSON.stringify(formData.courseInterested));
-  
-    for (let pair of formDataToSend.entries()) {
-      console.log(pair[0], pair[1]);
-    }
-console.log("formDataToSend before sending:: ", formDataToSend.installments );
-     try {
-      const response = await axios.post( 
-        `${API_BASE_URL}/api/v1/institute_student/register_student`,
-        formDataToSend,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
+    
+    // Handle courseInterested separately
+    formDataToSend.append("courseInterested", JSON.stringify(formData.courseInterested));
+    
+    const response = await axios.post( 
+      `${API_BASE_URL}/api/v1/institute_student/register_student`,
+      formDataToSend,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
+    
+    if (response.data.success) {
+      toast.success("Student registered successfully!");
       
-      console.log(response);
-      toast.success("Student added successfully!");
-      
-      // Reset form after successful submission
+      // Reset form
       setFormData({
         studentPhoto: null,
         studentSignature: null,
@@ -201,21 +367,23 @@ console.log("formDataToSend before sending:: ", formDataToSend.installments );
         feesReceived: 0, 
         installments: [],
       });
-      
-    } catch (error) {
-      console.error("Error adding student:", error);
-      
-      // Check if it's a wallet deduction error
-      if (error.response?.data?.code === 'INSUFFICIENT_BALANCE') {
-        toast.error("Insufficient wallet balance. Please add money.");
-      } else {
-        toast.error("Failed to add student: " + (error.response?.data?.message || error.message));
-      }
     }
-    finally {
-      setIsSubmitting(false);
+    
+  } catch (error) {
+    console.error("Registration error:", error);
+    
+    const errorMessage = getErrorMessage(error);
+    toast.error(errorMessage);
+    
+    // Log detailed error for debugging
+    if (error.response?.data) {
+      console.log("Detailed error:", error.response.data);
     }
-  };
+    
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="p-4 sm:p-6 min-h-screen bg-blue-50">
@@ -584,6 +752,7 @@ console.log("formDataToSend before sending:: ", formDataToSend.installments );
 };
 
 export default AddNewStudent;
+
 
 // import React, { useState , useEffect } from "react";
 // import axios from "axios";

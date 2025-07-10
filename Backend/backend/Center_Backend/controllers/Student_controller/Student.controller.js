@@ -9,7 +9,32 @@ import { ApiResponse } from "../../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 import Wallet from "../../models/Payment/Wallet.js";
 import Transaction from "../../models/Payment/Transaction.js";
- 
+// Add these validation functions at the top of your controller file
+const validateRequiredFields = (fields) => {
+  const missingFields = [];
+  
+  for (const [key, value] of Object.entries(fields)) {
+    if (!value || (typeof value === 'string' && !value.trim())) {
+      missingFields.push(key);
+    }
+  }
+  
+  return missingFields;
+};
+
+const validateEmail = (email) => {
+  if (!email) return true; // Email is optional
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const validateMobile = (mobile) => {
+  if (!mobile) return false;
+  const mobileRegex = /^[6-9]\d{9}$/; // Indian mobile number format
+  return mobileRegex.test(mobile);
+};
+
+// Updated registerStudent function with better error handling
 const registerStudent = asyncHandler(async (req, res) => {
   const {
     rollNumber,
@@ -33,8 +58,6 @@ const registerStudent = asyncHandler(async (req, res) => {
     admissionDate,
     displayAdmissionOptions,
     courseInterested,
-
-    // Fee details
     courseFees,
     discountType,
     discountAmount, 
@@ -42,266 +65,414 @@ const registerStudent = asyncHandler(async (req, res) => {
     feesReceived,
     balance,
     remarks,
-    // Batch selection
     selectedBatch,
-    // Installment details
     installments,
   } = req.body;
 
-  
-let parsedCourseInterested;
-
-try {
-  parsedCourseInterested = JSON.parse(courseInterested);
-} catch (err) {
-  return res.status(400).json({ message: "Invalid courseInterested format" });
-}
-
-console.log("Parsed courseInterested:", parsedCourseInterested);  
-
-let parsedInstallments = [];
-
-try {
-  if (typeof installments === "string") {
-    parsedInstallments = JSON.parse(installments);
-  } else if (Array.isArray(installments)) {
-    parsedInstallments = installments;
-  }
-} catch (err) {
-  console.error("Failed to parse installments", err);
-}
-
- 
-
-  // Validate required fields
-  if ([rollNumber, studentName, relationType, studentMobile, dob, gender, admissionDate].some(field => !field?.trim())) {
-      throw new ApiError(400, "All required fields must be provided");
-  }
-
-
-  // Validate batch selection
-  if (!selectedBatch) {
-    throw new ApiError(400, "Batch selection is required");
-  }
-  console.log(selectedBatch);
-  
-  // Find the batch by its timing or name
-  const batch = await BatchModel.findOne({
-    $or: [
-      { batchTiming: selectedBatch },
-      { batchName: selectedBatch },
-      // { _id: selectedBatch }, // Use _id instead of id for MongoDB ObjectId
-    ],
-  });
-console.log("batch value :: ", batch);
-  if (!batch) {
-    throw new ApiError(404, "Selected batch not found");
-  }
-
-  // Check remaining seats in the batch
-  if (batch.remainingSeats <= 0) {
-    throw new ApiError(400, "Selected batch has no available seats");
-  }
-
-  // Check for student photo & signature
-  const studentPhotoLocalPath = req.files?.studentPhoto?.[0]?.path;
-  const studentSignatureLocalPath = req.files?.studentSignature?.[0]?.path;
-console.log(req.files)
-  if (!studentPhotoLocalPath || !studentSignatureLocalPath) {
-    throw new ApiError(400, "Student Photo and Signature are required");
-  }
-
-  // Upload to Cloudinary
-  const studentPhoto = await uploadOnCloudinary(studentPhotoLocalPath);
-  const studentSignature = await uploadOnCloudinary(studentSignatureLocalPath);
-
-  if (!studentPhoto || !studentSignature) {
-    throw new ApiError(500, "Error uploading student images");
-  }
-
-  // Define session outside the try block so it's accessible in the catch block
-  let session;
-
   try {
-    // Use a database transaction to ensure all operations succeed or fail together
-    session = await mongoose.startSession();
-    session.startTransaction();
+    // Validate required fields
+    const requiredFields = {
+      rollNumber,
+      studentName,
+      relationType,
+      studentMobile,
+      dob,
+      gender,
+      admissionDate
+    };
 
-    // Create student record in DB
-    const student = await Student.create(
-      [
-        {
-          studentPhoto: studentPhoto.url,
-          studentSignature: studentSignature.url,
-          rollNumber,
-          abbreviation: req.body.abbreviation || "",
-          studentName,
-          relationType,
-          fatherHusbandName,
-          surnameName,
-          motherName,
-          courseInterested: parsedCourseInterested, // Now properly structured as an object
-          studentMobile,
-          alternateMobile,
-          email,
-          dob,
-          gender,
-          city,
-          postCode,
-          permanentAddress,
-          referralCode,
-          caste,
-          qualifications,
-          occupation,
-          admissionDate,
-          selectedBatch: batch._id, // Store the reference to the batch object ID
-          displayAdmissionOptions: displayAdmissionOptions || false,
-        },
-      ],
-      { session }
-    );
-    
-    console.log("student id", student[0]._id);
-    const studentId = student[0]._id;
-    console.log("variable studentId", studentId);
-    
-    // Create fee record
-    const fee = await Fees_studentModel.create(
-      [
-        {
-          studentId: studentId,
-          courseFees: Number(courseFees) || 0,
-          discountType: discountType || "amount-",
-          discountAmount: Number(discountAmount) || 0,
-          totalFees: Number(totalFees) || 0,
-          feesReceived: Number(feesReceived) || 0,
-          balance: Number(balance) || Number(totalFees) - Number(feesReceived),
-          remarks: remarks || "",
-        },
-      ],
-      { session }
-    );
-
-    // Create installment records if any
-    const installmentRecords = [];
-    for(const installment of parsedInstallments){
-        console.log("installments array values :: " , installment)
+    const missingFields = validateRequiredFields(requiredFields);
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Missing required fields: ${missingFields.join(', ')}`,
+        code: 'MISSING_REQUIRED_FIELDS',
+        missingFields
+      });
     }
-   
-    if (parsedInstallments && parsedInstallments.length > 0) {
-      for (const installment of installments) {
-        // Validate installment data before creating
-        if (!installment.name) {
-          throw new ApiError(400, "Installment name is required");
-        }
 
-        // Parse amount properly to avoid NaN
-        const amount = parseFloat(installment.amount);
-        if (isNaN(amount)) {
-          throw new ApiError(
-            400,
-            `Invalid amount for installment: ${installment.name}`
-          );
-        }
+    // Validate mobile number
+    if (!validateMobile(studentMobile)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid mobile number format. Please enter a valid 10-digit Indian mobile number.",
+        code: 'INVALID_MOBILE_FORMAT'
+      });
+    }
 
-        // Validate date
-        if (!installment.date) {
-          throw new ApiError(
-            400,
-            `Date is required for installment: ${installment.name}`
-          );
-        }
+    // Validate email if provided
+    if (email && !validateEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format",
+        code: 'INVALID_EMAIL_FORMAT'
+      });
+    }
 
-        const newInstallment = await installmentModel.create(
-          [
-            {
-              studentId: studentId,
-              installmentName: installment.name,
-              amount: Number(installment.amount),
-              date: installment.date,
-              paid: false,
-            },
-          ],
-          { session }
-        );
+    // Check for duplicate roll number
+    const existingStudent = await Student.findOne({ rollNumber });
+    if (existingStudent) {
+      return res.status(409).json({
+        success: false,
+        message: "Student with this roll number already exists",
+        code: 'DUPLICATE_ROLL_NUMBER'
+      });
+    }
 
-        installmentRecords.push(newInstallment[0]._id);
+    // Check for duplicate email if provided
+    if (email) {
+      const existingEmail = await Student.findOne({ email });
+      if (existingEmail) {
+        return res.status(409).json({
+          success: false,
+          message: "Student with this email already exists",
+          code: 'DUPLICATE_EMAIL'
+        });
       }
     }
 
-    // Update student with fee and installment references
-    await Student.findByIdAndUpdate(
-      studentId,
-      {
-        feeDetails: fee[0]._id,
-        installmentDetails: installmentRecords,
-      },
-      { session }
-    );
-
-    // Update the batch to decrease remaining seats
-    await BatchModel.findByIdAndUpdate(
-      batch._id,
-      { $inc: { remainingSeats: -1 } }, // Decrease remaining seats by 1
-      { session }
-    );
-
-    // Commit the transaction
-    await session.commitTransaction();
-    session.endSession();
-
-    // Fetch the complete student record with populated references
-    const completeStudent = await Student.findById(studentId)
-      .populate("feeDetails")
-      .populate("installmentDetails")
-      .populate("selectedBatch");
-
-    if (!completeStudent) {
-      throw new ApiError(
-        500,
-        "Something went wrong while registering the student"
-      );
+    // Parse and validate courseInterested
+    let parsedCourseInterested;
+    try {
+      parsedCourseInterested = JSON.parse(courseInterested);
+      if (!parsedCourseInterested.courseName || !parsedCourseInterested.courseCode) {
+        return res.status(400).json({
+          success: false,
+          message: "Course selection is required",
+          code: 'INVALID_COURSE_SELECTION'
+        });
+      }
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid course selection format",
+        code: 'INVALID_COURSE_FORMAT'
+      });
     }
 
-    // Add wallet deduction logic before registration
-    // const instituteId = req.user._id; // assuming authentication middleware sets req.user
-    const registrationFee = 300; // or get from config
-
-    let wallet = await Wallet.findOne();
-    if (!wallet || wallet.balance < registrationFee) {
-      throw new ApiError(400, "Insufficient wallet balance. Please add money.");
+    // Parse and validate installments
+    let parsedInstallments = [];
+    try {
+      if (installments) {
+        if (typeof installments === "string") {
+          parsedInstallments = JSON.parse(installments);
+        } else if (Array.isArray(installments)) {
+          parsedInstallments = installments;
+        }
+      }
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid installments format",
+        code: 'INVALID_INSTALLMENTS_FORMAT'
+      });
     }
-    wallet.balance -= registrationFee;
-    await wallet.save();
 
-    // Record the deduction as a transaction
-    await Transaction.create({
-      // wallet: wallet._id,
-      amount: registrationFee,
-      type: "debit",
-      status: "approved",
-      referenceId: "Student Registration",
-      timestamp: new Date(),
+    // Validate batch selection
+    if (!selectedBatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Batch selection is required",
+        code: 'BATCH_REQUIRED'
+      });
+    }
+
+    // Find and validate batch
+    const batch = await BatchModel.findOne({
+      $or: [
+        { batchTiming: selectedBatch },
+        { batchName: selectedBatch },
+      ],
     });
 
-    return res
-      .status(201)
-      .json(
-        new ApiResponse(201, completeStudent, "Student registered successfully")
-      );
-  } catch (error) {
-    // If anything fails, abort the transaction
-    if (session) {
-      await session.abortTransaction();
-      session.endSession();
+    if (!batch) {
+      return res.status(404).json({
+        success: false,
+        message: "Selected batch not found",
+        code: 'BATCH_NOT_FOUND'
+      });
     }
-    throw new ApiError(
-      500,
-      error.message || "Something went wrong while registering the student"
-    );
-  }
-// return res.status(200)
 
+    if (batch.remainingSeats <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Selected batch has no available seats",
+        code: 'BATCH_FULL'
+      });
+    }
+
+    // Validate file uploads
+    const studentPhotoLocalPath = req.files?.studentPhoto?.[0]?.path;
+    const studentSignatureLocalPath = req.files?.studentSignature?.[0]?.path;
+
+    if (!studentPhotoLocalPath) {
+      return res.status(400).json({
+        success: false,
+        message: "Student photo is required",
+        code: 'PHOTO_REQUIRED'
+      });
+    }
+
+    if (!studentSignatureLocalPath) {
+      return res.status(400).json({
+        success: false,
+        message: "Student signature is required",
+        code: 'SIGNATURE_REQUIRED'
+      });
+    }
+
+    // Validate fee amounts
+    const numericFees = {
+      courseFees: Number(courseFees),
+      discountAmount: Number(discountAmount) || 0,
+      totalFees: Number(totalFees),
+      feesReceived: Number(feesReceived) || 0
+    };
+
+    if (isNaN(numericFees.courseFees) || numericFees.courseFees < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid course fees amount",
+        code: 'INVALID_COURSE_FEES'
+      });
+    }
+
+    if (isNaN(numericFees.totalFees) || numericFees.totalFees < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid total fees amount",
+        code: 'INVALID_TOTAL_FEES'
+      });
+    }
+
+    if (numericFees.feesReceived > numericFees.totalFees) {
+      return res.status(400).json({
+        success: false,
+        message: "Fees received cannot be greater than total fees",
+        code: 'INVALID_FEES_RECEIVED'
+      });
+    }
+
+    // Validate installments if provided
+    if (parsedInstallments.length > 0) {
+      for (let i = 0; i < parsedInstallments.length; i++) {
+        const installment = parsedInstallments[i];
+        
+        if (!installment.name || !installment.name.trim()) {
+          return res.status(400).json({
+            success: false,
+            message: `Installment name is required for installment ${i + 1}`,
+            code: 'INSTALLMENT_NAME_REQUIRED'
+          });
+        }
+
+        const amount = parseFloat(installment.amount);
+        if (isNaN(amount) || amount <= 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid amount for installment: ${installment.name}`,
+            code: 'INVALID_INSTALLMENT_AMOUNT'
+          });
+        }
+
+        if (!installment.date) {
+          return res.status(400).json({
+            success: false,
+            message: `Date is required for installment: ${installment.name}`,
+            code: 'INSTALLMENT_DATE_REQUIRED'
+          });
+        }
+      }
+    }
+
+    // Upload files to Cloudinary
+    let studentPhoto, studentSignature;
+    
+    try {
+      studentPhoto = await uploadOnCloudinary(studentPhotoLocalPath);
+      if (!studentPhoto) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to upload student photo",
+          code: 'PHOTO_UPLOAD_FAILED'
+        });
+      }
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Error uploading student photo",
+        code: 'PHOTO_UPLOAD_ERROR'
+      });
+    }
+
+    try {
+      studentSignature = await uploadOnCloudinary(studentSignatureLocalPath);
+      if (!studentSignature) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to upload student signature",
+          code: 'SIGNATURE_UPLOAD_FAILED'
+        });
+      }
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Error uploading student signature",
+        code: 'SIGNATURE_UPLOAD_ERROR'
+      });
+    }
+
+    // Check wallet balance
+    const registrationFee = 300;
+    let wallet = await Wallet.findOne();
+    if (!wallet || wallet.balance < registrationFee) {
+      return res.status(400).json({
+        success: false,
+        message: "Insufficient wallet balance. Please add money to continue.",
+        code: 'INSUFFICIENT_BALANCE',
+        requiredAmount: registrationFee,
+        currentBalance: wallet ? wallet.balance : 0
+      });
+    }
+
+    // Database transaction
+    let session;
+    try {
+      session = await mongoose.startSession();
+      session.startTransaction();
+
+      // Create student record
+      const student = await Student.create([{
+        studentPhoto: studentPhoto.url,
+        studentSignature: studentSignature.url,
+        rollNumber,
+        abbreviation: req.body.abbreviation || "Mr.",
+        studentName,
+        relationType,
+        fatherHusbandName,
+        includeFatherHusband: req.body.includeFatherHusband !== undefined ? req.body.includeFatherHusband : true,
+        surnameName,
+        includeSurname: req.body.includeSurname !== undefined ? req.body.includeSurname : true,
+        motherName,
+        courseInterested: parsedCourseInterested,
+        studentMobile,
+        alternateMobile,
+        email,
+        dob,
+        gender,
+        city,
+        postCode,
+        permanentAddress,
+        referralCode,
+        caste,
+        qualifications,
+        occupation,
+        admissionDate,
+        selectedBatch: batch._id,
+        displayAdmissionOptions: displayAdmissionOptions || false,
+      }], { session });
+
+      const studentId = student[0]._id;
+
+      // Create fee record
+      const fee = await Fees_studentModel.create([{
+        studentId: studentId,
+        courseFees: numericFees.courseFees,
+        discountType: discountType || "amount-",
+        discountAmount: numericFees.discountAmount,
+        totalFees: numericFees.totalFees,
+        feesReceived: numericFees.feesReceived,
+        balance: numericFees.totalFees - numericFees.feesReceived,
+        remarks: remarks || "",
+      }], { session });
+
+      // Create installment records
+      const installmentRecords = [];
+      if (parsedInstallments.length > 0) {
+        for (const installment of parsedInstallments) {
+          const newInstallment = await installmentModel.create([{
+            studentId: studentId,
+            installmentName: installment.name,
+            amount: Number(installment.amount),
+            date: installment.date,
+            paid: false,
+          }], { session });
+          installmentRecords.push(newInstallment[0]._id);
+        }
+      }
+
+      // Update student with references
+      await Student.findByIdAndUpdate(studentId, {
+        feeDetails: fee[0]._id,
+        installmentDetails: installmentRecords,
+      }, { session });
+
+      // Update batch
+      await BatchModel.findByIdAndUpdate(batch._id, {
+        $inc: { currentStudents: 1 }
+      }, { session });
+
+      // Update wallet
+      wallet.balance -= registrationFee;
+      await wallet.save({ session });
+
+      // Create transaction record
+      await Transaction.create([{
+        amount: registrationFee,
+        type: "withdrawal",
+        status: "approved",
+        referenceId: "Student Registration",
+        timestamp: new Date(),
+      }], { session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      // Fetch complete student record
+      const completeStudent = await Student.findById(studentId)
+        .populate("feeDetails")
+        .populate("installmentDetails")
+        .populate("selectedBatch");
+
+      return res.status(201).json({
+        success: true,
+        message: "Student registered successfully",
+        data: completeStudent
+      });
+
+    } catch (transactionError) {
+      if (session) {
+        await session.abortTransaction();
+        session.endSession();
+      }
+      
+      console.error("Transaction error:", transactionError);
+      
+      if (transactionError.code === 11000) {
+        return res.status(409).json({
+          success: false,
+          message: "Duplicate entry detected",
+          code: 'DUPLICATE_ENTRY'
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        message: "Database transaction failed",
+        code: 'TRANSACTION_FAILED'
+      });
+    }
+
+  } catch (error) {
+    console.error("Registration error:", error);
+    
+    return res.status(500).json({
+      success: false,
+      message: "Student registration failed",
+      code: 'REGISTRATION_FAILED',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
 });
 
 const getStudents = asyncHandler(async (req, res) => {

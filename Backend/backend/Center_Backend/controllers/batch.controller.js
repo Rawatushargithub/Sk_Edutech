@@ -39,12 +39,13 @@ export const getBatchSeats = asyncHandler(async (req, res) => {
 // Create new batch
 export const createBatch = asyncHandler(async (req, res) => {
   
-      const { batchName, batchLimit, currentStudents, batchTiming } = req.body;
+      const { batchName, batchLimit, currentStudents, batchTiming, franchiseId } = req.body;
       console.log(req.body)
       
       const newBatch = new Batch({
         batchName,
         batchLimit,
+        franchiseId,
         currentStudents,
         batchTiming
       });

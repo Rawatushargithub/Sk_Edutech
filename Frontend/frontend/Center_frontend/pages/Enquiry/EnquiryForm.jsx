@@ -6,6 +6,7 @@ import { useStudentContext } from '../../context/StudentContext.jsx';
 import API_BASE_URL from "../../../config";
 
 const EnquiryForm = () => {
+  
   const { addStudent } = useStudentContext();
   const [formData, setFormData] = useState({
     abbreviation: 'Mr.',
@@ -99,13 +100,15 @@ const EnquiryForm = () => {
 
   const handlenquiry = async (e) => {
     e.preventDefault();
-    
+  const franchiseId = localStorage.getItem("franchiseId");
+    // console.log("Franchise ID:", franchiseId);
     // Create student object from form data
     const studentData = {
       studentName: `${formData.abbreviation} ${formData.studentName}`,
       courseInterested: formData.courseOfInterest,
       email: formData.email,
       mobile: formData.studentMobile,
+      franchiseId: franchiseId,
       referralCode: formData.referralCode,
       referralName: '', // Can be added if needed
       guardianName: formData.guardianName,
@@ -124,7 +127,7 @@ const EnquiryForm = () => {
     try {
       setLoading(true);
       // Send data to backend
-      const response = await axios.post(`${API_BASE_URL}/api/v1/enquiry`, studentData);
+      const response = await axios.post(`${API_BASE_URL}/api/v1/institute_enquiry`, studentData);
       console.log(response)
       // Add to local context
       addStudent(response);
@@ -136,7 +139,7 @@ const EnquiryForm = () => {
       setLoading(false);
       
       // Navigate back to home page
-      navigate('/');
+      navigate('/institute');
     } catch (err) {
       setLoading(false);
       setError('Failed to submit enquiry');

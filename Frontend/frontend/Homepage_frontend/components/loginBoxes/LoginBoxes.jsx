@@ -110,7 +110,8 @@ const LoginBoxes = ({ onApplyClick }) => {
 
             {/* Modal Content */}
             <div
-              className="bg-white border-2 border-[#003366] text-[#003366] rounded-2xl shadow-lg max-w-sm w-full relative max-h-[90vh] overflow-y-auto transition-all duration-500"
+              className="bg-white 
+               border-white text-[#003366] rounded-2xl shadow-lg max-w-sm w-full relative max-h-[90vh] overflow-y-auto transition-all duration-500"
               {...handlers}
             >
               {modalType === "student" && <Login />}

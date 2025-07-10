@@ -5,6 +5,13 @@ const studentSchema = new mongoose.Schema({
   studentSignature: { type: String, required: true }, // Cloudinary URL
   rollNumber: { type: String, required: true, unique: true },
   abbreviation: { type: String },
+  franchiseId: { // System Generated ID
+            type: String,
+            default: true,
+            // required: true, // Not required initially for applications
+            // Allows multiple documents to have null/missing value
+            // lowercase: true, // Removed lowercase constraint
+        },
   studentName: { type: String, required: true }, 
   relationType: { type: String , required: true }, 
   fatherHusbandName: { type: String },

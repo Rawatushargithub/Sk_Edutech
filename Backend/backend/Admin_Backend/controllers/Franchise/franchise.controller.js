@@ -688,6 +688,56 @@ export const verificationCheck = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+// controllers/franchise.controller.js
+export const getFranchiseByFranchiseId = async (req, res) => {
+  try {
+    const id = req.params.getfranchisedetails;
+    const franchise = await Franchise.findOne({ franchiseId: id });
+
+    if (!franchise) {
+      return res.status(404).json({ message: "Franchise not found" });
+    }
+
+    const franchiseObj = franchise.toObject(); // Convert to plain object
+    delete franchiseObj.password; // Remove password
+
+    res.json(franchiseObj);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+export const updateFranchiseContact = async (req, res) => {
+  try {
+    // console.log("controller ruunnung");
+    const { franchiseId, email, mobile, address } = req.body;
+    // console.log("franchise iD", franchiseId);
+    
+    if (!franchiseId) {
+      return res.status(400).json({ message: "Franchise ID is required" });
+    }
+
+    const franchise = await Franchise.findOne({ franchiseId: franchiseId });
+
+    if (!franchise) {
+      return res.status(404).json({ message: "Franchise not found" });
+    }
+
+    // Update only the allowed fields
+    if (email) franchise.email = email;
+    if (mobile) franchise.mobile = mobile;
+    if (address) franchise.address = address;
+
+    await franchise.save();
+
+    res.status(200).json({ message: "Franchise contact details updated successfully" });
+  } catch (error) {
+    console.error("Error updating franchise contact:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // Export controllers
 export {
     addFranchiseByAdmin, // Renamed from createFranchise

@@ -6,6 +6,13 @@ const studentSchema = new mongoose.Schema({
   rollNumber: { type: String, required: true, unique: true },
   abbreviation: { type: String },
   studentName: { type: String, required: true }, 
+  franchiseId: { // System Generated ID
+            type: String,
+            default: true,
+            // required: true, // Not required initially for applications
+            // Allows multiple documents to have null/missing value
+            // lowercase: true, // Removed lowercase constraint
+        },
   relationType: { type: String , required: true }, 
   fatherHusbandName: { type: String },
   includeFatherHusband: { type:Boolean , default:true} , 

@@ -240,7 +240,7 @@ const Navbar = () => {
                     </button>
         
                     {/* Modal Card */}
-                    <div className="bg-white border-2 border-[#003366] text-[#003366] rounded-2xl shadow-lg max-w-sm w-full relative max-h-[90vh] overflow-y-auto transition-all duration-500"
+                    <div className="bg-white border-white text-[#003366] rounded-2xl shadow-lg max-w-sm w-full relative max-h-[90vh] overflow-y-auto transition-all duration-500"
                       {...handlers}>
                       {/* <Login /> */}
                       {activeSlide === 0 ? <Login /> : <centerLogin />}
@@ -338,10 +338,7 @@ const Navbar = () => {
             {/* Login Button for Mobile */}
             <li className="px-6 mt-4">
               <button
-                onClick={() => {
-                 onClick={studentLogin}
-                  setIsMenuOpen(false);
-                }}
+                onClick={studentLogin}
                 className="w-full bg-[#003366] text-white font-semibold text-xl py-2 px-4 text-center border rounded-md"
               >
                 Login
@@ -364,7 +361,7 @@ const Navbar = () => {
             </button>
 
             {/* Modal Card */}
-            <div className="bg-white border-2 border-[#003366] text-[#003366] rounded-2xl shadow-lg max-w-sm w-full relative max-h-[90vh] overflow-y-auto transition-all duration-500"
+            <div className="bg-black border-1 border-white text-[#003366] rounded-2xl shadow-lg max-w-sm w-full relative max-h-[90vh] overflow-y-auto transition-all duration-500"
               {...handlers}>
               {/* <Login /> */}
               {activeSlide === 0 ? <Login /> : <centerLogin />}
@@ -496,7 +493,7 @@ const Navbar = () => {
                     </button>
         
                     {/* Modal Card */}
-                    <div className="bg-white border-2 border-[#003366] text-[#003366] rounded-2xl shadow-lg max-w-sm w-full relative max-h-[90vh] overflow-y-auto transition-all duration-500"
+                    <div className="bg-white border-1 border-white text-[#003366] rounded-2xl shadow-lg max-w-sm w-full relative max-h-[90vh] overflow-y-auto transition-all duration-500"
                       {...handlers}>
                       {/* <Login /> */}
                       {activeSlide === 0 ? <Login /> : <centerLogin />}

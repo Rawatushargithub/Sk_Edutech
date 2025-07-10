@@ -36,7 +36,7 @@ const EnquiryList = () => {
   // Handle delete
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/institute_enquiry/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/institute_enquiry/${id}`, {
         method: 'DELETE',
       });
 

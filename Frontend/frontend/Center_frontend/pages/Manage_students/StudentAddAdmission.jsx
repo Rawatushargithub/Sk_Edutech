@@ -45,7 +45,7 @@
 //     feesReceived: 0, 
 //     installments: [],
 //   });
- 
+
 //   const [courses, setCourses] = useState([]);
 //   // State for batches
 //   const [batches, setBatches] = useState([]);
@@ -98,7 +98,7 @@
 //     formDataToSend.append("studentSignature", formData.studentSignature);
 //   }
 
-  
+
 //   // Append other fields
 //   Object.entries(formData).forEach(([key, value]) => {
 //     if (key !== "studentPhoto" && key !== "studentSignature" && value !== null) {
@@ -140,7 +140,7 @@
 //       // }
 //       // else
 //       // {
-        
+
 //       //   toast.error("Student registration failed");
 //       // }
 //     } catch (error) {
@@ -547,7 +547,7 @@
 //     feesReceived: 0, 
 //     installments: [],
 //   });
- 
+
 //   const [courses, setCourses] = useState([]);
 //   // State for batches
 //   const [batches, setBatches] = useState([]);
@@ -582,7 +582,7 @@
 //   const handleCourseChange = (e) => {
 //     const selectedCourseId = e.target.value;
 //     const selectedCourse = courses.find(course => course._id === selectedCourseId);
-    
+
 //     if (selectedCourse) {
 //       setFormData({
 //         ...formData,
@@ -615,7 +615,7 @@
 //   const handleSubmit = async (e) => {
 //     e.preventDefault();
 //     setIsSubmitting(true);
-    
+
 //     const formDataToSend = new FormData();
 
 //     // Append files separately
@@ -632,7 +632,7 @@
 //     // Handle courseInterested object specially
 //     formDataToSend.append("courseInterested[courseName]", formData.courseInterested.courseName);
 //     formDataToSend.append("courseInterested[courseCode]", formData.courseInterested.courseCode);
-    
+
 //     // Append other fields (excluding files and courseInterested as it's handled above)
 //     Object.entries(formData).forEach(([key, value]) => {
 //       if (key !== "studentPhoto" && key !== "studentSignature" && key !== "courseInterested" && value !== null) {
@@ -654,10 +654,10 @@
 //           headers: { "Content-Type": "multipart/form-data" },
 //         }
 //       );
-      
+
 //       console.log(response);
 //       toast.success("Student added successfully!");
-      
+
 //       // Reset form after successful submission
 //       setFormData({
 //         studentPhoto: null,
@@ -697,7 +697,7 @@
 //         feesReceived: 0, 
 //         installments: [],
 //       });
-      
+
 //     } catch (error) {
 //       console.error("Error adding student:", error);
 //       toast.error("Failed to add student: " + (error.response?.data?.message || error.message));
@@ -1062,14 +1062,16 @@
 
 // export default AddNewStudent;
 
-import React, { useState , useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Fees_table from "./Fees_table";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import API_BASE_URL  from "../../../config"
+import API_BASE_URL from "../../../config"
 
-const AddNewStudent = () => { 
+const AddNewStudent = () => {
+  const franchiseId = localStorage.getItem("franchiseId");
+  console.log("franchiseId in AddNewStudent component: ", franchiseId);
   const [formData, setFormData] = useState({
     // Personal Details
     studentPhoto: null,
@@ -1077,6 +1079,7 @@ const AddNewStudent = () => {
     rollNumber: "",
     abbreviation: "Mr.",
     studentName: "",
+    franchiseId: franchiseId, // Add franchiseId to formData
     relationType: "S/O",
     fatherOrHusbandName: "",
     includeFatherHusband: true,
@@ -1092,7 +1095,7 @@ const AddNewStudent = () => {
     postCode: "",
     permanentAddress: "",
     caste: "",
-    admissionDate:"",
+    admissionDate: "",
 
     // Academic Details - Modified courseInterested structure
     courseInterested: {
@@ -1103,17 +1106,17 @@ const AddNewStudent = () => {
     referralCode: "",
     qualifications: "",
     occupation: "",
-    selectedBatch:"",
+    selectedBatch: "",
 
     // Financial Details 
     courseFees: 0,
     discountRate: "amount-",
     discountAmount: 0,
     totalFees: 0,
-    feesReceived: 0, 
+    feesReceived: 0,
     installments: [],
   });
- 
+
   const [courses, setCourses] = useState([]);
   // State for batches
   const [batches, setBatches] = useState([]);
@@ -1126,7 +1129,7 @@ const AddNewStudent = () => {
     const fetchCourses = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
-        console.log("course fetching :: " , response)
+        console.log("course fetching :: ", response)
         setCourses(response.data); // Assuming the response is an array of course objects
       } catch (error) {
         console.error('Error fetching courses:', error);
@@ -1148,7 +1151,7 @@ const AddNewStudent = () => {
   const handleCourseChange = (e) => {
     const selectedCourseId = e.target.value;
     const selectedCourse = courses.find(course => course._id === selectedCourseId);
-    
+
     if (selectedCourse) {
       setFormData({
         ...formData,
@@ -1167,7 +1170,7 @@ const AddNewStudent = () => {
         }
       });
     }
-    
+
   };
 
   const handleFileChange = (e) => {
@@ -1182,12 +1185,17 @@ const AddNewStudent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     const formDataToSend = new FormData();
-    
+
+    const franchiseId = localStorage.getItem("franchiseId");
+    if (franchiseId) {
+      formDataToSend.append("franchiseId", franchiseId);
+    }
+
     // Append files separately
     if (formData.studentPhoto) {
-      formDataToSend.append("studentPhoto", formData.studentPhoto); 
+      formDataToSend.append("studentPhoto", formData.studentPhoto);
     }
     if (formData.studentSignature) {
       formDataToSend.append("studentSignature", formData.studentSignature);
@@ -1206,26 +1214,26 @@ const AddNewStudent = () => {
           formDataToSend.append(key, value);
         }
       }
-    }); 
-     // Handle courseInterested as a nested object - send as JSON string
-  formDataToSend.append("courseInterested", JSON.stringify(formData.courseInterested));
-  
+    });
+    // Handle courseInterested as a nested object - send as JSON string
+    formDataToSend.append("courseInterested", JSON.stringify(formData.courseInterested));
+
     for (let pair of formDataToSend.entries()) {
       console.log(pair[0], pair[1]);
     }
-console.log("formDataToSend before sending:: ", formDataToSend.installments );
-     try {
-      const response = await axios.post( 
+    console.log("formDataToSend before sending:: ", formDataToSend.installments);
+    try {
+      const response = await axios.post(
         `${API_BASE_URL}/api/v1/institute_student/register_student`,
         formDataToSend,
         {
           headers: { "Content-Type": "multipart/form-data" },
         }
       );
-      
+
       console.log(response);
       toast.success("Student added successfully!");
-      
+
       // Reset form after successful submission
       setFormData({
         studentPhoto: null,
@@ -1248,7 +1256,7 @@ console.log("formDataToSend before sending:: ", formDataToSend.installments );
         postCode: "",
         permanentAddress: "",
         caste: "",
-        admissionDate:"",
+        admissionDate: "",
         courseInterested: {
           courseName: "",
           courseCode: ""
@@ -1257,18 +1265,18 @@ console.log("formDataToSend before sending:: ", formDataToSend.installments );
         referralCode: "",
         qualifications: "",
         occupation: "",
-        selectedBatch:"",
+        selectedBatch: "",
         courseFees: 0,
         discountRate: "amount-",
         discountAmount: 0,
         totalFees: 0,
-        feesReceived: 0, 
+        feesReceived: 0,
         installments: [],
       });
-      
+
     } catch (error) {
       console.error("Error adding student:", error);
-      
+
       // Check if it's a wallet deduction error
       if (error.response?.data?.code === 'INSUFFICIENT_BALANCE') {
         toast.error("Insufficient wallet balance. Please add money.");
@@ -1283,7 +1291,7 @@ console.log("formDataToSend before sending:: ", formDataToSend.installments );
 
   return (
     <div className="p-6 min-h-screen bg-blue-50">
-       <ToastContainer position="top-right" autoClose={5000} />
+      <ToastContainer position="top-right" autoClose={5000} />
       <div className="w-full  bg-white p-6 rounded-2xl shadow">
         <h1 className="text-2xl font-bold mb-4 text-red-500">
           Add New Student
@@ -1330,7 +1338,7 @@ console.log("formDataToSend before sending:: ", formDataToSend.installments );
             </div>
             <div>
               <label className="block mb-1">Roll Number *</label>
-              <input 
+              <input
                 type="text"
                 name="rollNumber"
                 value={formData.rollNumber}
@@ -1441,9 +1449,9 @@ console.log("formDataToSend before sending:: ", formDataToSend.installments );
               <select
                 name="courseInterested"
                 onChange={handleCourseChange}
-                value={formData.courseInterested.courseName ? 
-                  courses.find(course => 
-                    course.courseName === formData.courseInterested.courseName && 
+                value={formData.courseInterested.courseName ?
+                  courses.find(course =>
+                    course.courseName === formData.courseInterested.courseName &&
                     course.courseCode === formData.courseInterested.courseCode
                   )?._id || "" : ""}
                 className=" p-2 w-80 border-gray-400 border-2 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-200 focus:border-blue-200 "
@@ -1586,7 +1594,7 @@ console.log("formDataToSend before sending:: ", formDataToSend.installments );
                 onChange={handleChange}
                 className="border-gray-400 border-2 rounded-md p-2 w-80 focus:outline-none focus:ring-1 focus:ring-blue-200 focus:border-blue-200"
               />
-            </div> 
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
@@ -1611,17 +1619,17 @@ console.log("formDataToSend before sending:: ", formDataToSend.installments );
               />
             </div>
           </div>
-          <Fees_table 
-          handleSubmit={handleSubmit}   
-          formData={formData} handleChange={handleChange} 
-          setFormData={setFormData}
-          batches={batches} setBatches={setBatches} 
-          selectedBatch={selectedBatch} 
-          setSelectedBatch={setSelectedBatch} 
-          remainingSeats={remainingSeats} 
-          setRemainingSeats={setRemainingSeats}
-          isSubmitting={isSubmitting}  />
-       </form>
+          <Fees_table
+            handleSubmit={handleSubmit}
+            formData={formData} handleChange={handleChange}
+            setFormData={setFormData}
+            batches={batches} setBatches={setBatches}
+            selectedBatch={selectedBatch}
+            setSelectedBatch={setSelectedBatch}
+            remainingSeats={remainingSeats}
+            setRemainingSeats={setRemainingSeats}
+            isSubmitting={isSubmitting} />
+        </form>
       </div>
     </div>
   );

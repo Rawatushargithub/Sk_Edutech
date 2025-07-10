@@ -4,6 +4,7 @@ import EnquiryStudent from '../models/EnquiryStudent.model.js';
 export const addStudent = async (req, res) => {
   try {
     const newStudent = new EnquiryStudent(req.body);
+    // console.log('New Student Enquiry:', newStudent);
     await newStudent.save();
     res.status(201).json({ message: 'Student enquiry saved', student: newStudent });
   } catch (error) {

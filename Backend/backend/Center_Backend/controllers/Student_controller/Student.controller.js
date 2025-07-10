@@ -9,7 +9,305 @@ import { ApiResponse } from "../../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 import Wallet from "../../models/Payment/Wallet.js";
 import Transaction from "../../models/Payment/Transaction.js";
- 
+
+// const registerStudent = asyncHandler(async (req, res) => {
+//   const {
+//     rollNumber,
+//     studentName,
+//     relationType,
+//     fatherHusbandName,
+//     surnameName,
+//     franchiseId, // Added franchiseId to the request body
+//     motherName,
+//     studentMobile,
+//     alternateMobile,
+//     email,
+//     dob,
+//     gender,
+//     city,
+//     postCode,
+//     permanentAddress,
+//     referralCode,
+//     caste,
+//     qualifications,
+//     occupation,
+//     admissionDate,
+//     displayAdmissionOptions,
+//     courseInterested,
+
+//     // Fee details
+//     courseFees,
+//     discountType,
+//     discountAmount,
+//     totalFees,
+//     feesReceived,
+//     balance,
+//     remarks,
+//     // Batch selection
+//     selectedBatch,
+//     // Installment details
+//     installments,
+//   } = req.body;
+
+//   console.log("franchise", franchiseId);
+
+
+//   let parsedCourseInterested;
+
+//   try {
+//     parsedCourseInterested = JSON.parse(courseInterested);
+//   } catch (err) {
+//     return res.status(400).json({ message: "Invalid courseInterested format" });
+//   }
+
+//   console.log("Parsed courseInterested:", parsedCourseInterested);
+
+//   let parsedInstallments = [];
+
+//   try {
+//     if (typeof installments === "string") {
+//       parsedInstallments = JSON.parse(installments);
+//     } else if (Array.isArray(installments)) {
+//       parsedInstallments = installments;
+//     }
+//   } catch (err) {
+//     console.error("Failed to parse installments", err);
+//   }
+
+
+
+//   // Validate required fields
+//   if ([rollNumber, studentName, relationType, studentMobile, dob, gender, admissionDate].some(field => !field?.trim())) {
+//     throw new ApiError(400, "All required fields must be provided");
+//   }
+
+
+//   // Validate batch selection
+//   if (!selectedBatch) {
+//     throw new ApiError(400, "Batch selection is required");
+//   }
+//   console.log(selectedBatch);
+
+//   // Find the batch by its timing or name
+//   const batch = await BatchModel.findOne({
+//     $or: [
+//       { batchTiming: selectedBatch },
+//       { batchName: selectedBatch },
+//       // { _id: selectedBatch }, // Use _id instead of id for MongoDB ObjectId
+//     ],
+//   });
+//   console.log("batch value :: ", batch);
+//   if (!batch) {
+//     throw new ApiError(404, "Selected batch not found");
+//   }
+
+//   // Check remaining seats in the batch
+//   if (batch.remainingSeats <= 0) {
+//     throw new ApiError(400, "Selected batch has no available seats");
+//   }
+
+//   // Check for student photo & signature
+//   const studentPhotoLocalPath = req.files?.studentPhoto?.[0]?.path;
+//   const studentSignatureLocalPath = req.files?.studentSignature?.[0]?.path;
+//   console.log(req.files)
+//   if (!studentPhotoLocalPath || !studentSignatureLocalPath) {
+//     throw new ApiError(400, "Student Photo and Signature are required");
+//   }
+
+//   // Upload to Cloudinary
+//   const studentPhoto = await uploadOnCloudinary(studentPhotoLocalPath);
+//   const studentSignature = await uploadOnCloudinary(studentSignatureLocalPath);
+
+//   if (!studentPhoto || !studentSignature) {
+//     throw new ApiError(500, "Error uploading student images");
+//   }
+
+//   // Define session outside the try block so it's accessible in the catch block
+//   let session;
+
+//   try {
+//     // Use a database transaction to ensure all operations succeed or fail together
+//     session = await mongoose.startSession();
+//     session.startTransaction();
+
+//     // Create student record in DB
+//     const student = await Student.create(
+//       [
+//         {
+//           studentPhoto: studentPhoto.url,
+//           studentSignature: studentSignature.url,
+//           rollNumber,
+//           abbreviation: req.body.abbreviation || "",
+//           studentName,
+//           franchiseId,
+//           relationType,
+//           fatherHusbandName,
+//           surnameName,
+//           motherName,
+//           courseInterested: parsedCourseInterested, // Now properly structured as an object
+//           studentMobile,
+//           alternateMobile,
+//           email,
+//           dob,
+//           gender,
+//           city,
+//           postCode,
+//           permanentAddress,
+//           referralCode,
+//           caste,
+//           qualifications,
+//           occupation,
+//           admissionDate,
+//           selectedBatch: batch._id, // Store the reference to the batch object ID
+//           displayAdmissionOptions: displayAdmissionOptions || false,
+//         },
+//       ],
+//       { session }
+//     );
+
+//     console.log("student id", student[0]._id);
+//     const studentId = student[0]._id;
+//     console.log("variable studentId", studentId);
+
+//     // Create fee record
+//     const fee = await Fees_studentModel.create(
+//       [
+//         {
+//           studentId: studentId,
+//           courseFees: Number(courseFees) || 0,
+//           discountType: discountType || "amount-",
+//           discountAmount: Number(discountAmount) || 0,
+//           totalFees: Number(totalFees) || 0,
+//           feesReceived: Number(feesReceived) || 0,
+//           balance: Number(balance) || Number(totalFees) - Number(feesReceived),
+//           remarks: remarks || "",
+//         },
+//       ],
+//       { session }
+//     );
+
+//     // Create installment records if any
+//     const installmentRecords = [];
+//     for (const installment of parsedInstallments) {
+//       console.log("installments array values :: ", installment)
+//     }
+
+//     if (parsedInstallments && parsedInstallments.length > 0) {
+//       for (const installment of installments) {
+//         // Validate installment data before creating
+//         if (!installment.name) {
+//           throw new ApiError(400, "Installment name is required");
+//         }
+
+//         // Parse amount properly to avoid NaN
+//         const amount = parseFloat(installment.amount);
+//         if (isNaN(amount)) {
+//           throw new ApiError(
+//             400,
+//             `Invalid amount for installment: ${installment.name}`
+//           );
+//         }
+
+//         // Validate date
+//         if (!installment.date) {
+//           throw new ApiError(
+//             400,
+//             `Date is required for installment: ${installment.name}`
+//           );
+//         }
+
+//         const newInstallment = await installmentModel.create(
+//           [
+//             {
+//               studentId: studentId,
+//               installmentName: installment.name,
+//               amount: Number(installment.amount),
+//               date: installment.date,
+//               paid: false,
+//             },
+//           ],
+//           { session }
+//         );
+
+//         installmentRecords.push(newInstallment[0]._id);
+//       }
+//     }
+
+//     // Update student with fee and installment references
+//     await Student.findByIdAndUpdate(
+//       studentId,
+//       {
+//         feeDetails: fee[0]._id,
+//         installmentDetails: installmentRecords,
+//       },
+//       { session }
+//     );
+
+//     // Update the batch to decrease remaining seats
+//     await BatchModel.findByIdAndUpdate(
+//       batch._id,
+//       { $inc: { remainingSeats: -1 } }, // Decrease remaining seats by 1
+//       { session }
+//     );
+
+//     // Commit the transaction
+//     await session.commitTransaction();
+//     session.endSession();
+
+//     // Fetch the complete student record with populated references
+//     const completeStudent = await Student.findById(studentId)
+//       .populate("feeDetails")
+//       .populate("installmentDetails")
+//       .populate("selectedBatch");
+
+//     if (!completeStudent) {
+//       throw new ApiError(
+//         500,
+//         "Something went wrong while registering the student"
+//       );
+//     }
+
+//     // Add wallet deduction logic before registration
+//     // const instituteId = req.user._id; // assuming authentication middleware sets req.user
+//     const registrationFee = 300; // or get from config
+
+//     let wallet = await Wallet.findOne();
+//     if (!wallet || wallet.balance < registrationFee) {
+//       throw new ApiError(400, "Insufficient wallet balance. Please add money.");
+//     }
+//     wallet.balance -= registrationFee;
+//     await wallet.save();
+
+//     // Record the deduction as a transaction
+//     await Transaction.create({
+//       // wallet: wallet._id,
+//       amount: registrationFee,
+//       type: "debit",
+//       status: "approved",
+//       referenceId: "Student Registration",
+//       timestamp: new Date(),
+//     });
+
+//     return res
+//       .status(201)
+//       .json(
+//         new ApiResponse(201, completeStudent, "Student registered successfully")
+//       );
+//   } catch (error) {
+//     // If anything fails, abort the transaction
+//     if (session) {
+//       await session.abortTransaction();
+//       session.endSession();
+//     }
+//     throw new ApiError(
+//       500,
+//       error.message || "Something went wrong while registering the student"
+//     );
+//   }
+//   // return res.status(200)
+
+// });
+
 const registerStudent = asyncHandler(async (req, res) => {
   const {
     rollNumber,
@@ -17,6 +315,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     relationType,
     fatherHusbandName,
     surnameName,
+    franchiseId,
     motherName,
     studentMobile,
     alternateMobile,
@@ -25,7 +324,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     gender,
     city,
     postCode,
-    permanentAddress, 
+    permanentAddress,
     referralCode,
     caste,
     qualifications,
@@ -33,85 +332,58 @@ const registerStudent = asyncHandler(async (req, res) => {
     admissionDate,
     displayAdmissionOptions,
     courseInterested,
-
-    // Fee details
     courseFees,
     discountType,
-    discountAmount, 
+    discountAmount,
     totalFees,
     feesReceived,
     balance,
     remarks,
-    // Batch selection
     selectedBatch,
-    // Installment details
     installments,
   } = req.body;
 
-  
-let parsedCourseInterested;
+  let parsedCourseInterested, parsedInstallments = [];
 
-try {
-  parsedCourseInterested = JSON.parse(courseInterested);
-} catch (err) {
-  return res.status(400).json({ message: "Invalid courseInterested format" });
-}
+  try {
+    parsedCourseInterested = JSON.parse(courseInterested);
+  } catch {
+    return res.status(400).json({ message: "Invalid courseInterested format" });
+  }
 
-console.log("Parsed courseInterested:", parsedCourseInterested);  
-
-let parsedInstallments = [];
-
-try {
   if (typeof installments === "string") {
-    parsedInstallments = JSON.parse(installments);
+    try {
+      parsedInstallments = JSON.parse(installments);
+    } catch {
+      return res.status(400).json({ message: "Invalid installments format" });
+    }
   } else if (Array.isArray(installments)) {
     parsedInstallments = installments;
   }
-} catch (err) {
-  console.error("Failed to parse installments", err);
-}
-
- 
 
   // Validate required fields
   if ([rollNumber, studentName, relationType, studentMobile, dob, gender, admissionDate].some(field => !field?.trim())) {
-      throw new ApiError(400, "All required fields must be provided");
+    throw new ApiError(400, "All required fields must be provided");
   }
 
-
-  // Validate batch selection
   if (!selectedBatch) {
     throw new ApiError(400, "Batch selection is required");
   }
-  console.log(selectedBatch);
-  
-  // Find the batch by its timing or name
+
   const batch = await BatchModel.findOne({
-    $or: [
-      { batchTiming: selectedBatch },
-      { batchName: selectedBatch },
-      // { _id: selectedBatch }, // Use _id instead of id for MongoDB ObjectId
-    ],
+    $or: [{ batchTiming: selectedBatch }, { batchName: selectedBatch }],
   });
-console.log("batch value :: ", batch);
-  if (!batch) {
-    throw new ApiError(404, "Selected batch not found");
-  }
 
-  // Check remaining seats in the batch
-  if (batch.remainingSeats <= 0) {
-    throw new ApiError(400, "Selected batch has no available seats");
-  }
+  if (!batch) throw new ApiError(404, "Selected batch not found");
+  if (batch.remainingSeats <= 0) throw new ApiError(400, "Batch is full");
 
-  // Check for student photo & signature
   const studentPhotoLocalPath = req.files?.studentPhoto?.[0]?.path;
   const studentSignatureLocalPath = req.files?.studentSignature?.[0]?.path;
-console.log(req.files)
+
   if (!studentPhotoLocalPath || !studentSignatureLocalPath) {
     throw new ApiError(400, "Student Photo and Signature are required");
   }
 
-  // Upload to Cloudinary
   const studentPhoto = await uploadOnCloudinary(studentPhotoLocalPath);
   const studentSignature = await uploadOnCloudinary(studentSignatureLocalPath);
 
@@ -119,109 +391,77 @@ console.log(req.files)
     throw new ApiError(500, "Error uploading student images");
   }
 
-  // Define session outside the try block so it's accessible in the catch block
   let session;
 
   try {
-    // Use a database transaction to ensure all operations succeed or fail together
     session = await mongoose.startSession();
     session.startTransaction();
 
-    // Create student record in DB
     const student = await Student.create(
-      [
-        {
-          studentPhoto: studentPhoto.url,
-          studentSignature: studentSignature.url,
-          rollNumber,
-          abbreviation: req.body.abbreviation || "",
-          studentName,
-          relationType,
-          fatherHusbandName,
-          surnameName,
-          motherName,
-          courseInterested: parsedCourseInterested, // Now properly structured as an object
-          studentMobile,
-          alternateMobile,
-          email,
-          dob,
-          gender,
-          city,
-          postCode,
-          permanentAddress,
-          referralCode,
-          caste,
-          qualifications,
-          occupation,
-          admissionDate,
-          selectedBatch: batch._id, // Store the reference to the batch object ID
-          displayAdmissionOptions: displayAdmissionOptions || false,
-        },
-      ],
+      [{
+        studentPhoto: studentPhoto.url,
+        studentSignature: studentSignature.url,
+        rollNumber,
+        abbreviation: req.body.abbreviation || "",
+        studentName,
+        franchiseId,
+        relationType,
+        fatherHusbandName,
+        surnameName,
+        motherName,
+        courseInterested: parsedCourseInterested,
+        studentMobile,
+        alternateMobile,
+        email,
+        dob,
+        gender,
+        city,
+        postCode,
+        permanentAddress,
+        referralCode,
+        caste,
+        qualifications,
+        occupation,
+        admissionDate,
+        selectedBatch: batch._id,
+        displayAdmissionOptions: displayAdmissionOptions || false,
+      }],
       { session }
     );
-    
-    console.log("student id", student[0]._id);
+
     const studentId = student[0]._id;
-    console.log("variable studentId", studentId);
-    
-    // Create fee record
+
     const fee = await Fees_studentModel.create(
-      [
-        {
-          studentId: studentId,
-          courseFees: Number(courseFees) || 0,
-          discountType: discountType || "amount-",
-          discountAmount: Number(discountAmount) || 0,
-          totalFees: Number(totalFees) || 0,
-          feesReceived: Number(feesReceived) || 0,
-          balance: Number(balance) || Number(totalFees) - Number(feesReceived),
-          remarks: remarks || "",
-        },
-      ],
+      [{
+        studentId,
+        courseFees: Number(courseFees) || 0,
+        discountType: discountType || "amount-",
+        discountAmount: Number(discountAmount) || 0,
+        totalFees: Number(totalFees) || 0,
+        feesReceived: Number(feesReceived) || 0,
+        balance: Number(balance) || Number(totalFees) - Number(feesReceived),
+        remarks: remarks || "",
+      }],
       { session }
     );
 
-    // Create installment records if any
     const installmentRecords = [];
-    for(const installment of parsedInstallments){
-        console.log("installments array values :: " , installment)
-    }
-   
-    if (parsedInstallments && parsedInstallments.length > 0) {
-      for (const installment of installments) {
-        // Validate installment data before creating
-        if (!installment.name) {
-          throw new ApiError(400, "Installment name is required");
-        }
 
-        // Parse amount properly to avoid NaN
+    if (parsedInstallments.length > 0) {
+      for (const installment of parsedInstallments) {
+        if (!installment.name) throw new ApiError(400, "Installment name is required");
         const amount = parseFloat(installment.amount);
-        if (isNaN(amount)) {
-          throw new ApiError(
-            400,
-            `Invalid amount for installment: ${installment.name}`
-          );
-        }
-
-        // Validate date
-        if (!installment.date) {
-          throw new ApiError(
-            400,
-            `Date is required for installment: ${installment.name}`
-          );
-        }
+        if (isNaN(amount)) throw new ApiError(400, `Invalid amount for installment: ${installment.name}`);
+        if (!installment.date) throw new ApiError(400, `Date is required for installment: ${installment.name}`);
 
         const newInstallment = await installmentModel.create(
-          [
-            {
-              studentId: studentId,
-              installmentName: installment.name,
-              amount: Number(installment.amount),
-              date: installment.date,
-              paid: false,
-            },
-          ],
+          [{
+            studentId,
+            installmentName: installment.name,
+            amount,
+            date: installment.date,
+            paid: false,
+          }],
           { session }
         );
 
@@ -229,7 +469,6 @@ console.log(req.files)
       }
     }
 
-    // Update student with fee and installment references
     await Student.findByIdAndUpdate(
       studentId,
       {
@@ -239,44 +478,28 @@ console.log(req.files)
       { session }
     );
 
-    // Update the batch to decrease remaining seats
     await BatchModel.findByIdAndUpdate(
       batch._id,
-      { $inc: { remainingSeats: -1 } }, // Decrease remaining seats by 1
+      { $inc: { remainingSeats: -1 } },
       { session }
     );
 
-    // Commit the transaction
     await session.commitTransaction();
     session.endSession();
 
-    // Fetch the complete student record with populated references
-    const completeStudent = await Student.findById(studentId)
-      .populate("feeDetails")
-      .populate("installmentDetails")
-      .populate("selectedBatch");
+    // --- 🔻 Non-transactional logic starts here 🔻 ---
 
-    if (!completeStudent) {
-      throw new ApiError(
-        500,
-        "Something went wrong while registering the student"
-      );
-    }
-
-    // Add wallet deduction logic before registration
-    // const instituteId = req.user._id; // assuming authentication middleware sets req.user
-    const registrationFee = 300; // or get from config
-
+    const registrationFee = 300;
     let wallet = await Wallet.findOne();
+
     if (!wallet || wallet.balance < registrationFee) {
       throw new ApiError(400, "Insufficient wallet balance. Please add money.");
     }
+
     wallet.balance -= registrationFee;
     await wallet.save();
 
-    // Record the deduction as a transaction
     await Transaction.create({
-      // wallet: wallet._id,
       amount: registrationFee,
       type: "debit",
       status: "approved",
@@ -284,24 +507,27 @@ console.log(req.files)
       timestamp: new Date(),
     });
 
-    return res
-      .status(201)
-      .json(
-        new ApiResponse(201, completeStudent, "Student registered successfully")
-      );
-  } catch (error) {
-    // If anything fails, abort the transaction
-    if (session) {
-      await session.abortTransaction();
-      session.endSession();
-    }
-    throw new ApiError(
-      500,
-      error.message || "Something went wrong while registering the student"
-    );
-  }
-// return res.status(200)
+    const completeStudent = await Student.findById(studentId)
+      .populate("feeDetails")
+      .populate("installmentDetails")
+      .populate("selectedBatch");
 
+    if (!completeStudent) {
+      throw new ApiError(500, "Something went wrong while fetching student details");
+    }
+
+    return res.status(201).json(
+      new ApiResponse(201, completeStudent, "Student registered successfully")
+    );
+  } catch (error) {
+    if (session && session.inTransaction()) {
+      await session.abortTransaction();
+    }
+    if (session) session.endSession();
+
+    console.error("Registration error:", error);
+    throw new ApiError(500, error.message || "Registration failed");
+  }
 });
 
 const getStudents = asyncHandler(async (req, res) => {
@@ -347,20 +573,20 @@ const getStudents = asyncHandler(async (req, res) => {
     .limit(limit)
     .sort({ admissionDate: -1 }); // Sort by admission date, newest first
 
-     // Format the results to include the batch name in a new field
+  // Format the results to include the batch name in a new field
   const formattedStudents = students.map(student => {
     // Convert to plain JavaScript object
     const studentObj = student.toObject();
-    
+
     // Add a new batch field with the batch name
     if (studentObj.selectedBatch && studentObj.selectedBatch.batchName) {
       studentObj.batch = studentObj.selectedBatch.batchName;
     } else {
       studentObj.batch = "No Batch Assigned";
     }
-    
-      // Remove the original selectedBatch object to clean the response
-      delete studentObj.selectedBatch;
+
+    // Remove the original selectedBatch object to clean the response
+    delete studentObj.selectedBatch;
 
     return studentObj;
   });
@@ -394,30 +620,30 @@ const getStudents = asyncHandler(async (req, res) => {
   );
 });
 
-const getStudentCount = asyncHandler( async (req, res) => {
+const getStudentCount = asyncHandler(async (req, res) => {
   try {
     const count = await Student.countDocuments();   // { instituteId: req.user.instituteId } <= when add the instituteID to the students
-    
+
     res.status(200).json({ count });
   } catch (error) {
     res.status(500).json({ message: "Error fetching student count", error });
   }
 })
 
-const getRecentsStudents = asyncHandler( async (req , res) => {
+const getRecentsStudents = asyncHandler(async (req, res) => {
 
   try {
     const limit = parseInt(req.query.limit) || 5;
-    
+
     const students = await Student.find()
       .sort({ createdAt: -1 }) // Sort by creation date, newest first
       .limit(limit)
       .select("studentName courseInterested rollNumber createdAt studentPhoto");
-    
+
     if (students.length === 0) {
       return res.status(404).json({ message: "No students found" });
     }
-    
+
     // Format the response data
     const formattedStudents = students.map(student => ({
       id: student._id,
@@ -436,10 +662,10 @@ const getRecentsStudents = asyncHandler( async (req , res) => {
 
 })
 
-const updateStudent = asyncHandler( async( req , res) => {
+const updateStudent = asyncHandler(async (req, res) => {
   console.log("update is working")
   try {
-console.log("id value:: " , req.params.id);
+    console.log("id value:: ", req.params.id);
     console.log(req.body)
     // Find and update the student
     const updatedStudent = await Student.findByIdAndUpdate(
@@ -449,7 +675,7 @@ console.log("id value:: " , req.params.id);
         new: true, // Return the updated document
       }
     );
-    
+
     if (!updatedStudent) {
       return res.status(404).json({
         success: false,
@@ -457,7 +683,7 @@ console.log("id value:: " , req.params.id);
       });
     }
     console.log("updated student in backend :: ", updatedStudent)
-    
+
     res.status(200).json({
       success: true,
       message: "Student updated successfully",
@@ -473,10 +699,10 @@ console.log("id value:: " , req.params.id);
   }
 })
 
-export { 
-  registerStudent, 
-  getStudents , 
+export {
+  registerStudent,
+  getStudents,
   getStudentCount,
   getRecentsStudents,
   updateStudent
- };
+};

@@ -83,6 +83,7 @@ export const createExam = asyncHandler(async (req, res) => {
       courseCode,
       batch,
       examDate,
+      franchiseId,
       examDurationMinutes,
       totalQuestions,
       totalMarks,
@@ -148,6 +149,7 @@ console.log("Request Body:", req.body);
         courseCode,
         batch: batchItem,
         examDate,
+        franchiseId, // Add franchiseId to the exam object
         examDurationMinutes,
         totalQuestions,
         totalMarks,

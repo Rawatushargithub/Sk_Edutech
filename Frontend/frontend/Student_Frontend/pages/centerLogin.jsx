@@ -24,6 +24,7 @@ const CenterLoginModal = () => {
       const { token, franchise } = await loginFranchise(identifier, password);
       localStorage.setItem("centerToken", token);
       localStorage.setItem("franchiseName", franchise.franchiseName);
+      localStorage.setItem("franchiseId", franchise.franchiseId);
       navigate("/institute");
     } catch (err) {
       setErrorMsg(err?.response?.data?.message || "Login failed");
@@ -130,11 +131,7 @@ const CenterLoginModal = () => {
         © {new Date().getFullYear()} Center Panel. All rights reserved.
       </div>
 
-      <div className="mt-3 text-center">
-        <button  className="text-sm text-gray-500 hover:underline">
-          Close Login
-        </button>
-      </div>
+      
     </div>
   );
 };

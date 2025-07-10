@@ -122,11 +122,16 @@ const CourseForm = ({ mode }) => {
   };
 
   const handleSubmit = async (e) => {
+    
     e.preventDefault();
     setLoading(true);
     const toastId = toast.loading(isEditMode ? 'Updating course...' : 'Creating course...');
     const submissionData = new FormData();
-
+    
+    
+    const franchiseId = localStorage.getItem("franchiseId");
+    submissionData.append('franchiseId', franchiseId);
+    
     Object.keys(formData).forEach(key => submissionData.append(key, formData[key]));
     
     const validVideoLinks = courseVideoLinks.filter(v => v.title && v.link).map(({id, ...rest}) => rest);

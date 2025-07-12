@@ -21,6 +21,13 @@ const Dashboard = () => {
     // Redirect to login/home page
     navigate("/");
   };
+   
+  const [franchiseName, setFranchiseName] = useState('');
+
+  useEffect(() => {
+    const name = localStorage.getItem("franchiseName");
+    setFranchiseName(name);
+  },[])
 
     // Mock Data
     const totalStudents = 120; 
@@ -46,8 +53,6 @@ const Dashboard = () => {
       }; 
 
     // Franchise (owner) state
-    const [franchise, setFranchise] = useState(null);
-    const [franchiseLoading, setFranchiseLoading] = useState(true);
 
 //     useEffect(() => {
 //         // Replace with actual logic to get franchiseId (from auth, context, or localStorage)
@@ -75,23 +80,9 @@ const Dashboard = () => {
           <div className=" text-black flex items-center justify-between top-0 px-4 py-2">
             {/* Franchise Owner Info */}
             <div className="flex items-center space-x-4">
-                {franchiseLoading ? (
-                    <span>Loading owner info...</span>
-                ) : franchise ? (
-                    <>
-                        {franchise.ownerPhotoUrl && (
-                            <img src={franchise.ownerPhotoUrl} alt="Owner" className="h-10 w-10 rounded-full object-cover border" />
-                        )}
-                        <div>
-                            <div className="text-lg font-semibold">
-                                Welcome, <span className="text-blue-400">{franchise.ownerName}</span>
+                <div className="text-lg font-semibold">
+                                Welcome, <span className="text-blue-400">{franchiseName}</span>
                             </div>
-                            <div className="text-sm text-gray-600">{franchise.email}</div>
-                        </div>
-                    </>
-                ) : (
-                    <span>Owner info not found</span>
-                )}
             </div>
            
                  {/* Right Section */}

@@ -7,7 +7,7 @@ import { asyncHandler } from "../utils/asynchanlder.js";
 export const createCourse = asyncHandler(async (req, res) => {
     try {
         const {
-            courseCode, courseName, courseSubject, courseFees, courseMRP,
+            courseCode, courseName, courseSubject, franchiseId, courseFees, courseMRP,
             courseDuration, // Expected as number (months)
             courseVideoLinks, // Expected as JSON string of [{title, link}]
             courseSyllabus, courseEligibility,
@@ -109,6 +109,7 @@ export const createCourse = asyncHandler(async (req, res) => {
                             url: uploadedMaterial.url,
                             fileName: materialFile.originalname,
                             fileType: materialFile.mimetype,
+                            franchiseId,
                         });
                     } else {
                         console.error("Cloudinary material upload failed for file:", materialFile.originalname, uploadedMaterial);
@@ -139,6 +140,7 @@ export const createCourse = asyncHandler(async (req, res) => {
             courseCode,
             courseName,
             courseSubject,
+            franchiseId, // System Generated ID
             courseFees: Number(courseFees),
             courseMRP: Number(courseMRP),
             courseDuration: Number(courseDuration),
@@ -437,10 +439,11 @@ export const getCourseById = asyncHandler(async (req, res) => {
 export const addNoteToCourse = asyncHandler(async (req, res) => {
     const { courseId } = req.params;
     
-    console.log("[addNoteToCourse] req.body:", req.body);
-    console.log("[addNoteToCourse] req.files:", req.files);
+    // console.log("[addNoteToCourse] req.body:", req.body);
+    // console.log("[addNoteToCourse] req.files:", req.files);
 
-    const { title, type, url: linkUrl } = req.body; 
+    console.log("franchiseId in addNoteToCourse:", req.body.franchiseId);
+    const { title, type, url: linkUrl, franchiseId, } = req.body; 
 
     if (!title || !type) {
         console.error("[addNoteToCourse] Missing title or type in req.body", req.body);
@@ -459,7 +462,7 @@ export const addNoteToCourse = asyncHandler(async (req, res) => {
             return res.status(400).json({ error: "URL is required for link type notes." });
         }
         newNote = {
-            title, type: 'link', url: linkUrl, fileType: 'external-link',
+            title, type: 'link', url: linkUrl, fileType: 'external-link', franchiseId,
         };
     } else if (type === 'file') {
         if (!req.files || !req.files.noteFile || req.files.noteFile.length === 0) {
@@ -474,13 +477,13 @@ export const addNoteToCourse = asyncHandler(async (req, res) => {
         }
         newNote = {
             title: title || noteFile.originalname, type: 'file', url: uploadedFile.url,
-            fileName: noteFile.originalname, fileType: noteFile.mimetype,
+            fileName: noteFile.originalname, fileType: noteFile.mimetype, franchiseId,
         };
     } else {
         return res.status(400).json({ error: "Invalid note type specified." });
     }
 
-    console.log("[addNoteToCourse] Constructed newNote:", newNote);
+    // console.log("[addNoteToCourse] Constructed newNote:", newNote);
     // Ensure existing materials are valid before pushing and saving
     const validExistingMaterials = [];
     if (course.courseMaterials && Array.isArray(course.courseMaterials)) {
@@ -495,7 +498,7 @@ export const addNoteToCourse = asyncHandler(async (req, res) => {
             validExistingMaterials.push({
                 title: currentTitle, type: currentType, url: currentUrl,
                 fileName: material.fileName, fileType: material.fileType, 
-                thumbnailUrl: material.thumbnailUrl, _id: material._id
+                thumbnailUrl: material.thumbnailUrl, _id: material._id, franchiseId,
             });
         });
     }
@@ -512,7 +515,7 @@ export const addNoteToCourse = asyncHandler(async (req, res) => {
 // Add a new video link to a specific course
 export const addVideoLinkToCourse = asyncHandler(async (req, res) => {
     const { courseId } = req.params;
-    const { title, link } = req.body;
+    const { title, link, franchiseId } = req.body;
 
     if (!title || !link) {
         return res.status(400).json({ error: "Title and Link are required for a video." });
@@ -523,7 +526,7 @@ export const addVideoLinkToCourse = asyncHandler(async (req, res) => {
         return res.status(404).json({ error: "Course not found" });
     }
 
-    const newVideoLink = { title, link };
+    const newVideoLink = { title, link, franchiseId };
 
     course.courseVideoLinks.push(newVideoLink);
     

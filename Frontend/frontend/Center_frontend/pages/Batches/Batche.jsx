@@ -3,8 +3,9 @@ import axios from "axios";
 import API_BASE_URL from "../../../config";
 
 const Batches = () => {
+    const franchiseId = localStorage.getItem("franchiseId");
   const [batches, setBatches] = useState([]);
-  const [batch, setBatch] = useState({ batchName: "", batchTiming: "", batchLimit: "" , currentStudents:"6" }); // create batches field
+  const [batch, setBatch] = useState({ batchName: "", batchTiming: "", batchLimit: "" , currentStudents:"6", franchiseId:franchiseId }); // create batches field
 
   useEffect(() => {
     fetchBatches();
@@ -38,7 +39,7 @@ const Batches = () => {
 
     try {
       console.log(batch)
-      await axios.post(`${API_BASE_URL}/api/v1/batche/createBatch`, batch);
+      await axios.post(`${API_BASE_URL}/api/v1/institute_batche/createBatch`, batch);
       
       fetchBatches();
       setBatch({ batchName: "", batchTiming: "", batchLimit: "" });
@@ -51,7 +52,7 @@ const Batches = () => {
 
   const deleteBatch = async (batchId) => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/v1/batche/${batchId}`);
+      await axios.delete(`${API_BASE_URL}/api/v1/institute_batche/${batchId}`);
       alert("Successfully deleted");
       // Refresh the batches list after deletion
       fetchBatches();

@@ -69,6 +69,8 @@ const AddNote = () => {
       return;
     }
 
+    const franchiseId = localStorage.getItem("franchiseId");
+
     setIsSubmitting(true);
     const toastId = toast.loading('Adding note...');
     const formDataToSend = new FormData();
@@ -80,6 +82,8 @@ const AddNote = () => {
     } else if (noteData.type === "file" && noteData.file) {
       formDataToSend.append("noteFile", noteData.file); 
     }
+
+    formDataToSend.append("franchiseId", franchiseId);
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/${noteData.selectedCourseId}/notes`, {

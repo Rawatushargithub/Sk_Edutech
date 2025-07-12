@@ -4,10 +4,10 @@ import { asyncHandler } from "../utils/asynchanlder.js";
 // Create a new note
 export const createNote = asyncHandler(async (req, res) => {
   try {
-    const { course, title, content, date, link } = req.body;
+    const { course, title, content, date, link, franchiseId } = req.body;
     const file = req.file ? req.file.filename : "";
 
-    const newNote = new Note({ course, title, content, date, link, file });
+    const newNote = new Note({ course, title, content, date, link, file, franchiseId });
     await newNote.save();
     res.status(201).json({ message: "✅ Note added successfully" });
   } catch (error) {

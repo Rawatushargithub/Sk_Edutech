@@ -55,10 +55,14 @@ const AddExam = () => {
     fetchBatches();
   }, []);
 
+
+
   const [newExam, setNewExam] = useState({
+    
     courseCode: "",
     batch: [],
     examDate: "",
+    // franchiseId: franchiseId,
     examDurationMinutes: "",
     totalQuestions: "",
     totalMarks: "",
@@ -117,11 +121,14 @@ const AddExam = () => {
   }, [isOnlineExam]);
 
   const handleAddExam = async () => {
+  const franchiseId = localStorage.getItem("franchiseId");
+  console.log("franchiseID: ", franchiseId);
     try {
       // Prepare examData
       const examData = {
         ...newExam,
         batch: newExam.batch,
+        franchiseId: franchiseId,
       };
       // Only send selectedQuestions for online exams
       if (isOnlineExam) {
@@ -224,9 +231,9 @@ const AddExam = () => {
            topic.toLowerCase().includes(searchTerm);
   });
 
-  console.log("Current courseCode:", newExam.courseCode);
-  console.log("All questions:", questions);
-  console.log("Filtered questions:", filteredQuestions);
+  // console.log("Current courseCode:", newExam.courseCode);
+  // console.log("All questions:", questions);
+  // console.log("Filtered questions:", filteredQuestions);
 
   return (
     <div className="min-h-screen p-8 bg-gray-100">

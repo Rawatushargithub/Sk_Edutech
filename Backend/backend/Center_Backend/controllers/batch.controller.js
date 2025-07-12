@@ -69,6 +69,7 @@ export const createBatch = asyncHandler(async (req, res) => {
       const newBatch = new Batch({
         batchName,
         batchLimit,
+        franchiseId,
         currentStudents,
         batchTiming,
         franchiseId

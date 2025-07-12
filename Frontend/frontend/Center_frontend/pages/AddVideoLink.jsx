@@ -54,6 +54,8 @@ const AddVideoLink = () => {
         return;
     }
 
+    const franchiseId = localStorage.getItem("franchiseId");
+    
     setIsSubmitting(true);
     const toastId = toast.loading('Adding video link...');
     
@@ -63,7 +65,7 @@ const AddVideoLink = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ title: videoData.title.trim(), link: videoData.link.trim() }), 
+        body: JSON.stringify({ title: videoData.title.trim(), link: videoData.link.trim(), franchiseId: franchiseId }), 
       });
 
       const result = await response.json();

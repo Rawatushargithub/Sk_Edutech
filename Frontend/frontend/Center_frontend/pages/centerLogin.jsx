@@ -130,11 +130,7 @@ const CenterLoginModal = () => {
         © {new Date().getFullYear()} Center Panel. All rights reserved.
       </div>
 
-      <div className="mt-3 text-center">
-        <button  className="text-sm text-gray-500 hover:underline">
-          Close Login
-        </button>
-      </div>
+      
     </div>
   );
 };

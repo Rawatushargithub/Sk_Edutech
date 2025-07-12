@@ -149,6 +149,7 @@ const CourseForm = ({ mode }) => {
   };
 
   const handleSubmit = async (e) => {
+    
     e.preventDefault();
     
     // Validate franchise ID
@@ -162,6 +163,11 @@ const CourseForm = ({ mode }) => {
     const submissionData = new FormData();
 
     // Add franchise ID to form data
+    
+    
+    const franchiseId = localStorage.getItem("franchiseId");
+    submissionData.append('franchiseId', franchiseId);
+    
     Object.keys(formData).forEach(key => submissionData.append(key, formData[key]));
     submissionData.append('franchiseId', franchiseId);
     

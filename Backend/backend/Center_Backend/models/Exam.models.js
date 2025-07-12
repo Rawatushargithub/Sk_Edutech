@@ -9,6 +9,13 @@ const ExamSchema = new mongoose.Schema({
     id: { type: String, required: true },
   },
   examDate: { type: String, required: true },
+  franchiseId: { // System Generated ID
+            type: String,
+            default: true,
+            // required: true, // Not required initially for applications
+            // Allows multiple documents to have null/missing value
+            // lowercase: true, // Removed lowercase constraint
+        },
   examDurationMinutes: { type: Number, required: true },
   totalQuestions: { type: Number, required: true },
   totalMarks: { type: Number, required: true },

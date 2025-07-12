@@ -3,11 +3,11 @@ import QuestionBank from '../models/Questionbank.model.js';
 // Add a new question to a course's question bank
 export const createQuestionBank = async (req, res) => {
   try {
-    const { courseCode, courseName, qNo, question, options, answer } = req.body;
+    const { courseCode, courseName, qNo, question, options, answer, franchiseId } = req.body;
     if (!courseCode || !courseName || !qNo || !question || !options || !answer) {
       return res.status(400).json({ message: 'All fields are required.' });
     }
-
+    console.log("Received data:", req.body);
     // Find or create the course's question bank
     let qb = await QuestionBank.findOne({ courseCode });
     if (!qb) {
@@ -15,12 +15,13 @@ export const createQuestionBank = async (req, res) => {
         courseCode,
         courseName,
         questions: [],
+        
       });
     }
 
     qb.courseName = courseName; // update courseName if changed
 
-    qb.questions.push({ qNo, question, options, answer });
+    qb.questions.push({ qNo, question, options, answer, franchiseId });
     await qb.save();
 
     res.status(201).json({ message: 'Question added successfully', data: qb });

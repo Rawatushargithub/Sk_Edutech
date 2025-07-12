@@ -94,10 +94,13 @@ const OurAchievers = () => {
 
 
   return (
-    <div className="mx-auto my-6 justify-center p-8 flex flex-col lg:flex-row gap-8 ">
+    <div className="mx-auto my-6 justify-center px-4 md:px-8 flex flex-col lg:flex-row gap-8 ">
       {/* Left div for images from API */}
       {/* EventBox slider*/}
-      <div className="max-w-[550px] max-h-[500px] relative rounded-3xl overflow-hidden bg-gray-100 sm:object-cover">
+      <div 
+       className="w-full max-w-[550px] aspect-[11/10] sm:aspect-[11/9] relative rounded-3xl overflow-hidden bg-gray-100"
+       
+      >
 
         {/* Images */}
       <div 
@@ -109,7 +112,7 @@ const OurAchievers = () => {
             <img 
               src={image.url} 
               alt={image.name || `Slide ${index + 1}`} 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-center"
             />
           </div>
         ))}
@@ -167,18 +170,6 @@ const OurAchievers = () => {
 
         {/* Profile icons grid */}
         <div className="">
-          {/* {achievers.map((achiever) => (
-            <div key={achiever.id} className="bg-gray-50 p-4 rounded-lg flex flex-col items-center">
-              <div className="w-24 h-24 rounded-full overflow-hidden bg-cyan-100 mb-2">
-                <img 
-                  src={achiever.image} 
-                  alt={achiever.name} 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <h3 className="font-semibold text-gray-800 text-center">{achiever.name}</h3>
-            </div>
-          ))} */}
           <AchieverSlider />
         </div>
       </div>

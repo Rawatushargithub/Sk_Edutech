@@ -157,7 +157,7 @@ const LoginBoxes = ({ onApplyClick }) => {
       {/* Popup Modal */}
       {isOpen && (
         <div className="fixed inset-0 flex items-center justify-center  bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg border-2 border-gray-300 w-96">
+          <div className="bg-white m-2 p-6 rounded-lg shadow-lg border-2 border-gray-300 w-96">
             <h2 className="text-lg font-semibold text-[#003366]">Certificate Verification</h2>
             <input
               type="text"

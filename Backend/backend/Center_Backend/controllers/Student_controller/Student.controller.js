@@ -341,7 +341,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     try {
       session = await mongoose.startSession();
       session.startTransaction();
-
+      console.log(franchiseId)
       // Create student record
       const student = await Student.create([{
         studentPhoto: studentPhoto.url,
@@ -349,6 +349,7 @@ const registerStudent = asyncHandler(async (req, res) => {
         rollNumber,
         abbreviation: req.body.abbreviation || "Mr.",
         studentName,
+        franchiseId,
         relationType,
         fatherHusbandName,
         includeFatherHusband: req.body.includeFatherHusband !== undefined ? req.body.includeFatherHusband : true,

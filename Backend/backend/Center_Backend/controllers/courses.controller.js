@@ -17,7 +17,7 @@ export const createCourse = asyncHandler(async (req, res) => {
         console.log("In Controller 2nd time:: ", req.body);
 
         // Get franchiseId from req.user (preferred) or req.body (fallback)
-        let franchiseId = req.user?.franchiseId || req.body.franchiseId;
+        // let franchiseId = req.user?.franchiseId || req.body.franchiseId;
         
         // If franchiseId is not found, try to get instituteID from req.user
         if (!franchiseId && req.user?.instituteID) {

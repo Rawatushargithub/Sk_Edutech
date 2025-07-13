@@ -6,7 +6,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import API_BASE_URL  from "../../../config"
 
 const AddNewStudent = () => { 
-  const franchiseId = localStorage.getItem("franchiseId");
  
   const [formData, setFormData] = useState({
     // Personal Details
@@ -14,8 +13,7 @@ const AddNewStudent = () => {
     studentSignature: null, 
     rollNumber: "",
     abbreviation: "Mr.",
-    studentName: "",franchiseId: franchiseId, // Add franchiseId to formData
-
+    studentName: "",
     relationType: "S/O",
     fatherOrHusbandName: "",
     includeFatherHusband: true,
@@ -62,6 +60,7 @@ const AddNewStudent = () => {
 
   useEffect(() => {
     // Fetch courses from the backend
+    
     const fetchCourses = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
@@ -293,6 +292,8 @@ const handleSubmit = async (e) => {
   
   try {
     const formDataToSend = new FormData();
+    const franchiseId = localStorage.getItem("franchiseID");
+    console.log(franchiseId)
     if (franchiseId) {
       formDataToSend.append("franchiseId", franchiseId);
     }
@@ -307,7 +308,7 @@ const handleSubmit = async (e) => {
 
     // Append other fields
     Object.entries(formData).forEach(([key, value]) => {
-      if (key !== "studentPhoto" && key !== "studentSignature" && key !== "courseInterested" && value !== null && value !== undefined) {
+      if (key !== "studentPhoto" && key !== "studentSignature" && key !== "courseInterested"  && value !== null && value !== undefined) {
         if (typeof value === 'object' && !Array.isArray(value)) {
           formDataToSend.append(key, JSON.stringify(value));
         } else if (Array.isArray(value)) {

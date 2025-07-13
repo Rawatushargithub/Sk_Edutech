@@ -24,7 +24,7 @@ const StudentAdmissionList = () => {
     const fetchStudents = async () => {
       try {
         const response = await axios.get(
-          `${API_BASE_URL}/api/v1/institute_student/get_students`
+          `${API_BASE_URL}/api/v1/admin_student/get_students`
         );
         console.log("students data :: ", response.data);
 

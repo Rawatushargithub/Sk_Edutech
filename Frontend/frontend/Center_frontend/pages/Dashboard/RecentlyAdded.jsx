@@ -16,13 +16,13 @@ const TabMenu = () => {
   const [selectedTab, setSelectedTab] = useState("Franchise");
 
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); 
   const [error, setError] = useState("");
   const [sortOrder, setSortOrder] = useState("newest"); // "newest" or "oldest"
 
   // Update API URLs
   const API_ENDPOINTS = {
-    Student: "/api/v1/institute_student/recent",
+    Student: "/api/v1/institute_student/recent", 
     Franchise: "/api/v1/franchises/recent",
     Courses: "/api/v1/institute_courses/recent",
   };
@@ -30,12 +30,12 @@ const TabMenu = () => {
   // Generic fetch function for all tabs
   const fetchData = async (tabName) => {
     setLoading(true);
-    setError("");
+    setError(""); 
     setData([]); // Reset data before fetching
 
     try {
       console.log(API_ENDPOINTS[tabName]);
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS[tabName]}`);
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS[tabName]}?franchiseId=${localStorage.getItem("franchiseID")}`);
       if (!response.ok)
         throw new Error(`Failed to fetch ${tabName.toLowerCase()}`);
 

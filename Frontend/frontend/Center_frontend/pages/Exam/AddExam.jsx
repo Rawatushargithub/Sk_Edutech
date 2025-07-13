@@ -38,8 +38,9 @@ const AddExam = () => {
 
     const fetchBatches = async () => {
       try {
+        const franchiseId = localStorage.getItem("franchiseID");
         const response = await fetch(
-          `${API_BASE_URL}/api/v1/institute_batche/allBatches`
+          `${API_BASE_URL}/api/v1/institute_batche/allBatches?franchiseId=${franchiseId}`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch batches");
@@ -121,8 +122,8 @@ const AddExam = () => {
   }, [isOnlineExam]);
 
   const handleAddExam = async () => {
-  const franchiseId = localStorage.getItem("franchiseId");
-  console.log("franchiseID: ", franchiseId);
+  const franchiseId = localStorage.getItem("franchiseID");
+  
     try {
       // Prepare examData
       const examData = {
@@ -139,7 +140,6 @@ const AddExam = () => {
       } else {
         delete examData.selectedQuestions;
       }
-      console.log("Exam data being sent:", examData);
 
       const response = await fetch(
           `${API_BASE_URL}/api/v1/institute_exam/exams`,

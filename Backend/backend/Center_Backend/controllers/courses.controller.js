@@ -14,7 +14,7 @@ export const createCourse = asyncHandler(async (req, res) => {
             instituteStatus // Renamed from status
         } = req.body;
 
-        console.log("In Controller 2nd time:: ", req.body);
+        console.log("Received course creation request with body:", req.body);
 
         // Get franchiseId from req.user (preferred) or req.body (fallback)
         // let franchiseId = req.user?.franchiseId || req.body.franchiseId;
@@ -24,29 +24,10 @@ export const createCourse = asyncHandler(async (req, res) => {
             franchiseId = req.user.instituteID;
         }
 
-        if (!franchiseId) {
-            return res.status(400).json({ 
-                success: false,
-                error: "Franchise ID is required. Please ensure you are properly authenticated." 
-            });
-        }
-
-        // Validate that the franchise/institute exists
-        const institute = await Institute.findOne({ 
-             franchiseId: franchiseId ,
-        });
-
-        if (!institute) {
-            return res.status(404).json({ 
-                success: false,
-                error: "Institute not found. Please check your franchise ID." 
-            });
-        }
-
         // Check if course code already exists for this franchise
         const existingCourse = await Course.findOne({ 
             courseCode: courseCode,
-            franchiseId: institute.instituteID // Use instituteID for consistency
+            franchiseId:franchiseId
         });
 
         if (existingCourse) {
@@ -134,7 +115,7 @@ export const createCourse = asyncHandler(async (req, res) => {
                 error: "All required fields must be filled." 
             });
         }
-
+console.log(franchiseId, "franchiseId in createCourse");
         // Create new course with franchise information
         const newCourse = new Course({
             courseCode,
@@ -150,9 +131,8 @@ export const createCourse = asyncHandler(async (req, res) => {
             courseImage: courseImageCloudinaryUrl,
             courseMaterials: processedCourseMaterials,
             instituteStatus: instituteStatus || 'active',
-            franchiseId: institute.instituteID, // Use instituteID for consistency
-            franchiseName: institute.instituteName, // Store franchise name for easier queries
-            // adminApprovalStatus will default to 'pending' as per schema
+            franchiseId:  franchiseId, // Use franchiseId from request
+            
         });
 
         await newCourse.save();
@@ -164,9 +144,7 @@ export const createCourse = asyncHandler(async (req, res) => {
             course: {
                 ...newCourse.toObject(),
                 franchiseInfo: {
-                    franchiseId: institute.instituteID,
-                    franchiseName: institute.instituteName,
-                    ownerName: institute.ownerName
+                    franchiseId: franchiseId
                 }
             }
         });

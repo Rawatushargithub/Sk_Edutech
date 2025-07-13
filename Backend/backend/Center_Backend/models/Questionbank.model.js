@@ -14,13 +14,6 @@ const questionSchema = new mongoose.Schema({
     minlength: 10,
     maxlength: 1000 
   },
-  franchiseId: { // System Generated ID
-            type: String,
-            default: true,
-            // required: true, // Not required initially for applications
-            // Allows multiple documents to have null/missing value
-            // lowercase: true, // Removed lowercase constraint
-        },
   options: {
     a: {
       type: String,

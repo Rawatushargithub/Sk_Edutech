@@ -13,7 +13,7 @@ const ProfileSection = () => {
 
   useEffect(() => {
     const fetchFranchiseDetails = async () => {
-      const storedId = localStorage.getItem("franchiseId");
+      const storedId = localStorage.getItem("franchiseID");
       if (!storedId) return;
       console.log("Stored Franchise ID:", storedId);
       try {

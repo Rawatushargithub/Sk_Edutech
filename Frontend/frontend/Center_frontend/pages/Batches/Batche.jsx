@@ -9,11 +9,13 @@ const Batches = () => {
 
   useEffect(() => {
     fetchBatches();
-  }, []);
+  }, []);  
 
   const fetchBatches = async () => { 
     try {
        const franchiseId = localStorage.getItem('franchiseID');
+       batch.franchiseId = franchiseId;
+       console.log(franchiseId)
       const response = await axios.get(`${API_BASE_URL}/api/v1/institute_batche/allBatches?franchiseId=${franchiseId}`);
       console.log(response.data.data)
 
@@ -36,7 +38,7 @@ const Batches = () => {
       alert("Invalid time format! Use format: 9AM - 10AM");
       return;
     }
-
+console.log(batch.batchName)
     try {
       console.log(batch)
       await axios.post(`${API_BASE_URL}/api/v1/institute_batche/createBatch`, batch);

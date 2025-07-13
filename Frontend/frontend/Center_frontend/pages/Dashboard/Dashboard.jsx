@@ -17,6 +17,7 @@ const Dashboard = () => {
     // Clear stored center data
     localStorage.removeItem("centerToken");
     localStorage.removeItem("franchiseName");
+    localStorage.removeItem("franchiseID");
 
     // Redirect to login/home page
     navigate("/");
@@ -29,10 +30,6 @@ const Dashboard = () => {
     setFranchiseName(name);
   },[])
 
-    // Mock Data
-    const totalStudents = 120; 
-    const totalCourses = 15;
-    const walletBalance = { paid: 5000, balance: 3000 };
 
     // Active Tab State
     const [activeTab, setActiveTab] = useState("students");

@@ -579,7 +579,12 @@ console.log("students value :: ", students)
 
 const getStudentCount = asyncHandler(async (req, res) => {
   try {
-    const count = await Student.countDocuments();   // { instituteId: req.user.instituteId } <= when add the instituteID to the students
+    const { franchiseId } = req.query;
+    console.log("franchiseId value :: ", franchiseId)
+    if (!franchiseId) {
+      return res.status(400).json({ message: "Franchise ID is required" });
+    }
+    const count = await Student.countDocuments({franchiseId});   // { instituteId: req.user.instituteId } <= when add the instituteID to the students
 
     res.status(200).json({ count });
   } catch (error) {
@@ -591,12 +596,17 @@ const getRecentsStudents = asyncHandler(async (req, res) => {
 
   try {
     const limit = parseInt(req.query.limit) || 5;
+    const { franchiseId } = req.query;
+    console.log("franchiseId value :: ", franchiseId)
+    if (!franchiseId) {
+      return res.status(400).json({ message: "Franchise ID is required" });
+    }
 
-    const students = await Student.find()
+    const students = await Student.find({franchiseId: franchiseId})
       .sort({ createdAt: -1 }) // Sort by creation date, newest first
       .limit(limit)
       .select("studentName courseInterested rollNumber createdAt studentPhoto");
-
+    console.log("students value :: ", students)
     if (students.length === 0) {
       return res.status(404).json({ message: "No students found" });
     }

@@ -64,13 +64,14 @@ const ExamManagement = () => {
       throw err;
     }
   };
-
+ 
   // Fetch exams from API with automatic status update
   const fetchExams = async (examMode = mode) => {
     try {
       setLoading(true);
       setError(null);
  const franchiseId = localStorage.getItem('franchiseID');
+ console.log("Fetching exams for franchise:", franchiseId);
       const response = await fetch(
         `${API_BASE_URL}/api/v1/institute_exam/exams?examMode=${examMode === 'online' ? 'Online' : 'Offline'}&franchiseId=${franchiseId}`, 
         {

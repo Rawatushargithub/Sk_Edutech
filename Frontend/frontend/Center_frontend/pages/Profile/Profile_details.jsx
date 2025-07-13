@@ -6,15 +6,14 @@ import API_BASE_URL from "../../../config";
 const Profile_details = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [profilePic, setProfilePic] = useState(null);
   const [formData, setFormData] = useState({});
   const [editableFields, setEditableFields] = useState({
     email: false,
     mobileNumber: false,
     address: false,
   });
-
-  const franchiseId = localStorage.getItem("FranchiseId");
+const [isSubmitting, setIsSubmitting] = useState(false);
+  const franchiseId = localStorage.getItem("franchiseID");
 
   useEffect(() => {
     const fetchFranchiseDetails = async () => {
@@ -83,6 +82,9 @@ const Profile_details = () => {
       </div>
     );
   }
+  const handleCancel = () => {
+    navigate("/institute");
+  };
 
   return (
     <div className="flex flex-col items-center px-4 py-6">
@@ -141,6 +143,16 @@ const Profile_details = () => {
         ))}
 
         <div className="col-span-3 flex justify-end space-x-4 mt-4">
+          
+        <button
+            type="button"
+            className="bg-red-500 text-white px-4 py-2 rounded disabled:opacity-50"
+            onClick={handleCancel}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          
           <button
             type="button"
             className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"

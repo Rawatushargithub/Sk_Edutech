@@ -5,7 +5,8 @@ import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../../config"; // Adjust the import path as necessary
 
 const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textColor = "#09182a" , isWallet=false }) => {
-  const API_URL = `${API_BASE_URL}/api/v1/${apiEndpoint}`; // Replace with actual API
+  const franchiseId = localStorage.getItem("franchiseID");
+  const API_URL = `${API_BASE_URL}/api/v1/${apiEndpoint}?franchiseId=${franchiseId}`; // Replace with actual API
   const navigate = useNavigate();
 
   const [value, setValue] = useState(null);

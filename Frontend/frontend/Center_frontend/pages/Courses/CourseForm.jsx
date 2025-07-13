@@ -48,8 +48,7 @@ const CourseForm = ({ mode }) => {
           'Authorization': `Bearer ${centerToken}`,
           'Content-Type': 'application/json'
         }
-      }) 
-        .then(res => {
+      }) .then(res => {
           if (!res.ok) {
             // Try to parse error message from backend if available
             return res.json().then(errData => {
@@ -152,12 +151,6 @@ const CourseForm = ({ mode }) => {
     
     e.preventDefault();
     
-    // Validate franchise ID
-    if (!franchiseId) {
-      toast.error('Franchise ID is required. Please login again.');
-      return;
-    }
-    
     setLoading(true);
     const toastId = toast.loading(isEditMode ? 'Updating course...' : 'Creating course...');
     const submissionData = new FormData();
@@ -165,8 +158,13 @@ const CourseForm = ({ mode }) => {
     // Add franchise ID to form data
     
     
-    const franchiseId = localStorage.getItem("franchiseId");
-    submissionData.append('franchiseId', franchiseId);
+    // const franchiseId = localStorage.getItem("franchiseID");
+    // // Validate franchise ID
+    // if (!franchiseId) {
+    //   toast.error('Franchise ID is required. Please login again.');
+    //   return;
+    // }
+    // submissionData.append('franchiseId', franchiseId);
     
     Object.keys(formData).forEach(key => submissionData.append(key, formData[key]));
     submissionData.append('franchiseId', franchiseId);

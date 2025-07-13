@@ -12,7 +12,10 @@ const studentSchema = new mongoose.Schema({
             // Allows multiple documents to have null/missing value
             // lowercase: true, // Removed lowercase constraint
         },
-  courseOfInterest: String,
+ courseInterested: { 
+    courseName: {type: String, required: true},
+    courseCode: {type: String, required: true}  
+}, 
   studentMobile: String,
   alternateMobile: String,
   email: String,

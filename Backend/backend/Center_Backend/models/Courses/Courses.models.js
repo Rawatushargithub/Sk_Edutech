@@ -19,13 +19,6 @@ const courseSchema = new mongoose.Schema({
         {
             title: { type: String, required: true },
             link: { type: String, required: true },
-            franchiseId: { // System Generated ID
-            type: String,
-            default: true,
-            // required: true, // Not required initially for applications
-            // Allows multiple documents to have null/missing value
-            // lowercase: true, // Removed lowercase constraint
-        },
         }
     ],
     courseSyllabus: { type: String, required: true }, // Detailed syllabus
@@ -38,13 +31,6 @@ const courseSchema = new mongoose.Schema({
             url: { type: String, required: true }, // Cloudinary URL or external link
             fileName: { type: String }, // Original name of the uploaded file, if type is 'file'
             fileType: { type: String },
-            franchiseId: { // System Generated ID
-            type: String,
-            default: true,
-            // required: true, // Not required initially for applications
-            // Allows multiple documents to have null/missing value
-            // lowercase: true, // Removed lowercase constraint
-        }, // e.g., 'pdf', 'jpg', 'png', or 'external-link'. Helps in UI rendering.
             thumbnailUrl: {type: String } // Optional: URL to a thumbnail for the note (e.g., auto-generated for images, or a generic icon)
         }
     ],

@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState ,useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from "axios"
 import { useStudentContext } from '../../context/StudentContext.jsx';
 import API_BASE_URL from "../../../config";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const EnquiryForm = () => {
   
@@ -13,9 +15,12 @@ const EnquiryForm = () => {
     studentName: '',
     relation: 'S/o',
     guardianName: '',
-    // surname: '',
     motherName: '',
-    courseOfInterest: '',
+    // Updated courseInterested structure to match schema
+    courseInterested: {
+      courseName: '',
+      courseCode: ''
+    },
     studentMobile: '',
     alternateMobile: '',
     email: '',
@@ -30,10 +35,9 @@ const EnquiryForm = () => {
   });
 
   const navigate = useNavigate();
-  // API base URL - replace with your actual backend URL
-  // const API_URL = 'http://localhost:8000/api/v1';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [courses, setCourses] = useState([]);
 
   // Indian States Data
   const indianStates = [
@@ -67,6 +71,22 @@ const EnquiryForm = () => {
     { value: 'west-bengal', label: 'West Bengal' }
   ];
 
+  // Fetch courses on component mount
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
+        console.log("course fetching :: ", response);
+        setCourses(response.data); // Assuming the response is an array of course objects
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        toast.error('Failed to fetch courses');
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
@@ -98,53 +118,122 @@ const EnquiryForm = () => {
     setFormData({ ...formData, [name]: value });
   };
 
+  // Handler for course selection
+  const handleCourseChange = (e) => {
+    const selectedCourseId = e.target.value;
+    
+    if (selectedCourseId) {
+      const selectedCourse = courses.find(course => course._id === selectedCourseId);
+      
+      if (selectedCourse) {
+        setFormData({
+          ...formData,
+          courseInterested: {
+            courseName: selectedCourse.courseName,
+            courseCode: selectedCourse.courseCode
+          }
+        });
+      } else {
+        toast.error("Invalid course selection");
+      }
+    } else {
+      // Reset course selection if no course is selected
+      setFormData({
+        ...formData,
+        courseInterested: {
+          courseName: '',
+          courseCode: ''
+        }
+      });
+    }
+  };
+
   const handlenquiry = async (e) => {
     e.preventDefault();
-  const franchiseId = localStorage.getItem("franchiseId");
-    // console.log("Franchise ID:", franchiseId);
+    
+    // Validation
+    if (!formData.studentName.trim()) {
+      toast.error('Student name is required');
+      return;
+    }
+    
+    if (!formData.guardianName.trim()) {
+      toast.error('Guardian name is required');
+      return;
+    }
+    
+    if (!formData.motherName.trim()) {
+      toast.error('Mother name is required');
+      return;
+    }
+    
+    if (!formData.studentMobile.trim()) {
+      toast.error('Student mobile is required');
+      return;
+    }
+    
+    if (formData.studentMobile.length !== 10) {
+      toast.error('Mobile number must be 10 digits');
+      return;
+    }
+    
+    if (!formData.courseInterested.courseName) {
+      toast.error('Please select a course');
+      return;
+    }
+
+    const franchiseId = localStorage.getItem("franchiseID");
+    
     // Create student object from form data
     const studentData = {
       studentName: `${formData.abbreviation} ${formData.studentName}`,
-      courseInterested: formData.courseOfInterest,
-      email: formData.email,
-      mobile: formData.studentMobile,
-      franchiseId: franchiseId,
-      referralCode: formData.referralCode,
-      referralName: '', // Can be added if needed
+      relation: formData.relation,
       guardianName: formData.guardianName,
-      //surname: formData.surname,
       motherName: formData.motherName,
+      courseInterested: formData.courseInterested, // Now properly structured
+      studentMobile: formData.studentMobile,
       alternateMobile: formData.alternateMobile,
+      email: formData.email,
       dateOfBirth: formData.dateOfBirth,
       gender: formData.gender,
       state: formData.state,
       city: formData.city,
       postcode: formData.postcode,
       permanentAddress: formData.permanentAddress,
+      referralCode: formData.referralCode,
       enquiryDate: formData.enquiryDate,
+      franchiseId: franchiseId,
       status: 'pending'
     };
+
     try {
       setLoading(true);
       // Send data to backend
       const response = await axios.post(`${API_BASE_URL}/api/v1/institute_enquiry`, studentData);
-      console.log(response)
-      // Add to local context
-      addStudent(response);
+      console.log(response);
       
+      // Add to local context
+      addStudent(response.data);
+       
       // Show success message
-      alert('Enquiry submitted successfully!');
+      toast.success('Enquiry submitted successfully!');
       
       // Reset loading state
       setLoading(false);
       
-      // Navigate back to home page
-      navigate('/institute');
+      // Navigate back to home page after a short delay
+      setTimeout(() => {
+        navigate('/institute');
+      }, 1500);
+      
     } catch (err) {
       setLoading(false);
       setError('Failed to submit enquiry');
       console.error('Error submitting enquiry:', err);
-      alert('Failed to submit enquiry. Please try again.');
+      
+      // Better error handling
+      const errorMessage = err.response?.data?.message || 'Failed to submit enquiry. Please try again.';
+      toast.error(errorMessage);
     }
   };
 
@@ -156,6 +245,7 @@ const EnquiryForm = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+      <ToastContainer position="top-right" autoClose={5000} />
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           {/* Header */}
@@ -239,7 +329,7 @@ const EnquiryForm = () => {
               </div>
 
               {/* Family Information Row */}
-              <div className="grid grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="guardianName" className={labelStyle}>
                     Father/Husband Name {requiredStar}
@@ -278,24 +368,35 @@ const EnquiryForm = () => {
             <div className="space-y-6">
               <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Course & Contact Details</h2>
               
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="courseOfInterest" className={labelStyle}>
-                    Course of Interest {requiredStar}
+                  <label htmlFor="courseInterested" className={labelStyle}>
+                    Course Interested {requiredStar}
                   </label>
                   <select
-                    id="courseOfInterest"
-                    name="courseOfInterest"
-                    value={formData.courseOfInterest}
-                    onChange={handleInputChange}
+                    id="courseInterested"
+                    name="courseInterested"
+                    onChange={handleCourseChange}
+                    value={formData.courseInterested.courseName ? 
+                      courses.find(course => 
+                        course.courseName === formData.courseInterested.courseName && 
+                        course.courseCode === formData.courseInterested.courseCode
+                      )?._id || "" : ""}
                     required
                     className={inputStyle}
                   >
-                    <option value="">Select a Course</option>
-                    <option value="basic-computers">Basic Course in Computers</option>
-                    <option value="advanced-programming">Advanced Programming</option>
-                    <option value="data-science">Data Science</option>
+                    <option value="">Select a course</option>
+                    {courses.map((course) => (
+                      <option key={course._id} value={course._id}>
+                        {course.courseName} ({course.courseCode})
+                      </option>
+                    ))}
                   </select>
+                  {formData.courseInterested.courseName && (
+                    <div className="mt-2 text-sm text-gray-600">
+                      Selected: {formData.courseInterested.courseName} - {formData.courseInterested.courseCode}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -504,10 +605,10 @@ const EnquiryForm = () => {
             <div className="flex justify-end space-x-4 pt-6 border-t">
               <button
                 type="submit"
-                className="bg-[#457B9D] from-blue-500 to-blue-600 px-8 py-4 text-white rounded-md hover:bg-[#2e5369] focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors font-medium"
-               
+                disabled={loading}
+                className="bg-[#457B9D] from-blue-500 to-blue-600 px-8 py-4 text-white rounded-md hover:bg-[#2e5369] focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save Admission
+                {loading ? 'Processing...' : 'Save Enquiry'}
               </button>
               <button
                 type="button"

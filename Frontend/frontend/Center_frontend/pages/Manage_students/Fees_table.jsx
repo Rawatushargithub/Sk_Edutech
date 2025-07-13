@@ -53,6 +53,7 @@ const Fees_table = ({
       );
       if (!response.ok) throw new Error("Failed to fetch remaining seats");
       const data = await response.json();
+      console.log("Remaining seats data:", data);
       setRemainingSeats(data.data);
     } catch (error) {
       console.error("Error fetching remaining seats:", error);

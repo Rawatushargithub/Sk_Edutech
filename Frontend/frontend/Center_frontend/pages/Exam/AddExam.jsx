@@ -38,8 +38,9 @@ const AddExam = () => {
 
     const fetchBatches = async () => {
       try {
+        const franchiseId = localStorage.getItem("franchiseID");
         const response = await fetch(
-          `${API_BASE_URL}/api/v1/institute_batche/allBatches`
+          `${API_BASE_URL}/api/v1/institute_batche/allBatches?franchiseId=${franchiseId}`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch batches");
@@ -55,10 +56,14 @@ const AddExam = () => {
     fetchBatches();
   }, []);
 
+
+
   const [newExam, setNewExam] = useState({
+    
     courseCode: "",
     batch: [],
     examDate: "",
+    // franchiseId: franchiseId,
     examDurationMinutes: "",
     totalQuestions: "",
     totalMarks: "",
@@ -117,11 +122,14 @@ const AddExam = () => {
   }, [isOnlineExam]);
 
   const handleAddExam = async () => {
+  const franchiseId = localStorage.getItem("franchiseID");
+  
     try {
       // Prepare examData
       const examData = {
         ...newExam,
         batch: newExam.batch,
+        franchiseId: franchiseId,
       };
       // Only send selectedQuestions for online exams
       if (isOnlineExam) {
@@ -132,7 +140,6 @@ const AddExam = () => {
       } else {
         delete examData.selectedQuestions;
       }
-      console.log("Exam data being sent:", examData);
 
       const response = await fetch(
           `${API_BASE_URL}/api/v1/institute_exam/exams`,
@@ -224,9 +231,9 @@ const AddExam = () => {
            topic.toLowerCase().includes(searchTerm);
   });
 
-  console.log("Current courseCode:", newExam.courseCode);
-  console.log("All questions:", questions);
-  console.log("Filtered questions:", filteredQuestions);
+  // console.log("Current courseCode:", newExam.courseCode);
+  // console.log("All questions:", questions);
+  // console.log("Filtered questions:", filteredQuestions);
 
   return (
     <div className="min-h-screen p-8 bg-gray-100">

@@ -78,11 +78,11 @@ import mongoose from "mongoose";
 
 export const createExam = asyncHandler(async (req, res) => {
   try {
-    console.log("I am working createxam");
     const {
       courseCode,
       batch,
       examDate,
+      franchiseId,
       examDurationMinutes,
       totalQuestions,
       totalMarks,
@@ -91,7 +91,7 @@ export const createExam = asyncHandler(async (req, res) => {
       status = "Active", // Default to Active status
       selectedQuestions // This is expected from frontend for online exams
     } = req.body;
-console.log("Request Body:", req.body);
+    
     // Validate required fields
     if (!courseCode || !batch || !examDate || !examDurationMinutes || !totalQuestions || !passingMarks || !totalMarks) {
       return res.status(400).json({ 
@@ -138,16 +138,17 @@ console.log("Request Body:", req.body);
     // For each batch, create a separate exam document
     for (const batchItem of batch) {
       // Extract the batch code from the name (e.g., "BATCH 3" to "B3")
-      console.log("Batch Item:", batchItem);
+      
       const batchCode = getBatchCode(batchItem.name);
       const examID = `${courseCode}_${batchCode}_${examDay}`;
 
       // Prepare exam object
       const examObj = {
         ExamID: examID,
-        courseCode,
+        courseCode, 
         batch: batchItem,
         examDate,
+        franchiseId, // Add franchiseId to the exam object
         examDurationMinutes,
         totalQuestions,
         totalMarks,
@@ -184,12 +185,10 @@ console.log("Request Body:", req.body);
   }
 });
 
-
-
 export const getAllExams = asyncHandler(async (req, res) => {
   try {
     const { examMode, franchiseId } = req.query; // Get examMode and franchiseId from query parameters
-    
+    console.log("Fetching exams with examMode:", examMode, "and franchiseId:", franchiseId);
     // Build filter object
     let filter = {};
     
@@ -202,7 +201,6 @@ export const getAllExams = asyncHandler(async (req, res) => {
     if (franchiseId) {
       filter.franchiseId = franchiseId;
     }
-    
   
     // Fetch exams based on filter
     const exams = await Exam.find(filter).limit(10);

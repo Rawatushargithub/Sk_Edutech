@@ -70,7 +70,7 @@ const QuestionBankSystem = () => {
   useEffect(() => {
     if (selectedCourseCode) {
       loadQuestions();
-    } else { 
+    } else {
       setQuestions([]);
     }
   }, [selectedCourseCode]);
@@ -140,6 +140,8 @@ const QuestionBankSystem = () => {
       return;
     }
 
+    const franchiseId = localStorage.getItem("franchiseId");
+
     try {
       setLoading(true);
 
@@ -167,6 +169,7 @@ const QuestionBankSystem = () => {
             answer,
             courseCode: selectedCourseCode,
             courseName: course ? course.courseName : "",
+            franchiseId: franchiseId, // Include franchiseId
           }),
         });
         showNotification("Question added successfully!", "success");
@@ -278,11 +281,10 @@ const QuestionBankSystem = () => {
         {/* Notification */}
         {notification.show && (
           <div
-            className={`mb-6 p-4 rounded-lg flex items-center gap-2 ${
-              notification.type === "success"
+            className={`mb-6 p-4 rounded-lg flex items-center gap-2 ${notification.type === "success"
                 ? "bg-green-100 text-green-800"
                 : "bg-red-100 text-red-800"
-            }`}
+              }`}
           >
             {notification.type === "success" ? (
               <CheckCircle size={20} />
@@ -466,11 +468,10 @@ const QuestionBankSystem = () => {
                       {Object.entries(question.options).map(([key, value]) => (
                         <div
                           key={key}
-                          className={`p-2 rounded border ${
-                            question.answer === key
+                          className={`p-2 rounded border ${question.answer === key
                               ? "bg-green-100 border-green-300 text-green-800"
                               : "bg-gray-50 border-gray-200"
-                          }`}
+                            }`}
                         >
                           <span className="font-semibold">
                             {key.toUpperCase()}:

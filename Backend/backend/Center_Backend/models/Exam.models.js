@@ -9,6 +9,10 @@ const ExamSchema = new mongoose.Schema({
     id: { type: String, required: true },
   },
   examDate: { type: String, required: true },
+  franchiseId: { // System Generated ID
+            type: String, 
+            default: true
+        },
   examDurationMinutes: { type: Number, required: true },
   totalQuestions: { type: Number, required: true },
   totalMarks: { type: Number, required: true },

@@ -42,6 +42,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     relationType,
     fatherHusbandName,
     surnameName,
+    franchiseId,
     motherName,
     studentMobile,
     alternateMobile,
@@ -50,7 +51,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     gender,
     city,
     postCode,
-    permanentAddress, 
+    permanentAddress,
     referralCode,
     caste,
     qualifications,
@@ -60,7 +61,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     courseInterested,
     courseFees,
     discountType,
-    discountAmount, 
+    discountAmount,
     totalFees,
     feesReceived,
     balance,
@@ -340,7 +341,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     try {
       session = await mongoose.startSession();
       session.startTransaction();
-
+      console.log(franchiseId)
       // Create student record
       const student = await Student.create([{
         studentPhoto: studentPhoto.url,
@@ -348,6 +349,7 @@ const registerStudent = asyncHandler(async (req, res) => {
         rollNumber,
         abbreviation: req.body.abbreviation || "Mr.",
         studentName,
+        franchiseId,
         relationType,
         fatherHusbandName,
         includeFatherHusband: req.body.includeFatherHusband !== undefined ? req.body.includeFatherHusband : true,
@@ -532,16 +534,16 @@ console.log("students value :: ", students)
   const formattedStudents = students.map(student => {
     // Convert to plain JavaScript object
     const studentObj = student.toObject();
-    
+
     // Add a new batch field with the batch name
     if (studentObj.selectedBatch && studentObj.selectedBatch.batchName) {
       studentObj.batch = studentObj.selectedBatch.batchName;
     } else {
       studentObj.batch = "No Batch Assigned";
     }
-    
-      // Remove the original selectedBatch object to clean the response
-      delete studentObj.selectedBatch;
+
+    // Remove the original selectedBatch object to clean the response
+    delete studentObj.selectedBatch;
 
     return studentObj;
   });
@@ -575,30 +577,40 @@ console.log("students value :: ", students)
   );
 });
 
-const getStudentCount = asyncHandler( async (req, res) => {
+const getStudentCount = asyncHandler(async (req, res) => {
   try {
-    const count = await Student.countDocuments();   // { instituteId: req.user.instituteId } <= when add the instituteID to the students
-    
+    const { franchiseId } = req.query;
+    console.log("franchiseId value :: ", franchiseId)
+    if (!franchiseId) {
+      return res.status(400).json({ message: "Franchise ID is required" });
+    }
+    const count = await Student.countDocuments({franchiseId});   // { instituteId: req.user.instituteId } <= when add the instituteID to the students
+
     res.status(200).json({ count });
   } catch (error) {
     res.status(500).json({ message: "Error fetching student count", error });
   }
 })
 
-const getRecentsStudents = asyncHandler( async (req , res) => {
+const getRecentsStudents = asyncHandler(async (req, res) => {
 
   try {
     const limit = parseInt(req.query.limit) || 5;
-    
-    const students = await Student.find()
+    const { franchiseId } = req.query;
+    console.log("franchiseId value :: ", franchiseId)
+    if (!franchiseId) {
+      return res.status(400).json({ message: "Franchise ID is required" });
+    }
+
+    const students = await Student.find({franchiseId: franchiseId})
       .sort({ createdAt: -1 }) // Sort by creation date, newest first
       .limit(limit)
       .select("studentName courseInterested rollNumber createdAt studentPhoto");
-    
+    console.log("students value :: ", students)
     if (students.length === 0) {
       return res.status(404).json({ message: "No students found" });
     }
-    
+
     // Format the response data
     const formattedStudents = students.map(student => ({
       id: student._id,
@@ -617,10 +629,10 @@ const getRecentsStudents = asyncHandler( async (req , res) => {
 
 })
 
-const updateStudent = asyncHandler( async( req , res) => {
+const updateStudent = asyncHandler(async (req, res) => {
   console.log("update is working")
   try {
-console.log("id value:: " , req.params.id);
+    console.log("id value:: ", req.params.id);
     console.log(req.body)
     // Find and update the student
     const updatedStudent = await Student.findByIdAndUpdate(
@@ -630,7 +642,7 @@ console.log("id value:: " , req.params.id);
         new: true, // Return the updated document
       }
     );
-    
+
     if (!updatedStudent) {
       return res.status(404).json({
         success: false,
@@ -638,7 +650,7 @@ console.log("id value:: " , req.params.id);
       });
     }
     console.log("updated student in backend :: ", updatedStudent)
-    
+
     res.status(200).json({
       success: true,
       message: "Student updated successfully",
@@ -654,10 +666,10 @@ console.log("id value:: " , req.params.id);
   }
 })
 
-export { 
-  registerStudent, 
-  getStudents , 
+export {
+  registerStudent,
+  getStudents,
   getStudentCount,
   getRecentsStudents,
   updateStudent
- };
+};

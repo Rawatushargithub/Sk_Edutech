@@ -14,6 +14,8 @@ import {
     updateFranchiseStatusOnly, // New 
     getRecentFranchises,
     getFranchiseCount,
+    getFranchiseByFranchiseId,
+    updateFranchiseContact ,
 
 } from '../../controllers/Franchise/franchise.controller.js';
 import { upload } from '../../middlewares/franchise.multer.middleware.js'; // Assuming multer middleware is configured here
@@ -25,6 +27,7 @@ const router = Router();
 // Route to get all ACTIVE franchises (for general listing)
 router.route('/').get(getAllFranchises);
 
+router.put("/manage/updatecontact", updateFranchiseContact); //for update center profile
 // Route for ADMIN to create a new, active franchise
 router.route('/').post(
     upload.fields([
@@ -85,6 +88,8 @@ router.route('/me').get(
         }
     }
 );
+
+router.get("/getprofile/:getfranchisedetails", getFranchiseByFranchiseId);
 
 
 // --- Franchise Application Route (Future Implementation) ---

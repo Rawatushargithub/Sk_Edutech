@@ -3,8 +3,10 @@ import EnquiryStudent from '../models/EnquiryStudent.model.js';
 // Add a new student enquiry
 export const addStudent = async (req, res) => {
   try {
-    const { franchiseId } = req.query;
-    
+    const studentData = req.body;
+    console.log("Received student data:", studentData);
+    const franchiseId = studentData.franchiseId; // Ensure franchiseId is included in the request body
+    console.log(studentData.franchiseId)
     // Validate franchiseId
     if (!franchiseId) {
       return res.status(400).json({ 
@@ -12,12 +14,6 @@ export const addStudent = async (req, res) => {
         message: 'FranchiseID is required' 
       });
     }
-    
-    // Add franchiseId to the request body
-    const studentData = {
-      ...req.body,
-      franchiseId: franchiseId
-    };
     
     const newStudent = new EnquiryStudent(studentData);
     await newStudent.save();

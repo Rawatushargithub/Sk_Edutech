@@ -6,7 +6,7 @@ const Header = () => {
 
   useEffect(() => {
     // Fetch institute name from local storage (assuming it's stored during login)
-    const storedInstitute = localStorage.getItem("instituteName");
+    const storedInstitute = localStorage.getItem("fanchiseName");
 
     if (storedInstitute) {
       setInstituteName(storedInstitute);

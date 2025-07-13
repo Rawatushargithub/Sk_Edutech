@@ -102,7 +102,6 @@ app.use("/api/v1/admin_courses", adminCourseRouter); // Add admin course routes
 //Student Routes
 import StudentRoutes from "./backend/Student_backend/routes/studentRoutes.js"
 import notesRoutes from "./backend/Student_backend/routes/notesRoutes.js";
-import videoRoutes from "./backend/Student_backend/routes/videoRoutes.js";
 import certificateRoutes from './backend/Student_backend/routes/certiifcateRoutes.js'
 import feesRoutes from "./backend/Student_backend/routes/feesRoutes.js";
 import feedbackRoutes from "./backend/Student_backend/routes/feedbackRoutes.js";
@@ -111,7 +110,6 @@ import ExamRoutes from "./backend/Student_backend/routes/exam.routes.js";
 // Student Routes 
 app.use("/api/v1/student", StudentRoutes);
 app.use("/api/notes", notesRoutes);
-app.use("/api/videos", videoRoutes);
 app.use("/api/v1/certificates", certificateRoutes);
 app.use("/api/v1/fees", feesRoutes);
 app.use("/api/exams", ExamRoutes);
@@ -125,7 +123,6 @@ import studentRouter from "./backend/Center_Backend/routes/Student/Student.route
 import courseRouter from "./backend/Center_Backend/routes/Courses.routes.js"
 import feesRouter from "./backend/Center_Backend/routes/Student/fees_routes.js" 
 import batchRouter from "./backend/Center_Backend/routes/batch.routes.js";
-import videoRouter from "./backend/Center_Backend/routes/VideoRoutes.js"
 import institute_notesRoutes from "./backend/Center_Backend/routes/notesRoutes.js"
 import institute_examRoutes from "./backend/Center_Backend/routes/examRoutes.js"
 import institute_walletRoutes from "./backend/Center_Backend/routes/payment.routes.js"
@@ -137,7 +134,6 @@ app.use("/api/v1/institute_student" , studentRouter);
 app.use("/api/v1/institute_courses" , courseRouter); 
 app.use("/api/v1/institute_fees" , feesRouter)
 app.use("/api/v1/institute_batche" , batchRouter); 
-app.use("/api/v1/institute_videos" , videoRouter)
 app.use("/api/v1/institute_note", institute_notesRoutes);
 app.use("/api/v1/institute_exam", institute_examRoutes);
 app.use("/api/v1/institute_wallet", institute_walletRoutes);

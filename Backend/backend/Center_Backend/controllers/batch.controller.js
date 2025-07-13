@@ -58,14 +58,12 @@ export const getBatchSeats = asyncHandler(async (req, res) => {
 // Create new batch for a specific franchise
 export const createBatch = asyncHandler(async (req, res) => {
     try {
-      const { batchName, batchLimit, currentStudents, batchTiming, franchiseId } = req.body;
-      
+      const { batchName, batchLimit, currentStudents, batchTiming , franchiseId } = req.body;
+    
       if (!franchiseId) {
         throw new ApiError(400, "Franchise ID is required");
       }
-      
-      console.log(req.body)
-      
+      console.log(req.body);
       const newBatch = new Batch({
         batchName,
         batchLimit,

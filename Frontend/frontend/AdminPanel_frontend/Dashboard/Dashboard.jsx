@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TabMenu from "./RecentlyAdded"
 import StatsCard from "./StatsCard";
+import AdminHeader from "./AdminHeader";
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -17,6 +18,9 @@ const Dashboard = () => {
     return ( 
         <div className="p-6 space-y-8">
             {/* <Header /> */}
+            <AdminHeader/>
+
+            {/* Dashboard Title */}
            
             {/* Top Boxes */}
             <StatsCard/>

@@ -5,7 +5,17 @@ const studentSchema = new mongoose.Schema({
   relation: String,
   guardianName: String,
   motherName: String,
-  courseOfInterest: String,
+  franchiseId: { // System Generated ID
+            type: String,
+            default: true,
+            // required: true, // Not required initially for applications
+            // Allows multiple documents to have null/missing value
+            // lowercase: true, // Removed lowercase constraint
+        },
+ courseInterested: { 
+    courseName: {type: String, required: true},
+    courseCode: {type: String, required: true}  
+}, 
   studentMobile: String,
   alternateMobile: String,
   email: String,

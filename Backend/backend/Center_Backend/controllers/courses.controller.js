@@ -7,46 +7,27 @@ import { asyncHandler } from "../utils/asynchanlder.js";
 export const createCourse = asyncHandler(async (req, res) => {
     try {
         const {
-            courseCode, courseName, courseSubject, courseFees, courseMRP,
+            courseCode, courseName, courseSubject, franchiseId, courseFees, courseMRP,
             courseDuration, // Expected as number (months)
             courseVideoLinks, // Expected as JSON string of [{title, link}]
             courseSyllabus, courseEligibility,
             instituteStatus // Renamed from status
         } = req.body;
 
-        console.log("In Controller 2nd time:: ", req.body);
+        console.log("Received course creation request with body:", req.body);
 
         // Get franchiseId from req.user (preferred) or req.body (fallback)
-        let franchiseId = req.user?.franchiseId || req.body.franchiseId;
+        // let franchiseId = req.user?.franchiseId || req.body.franchiseId;
         
         // If franchiseId is not found, try to get instituteID from req.user
         if (!franchiseId && req.user?.instituteID) {
             franchiseId = req.user.instituteID;
         }
 
-        if (!franchiseId) {
-            return res.status(400).json({ 
-                success: false,
-                error: "Franchise ID is required. Please ensure you are properly authenticated." 
-            });
-        }
-
-        // Validate that the franchise/institute exists
-        const institute = await Institute.findOne({ 
-             franchiseId: franchiseId ,
-        });
-
-        if (!institute) {
-            return res.status(404).json({ 
-                success: false,
-                error: "Institute not found. Please check your franchise ID." 
-            });
-        }
-
         // Check if course code already exists for this franchise
         const existingCourse = await Course.findOne({ 
             courseCode: courseCode,
-            franchiseId: institute.instituteID // Use instituteID for consistency
+            franchiseId:franchiseId
         });
 
         if (existingCourse) {
@@ -109,6 +90,7 @@ export const createCourse = asyncHandler(async (req, res) => {
                             url: uploadedMaterial.url,
                             fileName: materialFile.originalname,
                             fileType: materialFile.mimetype,
+                            franchiseId,
                         });
                     } else {
                         console.error("Cloudinary material upload failed for file:", materialFile.originalname, uploadedMaterial);
@@ -133,12 +115,13 @@ export const createCourse = asyncHandler(async (req, res) => {
                 error: "All required fields must be filled." 
             });
         }
-
+console.log(franchiseId, "franchiseId in createCourse");
         // Create new course with franchise information
         const newCourse = new Course({
             courseCode,
             courseName,
             courseSubject,
+            franchiseId, // System Generated ID
             courseFees: Number(courseFees),
             courseMRP: Number(courseMRP),
             courseDuration: Number(courseDuration),
@@ -148,9 +131,8 @@ export const createCourse = asyncHandler(async (req, res) => {
             courseImage: courseImageCloudinaryUrl,
             courseMaterials: processedCourseMaterials,
             instituteStatus: instituteStatus || 'active',
-            franchiseId: institute.instituteID, // Use instituteID for consistency
-            franchiseName: institute.instituteName, // Store franchise name for easier queries
-            // adminApprovalStatus will default to 'pending' as per schema
+            franchiseId:  franchiseId, // Use franchiseId from request
+            
         });
 
         await newCourse.save();
@@ -162,9 +144,7 @@ export const createCourse = asyncHandler(async (req, res) => {
             course: {
                 ...newCourse.toObject(),
                 franchiseInfo: {
-                    franchiseId: institute.instituteID,
-                    franchiseName: institute.instituteName,
-                    ownerName: institute.ownerName
+                    franchiseId: franchiseId
                 }
             }
         });
@@ -437,10 +417,11 @@ export const getCourseById = asyncHandler(async (req, res) => {
 export const addNoteToCourse = asyncHandler(async (req, res) => {
     const { courseId } = req.params;
     
-    console.log("[addNoteToCourse] req.body:", req.body);
-    console.log("[addNoteToCourse] req.files:", req.files);
+    // console.log("[addNoteToCourse] req.body:", req.body);
+    // console.log("[addNoteToCourse] req.files:", req.files);
 
-    const { title, type, url: linkUrl } = req.body; 
+    console.log("franchiseId in addNoteToCourse:", req.body.franchiseId);
+    const { title, type, url: linkUrl, franchiseId, } = req.body; 
 
     if (!title || !type) {
         console.error("[addNoteToCourse] Missing title or type in req.body", req.body);
@@ -459,7 +440,7 @@ export const addNoteToCourse = asyncHandler(async (req, res) => {
             return res.status(400).json({ error: "URL is required for link type notes." });
         }
         newNote = {
-            title, type: 'link', url: linkUrl, fileType: 'external-link',
+            title, type: 'link', url: linkUrl, fileType: 'external-link', franchiseId,
         };
     } else if (type === 'file') {
         if (!req.files || !req.files.noteFile || req.files.noteFile.length === 0) {
@@ -474,13 +455,13 @@ export const addNoteToCourse = asyncHandler(async (req, res) => {
         }
         newNote = {
             title: title || noteFile.originalname, type: 'file', url: uploadedFile.url,
-            fileName: noteFile.originalname, fileType: noteFile.mimetype,
+            fileName: noteFile.originalname, fileType: noteFile.mimetype, franchiseId,
         };
     } else {
         return res.status(400).json({ error: "Invalid note type specified." });
     }
 
-    console.log("[addNoteToCourse] Constructed newNote:", newNote);
+    // console.log("[addNoteToCourse] Constructed newNote:", newNote);
     // Ensure existing materials are valid before pushing and saving
     const validExistingMaterials = [];
     if (course.courseMaterials && Array.isArray(course.courseMaterials)) {
@@ -495,7 +476,7 @@ export const addNoteToCourse = asyncHandler(async (req, res) => {
             validExistingMaterials.push({
                 title: currentTitle, type: currentType, url: currentUrl,
                 fileName: material.fileName, fileType: material.fileType, 
-                thumbnailUrl: material.thumbnailUrl, _id: material._id
+                thumbnailUrl: material.thumbnailUrl, _id: material._id, franchiseId,
             });
         });
     }
@@ -512,7 +493,7 @@ export const addNoteToCourse = asyncHandler(async (req, res) => {
 // Add a new video link to a specific course
 export const addVideoLinkToCourse = asyncHandler(async (req, res) => {
     const { courseId } = req.params;
-    const { title, link } = req.body;
+    const { title, link, franchiseId } = req.body;
 
     if (!title || !link) {
         return res.status(400).json({ error: "Title and Link are required for a video." });
@@ -523,7 +504,7 @@ export const addVideoLinkToCourse = asyncHandler(async (req, res) => {
         return res.status(404).json({ error: "Course not found" });
     }
 
-    const newVideoLink = { title, link };
+    const newVideoLink = { title, link, franchiseId };
 
     course.courseVideoLinks.push(newVideoLink);
     

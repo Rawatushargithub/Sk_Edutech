@@ -2,7 +2,6 @@ import Course from '../models/Courses/Courses.models.js';
 import  Institute from '../models/Franchise.model.js'; // Import Institute model for validation
 import { uploadOnCloudinary } from "../utils/cloudinary.js"; 
 import { asyncHandler } from "../utils/asynchanlder.js";
-
 // Create a new course
 export const createCourse = asyncHandler(async (req, res) => {
     try {
@@ -238,8 +237,13 @@ export const getCourses = async (req, res) => {
 //Get courses count
 export const getCoursesCount = async (req , res) => {
     try {
-        const count = await Course.countDocuments();
-       console.log(count)
+        const { franchiseId } = req.query;
+        console.log("franchiseId value :: ", franchiseId)
+    if (!franchiseId) {
+      return res.status(400).json({ message: "Franchise ID is required" });
+    }
+        const count = await Course.countDocuments({franchiseId});
+       console.log("getting the count of franchiseID" , count)
         res.status(200).json({ count });
       } catch (error) {
         res.status(500).json({ message: "Error fetching course count", error });
@@ -279,7 +283,7 @@ export const getRecentCourses = async (req, res) => {
     }
   };
 
-// Update an existing course by ID (with franchise validation)
+// Update an existing course by ID (with fra    nchise validation)
 export const updateCourseById = asyncHandler(async (req, res) => {
     const { courseId } = req.params;
     const {

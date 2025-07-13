@@ -580,7 +580,7 @@ console.log("students value :: ", students)
 const getStudentCount = asyncHandler(async (req, res) => {
   try {
     const { franchiseId } = req.query;
-    console.log("franchiseId value :: ", franchiseId)
+    
     if (!franchiseId) {
       return res.status(400).json({ message: "Franchise ID is required" });
     }

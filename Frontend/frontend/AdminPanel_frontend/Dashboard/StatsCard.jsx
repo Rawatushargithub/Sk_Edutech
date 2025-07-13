@@ -96,7 +96,7 @@ const DashboardStats = () => {
       <StatsCard
         title="Total Students"
         icon={FaUserGraduate}
-        apiEndpoint="admin_student/student/count"
+        apiEndpoint="admin_student/student/count" 
         bgColor="#E4E8ED"
         textColor="#09182a"
       />

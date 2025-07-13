@@ -80,11 +80,8 @@ import franchiseRouter from "./backend/Admin_Backend/routes/franchise/franchise.
 import galleryRouter from "./backend/Admin_Backend/routes/Gallery/galleryRoutes.js"; // Import franchise router
 import adminCourseRouter from "./backend/Admin_Backend/routes/courses.routes.js"; // Import admin course router
 import paymentRouter from "./backend/Admin_Backend/routes/admin.routes.js"; // Import payment router
-
 import adminRoutes from "./backend/Admin_Backend/routes/AdminPanel/admin.panel.js"; // Import admin routes
-
 import adminstudentRouter from "./backend/Admin_Backend/routes/student.routes.js"; // Import student router
-
 
 // admin routes
 app.use("/api/v1/mainSliderImages",mainSliderRouter)

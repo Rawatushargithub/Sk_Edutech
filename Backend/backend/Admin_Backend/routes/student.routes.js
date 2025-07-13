@@ -1,10 +1,10 @@
 import { Router } from "express"
-import {  getStudentCount , getRecentsStudents } from "../controllers/student.controller.js"
+import {  getStudentCount , getRecentsStudents , getStudents } from "../controllers/student.controller.js"
 
 const router = Router()
 
 try {
-   
+    router.route("/get_students").get(getStudents)
     router.route("/student/count").get(getStudentCount)
     router.route("/recent").get(getRecentsStudents);
 

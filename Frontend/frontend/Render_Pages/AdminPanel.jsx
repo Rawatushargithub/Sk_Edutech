@@ -41,7 +41,7 @@ const AdminPanel = () => {
         <div className="flex flex-1">
 
           {/* Fixed Sidebar */}
-          <div className="xs:hidden fixed top-0 left-0 h-screen w-64 z-10">
+          <div className="xs:hidden fixed top-0 left-0 h-screen w-64 z-20">
             <Sidebar />
           </div>
 

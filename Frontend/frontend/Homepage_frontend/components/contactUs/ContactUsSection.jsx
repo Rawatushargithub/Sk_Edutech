@@ -14,7 +14,7 @@ const ContactUsSection = () => {
       </div>
 
       {/* Contact Cards */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Visit Us Card */}
         <a
           href="https://www.google.com/maps?q=First+floor,+Link+Road+NH-48,+Narsinghpur,+Gurgaon+HR"

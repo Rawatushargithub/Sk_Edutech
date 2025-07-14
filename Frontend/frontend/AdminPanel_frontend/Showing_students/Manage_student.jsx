@@ -26,7 +26,7 @@ const StudentAdmissionList = () => {
         const response = await axios.get(
           `${API_BASE_URL}/api/v1/admin_student/get_students`
         );
-        console.log("students data :: ", response.data);
+        console.log("students data 1 :: ", response.data);
 
         // Check if response.data is an array, if not, handle appropriately
         if (Array.isArray(response.data)) {
@@ -76,31 +76,7 @@ const StudentAdmissionList = () => {
   };
 
   // toggle the state of student active or not
-  const handleStatusToggle = async (id) => {
-    const confirmChange = window.confirm(
-      "Are you sure you want to change the status?"
-    );
-    if (!confirmChange) return;
-
-    // Update status locally
-    const updatedStudents = students.map((student) => {
-      if (student.id === id) {
-        return { ...student, status: !student.status };
-      }
-      return student;
-    });
-
-    setStudents(updatedStudents);
-
-    // Send updated status to backend
-    try {
-      await axios.patch(`/api/v1/institute_students/students/${id}`, {
-        status: !students.find((student) => student.id === id).status,
-      });
-    } catch (error) {
-      console.error("Error updating status: ", error);
-    }
-  };
+  
   // Handle showing student profile popup
   const handleViewProfile = (students) => {
     setSelectedStudent(students);
@@ -164,6 +140,7 @@ const StudentAdmissionList = () => {
             <thead className="sticky top-0 bg-gray-100">
               <tr>
                 <th className="border border-gray-300 px-4 py-2">S/N</th>
+                 <th className="border border-gray-300 px-4 py-2">FranchiseId</th>
                 <th className="border border-gray-300 px-4 py-2">Action</th>
                 <th className="border border-gray-300 px-4 py-2">Status</th> 
                 <th className="border border-gray-300 px-4 py-2">
@@ -192,6 +169,9 @@ const StudentAdmissionList = () => {
                   <td className="border border-gray-300 px-4 py-2">
                     {startIndex + index + 1}
                   </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {student.franchiseId}
+                  </td>
                   <td className="border-gray-500 px-4 py-2 flex justify-center gap-2">
                     <button
                       className="bg-sky-800 text-white p-2 rounded-md text-sm font-medium"
@@ -200,13 +180,15 @@ const StudentAdmissionList = () => {
                       <FaUser className="w-8 h-8 items-center"/>
                     </button>
                   </td>
+                  
                   <td className="p-2 border">
                     <button 
-                      onClick={() => handleStatusToggle(student.id)}
+                      
                       className={`px-2 py-1 rounded-full text-sm font-medium  ${
                         student.status ? "bg-green-200 text-green-800 " : "bg-red-200 text-red-800"
                       }`}
                     >
+                      
                       {student.status ? "Active" : "Inactive"}
                     </button>
                   </td>                

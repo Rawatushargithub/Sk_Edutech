@@ -1,5 +1,5 @@
 import { asyncHandler } from "../../utils/asynchanlder.js";
-import Student from "../../../Admin_Backend/models/Student/Student_Details.model.js"
+import Student from "../../../Center_Backend/models/Student/Student_Detais.model.js";
 import Fees_studentModel from "../../models/Student/Fees_student.model.js";
 import installmentModel from "../../models/Student/installment.model.js";
 import BatchModel from "../../models/batch.model.js"; // Import your Batch model
@@ -520,7 +520,7 @@ console.log("filter value :: ", filter)
   // Query database with projections for only the fields we need
   const students = await Student.find(filter)
     .select(
-      "studentPhoto studentName courseInterested studentMobile referralCode email rollNumber admissionDate selectedBatch status"
+      "studentPhoto studentName franchiseId status courseInterested studentMobile referralCode email rollNumber admissionDate selectedBatch status"
     )
     .populate({
       path: 'selectedBatch',

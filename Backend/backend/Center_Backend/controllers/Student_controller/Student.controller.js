@@ -1,5 +1,5 @@
 import { asyncHandler } from "../../utils/asynchanlder.js";
-import Student from "../../../Admin_Backend/models/Student/Student_Details.model.js"
+import Student from "../../../Center_Backend/models/Student/Student_Detais.model.js"
 import Fees_studentModel from "../../models/Student/Fees_student.model.js";
 import installmentModel from "../../models/Student/installment.model.js";
 import BatchModel from "../../models/batch.model.js"; // Import your Batch model

@@ -8,9 +8,6 @@ const studentSchema = new mongoose.Schema({
   franchiseId: { // System Generated ID
             type: String,
             default: true,
-            // required: true, // Not required initially for applications
-            // Allows multiple documents to have null/missing value
-            // lowercase: true, // Removed lowercase constraint
         },
   studentName: { type: String, required: true }, 
   relationType: { type: String , required: true }, 
@@ -43,8 +40,8 @@ const studentSchema = new mongoose.Schema({
 
   admissionDate: { type: String, required: true }, // Format: dd-mm-yyyy
   displayAdmissionOptions: { type: Boolean, default: false }, // For ID card, admission form & fee receipt
-
   status: { type: Boolean, default: true }
+  
 }, { timestamps: true });
  
 const Student = mongoose.models.Student || mongoose.model("Student", studentSchema);

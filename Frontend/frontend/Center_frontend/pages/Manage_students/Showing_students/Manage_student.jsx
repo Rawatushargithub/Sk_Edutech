@@ -17,6 +17,8 @@ const StudentAdmissionList = () => {
   const [showFormPopup, setShowFormPopup] = useState(false);
   const [showIdCardPopup, setShowIdCardPopup] = useState(false);
   const [showSharePopup, setShowSharePopup] = useState(false);
+  const [showStatusPopup, setShowStatusPopup] = useState(false);
+  const [statusToggleStudent, setStatusToggleStudent] = useState(null);
 
   // Then modify your useEffect fetch to ensure you're setting an array
   useEffect(() => {
@@ -77,32 +79,57 @@ const StudentAdmissionList = () => {
     if (currentPage > 1) setCurrentPage((prev) => prev - 1);
   };
 
-  // toggle the state of student active or not
-  const handleStatusToggle = async (id) => {
-    const confirmChange = window.confirm(
-      "Are you sure you want to change the status?"
-    );
-    if (!confirmChange) return;
+  // Handle status toggle with popup
+  const handleStatusToggleClick = (student) => {
+    setStatusToggleStudent(student);
+    setShowStatusPopup(true);
+  };
 
-    // Update status locally
-    const updatedStudents = students.map((student) => {
-      if (student.id === id) {
-        return { ...student, status: !student.status };
-      }
-      return student;
-    });
+  // Confirm status toggle
+  const confirmStatusToggle = async () => {
+    if (!statusToggleStudent) return;
 
-    setStudents(updatedStudents);
-
-    // Send updated status to backend
     try {
-      await axios.patch(`/api/v1/institute_students/students/${id}`, {
-        status: !students.find((student) => student.id === id).status,
-      });
+      const newStatus = !statusToggleStudent.status;
+      
+      // Update status in backend
+      const response = await axios.patch(
+        `${API_BASE_URL}/api/v1/institute_student/toggle_status/${statusToggleStudent._id}`,
+        { status: newStatus }
+      );
+
+      if (response.data.success) {
+        // Update status locally
+        const updatedStudents = students.map((student) => {
+          if (student._id === statusToggleStudent._id) {
+            return { ...student, status: newStatus };
+          }
+          return student;
+        });
+
+        setStudents(updatedStudents);
+        
+        // // Show success message
+        // alert(`Student status updated to ${newStatus ? 'Active' : 'Inactive'} successfully!`);
+      } else {
+        alert('Failed to update student status. Please try again.');
+      }
     } catch (error) {
       console.error("Error updating status: ", error);
+      alert('Error updating student status. Please try again.');
     }
+
+    // Close popup
+    setShowStatusPopup(false);
+    setStatusToggleStudent(null);
   };
+
+  // Cancel status toggle
+  const cancelStatusToggle = () => {
+    setShowStatusPopup(false);
+    setStatusToggleStudent(null);
+  };
+
   // Handle showing student profile popup
   const handleViewProfile = (students) => {
     setSelectedStudent(students);
@@ -146,12 +173,6 @@ const StudentAdmissionList = () => {
       console.error("Student not found with ID:", studentId);
     }
   };
-
-  // Close profile popup
-  // const closeProfilePopup = () => {
-  //   setShowProfilePopup(false);
-  //   setSelectedStudent(null);
-  // };
 
   return (
     <div className="min-h-full bg-blue-50">
@@ -215,9 +236,9 @@ const StudentAdmissionList = () => {
                   </td>
                   <td className="p-2 border">
                     <button 
-                      onClick={() => handleStatusToggle(student.id)}
-                      className={`px-2 py-1 rounded-full text-sm font-medium  ${
-                        student.status ? "bg-green-200 text-green-800 " : "bg-red-200 text-red-800"
+                      onClick={() => handleStatusToggleClick(student)}
+                      className={`px-2 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
+                        student.status ? "bg-green-200 text-green-800 hover:bg-green-300" : "bg-red-200 text-red-800 hover:bg-red-300"
                       }`}
                     >
                       {student.status ? "Active" : "Inactive"}
@@ -285,6 +306,41 @@ const StudentAdmissionList = () => {
           </button>
         </div>
       </div>
+
+      {/* Status Toggle Confirmation Popup */}
+      {showStatusPopup && statusToggleStudent && (
+        <div className="fixed inset-0 bg-grey bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Confirm Status Change</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to change the status of{" "}
+              <strong>{statusToggleStudent.studentName}</strong> to{" "}
+              <strong className={statusToggleStudent.status ? "text-red-600" : "text-green-600"}>
+                {statusToggleStudent.status ? "Inactive" : "Active"}
+              </strong>?
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelStatusToggle}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmStatusToggle}
+                className={`px-4 py-2 rounded text-white transition-colors ${
+                  statusToggleStudent.status
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "bg-green-500 hover:bg-green-600"
+                }`}
+              >
+                {statusToggleStudent.status ? "Deactivate" : "Activate"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Student Profile Popup */}
       {showProfilePopup && selectedStudent && (
         <StudentProfile
@@ -311,3 +367,4 @@ const StudentAdmissionList = () => {
 };
 
 export default StudentAdmissionList;
+

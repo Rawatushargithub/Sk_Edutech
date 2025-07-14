@@ -520,7 +520,7 @@ console.log("filter value :: ", filter)
   // Query database with projections for only the fields we need
   const students = await Student.find(filter)
     .select(
-      "studentPhoto studentName courseInterested studentMobile referralCode email rollNumber admissionDate selectedBatch"
+      "studentPhoto studentName courseInterested studentMobile referralCode email rollNumber admissionDate selectedBatch status"
     )
     .populate({
       path: 'selectedBatch',
@@ -666,10 +666,72 @@ const updateStudent = asyncHandler(async (req, res) => {
   }
 })
 
+const toggleStudentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+console.log("toggleStudentStatus called with id:", id, "status:", status);  
+    // Validate student ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid student ID format"
+      });
+    }
+console.log("Type of status:", typeof status, "Value:", status);
+
+    // Validate status
+    if (typeof status !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "Status must be a boolean value"
+      });
+    }
+
+    // Find and update student
+    const student = await Student.findByIdAndUpdate(
+  {_id: id} ,
+  { status },
+  { new: true, runValidators: true }
+);
+
+    console.log("Found student:", student);
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found"
+      });
+    }
+    console.log(student.toObject()); // Safely prints the raw document
+    console.log("Updated student:", student.status , "roll number: ", student.rollNumber);
+    const studentcheck = await Student.findById(id) 
+console.log("Updated student status:", studentcheck);
+    res.status(200).json({
+      success: true,
+      message: `Student status updated to ${status ? 'Active' : 'Inactive'} successfully`,
+      data: {
+        id: student._id,
+        studentName: student.studentName,
+        status: student.status,
+        updatedAt: student.updatedAt
+      }
+    });
+
+  } catch (error) {
+    console.error("Error toggling student status:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
+
 export {
   registerStudent,
   getStudents,
   getStudentCount,
   getRecentsStudents,
-  updateStudent
+  updateStudent,
+  toggleStudentStatus
 };

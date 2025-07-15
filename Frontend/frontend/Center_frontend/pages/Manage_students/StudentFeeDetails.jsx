@@ -313,7 +313,7 @@ const FeesManagementSystem = () => {
             <table className="min-w-full text-left border-collapse">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">ID</th>
+                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Student ID</th>
                   <th className="py-3 px-4 border-b font-semibold text-gray-700">Student Name</th>
                   <th className="py-3 px-4 border-b font-semibold text-gray-700">Course</th>
                   <th className="py-3 px-4 border-b font-semibold text-gray-700">Course Fee</th>
@@ -334,7 +334,7 @@ const FeesManagementSystem = () => {
                       }
                       className="hover:bg-gray-50 cursor-pointer transition-colors"
                     >
-                      <td className="py-3 px-4 border-b">{index + 1}</td>
+                      <td className="py-3 px-4 border-b">{student.rollNumber}</td>
                       <td className="py-3 px-4 border-b font-medium">{student.studentName}</td>
                       <td className="py-3 px-4 border-b">{student.course.courseName}</td>
                       <td className="py-3 px-4 border-b">{student.courseFee.toLocaleString()}</td>

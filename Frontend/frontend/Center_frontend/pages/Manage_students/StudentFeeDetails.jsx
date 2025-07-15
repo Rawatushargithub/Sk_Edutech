@@ -317,6 +317,7 @@ const FeesManagementSystem = () => {
                   <th className="py-3 px-4 border-b font-semibold text-gray-700">Student Name</th>
                   <th className="py-3 px-4 border-b font-semibold text-gray-700">Course</th>
                   <th className="py-3 px-4 border-b font-semibold text-gray-700">Course Fee</th>
+                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Student Fee</th>
                   <th className="py-3 px-4 border-b font-semibold text-gray-700">Paid Fee</th>
                   <th className="py-3 px-4 border-b font-semibold text-gray-700">Due Fee</th>
                   <th className="py-3 px-4 border-b font-semibold text-gray-700">Actions</th>
@@ -336,7 +337,8 @@ const FeesManagementSystem = () => {
                       <td className="py-3 px-4 border-b">{index + 1}</td>
                       <td className="py-3 px-4 border-b font-medium">{student.studentName}</td>
                       <td className="py-3 px-4 border-b">{student.course.courseName}</td>
-                      <td className="py-3 px-4 border-b">₹{student.courseFee.toLocaleString()}</td>
+                      <td className="py-3 px-4 border-b">{student.courseFee.toLocaleString()}</td>
+                      <td className="py-3 px-4 border-b">₹{student.totalFee.toLocaleString()}</td>
                       <td className="py-3 px-4 border-b text-green-600">₹{student.paidFee.toLocaleString()}</td>
                       <td className="py-3 px-4 border-b text-red-600">₹{student.dueFee.toLocaleString()}</td>
                       <td className="py-3 px-4 border-b">

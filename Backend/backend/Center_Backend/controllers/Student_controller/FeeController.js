@@ -75,6 +75,7 @@ export const getAllStudentsFeeDetails = async (req, res) => {
       studentName: student.studentName,
       course: student.courseInterested,
       courseFee: student.feeDetails ? student.feeDetails.courseFees : 0,
+      totalFee: student.feeDetails ? student.feeDetails.totalFees : 0,
       paidFee: student.feeDetails ? student.feeDetails.feesReceived : 0,
       dueFee: student.feeDetails ? student.feeDetails.balance : 0,
       admissionDate: student.admissionDate,

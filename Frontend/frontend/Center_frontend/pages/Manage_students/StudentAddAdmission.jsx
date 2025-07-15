@@ -225,29 +225,33 @@ const handleChange = (e) => {
   // New handler for course selection
  const handleCourseChange = (e) => {
   const selectedCourseId = e.target.value;
-  if (selectedCourseId) {
+   if (selectedCourseId) {
+    const selectedCourse = courses.find(course => course._id === selectedCourseId);
+    
+    if (selectedCourse) {
+      setFormData({
+        ...formData,
+        courseInterested: {
+          courseName: selectedCourse.courseName,
+          courseCode: selectedCourse.courseCode
+        },
+        // Set the course fees from the selected course
+        courseFees: selectedCourse.courseFees || 0
+      });
+    } else {
+      toast.error("Invalid course selection");
+    }
+  } else {
+    // Reset course selection and fees when no course is selected
     setFormData({
       ...formData,
       courseInterested: {
         courseName: "",
         courseCode: ""
-      }
+      },
+      courseFees: 0
     });
-    const selectedCourse = courses.find(course => course._id === selectedCourseId);
-  
-  if (selectedCourse) {
-    setFormData({
-      ...formData,
-      courseInterested: {
-        courseName: selectedCourse.courseName,
-        courseCode: selectedCourse.courseCode
-      }
-    });
-  } else {
-    toast.error("Invalid course selection");
   }
-};
-    return;
   }
 
  const handleFileChange = (e) => {
@@ -564,7 +568,7 @@ const handleSubmit = async (e) => {
                   <option key={course._id} value={course._id} >
                     {course.courseName} ({course.courseCode})
                   </option>
-                ))}
+                ))} 
               </select>
               {formData.courseInterested.courseName && (
                 <div className="mt-2 text-sm text-gray-600">

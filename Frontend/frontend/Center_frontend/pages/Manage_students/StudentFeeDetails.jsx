@@ -189,7 +189,7 @@ const FeesManagementSystem = () => {
         console.log(response)
         const updatedStudents = response.data.data.map((student) => ({
           ...student,
-          dueFee: student.courseFee - student.paidFee, // Ensure dueFee is properly calculated
+          dueFee: student.totalFee - student.paidFee, // Ensure dueFee is properly calculated
         }));
         setStudents(updatedStudents);
       })

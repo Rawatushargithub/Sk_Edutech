@@ -1,4 +1,4 @@
-import Certificate from "../models/Certificate.js";
+import Certificate from "../../Center_Backend/models/certificate.model.js";
 import Student from "../models/Student.js";
 
 // ✅ Request Certificate (Add to Certificate Collection)
@@ -96,3 +96,63 @@ export const updateCertificateStatus = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+// import Franchise from '../models/Franchise.js'; // Your Mongoose model
+
+// import Certificate from "../models/Certificate.js"; // Make sure path is correct
+
+export const getCertificateDetails = async (req, res) => {
+  const { franchiseId, courseCode, rollNumber } = req.body;
+
+  if (!franchiseId || !courseCode || !rollNumber) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  try {
+    // Step 1: Find certificate document by franchiseId
+    const certificate = await Certificate.findOne({ franchiseId });
+
+    if (!certificate) {
+      return res.status(404).json({ message: "Certificate record not found for this franchise" });
+    }
+
+    // Step 2: Find the matching course by courseCode
+    const course = certificate.courses.find(c => c.courseCode === courseCode);
+
+    if (!course) {
+      return res.status(404).json({ message: "Course not found in certificate data" });
+    }
+
+    // Step 3: Find the result by rollNumber
+    const result = course.results.find(r => r.rollNumber === rollNumber);
+
+    if (!result) {
+      return res.status(404).json({ message: "Result not found for this roll number" });
+    }
+
+    // Step 4: Check if certificate is approved
+    if (!result.isApproved) {
+      return res.status(403).json({ message: "Certificate not approved yet" });
+    }
+
+    // Step 5: Return result details along with courseName and examId from course
+    return res.status(200).json({
+      studentName: result.studentName,
+      fatherName: result.fatherName,
+      rollNumber: result.rollNumber,
+      courseName: course.courseName,    // <-- from course object
+      examId: course.examId,            // <-- from course object
+      session: result.session,
+      instituteName: result.instituteName,
+      percentage: result.percentage,
+      grade: result.grade,
+      certificateId: result.certificateId,
+    });
+
+  } catch (error) {
+    console.error("Error fetching certificate details:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+

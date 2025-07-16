@@ -1,265 +1,626 @@
-import certificateModel from '../models/certificate.model.js';
-import Student_DetaisModel from '../models/Student/Student_Detais.model.js';
-import PDFDocument from 'pdfkit';
-import { createWriteStream } from 'fs';
-import { join } from 'path';
+// controllers/certificate.controller.js
+import Student from "../models/Student/Student_Detais.model.js";
+import Exam from "../models/Exam.models.js";
+import Course from "../models/Courses/Courses.models.js";
+import Certificate from "../models/certificate.model.js";
+import {Franchise} from "../../Admin_Backend/models/franchise/franchise.models.js";
 
-// Request a certificate
+export const fetchCertificateData = async (req, res) => {
+  const { franchiseId, examId } = req.query;
+
+  try {
+    console.log("Fetching certificate data for franchise:", franchiseId, "exam:", examId);
+
+    const exam = await Exam.findOne({ franchiseId: franchiseId, ExamID: examId });
+    if (!exam) return res.status(404).json({ message: "Exam not found" });
+
+    const course = await Course.findOne({ courseCode: exam.courseCode });
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    console.log("Course found:", course.courseName);
+    const institute = await Franchise.findOne({ franchiseId: franchiseId });
+
+    console.log("institute name: ", institute.instituteName); 
+    const instituteName = institute.franchiseName || "Institute Name Not Found";
+
+    const resultsData = [];
+
+    for (const result of exam.results) {
+      const student = await Student.findOne({ rollNumber: result.rollNumber });
+      if (!student) continue;
+
+      const admissionYear = new Date(student.admissionDate).getFullYear();
+      const session = `${admissionYear} - ${admissionYear + Number(course.courseDuration)}`;
+      const percentage = (result.marksObtained / exam.totalMarks) * 100;
+
+      let grade = "F";
+      if (percentage >= 90) grade = "A";
+      else if (percentage >= 80) grade = "B";
+      else if (percentage >= 70) grade = "C";
+      else if (percentage >= 60) grade = "D";
+
+      resultsData.push({
+        rollNumber: result.rollNumber,
+        studentName: student.studentName,
+        courseCode: course.courseCode,
+        fatherName: `${student.relationType} ${student.surnameName}`,
+        courseName: course.courseName,
+        session,
+        instituteName: instituteName || "",
+        percentage: Math.round(percentage),
+        grade,
+        requestedStatus: "not_requested",
+        isApproved: false
+      });
+    }
+
+    // Check for existing certificate requests and merge status
+    const certificate = await Certificate.findOne({ franchiseId: franchiseId });
+    
+    if (certificate) {
+      const existingCourse = certificate.courses.find(c => 
+        c.courseCode === course.courseCode && c.examId === exam.ExamID
+      );
+      
+      if (existingCourse) {
+        // Merge the request status from existing data
+        resultsData.forEach(result => {
+          const existingResult = existingCourse.results.find(r => 
+            r.rollNumber.trim() === result.rollNumber.trim()
+          );
+          if (existingResult) {
+            result.requestedStatus = existingResult.requestedStatus;
+            result.isApproved = existingResult.isApproved;
+          }
+        });
+      }
+    }
+
+    res.status(200).json({
+      message: "Certificate data fetched successfully",
+      data: resultsData
+    });
+  } catch (err) {
+    console.error("Error in fetchCertificateData:", err);
+    res.status(500).json({ message: "Error fetching certificate data", error: err.message });
+  }
+};
+
 export const requestCertificate = async (req, res) => {
-    try {
-        const { studentId, courseId } = req.body;
-        
-        // First check if student exists
-        const student = await Student_DetaisModel.findOne({ studentId: studentId });
-        if (!student) {
-            return res.status(404).json({
-                success: false,
-                message: 'Student not found'
-            });
-        }
+  const { franchiseId, courseCode, examId, results } = req.body;
 
-        // Check if certificate request already exists
-        const existingRequest = await certificateModel.findOne({
-            studentId,
-            courseId,
-            status: { $in: ['pending', 'approved'] }
-        });
+  console.log("Requesting certificate for franchise:", franchiseId, "course:", courseCode, "exam:", examId);
+  console.log("Received results array:", results);
 
-        if (existingRequest) {
-            return res.status(400).json({
-                success: false,
-                message: 'Certificate request already exists for this student and course'
-            });
-        }
-
-        const certificate = new certificateModel({
-            studentId,
-            courseId
-        });
-
-        await certificate.save();
-
-        res.status(201).json({
-            success: true,
-            data: certificate
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+  try {
+    if (!franchiseId || !courseCode || !examId || !results || results.length === 0) {
+      return res.status(400).json({ message: "Missing or incomplete request data." });
     }
-};
 
-// Bulk request certificates
-export const bulkRequestCertificates = async (req, res) => {
-    try {
-        const { requests } = req.body; // Array of {studentId, courseId}
-        
-        const certificates = [];
-        const errors = [];
+    // Format each result with request status
+    const formattedResults = results.map((r) => ({
+      ...r,
+      requestedStatus: "requested",
+      isApproved: false,
+    }));
 
-        for (const request of requests) {
-            try {
-                // First check if student exists
-                const student = await Student_DetaisModel.findOne({ studentId: request.studentId });
-                if (!student) {
-                    errors.push(`Student ${request.studentId} not found`);
-                    continue;
-                }
+    let certDoc = await Certificate.findOne({ franchiseId });
 
-                const existingRequest = await certificateModel.findOne({
-                    studentId: request.studentId,
-                    courseId: request.courseId,
-                    status: { $in: ['pending', 'approved'] }
-                });
+    if (!certDoc) {
+      // First time certificate request for this franchise
+      certDoc = new Certificate({
+        franchiseId,
+        courses: [
+          {
+            courseCode,
+            courseName: results[0]?.courseName || "",
+            examId,
+            results: formattedResults,
+          },
+        ],
+      });
+    } else {
+      // Check if the course+exam entry already exists
+      const courseIndex = certDoc.courses.findIndex(
+        (c) => c.courseCode === courseCode && c.examId === examId
+      );
 
-                if (!existingRequest) {
-                    const certificate = new certificateModel({
-                        studentId: request.studentId,
-                        courseId: request.courseId
-                    });
-                    await certificate.save();
-                    certificates.push(certificate);
-                } else {
-                    errors.push(`Request already exists for student ${request.studentId}`);
-                }
-            } catch (error) {
-                errors.push(`Error processing request for student ${request.studentId}: ${error.message}`);
+      if (courseIndex !== -1) {
+        // Update existing course - merge new requests with existing ones
+        const existingCourse = certDoc.courses[courseIndex];
+        const updatedResults = [...existingCourse.results];
+
+        for (const newResult of formattedResults) {
+          const existingIndex = updatedResults.findIndex(
+            (r) => r.rollNumber.trim() === newResult.rollNumber.trim()
+          );
+
+          if (existingIndex !== -1) {
+            // Update existing result if not already approved
+            if (!updatedResults[existingIndex].isApproved) {
+              updatedResults[existingIndex] = {
+                ...updatedResults[existingIndex],
+                ...newResult,
+                requestedStatus: "requested",
+                isApproved: false
+              };
             }
+          } else {
+            // Add new result
+            updatedResults.push(newResult);
+          }
         }
 
-        res.status(200).json({
-            success: true,
-            data: {
-                certificates,
-                errors
-            }
+        certDoc.courses[courseIndex].results = updatedResults;
+      } else {
+        // Course entry doesn't exist — add new course
+        certDoc.courses.push({
+          courseCode,
+          courseName: results[0]?.courseName || "",
+          examId,
+          results: formattedResults,
         });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+      }
     }
+
+    await certDoc.save();
+    console.log("Certificate request saved for:", franchiseId);
+
+    return res.status(201).json({ 
+      message: "Certificate request submitted successfully.",
+      success: true 
+    });
+  } catch (err) {
+    console.error("Certificate request error:", err);
+    return res.status(500).json({ 
+      message: "Error requesting certificate", 
+      error: err.message,
+      success: false 
+    });
+  }
 };
 
-// Get all certificate requests with filters
-export const getCertificates = async (req, res) => {
-    try {
-        const {
-            status,
-            courseId,
-            search,
-            page = 1,
-            limit = 10
-        } = req.query;
-
-        const query = {};
-        
-        if (status) query.status = status;
-        if (courseId) query.courseId = courseId;
-        if (search) {
-            query.$or = [
-                { studentId: { $regex: search, $options: 'i' } }
-            ];
-        }
-
-        const certificates = await Certificate.find(query)
-            .sort({ createdAt: -1 })
-            .skip((page - 1) * limit)
-            .limit(limit);
-
-        // Get student details for each certificate
-        const certificatesWithStudents = await Promise.all(certificates.map(async (cert) => {
-            const student = await Student_DetaisModel.findOne({ studentId: cert.studentId });
-            return {
-                ...cert.toObject(),
-                student: student ? {
-                    name: student.name,
-                    course: student.course,
-                    enrollmentDate: student.enrollmentDate
-                } : null
-            };
-        }));
-
-        const total = await certificateModel.countDocuments(query);
-
-        res.status(200).json({
-            success: true,
-            data: {
-                certificates: certificatesWithStudents,
-                total,
-                page: parseInt(page),
-                totalPages: Math.ceil(total / limit)
-            }
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
+export const getAllCertificates = async (req, res) => {
+  try {
+    const certificates = await Certificate.find({});
+    res.status(200).json(certificates);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching all certificates", error: err.message });
+  }
 };
 
-// Update certificate status (approve/reject)
-export const updateCertificateStatus = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status, remarks, adminId } = req.body;
-
-        const certificate = await certificateModel.findById(id);
-        
-        if (!certificate) {
-            return res.status(404).json({
-                success: false,
-                message: 'Certificate request not found'
-            });
-        }
-
-        certificate.status = status;
-        certificate.remarks = remarks;
-        certificate.approvedBy = adminId;
-        
-        if (status === 'approved') {
-            certificate.approvalDate = new Date();
-        }
-
-        await certificate.save();
-
-        res.status(200).json({
-            success: true,
-            data: certificate
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
+const extractStudentNumber = (rollNumber) => {
+  const match = rollNumber.match(/(\d+)$/);
+  return match ? match[1] : null;
 };
 
-// Generate certificate PDF
-export const generateCertificatePDF = async (req, res) => {
-    try {
-        const { id } = req.params;
-        
-        const certificate = await certificateModel.findById(id);
-        if (!certificate) {
-            return res.status(404).json({
-                success: false,
-                message: 'Certificate not found'
-            });
-        }
+export const approveStudentCertificate = async (req, res) => {
+  const { franchiseId, courseCode, examId, rollNumber } = req.body;
 
-        const student = await Student_DetaisModel.findOne({ studentId: certificate.studentId });
-        if (!student) {
-            return res.status(404).json({
-                success: false,
-                message: 'Student not found'
-            });
-        }
+  try {
+    const certificate = await Certificate.findOne({ franchiseId });
+    if (!certificate) return res.status(404).json({ message: "Certificate not found" });
 
-        if (certificate.status !== 'approved') {
-            return res.status(400).json({
-                success: false,
-                message: 'Certificate is not approved'
-            });
-        }
+    const course = certificate.courses.find(
+      (c) => c.courseCode === courseCode && c.examId === examId
+    );
+    if (!course) return res.status(404).json({ message: "Course not found" });
 
-        const doc = new PDFDocument({
-            layout: 'landscape',
-            size: 'A4'
-        });
+    const studentResult = course.results.find((r) => r.rollNumber === rollNumber);
+    if (!studentResult) return res.status(404).json({ message: "Student result not found" });
 
-        // Set response headers
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=certificate-${certificate._id}.pdf`);
-
-        // Pipe the PDF directly to the response
-        doc.pipe(res);
-
-        // Add certificate content
-        doc.fontSize(25).text('Certificate of Completion', { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(15).text(`Certificate Number: ${certificate._id}`, { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(20).text(`This is to certify that`, { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(30).text(student.name, { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(20).text(`has successfully completed the course`, { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(25).text(student.course, { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(15).text(`Date of Issue: ${certificate.approvalDate.toLocaleDateString()}`, { align: 'center' });
-
-        // Finalize the PDF
-        doc.end();
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+    const studentNumber = extractStudentNumber(rollNumber);
+    if (!studentNumber) {
+      return res.status(400).json({ message: "Invalid roll number format" });
     }
+
+    const certificateId = `${franchiseId}${studentNumber}`;
+
+    studentResult.certificateId = certificateId;
+    studentResult.isApproved = true;
+    studentResult.requestedStatus = "approved";
+
+    await certificate.save();
+
+    res.status(200).json({
+      message: "Student certificate approved successfully",
+      certificateId,
+      success: true
+    });
+  } catch (err) {
+    console.error("Error approving student certificate:", err);
+    return res.status(500).json({
+      message: "Error approving student certificate",
+      error: err.message,
+      success: false
+    });
+  }
 };
+
+// export const approveStudentCertificate = async (req, res) => {
+//   const { franchiseId, courseCode, examId, rollNumber } = req.body;
+
+//   try {
+//     const certificate = await Certificate.findOne({ franchiseId });
+//     if (!certificate) return res.status(404).json({ message: "Certificate not found" });
+
+//     const course = certificate.courses.find(
+//       (c) => c.courseCode === courseCode && c.examId === examId
+//     );
+//     if (!course) return res.status(404).json({ message: "Course not found" });
+
+//     const studentResult = course.results.find((r) => r.rollNumber === rollNumber);
+//     if (!studentResult) return res.status(404).json({ message: "Student result not found" });
+
+//     // Update both fields for consistency
+//     studentResult.isApproved = true;
+//     studentResult.requestedStatus = "approved";
+    
+//     await certificate.save();
+
+//     res.status(200).json({ 
+//       message: "Student certificate approved successfully",
+//       success: true 
+//     });
+//   } catch (err) {
+//     console.error("Error approving student certificate:", err);
+//     res.status(500).json({ 
+//       message: "Error approving student certificate", 
+//       error: err.message,
+//       success: false 
+//     });
+//   }
+// };
+
+export const checkCertificateStatus = async (req, res) => {
+  const { franchiseId, examId, courseCode } = req.query;
+
+  try {
+    const cert = await Certificate.findOne({ franchiseId });
+
+    if (!cert) return res.json({ status: "not_requested" });
+
+    const course = cert.courses.find(
+      (c) => c.examId === examId && c.courseCode === courseCode
+    );
+
+    if (!course) return res.json({ status: "not_requested" });
+
+    const allApproved = course.results.length > 0 && course.results.every(r => r.isApproved);
+    const allRequested = course.results.length > 0 && course.results.every(r => 
+      r.requestedStatus === "requested" || r.isApproved
+    );
+
+    if (allApproved) {
+      return res.json({ status: "approved" });
+    } else if (allRequested) {
+      return res.json({ status: "requested" });
+    }
+
+    return res.json({ status: "partial" });
+
+  } catch (err) {
+    console.error("Certificate status check error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Add these new controller functions to your existing certificate.controller.js
+
+// Get all active franchises
+export const getActiveFranchises = async (req, res) => {
+  try {
+    const franchises = await Franchise.find({ status: "Active" }).select('franchiseId franchiseName');
+    res.status(200).json(franchises);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching franchises", error: err.message });
+  }
+};
+
+// Get requested certificates with optional franchise filter
+export const getRequestedCertificates = async (req, res) => {
+  try {
+    const { franchiseId } = req.query;
+    
+    let query = {};
+    if (franchiseId) {
+      query.franchiseId = franchiseId;
+    }
+
+    const certificates = await Certificate.find(query);
+    
+    // Filter to only show courses and students with requested status
+    const requestedCertificates = certificates.map(cert => ({
+      ...cert.toObject(),
+      courses: cert.courses.map(course => ({
+        ...course.toObject(),
+        results: course.results.filter(result => 
+          result.requestedStatus === "requested" && !result.isApproved
+        )
+      })).filter(course => course.results.length > 0) // Only include courses with requested results
+    })).filter(cert => cert.courses.length > 0); // Only include certificates with requested courses
+
+    res.status(200).json(requestedCertificates);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching requested certificates", error: err.message });
+  }
+};
+
+// Get approved certificates with optional franchise filter
+export const getApprovedCertificates = async (req, res) => {
+  try {
+    const { franchiseId } = req.query;
+    
+    let query = {};
+    if (franchiseId) {
+      query.franchiseId = franchiseId;
+    }
+
+    const certificates = await Certificate.find(query);
+    
+    // Filter to only show courses and students with approved status
+    const approvedCertificates = certificates.map(cert => ({
+      ...cert.toObject(),
+      courses: cert.courses.map(course => ({
+        ...course.toObject(),
+        results: course.results.filter(result => result.isApproved)
+      })).filter(course => course.results.length > 0) // Only include courses with approved results
+    })).filter(cert => cert.courses.length > 0); // Only include certificates with approved courses
+
+    res.status(200).json(approvedCertificates);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching approved certificates", error: err.message });
+  }
+};
+// import Student from "../models/Student/Student_Detais.model.js";
+// import Exam from "../models/Exam.models.js";
+// import Course from "../models/Courses/Courses.models.js";
+// import Certificate from "../models/certificate.model.js";
+// import {Franchise} from "../../Admin_Backend/models/franchise/franchise.models.js";
+
+
+// export const fetchCertificateData = async (req, res) => {
+//   const { franchiseId, examId } = req.query;
+
+//   try {
+//     console.log("Fetching certificate data for franchise:", franchiseId, "exam:", examId);
+
+//     const exam = await Exam.findOne({ franchiseId: franchiseId, ExamID: examId });
+//     if (!exam) return res.status(404).json({ message: "Exam not found" });
+
+//     const course = await Course.findOne({ courseCode: exam.courseCode });
+//     if (!course) return res.status(404).json({ message: "Course not found" });
+
+//     console.log("Course found:", course.courseName);
+//     const institute = await Franchise.findOne({ franchiseId: franchiseId });
+
+//     console.log("institute name: ", institute.instituteName); 
+//      const instituteName = institute.franchiseName || "Institute Name Not Found";
+
+    
+//     const resultsData = [];
+
+//     for (const result of exam.results) {
+//       const student = await Student.findOne({ rollNumber: result.rollNumber });
+//       if (!student) continue;
+
+//     //   console.log("admission date", student.admissionDate);
+//       const admissionYear = new Date(student.admissionDate).getFullYear();
+//     //   console.log("admission year", admissionYear);
+//       const session = `${admissionYear} - ${admissionYear + Number(course.courseDuration)}`;
+//       const percentage = (result.marksObtained / exam.totalMarks) * 100;
+//     //   console.log("Calculated percentage:", percentage);
+
+//       let grade = "F";
+//       if (percentage >= 90) grade = "A";
+//       else if (percentage >= 80) grade = "B";
+//       else if (percentage >= 70) grade = "C";
+//       else if (percentage >= 60) grade = "D";
+
+//       resultsData.push({
+//         rollNumber: result.rollNumber,
+//         studentName: student.studentName,
+//         courseCode: course.courseCode,
+//         fatherName: `${student.relationType} ${student.surnameName}`,
+//         courseName: course.courseName,
+//         session,
+//         instituteName: instituteName || "",
+//         percentage: Math.round(percentage),
+//         grade,
+//       });
+//     }
+
+//     // Step 1: Check for existing Certificate
+//     let certificate = await Certificate.findOne({ franchiseId: franchiseId });
+
+//     if (!certificate) {
+//       // Create new certificate
+//       certificate = new Certificate({
+//         franchiseId,
+//         courses: [{
+//           courseCode: course.courseCode,
+//           courseName: course.courseName,
+//           examId: exam.ExamID,
+//           results: resultsData
+//         }]
+//       });
+//     } else {
+//       // Check if course already exists
+//       const existingCourse = certificate.courses.find(c => c.courseCode === course.courseCode && c.examId === exam.ExamID);
+
+//       if (existingCourse) {
+//         // Overwrite results for now, or you can merge/update as per logic
+//         existingCourse.results = resultsData;
+//       } else {
+//         // Push new course entry
+//         certificate.courses.push({
+//           courseCode: course.courseCode,
+//           courseName: course.courseName,
+//           examId: exam.ExamID,
+//           results: resultsData
+//         });
+//       }
+//     }
+
+//     await certificate.save();
+
+//     res.status(200).json({
+//       message: "Certificate data fetched and stored successfully",
+//       data: resultsData
+//     });
+//   } catch (err) {
+//     res.status(500).json({ message: "Error fetching certificate data", error: err.message });
+//   }
+// };
+
+
+// // Request certificate (save to DB)
+// // controllers/certificate.controller.js
+
+// // import Certificate from "../models/certificate.model.js";
+
+// export const requestCertificate = async (req, res) => {
+//   const { franchiseId, courseCode, examId, results } = req.body;
+
+//   console.log("Requesting certificate for franchise:", franchiseId, "course:", courseCode, "exam:", examId);
+//   console.log("Received results array:", results);
+
+//   try {
+//     if (!franchiseId || !courseCode || !examId || !results || results.length === 0) {
+//       return res.status(400).json({ message: "Missing or incomplete request data." });
+//     }
+
+//     // Format each result with default request status
+//     const formattedResults = results.map((r) => ({
+//       ...r,
+//       requestedStatus: "requested",
+//       isApproved: false,
+//     }));
+
+//     let certDoc = await Certificate.findOne({ franchiseId });
+
+//     if (!certDoc) {
+//       // First time certificate request for this franchise
+//       certDoc = new Certificate({
+//         franchiseId,
+//         courses: [
+//           {
+//             courseCode,
+//             courseName: results[0]?.courseName || "",
+//             examId,
+//             results: formattedResults,
+//           },
+//         ],
+//       });
+//     } else {
+//       // Check if the course+exam entry already exists
+//       const courseIndex = certDoc.courses.findIndex(
+//         (c) => c.courseCode === courseCode && c.examId === examId
+//       );
+
+//       if (courseIndex !== -1) {
+//         // Update or append new students into existing course
+//         const existingCourse = certDoc.courses[courseIndex];
+
+//         for (const newResult of formattedResults) {
+//           const exists = existingCourse.results.find(
+//             (r) => r.rollNumber.trim() === newResult.rollNumber.trim()
+//           );
+
+//           if (exists) {
+//             return res.status(400).json({
+//               message: `Certificate already requested for Roll Number ${newResult.rollNumber}.`,
+//             });
+//           }
+
+//           existingCourse.results.push(newResult);
+//         }
+//       } else {
+//         // Course entry doesn't exist — add new course
+//         certDoc.courses.push({
+//           courseCode,
+//           courseName: results[0]?.courseName || "",
+//           examId,
+//           results: formattedResults,
+//         });
+//       }
+//     }
+
+//     await certDoc.save();
+//     console.log("Certificate request saved for:", franchiseId);
+
+//     return res
+//       .status(201)
+//       .json({ message: "Certificate request submitted successfully." });
+//   } catch (err) {
+//     console.error("Certificate request error:", err);
+//     return res
+//       .status(500)
+//       .json({ message: "Error requesting certificate", error: err.message });
+//   }
+// };
+
+
+
+
+// // Get all certificate requests (Admin side)
+// export const getAllCertificates = async (req, res) => {
+//   try {
+//     const certificates = await Certificate.find({});
+//     res.status(200).json(certificates);
+//   } catch (err) {
+//     res.status(500).json({ message: "Error fetching all certificates", error: err.message });
+//   }
+// };
+
+
+// export const approveStudentCertificate = async (req, res) => {
+//   const { franchiseId, courseCode, examId, rollNumber } = req.body;
+
+//   try {
+//     const certificate = await Certificate.findOne({ franchiseId });
+//     if (!certificate) return res.status(404).json({ message: "Certificate not found" });
+
+//     const course = certificate.courses.find(
+//       (c) => c.courseCode === courseCode && c.examId === examId
+//     );
+//     if (!course) return res.status(404).json({ message: "Course not found" });
+
+//     const studentResult = course.results.find((r) => r.rollNumber === rollNumber);
+//     if (!studentResult) return res.status(404).json({ message: "Student result not found" });
+
+//     studentResult.isApproved = true;
+//     await certificate.save();
+
+//     res.status(200).json({ message: "Student certificate approved" });
+//   } catch (err) {
+//     res.status(500).json({ message: "Error approving student certificate", error: err.message });
+//   }
+// };
+
+// export const checkCertificateStatus = async (req, res) => {
+//   const { franchiseId, examId, courseCode } = req.query;
+
+//   try {
+//     const cert = await Certificate.findOne({ franchiseId });
+
+//     if (!cert) return res.json({ status: "not_requested" });
+
+//     const course = cert.courses.find(
+//       (c) => c.examId === examId && c.courseCode === courseCode
+//     );
+
+//     if (!course) return res.json({ status: "not_requested" });
+
+//     const allApproved = course.results.length > 0 && course.results.every(r => r.isApproved);
+//     if (allApproved) {
+//       return res.json({ status: "approved" });
+//     }
+
+//     return res.json({ status: "requested" });
+
+//   } catch (err) {
+//     console.error("Certificate status check error:", err);
+//     res.status(500).json({ message: "Server error", error: err.message });
+//   }
+// };

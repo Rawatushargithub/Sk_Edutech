@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler";
 import Student from "../models/Student.js";
+import Course from "../../Center_Backend/models/Courses/Courses.models.js"
 
 
 export const getAllStudents = async (req, res) => {
@@ -81,6 +82,28 @@ export const getStudentById = async (req, res) => {
   } catch (error) {
       console.error("Error fetching student:", error);
       res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getCourseDuration = async (req, res) => {
+  const { courseCode } = req.body;
+  // console.log("Received courseCode:", courseCode);
+  if (!courseCode) {
+    return res.status(400).json({ message: 'courseCode is required' });
+  }
+
+  try {
+    const course = await Course.findOne({ courseCode: courseCode });
+    // console.error("Course not found for courseCode:", course);
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    res.status(200).json({ duration: course.courseDuration });
+  } catch (error) {
+    console.error("Error fetching course duration:", error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 };
 

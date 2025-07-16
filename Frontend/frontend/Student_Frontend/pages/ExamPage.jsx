@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Calendar,
     Clock,
@@ -8,6 +9,8 @@ import {
     Users,
     Hash,
     Trophy,
+    Medal ,
+    Clock1 ,
     Activity,
     BookOpen
 } from "lucide-react";
@@ -16,26 +19,25 @@ import API_BASE_URL from "../../config";
 const ExamDetails = () => {
     const [exams, setExams] = useState([]);
     const [error, setError] = useState("");
+    const navigate = useNavigate();
 
-    // Note: Using React state instead of localStorage for Claude.ai compatibility
-    // const [student] = useState({ courseCode: "CS101" }); // Replace with your localStorage logic
-      const storedStudent = localStorage.getItem("student");
-  const parsedStudent = storedStudent ? JSON.parse(storedStudent) : null;
+    const storedStudent = localStorage.getItem("student");
+    const parsedStudent = storedStudent ? JSON.parse(storedStudent) : null;
+    const courseCode = parsedStudent?.courseCode;
+    const rollNumber = parsedStudent?.rollNumber;
 
-  const courseCode = parsedStudent?.courseCode;
     useEffect(() => {
         const fetchExams = async () => {
             try {
                 const res = await fetch(`${API_BASE_URL}/api/exams/by-course/${courseCode}`);
                 const data = await res.json();
-
                 if (res.ok) {
                     setExams(data.exams);
                 } else {
                     setError(data.message || "Failed to fetch exams");
                 }
             } catch (err) {
-                setError("Server error");
+                setError("Server error", err.message || "An error occurred while fetching exams");
             }
         };
 
@@ -44,11 +46,11 @@ const ExamDetails = () => {
 
     const getStatusIcon = (status) => {
         switch (status?.toLowerCase()) {
-            case 'active':
+            case "active":
                 return <Activity className="w-4 h-4 text-green-800" />;
-            case 'scheduled':
+            case "scheduled":
                 return <Calendar className="w-4 h-4 text-blue-900" />;
-            case 'completed':
+            case "completed":
                 return <CheckCircle className="w-4 h-4 text-blue-900" />;
             default:
                 return <Clock className="w-4 h-4 text-yellow-400" />;
@@ -57,19 +59,19 @@ const ExamDetails = () => {
 
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
-            case 'active':
-                return 'text-green-400 border-blue-900';
-            case 'scheduled':
-                return 'text-blue-900 bg-blue-900/20';
-            case 'completed':
-                return 'text-blue-900 bg-blue-900/20';
+            case "active":
+                return "text-green-400 border-blue-900";
+            case "scheduled":
+                return "text-blue-900 bg-blue-900/20";
+            case "completed":
+                return "text-blue-900 bg-blue-900/20";
             default:
-                return 'text-yellow-400 bg-yellow-900/20';
+                return "text-yellow-400 bg-yellow-900/20";
         }
     };
 
     return (
-        <div className="min-h-screen  p-6">
+        <div className="min-h-screen p-6">
             <div className="max-w-4xl mx-auto">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-blue-900 mb-2 flex items-center gap-3">
@@ -95,92 +97,153 @@ const ExamDetails = () => {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {exams.map((exam) => (
-                            <div
-                                key={exam.ExamID}
-                                className=" border border-blue-900 rounded-xl p-6 hover:border-blue-900 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10"
-                            >
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <Hash className="w-5 h-5 text-blue-900" />
-                                        <h3 className="text-xl font-semibold text-white">
-                                            Exam ID: {exam.ExamID}
-                                        </h3>
-                                    </div>
+                        {exams.map((exam) => {
+                            const studentResult = exam.results?.find((r) => r.rollNumber === rollNumber);
+                            const alreadyGiven = !!studentResult;
 
-                                    <span className={`px-3 py-1 rounded-full border-blue-900 border-1 text-sm font-medium flex items-center gap-2 ${getStatusColor(exam.status)}`}>
-                                        {getStatusIcon(exam.status)}
-                                        {exam.status}
-                                    </span>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div className="flex items-center gap-3 text-gray-300">
-                                        <Users className="w-4 h-4 text-blue-900" />
-                                        <div>
-                                            <p className="text-sm text-blue-900">Batch</p>
-                                            <p className="font-medium text-blue-900">{exam.batch.name}</p>
-                                            {/* <p className="text-xs text-blue-900">{exam.batch.timings}</p>    */}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 text-gray-300">
-                                        <Calendar className="w-4 h-4 text-blue-900" />
-                                        <div>
-                                            <p className="text-sm text-blue-900">Exam Date</p>
-                                            <p className="font-medium text-blue-900">{exam.examDate}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 text-gray-300">
-                                        <Clock className="w-4 h-4 text-blue-900" />
-                                        <div>
-                                            <p className="text-sm text-blue-900">Duration</p>
-                                            <p className="font-medium">{exam.examDurationMinutes} mins</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 text-gray-300">
-                                        <FileText className="w-4 h-4 text-blue-900" />
-                                        <div>
-                                            <p className="text-sm text-blue-900">Questions</p>
-                                            <p className="font-medium text-blue-900">{exam.totalQuestions}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 text-gray-300">
-                                        <Trophy className="w-4 h-4 text-blue-900" />
-                                        <div>
-                                            <p className="text-sm text-blue-900">Total Marks</p>
-                                            <p className="font-medium text-blue-900">{exam.totalMarks}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 text-gray-300">
-                                        <Award className="w-4 h-4 text-blue-900" />
-                                        <div>
-                                            <p className="text-sm text-blue-900">Passing Marks</p>
-                                            <p className="font-medium text-blue-900">{exam.passingMarks}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="mt-4 pt-4 border-t border-gray-700">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3 text-gray-300">
-                                            <CheckCircle className="w-4 h-4 text-blue-900" />
-                                            <span className="text-sm text-blue-900">Mode: <span className="font-medium text-blue-900">{exam.examMode}</span></span>
+                            return (
+                                <div
+                                    key={exam.ExamID}
+                                    className="border border-blue-900 rounded-xl p-6 hover:border-blue-900 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10"
+                                >
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <Hash className="w-5 h-5 text-blue-900" />
+                                            <h3 className="text-xl font-semibold text-blue-900">
+                                                Exam ID: {exam.ExamID}
+                                            </h3>
                                         </div>
 
-                                        {exam.questions?.length > 0 && (
-                                            <div className="text-sm text-blue-900">
-                                                <span className="font-medium  text-blue-900">{exam.questions.length}</span> questions assigned
+                                        <span
+                                            className={`px-3 py-1 rounded-full border-blue-900 border-1 text-sm font-medium flex items-center gap-2 ${getStatusColor(
+                                                exam.status
+                                            )}`}
+                                        >
+                                            {getStatusIcon(exam.status)}
+                                            {exam.status}
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <Users className="w-4 h-4 text-blue-900" />
+                                            <div>
+                                                <p className="text-sm text-blue-900">Batch</p>
+                                                <p className="font-medium text-blue-900">{exam.batch.name}</p>
                                             </div>
-                                        )}
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            <Calendar className="w-4 h-4 text-blue-900" />
+                                            <div>
+                                                <p className="text-sm text-blue-900">Exam Date</p>
+                                                <p className="font-medium text-blue-900">{exam.examDate}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            <Clock className="w-4 h-4 text-blue-900" />
+                                            <div>
+                                                <p className="text-sm text-blue-900">Duration</p>
+                                                <p className="font-medium">{exam.examDurationMinutes} mins</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            <FileText className="w-4 h-4 text-blue-900" />
+                                            <div>
+                                                <p className="text-sm text-blue-900">Questions</p>
+                                                <p className="font-medium text-blue-900">{exam.totalQuestions}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            <Trophy className="w-4 h-4 text-blue-900" />
+                                            <div>
+                                                <p className="text-sm text-blue-900">Total Marks</p>
+                                                <p className="font-medium text-blue-900">{exam.totalMarks}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            <Award className="w-4 h-4 text-blue-900" />
+                                            <div>
+                                                <p className="text-sm text-blue-900">Passing Marks</p>
+                                                <p className="font-medium text-blue-900">{exam.passingMarks}</p>
+                                            </div>
+                                        </div>
                                     </div>
+
+                                    <div className="mt-4 pt-4 border-t border-gray-200">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <CheckCircle className="w-4 h-4 text-blue-900" />
+                                                <span className="text-sm text-blue-900">
+                                                    Mode: <span className="font-medium">{exam.examMode}</span>
+                                                </span>
+                                            </div>
+
+                                            {exam.questions?.length > 0 && (
+                                                <div className="text-sm text-blue-900">
+                                                    <span className="font-medium">{exam.questions.length}</span> questions assigned
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+
+
+                                    {/* Show Result or Button */}
+                                    {exam.examMode === "Online" && exam.status === "Active" && (
+                                        <div className="mt-4">
+                                            {alreadyGiven ? (
+                                                <div className="bg-green-100 text-green-800 px-4 py-2 rounded space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <CheckCircle className="w-4 h-4" />
+                                                        You have already given this test.
+                                                    </div>
+                                                    <div className="border-1 border-blue-900 rounded-lg p-4 bg-white space-y-2 flex justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            <Award className="w-4 h-4 text-blue-900" />
+                                                            <div>
+                                                                <p className="text-sm text-blue-900">Marks Obtained</p>
+                                                                <p className="font-medium text-blue-900">{studentResult.marksObtained}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <Medal  className="w-4 h-4 text-blue-900" />
+                                                            <div>
+                                                                <p className="text-sm text-blue-900">Status: </p>
+                                                                <p className="font-medium text-blue-900">{studentResult.status}</p>
+                                                            </div>
+                                                        </div>
+                                                        {studentResult.createdAt && (
+                                                            <div className="flex items-center gap-3">
+                                                                <Clock1  className="w-4 h-4 text-blue-900" />
+                                                                <div>
+                                                                    <p className="text-sm text-blue-900">Submitted At:</p>
+                                                                    <p className="font-medium text-blue-900">{new Date(studentResult.createdAt).toLocaleString()}</p>
+                                                                </div>
+                                                            </div>
+                                                            // <p className="text-sm text-blue-900 ml-6">
+                                                            //     🕒 <strong>Submitted At:</strong> {new Date(studentResult.createdAt).toLocaleString()}
+                                                            // </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => navigate(`/student/exam/give/${exam._id}`)}
+                                                    className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                                                >
+                                                    Give Test
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>

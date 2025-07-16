@@ -167,6 +167,10 @@ const StudentAdmissionList = () => {
     if (studentToEdit) {
       // Store in localStorage for persistence
       localStorage.setItem("editStudentData", JSON.stringify(studentToEdit));
+      // Close the profile popup first
+      setShowProfilePopup(false);
+      setSelectedStudent(null);
+      
       // Navigate to edit page with student ID
       navigate(`/institute/edit-student/${studentID}`);
     } else {

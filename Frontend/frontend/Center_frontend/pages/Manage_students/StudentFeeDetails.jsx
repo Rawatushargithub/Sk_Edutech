@@ -309,7 +309,7 @@ const FeesManagementSystem = () => {
           </div>
 
           {/* Students Table */}
-          <div className="bg-white shadow-md rounded-lg overflow-hidden">
+          <div className="bg-white shadow-md rounded-lg overflow-hidden overflow-y-auto max-h-96">
             <table className="min-w-full text-left border-collapse">
               <thead className="bg-gray-50">
                 <tr>

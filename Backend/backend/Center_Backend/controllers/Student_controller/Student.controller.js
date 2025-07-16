@@ -520,7 +520,7 @@ console.log("filter value :: ", filter)
   // Query database with projections for only the fields we need
   const students = await Student.find(filter)
     .select(
-      "studentPhoto studentName franchiseId status courseInterested studentMobile referralCode email rollNumber admissionDate selectedBatch status"
+      "studentPhoto studentSignature studentName rollNumber abbreviation franchiseId status courseInterested studentMobile referralCode email dob city postCode permanentAddress admissionDate caste qualifications occupation relationType gender selectedBatch "
     )
     .populate({
       path: 'selectedBatch',

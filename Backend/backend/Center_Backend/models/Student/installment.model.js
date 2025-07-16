@@ -6,6 +6,6 @@ const installmentSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   date: { type: String, required: true }, // Format: dd-mm-yyyy
   paid: { type:Boolean }
-}, { timestamps: true });
+}, { timestamps: true }); 
 
 export default mongoose.model("Installment", installmentSchema);

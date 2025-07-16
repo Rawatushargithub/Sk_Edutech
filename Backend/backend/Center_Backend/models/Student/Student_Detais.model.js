@@ -33,7 +33,7 @@ const studentSchema = new mongoose.Schema({
   qualifications: { type: String },
   occupation: { type: String }, 
  
-  // Reference Fields
+  // Reference Fields 
   feeDetails: { type: mongoose.Schema.Types.ObjectId, ref: "Fee" }, // Linked Fee Schema
   installmentDetails: [{ type: mongoose.Schema.Types.ObjectId, ref: "Installment" }], // Linked Installments
   selectedBatch: { type: mongoose.Schema.Types.ObjectId, ref: "Batch" }, // Linked Batch

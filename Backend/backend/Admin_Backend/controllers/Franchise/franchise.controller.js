@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
-import { Franchise } from '../../models/franchise/franchise.models.js';
+import Franchise  from '../../models/franchise/franchise.models.js';
 import { asyncHandler } from '../../utils/asynchanlder.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';

@@ -16,7 +16,7 @@ import StudentAdmissionList from "../Center_frontend/pages/Manage_students/Showi
 import StudentProfileDetails from "../Center_frontend/pages/Manage_students/Showing_students/Student_profile_details.jsx";
 import { StudentProvider } from "../Center_frontend/context/StudentContext.jsx";
 
-import Center_wallet from "../Center_frontend/pages/Dashboard/Wallet.jsx";
+import Center_wallet from "../Center_frontend/pages/Dashboard/Wallet/Wallet.jsx";
 
 import Batches from "../Center_frontend/pages/Batches/Batche.jsx"
 import UploadCourseVideo1 from "../Center_frontend/pages/video.jsx" // This is the Video Dashboard

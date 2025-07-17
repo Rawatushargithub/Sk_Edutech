@@ -39,10 +39,7 @@ const Dashboard = () => {
     
       const navigate = useNavigate();
     
-      const toggleNotifications = () => {
-        setShowNotifications((prev) => !prev);
-        setShowProfileMenu(false); // Close profile menu when notifications are toggled
-      };
+   
     
       const toggleProfileMenu = () => {
         setShowProfileMenu((prev) => !prev);
@@ -84,23 +81,7 @@ const Dashboard = () => {
            
                  {/* Right Section */}
                  <div className="relative flex items-center space-x-6">
-                   {/* Notification Icon */}
-                   <div className="relative">
-                     <FaBell
-                       className="text-2xl cursor-pointer hover:text-blue-400"
-                       onClick={toggleNotifications}
-                     />
-                     {showNotifications && (
-                       <div className="absolute right-0 mt-2 w-64 bg-white text-black shadow-lg rounded-lg p-4 z-20">
-                         <h3 className="text-sm font-semibold mb-2">Notifications</h3>
-                         <ul className="space-y-2">
-                           <li className="text-sm border-b pb-1">New student registered.</li>
-                           <li className="text-sm border-b pb-1">Exam schedule updated.</li>
-                           <li className="text-sm">Fee payment received.</li>
-                         </ul>
-                       </div>
-                     )}
-                   </div>
+                     
            
                    {/* Profile Icon */}
                    <div className="relative">

@@ -272,7 +272,8 @@ const StudentProfileDetails = () => {
                   name="rollNumber"
                   value={formData.rollNumber}
                   onChange={handleChange}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={true}
+                  className="w-full rounded-md border bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
@@ -373,7 +374,7 @@ const StudentProfileDetails = () => {
                 </label>
               </div>
             </div>
-            
+
             {/* Middle Column */}
             <div className="space-y-4">
               {/* Surname */}
@@ -432,7 +433,8 @@ const StudentProfileDetails = () => {
                   name="courseInterested.courseName"
                   value={formData.courseInterested.courseName}
                   onChange={handleChange}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={true}
+                  className="w-full rounded-md border bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
@@ -448,7 +450,8 @@ const StudentProfileDetails = () => {
                   name="courseInterested.courseCode"
                   value={formData.courseInterested.courseCode}
                   onChange={handleChange}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={true}
+                  className="w-full rounded-md border bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
@@ -595,7 +598,8 @@ const StudentProfileDetails = () => {
                   name="referralCode"
                   value={formData.referralCode}
                   onChange={handleChange}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={true}
+                  className="w-full rounded-md border bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -610,6 +614,7 @@ const StudentProfileDetails = () => {
                   name="caste"
                   value={formData.caste}
                   onChange={handleChange}
+                  disabled={true}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -625,7 +630,8 @@ const StudentProfileDetails = () => {
                   name="qualifications"
                   value={formData.qualifications}
                   onChange={handleChange}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={true}
+                  className="w-full rounded-md border bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -655,8 +661,9 @@ const StudentProfileDetails = () => {
                   name="admissionDate"
                   value={formData.admissionDate}
                   onChange={handleChange}
+                  disabled={true}
                   placeholder="dd-mm-yyyy"
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-md border bg-gray-100 text-gray-500 cursor-not-allowed  border-gray-300  p-2 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
@@ -688,7 +695,7 @@ const StudentProfileDetails = () => {
               </div>
             </div>
           </div>
-          
+ 
           {/* Form Actions */}
           <div className="flex justify-end mt-8 space-x-4">
             <button

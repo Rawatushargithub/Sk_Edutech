@@ -1,6 +1,6 @@
 import { asyncHandler } from "../../utils/asynchanlder.js";
 import Student from "../../../Center_Backend/models/Student/Student_Detais.model.js"
-import Franchise from "../../../Center_Backend/models/Franchise.model.js";
+import Franchise from "../../models/Franchise.model.js";
 import Fees_studentModel from "../../models/Student/Fees_student.model.js";
 import installmentModel from "../../models/Student/installment.model.js";
 import BatchModel from "../../models/batch.model.js"; // Import your Batch model
@@ -746,6 +746,11 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Student not found");
   }
 
+  const franchise = await Franchise.findOne({ franchiseId: student.franchiseId });
+  if (!franchise) {
+    throw new ApiError(404, "Franchise not found");
+  }
+
   const pdfPath = "F:\\SK_for_course\\Sk_Edutech\\Frontend\\public\\assets\\blank_form.pdf";
   const existingPdfBytes = await fs.readFile(pdfPath);
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
@@ -768,9 +773,9 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
     try {
       const photoUrl = student.studentPhoto;
       const photoResponse = await axios.get(photoUrl, { responseType: 'arraybuffer' });
-      const photoBytes = photoResponse.data;
+      const photoBytes = Buffer.from(photoResponse.data, 'binary');
       let photoImage;
-      if (photoUrl.includes('.jpg') || photoUrl.includes('.jpeg') || photoUrl.includes('.png')) {
+      if (photoUrl.includes('.jpg') || photoUrl.includes('.jpeg')) {
         photoImage = await pdfDoc.embedJpg(photoBytes);
       } else {
         photoImage = await pdfDoc.embedPng(photoBytes);
@@ -787,9 +792,9 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
     try {
       const signatureUrl = student.studentSignature;
       const signatureResponse = await axios.get(signatureUrl, { responseType: 'arraybuffer' });
-      const signatureBytes = signatureResponse.data;
+      const signatureBytes = Buffer.from(signatureResponse.data, 'binary');
       let signatureImage;
-      if (signatureUrl.includes('.jpg') || signatureUrl.includes('.jpeg') || signatureUrl.includes('.png')) {
+      if (signatureUrl.includes('.jpg') || signatureUrl.includes('.jpeg')) {
         signatureImage = await pdfDoc.embedJpg(signatureBytes);
       } else {
         signatureImage = await pdfDoc.embedPng(signatureBytes);
@@ -802,13 +807,13 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   }
 
   // Fetch and embed franchise signature (bottom signature box)
-  if (franchise.franchiseSignature) {
+  if (franchise.instituteSignature) {
     try {
-      const franchiseSignatureUrl = franchise.franchiseSignature;
+      const franchiseSignatureUrl = franchise.instituteSignature;
       const signatureResponse = await axios.get(franchiseSignatureUrl, { responseType: 'arraybuffer' });
-      const signatureBytes = signatureResponse.data;
+      const signatureBytes = Buffer.from(signatureResponse.data, 'binary');
       let franchiseSignatureImage;
-      if (franchiseSignatureUrl.includes('.jpg') || franchiseSignatureUrl.includes('.jpeg') || franchiseSignatureUrl.includes('.png')) {
+      if (franchiseSignatureUrl.includes('.jpg') || franchiseSignatureUrl.includes('.jpeg')) {
         franchiseSignatureImage = await pdfDoc.embedJpg(signatureBytes);
       } else {
         franchiseSignatureImage = await pdfDoc.embedPng(signatureBytes);
@@ -896,8 +901,8 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   // Contact Number (after "CONTACT NO. :")
   drawText(franchise.mobileNumber, 420, 325);
 
-  // for director signn
-  instituteSignature
+  // // for director signn
+  // instituteSignature
   const pdfBytes = await pdfDoc.save();
 
   res.setHeader("Content-Type", "application/pdf");

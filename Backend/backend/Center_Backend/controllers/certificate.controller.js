@@ -3,7 +3,7 @@ import Student from "../models/Student/Student_Detais.model.js";
 import Exam from "../models/Exam.models.js";
 import Course from "../models/Courses/Courses.models.js";
 import Certificate from "../models/certificate.model.js";
-import {Franchise} from "../../Admin_Backend/models/franchise/franchise.models.js";
+import Franchise from "../../Admin_Backend/models/franchise/franchise.models.js";
 
 export const fetchCertificateData = async (req, res) => {
   const { franchiseId, examId } = req.query;

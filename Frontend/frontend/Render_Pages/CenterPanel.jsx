@@ -37,6 +37,7 @@ import Enquiries from "../Center_frontend/pages/Enquiry/EnquiryList.jsx"
 import Certificate from "../Center_frontend/pages/Certificate/Certificate.jsx"
 
 import QuestionBankSystem from "../Center_frontend/pages/QuestionBank/QuestionBankSystem.jsx";
+import ApprovedCertificates from "../Center_frontend/pages/Certificate/ApprovedCertificate.jsx";
 
 
 
@@ -102,6 +103,7 @@ useEffect(() => {
               <Route path="Exam" element={<ExamManagement />} />
               <Route path="AddExam" element={<AddExam />} />
               <Route path="apply-certificate" element={<Certificate />} />
+              <Route path="approve-certificate" element={<ApprovedCertificates />} />
               <Route path="Enquiries" element={< Enquiries/>} />
               <Route path="Question-bank" element={<QuestionBankSystem/>} />
               

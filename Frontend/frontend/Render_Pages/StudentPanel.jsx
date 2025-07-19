@@ -6,6 +6,7 @@ import Dashboard from "../Student_Frontend/component/Dashbaord";
 import StudentList from "../Student_Frontend/pages/studentList";
 import GiveTest from "../Student_Frontend/pages/GIveTest";
 import UploadForm from "../Student_Frontend/pages/UploadForm";
+import CertificatePreview from "../Student_Frontend/pages/Certificate";
 // import CertificateManagement from "../Student_Frontend/pages/certificate/Certificate";
 
 function App() {
@@ -17,7 +18,7 @@ function App() {
         <Route path="" element={<MainContent />} />
         <Route path="students" element={<StudentList />} />
         <Route path="/exam/give/:id" element={<GiveTest />} /> 
-        {/* <Route path="/certificate" element={<CertificateManagement/>} /> */}
+        <Route path="/certificate" element={<CertificatePreview/>} />
       </Routes>
     
   );

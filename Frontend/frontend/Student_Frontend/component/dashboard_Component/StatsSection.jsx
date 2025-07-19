@@ -7,14 +7,19 @@ const StatsSection = () => {
   const [balanceFees, setBalanceFees] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [daysRemaining, setDaysRemaining] = useState(0);
+  const [progress, setProgress] = useState(0);
+
 
   // Get student data from localStorage
   const student = JSON.parse(localStorage.getItem("student"));
   const studentId = student?.studentId;
-  const courseName = student?.course || "N/A";
+  const courseName = student?.courseName || "N/A";
   const rollNumber = student?.rollNumber || "N/A";
   const studentName = student?.name || "Student";
-  const enrollmentDate = student?.enrollmentDate || "N/A";
+  const enrollmentDate = student?.admissionDate || "N/A";
+  const courseCode = student?.courseCode || "N/A";
+  const [duration, setDuration] = useState(null);
 
   useEffect(() => {
     const fetchFees = async () => {
@@ -39,15 +44,59 @@ const StatsSection = () => {
     }
   }, [studentId]);
 
+  // React Component or useEffect logic
+  useEffect(() => {
+    if (!courseCode || !enrollmentDate) {
+      console.error("Missing courseCode or admissionDate");
+      return;
+    }
+
+    // Fetch course duration from API
+    fetch(`${API_BASE_URL}/api/v1/student/course-duration`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ courseCode })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.duration) {
+          const durationInMonths = parseInt(data.duration); // e.g., "6" or "12"
+          setDuration(durationInMonths);
+
+          // Calculate course timeline
+          const admission = new Date(enrollmentDate);
+          const today = new Date();
+
+          // Course end date = admission + duration (in months)
+          const endDate = new Date(admission);
+          endDate.setMonth(admission.getMonth() + durationInMonths);
+
+          const totalDays = Math.ceil((endDate - admission) / (1000 * 60 * 60 * 24));
+          const daysCompleted = Math.ceil((today - admission) / (1000 * 60 * 60 * 24));
+          const daysLeft = Math.max(0, totalDays - daysCompleted);
+          const progressPercent = Math.min(100, Math.round((daysCompleted / totalDays) * 100));
+
+          // Store in state
+          setDaysRemaining(daysLeft);
+          setProgress(progressPercent);
+        } else {
+          console.error('Error:', data.message);
+        }
+      })
+      .catch(err => console.error('Request failed:', err));
+  }, [courseCode, enrollmentDate]);
+
   // Format date function
   const formatDate = (dateString) => {
     if (dateString === "N/A") return "N/A";
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
       });
     } catch (e) {
       return dateString;
@@ -55,7 +104,7 @@ const StatsSection = () => {
   };
 
   // Calculate days remaining in course (dummy calculation - replace with actual logic)
-  const daysRemaining = 120; // Example: 120 days remaining
+  // const daysRemaining = 120; // Example: 120 days remaining
 
   return (
     <div className="bg-gradient-to-br from-sky-50 to-white p-6 rounded-xl shadow-md">
@@ -63,7 +112,7 @@ const StatsSection = () => {
         <User className="h-6 w-6 mr-2 text-sky-600" />
         Student Dashboard
       </h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Course Information Card */}
         <div className="bg-white rounded-lg shadow-sm border border-sky-100 overflow-hidden hover:shadow-md transition-all">
@@ -81,7 +130,7 @@ const StatsSection = () => {
                 <p className="text-base font-medium text-gray-800">{courseName}</p>
               </div>
             </div>
-            
+
             <div className="flex items-start mb-3">
               <User className="h-5 w-5 mr-2 text-sky-500 mt-1" />
               <div>
@@ -89,7 +138,7 @@ const StatsSection = () => {
                 <p className="text-base font-medium text-gray-800">{rollNumber}</p>
               </div>
             </div>
-            
+
             <div className="flex items-start">
               <Calendar className="h-5 w-5 mr-2 text-sky-500 mt-1" />
               <div>
@@ -126,9 +175,9 @@ const StatsSection = () => {
                     ₹{balanceFees}
                   </p>
                 </div>
-                
+
                 <div className="mt-2">
-                  <button 
+                  <button
                     className="w-full bg-sky-600 hover:bg-sky-700 text-white py-2 px-4 rounded transition-colors flex items-center justify-center"
                   >
                     <CreditCard className="h-4 w-4 mr-2" />
@@ -151,25 +200,27 @@ const StatsSection = () => {
           <div className="p-4">
             <div className="mb-3">
               <p className="text-xs text-gray-500 uppercase">Days Remaining</p>
-              <p className="text-2xl font-bold text-sky-700">{daysRemaining} days</p>
+              <p className="text-2xl font-bold text-sky-700">
+                {duration ? `${daysRemaining} days` : "Loading..."}
+              </p>
             </div>
-            
+
             {/* Progress Bar */}
             <div className="mt-4">
               <div className="flex justify-between text-xs text-gray-500 mb-1">
                 <span>Course Progress</span>
-                <span>65%</span>
+                <span>{progress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div 
-                  className="bg-sky-600 h-2.5 rounded-full" 
-                  style={{ width: '65%' }}
+                <div
+                  className="bg-sky-600 h-2.5 rounded-full"
+                  style={{ width: `${progress}%` }}
                 ></div>
               </div>
             </div>
 
             <div className="mt-4">
-              <button 
+              <button
                 className="w-full bg-white border border-sky-600 text-sky-600 hover:bg-sky-50 py-2 px-4 rounded transition-colors flex items-center justify-center"
               >
                 <BookOpen className="h-4 w-4 mr-2" />
@@ -177,6 +228,7 @@ const StatsSection = () => {
               </button>
             </div>
           </div>
+
         </div>
       </div>
 

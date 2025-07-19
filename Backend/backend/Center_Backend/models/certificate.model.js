@@ -1,55 +1,37 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
+
+const resultSchema = new mongoose.Schema({
+  rollNumber: String,
+  studentName: String,
+  fatherName: String,
+  courseName: String,
+  session: String,
+  instituteName: String,
+  instituteName: String,
+  instituteEmail: String,           // ✅ Added
+  institutePhone: String,           // ✅ Added
+  studentPhoto: String,             // ✅ Added
+  studentSignature: String,         // ✅ Added
+  examDate: Date,          
+  percentage: Number,
+  grade: String,
+  requestedStatus: { type: String, default: "not_requested" }, // not_requested, requested, approved
+  isApproved: { type: Boolean, default: false },
+  certificateId: { type: String, default: null } 
+});
+
+const courseSchema = new mongoose.Schema({
+  courseCode: String,
+  courseName: String,
+  examId: String,
+  results: [resultSchema],
+});
 
 const certificateSchema = new mongoose.Schema({
-    studentId: {
-        type: String,
-        required: true,
-        ref: 'Student'
-    },
-    courseId: {
-        type: String,
-        required: true,
-        ref: 'Course'
-    },
-    requestDate: {
-        type: Date, 
-        default: Date.now
-    },
-    status: {
-        type: String,
-        enum: ['pending', 'approved', 'rejected'],
-        default: 'pending'
-    },
-    approvalDate: {
-        type: Date
-    },
-    approvedBy: {
-        type: String  // Admin ID who approved/rejected
-    },
-    certificateNumber: {
-        type: String,
-        unique: true,
-        sparse: true  // Only enforces uniqueness for non-null values
-    },
-    remarks: String
-}, {
-    timestamps: true
+  franchiseId: { type: String, required: true },
+  courses: [courseSchema],
+  // isApproved: { type: Boolean, default: false },
+  requestedAt: { type: Date, default: Date.now }
 });
 
-// Generate unique certificate number when approved
-certificateSchema.pre('save', async function(next) {
-    if (this.isModified('status') && this.status === 'approved' && !this.certificateNumber) {
-        const year = new Date().getFullYear();
-        const count = await this.constructor.countDocuments({
-            status: 'approved',
-            createdAt: {
-                $gte: new Date(year, 0, 1),
-                $lte: new Date(year, 11, 31)
-            }
-        });
-        this.certificateNumber = `CERT/${year}/${(count + 1).toString().padStart(4, '0')}`;
-    }
-    next();
-});
-
-export default mongoose.model('Certificate', certificateSchema);
+export default mongoose.model("Certificate", certificateSchema);

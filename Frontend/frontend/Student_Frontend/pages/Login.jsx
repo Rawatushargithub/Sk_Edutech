@@ -39,7 +39,8 @@ const Login = () => {
           throw new Error("Student data not found in response!");
         }
 
-        const { studentName, dob, courseInterested, email, studentMobile, _id, rollNumber } = data.student;
+        const { studentName, dob, courseInterested, email, studentMobile, _id, rollNumber, franchiseId, 
+admissionDate } = data.student;
 
         const birthYear = dob ? new Date(dob).getFullYear() : null;
         const currentYear = new Date().getFullYear();
@@ -51,11 +52,13 @@ const Login = () => {
             name: studentName,
             age: age,
             courseName: courseInterested?.courseName || "N/A",
-    courseCode: courseInterested?.courseCode || "N/A",
+            courseCode: courseInterested?.courseCode || "N/A",
+            admissionDate: admissionDate || "N/A",
             email: email,
             phone: studentMobile,
             studentId: _id,
             rollNumber: rollNumber,
+            franchiseId: franchiseId,
           })
         );
         navigate("/student");
@@ -72,102 +75,102 @@ const Login = () => {
 
   return (
     <div className="w-full max-w-md pb-1">
-        <div className="bg-white rounded-xl  overflow-hidden ">
-          {/* Header */}
-          <div className="bg-sky-500 p-6 text-white text-center">
-            <div className="flex justify-center mb-3">
-              <div className="rounded-full bg-white/20 p-3">
-                <LogIn size={24} />
-              </div>
-            </div>
-            <h2 className="text-2xl font-bold">Student Login</h2>
-            <p className="text-sky-100 mt-1">Please enter your credentials to continue</p>
-          </div>
-
-          {/* Form Section */}
-          <div className="p-6">
-            {error && (
-              <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-3 flex items-center text-red-700">
-                <AlertCircle size={18} className="mr-2 flex-shrink-0" />
-                <p className="text-sm">{error}</p>
-              </div>
-            )}
-
-            <form onSubmit={handleLogin}>
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium text-sky-800 mb-1">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail size={16} className="text-sky-400" />
-                  </div>
-                  <input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full pl-10 pr-3 py-3 border border-sky-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <label htmlFor="mobile" className="block text-sm font-medium text-sky-800 mb-1">
-                  Mobile Number
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Phone size={16} className="text-sky-400" />
-                  </div>
-                  <input
-                    id="mobile"
-                    type="text"
-                    placeholder="Enter your mobile number"
-                    value={studentMobile}
-                    onChange={(e) => setStudentMobile(e.target.value)}
-                    required
-                    className="w-full pl-10 pr-3 py-3 border border-sky-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-sky-500 hover:bg-sky-600 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                    Logging in...
-                  </>
-                ) : (
-                  <>
-                    <LogIn size={18} className="mr-2" />
-                    Login
-                  </>
-                )}
-              </button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-sky-700">
-                Having trouble logging in?{" "}
-                <a href="#contact-support" className="text-sky-600 hover:text-sky-800 font-medium">
-                  Contact Support
-                </a>
-              </p>
+      <div className="bg-white rounded-xl  overflow-hidden ">
+        {/* Header */}
+        <div className="bg-sky-500 p-6 text-white text-center">
+          <div className="flex justify-center mb-3">
+            <div className="rounded-full bg-white/20 p-3">
+              <LogIn size={24} />
             </div>
           </div>
+          <h2 className="text-2xl font-bold">Student Login</h2>
+          <p className="text-sky-100 mt-1">Please enter your credentials to continue</p>
         </div>
 
-        <div className="mt-6 text-center text-xs text-sky-600">
-          © {new Date().getFullYear()} Student Learning Portal. All rights reserved.
+        {/* Form Section */}
+        <div className="p-6">
+          {error && (
+            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-3 flex items-center text-red-700">
+              <AlertCircle size={18} className="mr-2 flex-shrink-0" />
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleLogin}>
+            <div className="mb-4">
+              <label htmlFor="email" className="block text-sm font-medium text-sky-800 mb-1">
+                Email Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail size={16} className="text-sky-400" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-3 py-3 border border-sky-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label htmlFor="mobile" className="block text-sm font-medium text-sky-800 mb-1">
+                Mobile Number
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Phone size={16} className="text-sky-400" />
+                </div>
+                <input
+                  id="mobile"
+                  type="text"
+                  placeholder="Enter your mobile number"
+                  value={studentMobile}
+                  onChange={(e) => setStudentMobile(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-3 py-3 border border-sky-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-sky-500 hover:bg-sky-600 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                  Logging in...
+                </>
+              ) : (
+                <>
+                  <LogIn size={18} className="mr-2" />
+                  Login
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-sky-700">
+              Having trouble logging in?{" "}
+              <a href="#contact-support" className="text-sky-600 hover:text-sky-800 font-medium">
+                Contact Support
+              </a>
+            </p>
+          </div>
         </div>
       </div>
+
+      <div className="mt-6 text-center text-xs text-sky-600">
+        © {new Date().getFullYear()} Student Learning Portal. All rights reserved.
+      </div>
+    </div>
   );
 };
 

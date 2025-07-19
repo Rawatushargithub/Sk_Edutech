@@ -18,6 +18,7 @@ const AdminHeader = () => {
         localStorage.removeItem("adminToken");
         localStorage.removeItem("adminName");
         localStorage.removeItem("adminEmail");
+        localStorage.removeItem("adminUsername");
         navigate("/admin/login");
     };
 

@@ -18,7 +18,8 @@ import AddFranchisePage from "../AdminPanel_frontend/fracnhise/pages/AddFranchis
 import RequestStackPage from "../AdminPanel_frontend/fracnhise/pages/RequestStackPage";
 import EditFranchisePage from "../AdminPanel_frontend/fracnhise/pages/EditFranchisePage";
 import CourseListAdmin from "../AdminPanel_frontend/Courses/CourseListAdmin"; // Import Admin Course List
-
+import RequestedCertificates from "../AdminPanel_frontend/Certificate/Admin.certificate"; // Import Requested Certificates
+import ApprovedCertificates from "../AdminPanel_frontend/Certificate/ApproveCertificates";
 import AdminWallet from "../AdminPanel_frontend/Dashboard/Admin_Wallet"; // Import Admin Wallet
 import StudentAdmissionList from "../AdminPanel_frontend/Showing_students/Manage_student";
 
@@ -71,6 +72,10 @@ const AdminPanel = () => {
 
               {/* Admin Course Management Route */}
               <Route path="courses" element={<CourseListAdmin />} />
+
+              <Route path="Certificates" element={<RequestedCertificates />} />
+              <Route path="approved-certificates" element={<ApprovedCertificates />} />
+
             </Routes>
           </div>
         </div>

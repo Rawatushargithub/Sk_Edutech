@@ -11,6 +11,7 @@ import { useState } from "react";
 import Login from "../../../Student_Frontend/pages/Login";
 import CenterLoginModal from "../../../Center_frontend/pages/centerLogin.jsx";
 import FranchiseVerificationModal from "./FranchiseVerificationModal";
+import API_BASE_URL  from "../../../config.js"; // Adjust the import based on your project structure
 
 
 const LoginBoxes = ({ onApplyClick }) => {
@@ -29,23 +30,34 @@ const LoginBoxes = ({ onApplyClick }) => {
   // Mock function to simulate API call
   const verifyCertificate = async () => {
     setLoading(true);
+    setVerificationResult(null);
 
     try {
-      // Replace with actual API call
-      const response = await fetch(`/api/verify-certificate/${certificateId}`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/certificates/verify-certificate/${certificateId}`);
       const data = await response.json();
 
-      if (data.valid) {
-        setVerificationResult({ success: true, message: "Certificate is valid!" });
+      if (response.ok && data.verified) {
+        setVerificationResult({
+          success: true,
+          data,
+        });
       } else {
-        setVerificationResult({ success: false, message: "Certificate not found!" });
+        setVerificationResult({
+          success: false,
+          message: data.message || "Certificate not found!",
+        });
       }
     } catch (error) {
-      setVerificationResult({ success: false, message: "Error verifying certificate!" });
+      console.error("Verification error:", error);
+      setVerificationResult({
+        success: false,
+        message: "Error verifying certificate!",
+      });
     }
 
     setLoading(false);
   };
+
 
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState(""); // "student" or "center"
@@ -145,8 +157,9 @@ const LoginBoxes = ({ onApplyClick }) => {
 
       {/* Certificate Verification */}
       <div
+        onClick={() => setIsOpen(true)}
         className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-3 sm:gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 sm:h-auto"
-      
+
       >
         <FaFileSignature className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]" />
         <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left">
@@ -189,13 +202,28 @@ const LoginBoxes = ({ onApplyClick }) => {
 
             {/* Display Verification Result */}
             {verificationResult && (
-              <div
-                className={`mt-4 p-2 rounded-lg text-center ${verificationResult.success ? "bg-green-200 text-green-700" : "bg-red-200 text-red-700"
-                  }`}
-              >
-                {verificationResult.message}
+              <div className="mt-4">
+                {verificationResult.success ? (
+                  <div className="bg-green-100 border-l-4 border-green-500 text-green-800 p-4 rounded">
+                    <p className="font-semibold text-lg mb-2">✅ Certificate Verified</p>
+                    <div className="text-sm space-y-1">
+                      <p><strong>Name:</strong> {verificationResult.data.name}</p>
+                      <p><strong>Father's Name:</strong> {verificationResult.data.fatherName}</p>
+                      <p><strong>Course:</strong> {verificationResult.data.course}</p>
+                      <p><strong>Exam:</strong> {verificationResult.data.exam}</p>
+                      <p><strong>Session:</strong> {verificationResult.data.dob}</p>
+                      <p><strong>Institute:</strong> {verificationResult.data.instituteName}</p>
+                      <p><strong>Grade:</strong> {verificationResult.data.grade}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+                    <p className="font-semibold">❌ {verificationResult.message}</p>
+                  </div>
+                )}
               </div>
             )}
+
           </div>
         </div>
       )}

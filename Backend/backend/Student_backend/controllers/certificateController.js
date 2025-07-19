@@ -156,3 +156,46 @@ export const getCertificateDetails = async (req, res) => {
 };
 
 
+export const verifyCertificateById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Fetch all certificates
+    const certificates = await Certificate.find();
+
+    for (const certificate of certificates) {
+      for (const course of certificate.courses) {
+        for (const result of course.results) {
+          if (result.certificateId === id) {
+            // Match found
+            return res.json({
+              verified: true,
+              name: result.studentName,
+              fatherName: result.fatherName,
+              exam: course.examId,
+              course: result.courseName,
+              dob: result.session, // assuming "session" is DOB (change if not)
+              instituteName: result.instituteName,
+              grade: result.grade,
+            });
+          }
+        }
+      }
+    }
+
+    // If no result matched
+    return res.status(404).json({
+      verified: false,
+      message: "Certificate ID not found!",
+    });
+
+  } catch (error) {
+    console.error("Certificate verification error:", error);
+    return res.status(500).json({
+      verified: false,
+      message: "Server error occurred while verifying certificate.",
+    });
+  }
+};
+
+

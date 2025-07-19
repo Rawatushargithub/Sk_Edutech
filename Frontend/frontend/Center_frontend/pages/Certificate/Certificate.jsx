@@ -15,7 +15,7 @@ const CertificateRequest = () => {
   const [activeTab, setActiveTab] = useState("request"); // "request" or "approved"
 
   useEffect(() => {
-    const id = localStorage.getItem("franchiseId");
+    const id = localStorage.getItem("franchiseID");
     if (id) setFranchiseId(id);
   }, []);
 

@@ -56,6 +56,8 @@ import {
 import Exam from "../models/Exam.models.js";
 import Course from "../models/Courses/Courses.models.js";
 
+import { downloadCertificate } from "../certificatePdf/generateCertificate.js";
+
 const router = express.Router();
 
 // ✅ Get all courses by franchiseId (for dropdown)
@@ -112,5 +114,7 @@ router.get("/certificates/status", checkCertificateStatus);
 router.get('/certificates/requested', getRequestedCertificates);
 router.get('/certificates/approved', getApprovedCertificates);
 router.get('/franchises/active', getActiveFranchises);
+
+router.get("/download/:certificateId", downloadCertificate);
 
 export default router;

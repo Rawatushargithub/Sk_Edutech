@@ -7,6 +7,12 @@ const resultSchema = new mongoose.Schema({
   courseName: String,
   session: String,
   instituteName: String,
+  instituteName: String,
+  instituteEmail: String,           // ✅ Added
+  institutePhone: String,           // ✅ Added
+  studentPhoto: String,             // ✅ Added
+  studentSignature: String,         // ✅ Added
+  examDate: Date,          
   percentage: Number,
   grade: String,
   requestedStatus: { type: String, default: "not_requested" }, // not_requested, requested, approved

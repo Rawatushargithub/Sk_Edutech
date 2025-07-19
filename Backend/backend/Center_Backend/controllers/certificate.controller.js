@@ -22,6 +22,8 @@ export const fetchCertificateData = async (req, res) => {
 
     console.log("institute name: ", institute.instituteName); 
     const instituteName = institute.franchiseName || "Institute Name Not Found";
+    const instituteEmail = institute?.franchiseEmail || "Email Not Available";
+const institutePhone = institute?.franchisePhone || "Phone Not Available";
 
     const resultsData = [];
 
@@ -29,8 +31,20 @@ export const fetchCertificateData = async (req, res) => {
       const student = await Student.findOne({ rollNumber: result.rollNumber });
       if (!student) continue;
 
-      const admissionYear = new Date(student.admissionDate).getFullYear();
-      const session = `${admissionYear} - ${admissionYear + Number(course.courseDuration)}`;
+      const admissionDate = new Date(student.admissionDate);
+const courseDurationMonths = Number(course.courseDuration); // assumes courseDuration is in months
+
+// Format month and year
+const formatMonthYear = (date) => {
+  return `${date.toLocaleString("default", { month: "long" })} ${date.getFullYear()}`;
+};
+
+// Calculate end date
+const endDate = new Date(admissionDate);
+endDate.setMonth(endDate.getMonth() + courseDurationMonths);
+
+// Final session string
+const session = `${formatMonthYear(admissionDate)} - ${formatMonthYear(endDate)}`;
       const percentage = (result.marksObtained / exam.totalMarks) * 100;
 
       let grade = "F";
@@ -45,10 +59,16 @@ export const fetchCertificateData = async (req, res) => {
         courseCode: course.courseCode,
         fatherName: `${student.relationType} ${student.surnameName}`,
         courseName: course.courseName,
+        courseSubject: course.courseSubject || "",
         session,
         instituteName: instituteName || "",
+        studentPhoto: student.studentPhoto || "",       
+        studentSignature: student.studentSignature || "", 
         percentage: Math.round(percentage),
         grade,
+        examDate: exam.examDate,
+        instituteEmail: instituteEmail,         // ✅ added
+  institutePhone: institutePhone, 
         requestedStatus: "not_requested",
         isApproved: false
       });

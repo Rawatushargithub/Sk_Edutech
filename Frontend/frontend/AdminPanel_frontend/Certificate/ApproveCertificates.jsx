@@ -161,7 +161,7 @@ const ApprovedCertificates = () => {
                           <th className="border px-2 py-1">Grade</th>
                           <th className="border px-2 py-1">Session</th>
                           <th className="border px-2 py-1">Status</th>
-                          <th className="border px-2 py-1">Actions</th>
+                          {/* <th className="border px-2 py-1">Actions</th> */}
                         </tr>
                       </thead>
                       <tbody>
@@ -179,7 +179,7 @@ const ApprovedCertificates = () => {
                                 Approved
                               </span>
                             </td>
-                            <td className="border px-2 py-1 text-center">
+                            {/* <td className="border px-2 py-1 text-center">
                               <div className="flex gap-2 justify-center">
                                 <button
                                   onClick={() => handleDownloadCertificate(r)}
@@ -196,7 +196,7 @@ const ApprovedCertificates = () => {
                                   Print
                                 </button>
                               </div>
-                            </td>
+                            </td> */}
                           </tr>
                         ))}
                       </tbody>

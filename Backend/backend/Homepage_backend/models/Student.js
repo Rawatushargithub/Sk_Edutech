@@ -1,18 +1,25 @@
 import mongoose from "mongoose";
-
+ 
 const studentSchema = new mongoose.Schema({
   studentPhoto: { type: String, required: true }, // Cloudinary URL
   studentSignature: { type: String, required: true }, // Cloudinary URL
   rollNumber: { type: String, required: true, unique: true },
   abbreviation: { type: String },
-  studentName: { type: String, required: true },
-  relationType: { type: String, required: true },
+  franchiseId: { // System Generated ID
+            type: String, 
+            default: true,
+        },
+  studentName: { type: String, required: true }, 
+  relationType: { type: String , required: true }, 
   fatherHusbandName: { type: String },
-  includeFatherHusband: { type: Boolean, default: true },
+  includeFatherHusband: { type:Boolean , default:true} , 
   surnameName: { type: String },
-  includeSurname: { type: Boolean, default: true },
+  includeSurname: { type:Boolean , default:true},
   motherName: { type: String },
-  courseInterested: { type: String, required: true },
+  courseInterested: { 
+    courseName: {type: String, required: true},
+    courseCode: {type: String, required: true}  
+}, 
   studentMobile: { type: String, required: true },
   alternateMobile: { type: String },
   email: { type: String, unique: true },
@@ -24,17 +31,20 @@ const studentSchema = new mongoose.Schema({
   referralCode: { type: String },
   caste: { type: String },
   qualifications: { type: String },
-  occupation: { type: String },
-
-  // Reference Fields
-  feeDetails: { type: mongoose.Schema.Types.ObjectId, ref: "Fee" },
-  installmentDetails: [{ type: mongoose.Schema.Types.ObjectId, ref: "Installment" }],
-  selectedBatch: { type: mongoose.Schema.Types.ObjectId, ref: "Batch" },
+  occupation: { type: String }, 
+ 
+  // Reference Fields 
+  feeDetails: { type: mongoose.Schema.Types.ObjectId, ref: "Fee" }, // Linked Fee Schema
+  installmentDetails: [{ type: mongoose.Schema.Types.ObjectId, ref: "Installment" }], // Linked Installments
+  selectedBatch: { type: mongoose.Schema.Types.ObjectId, ref: "Batch" }, // Linked Batch
 
   admissionDate: { type: String, required: true }, // Format: dd-mm-yyyy
-  displayAdmissionOptions: { type: Boolean, default: false },
+  displayAdmissionOptions: { type: Boolean, default: false }, // For ID card, admission form & fee receipt
+  status: { type: Boolean, default: true }
+  
 }, { timestamps: true });
-
-const Student = mongoose.model("Student", studentSchema);
+ 
+const Student = mongoose.models.Student || mongoose.model("Student", studentSchema);
 
 export default Student;
+

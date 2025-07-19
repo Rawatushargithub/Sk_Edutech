@@ -6,7 +6,7 @@ const studentSchema = new mongoose.Schema({
   rollNumber: { type: String, required: true, unique: true },
   abbreviation: { type: String },
   franchiseId: { // System Generated ID
-            type: String,
+            type: String, 
             default: true,
         },
   studentName: { type: String, required: true }, 

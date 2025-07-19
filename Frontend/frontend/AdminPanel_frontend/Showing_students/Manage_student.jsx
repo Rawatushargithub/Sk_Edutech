@@ -1,3 +1,8 @@
+// Updated Admin StudentAdmissionList component with Excel and PDF export functionality
+
+// First, install these packages:
+// npm install xlsx jspdf jspdf-autotable
+
 // Import necessary dependencies
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +15,12 @@ import API_BASE_URL from "../../config";
 import { FaCircleCheck, FaPerson, FaPersonCirclePlus, FaPersonDotsFromLine, FaPersonRifle } from "react-icons/fa6";
 import { FaArrowUp, FaUser, FaSearch, FaTimes } from "react-icons/fa";
 
+// Import for Excel export
+import * as XLSX from 'xlsx';
+// Import for PDF export
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable'; // Import autoTable separately
+
 const StudentAdmissionList = () => {
   const navigate = useNavigate();
   const [students, setStudents] = useState([]);
@@ -20,6 +31,41 @@ const StudentAdmissionList = () => {
   const [showIdCardPopup, setShowIdCardPopup] = useState(false);
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // New state for export dropdown
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  // State for detailed students data
+  const [detailedStudents, setDetailedStudents] = useState([]);
+
+  // Function to fetch detailed student data (if needed)
+  const fetchDetailedStudentData = async (studentId) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/api/v1/admin_student/get_student/${studentId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching detailed data for student ${studentId}:`, error);
+      return null;
+    }
+  };
+
+  // Function to fetch all detailed student data
+  const fetchAllDetailedData = async () => {
+    try {
+      const detailedData = await Promise.all(
+        filteredStudents.map(async (student) => {
+          const detailedStudent = await fetchDetailedStudentData(student._id);
+          return detailedStudent || student; // Fallback to basic data if detailed fetch fails
+        })
+      );
+      setDetailedStudents(detailedData);
+      return detailedData;
+    } catch (error) {
+      console.error('Error fetching detailed student data:', error);
+      return filteredStudents; // Fallback to basic data
+    }
+  };
 
   // Then modify your useEffect fetch to ensure you're setting an array
   useEffect(() => {
@@ -106,8 +152,192 @@ const StudentAdmissionList = () => {
     setSearchTerm("");
   };
 
-  // toggle the state of student active or not
-  
+  // EXPORT FUNCTIONS - Adapted for Admin side
+  const prepareExportData = (studentsData) => {
+    return studentsData.map((student, index) => ({
+      'S/N': index + 1,
+      'Franchise ID': student.franchiseId || '',
+      'Status': student.status ? 'Active' : 'Inactive',
+      'Student Name': student.studentName || '',
+      'Student ID': student.rollNumber || '',
+      'Course Name': student.courseInterested?.courseName || '',
+      'Course ID': student.courseInterested?.courseCode || '',
+      'Mobile': student.studentMobile || '',
+      'Referral Code': student.referralCode || '',
+      'Admission Date': student.admissionDate || '',
+      // Additional fields that might be available
+      'Email': student.email || '',
+      'Date of Birth': student.dob || '',
+      'Gender': student.gender || '',
+      'City': student.city || '',
+      'Post Code': student.postCode || '',
+      'Permanent Address': student.permanentAddress || '',
+      'Caste': student.caste || '',
+      'Qualifications': student.qualifications || '',
+      'Occupation': student.occupation || '',
+      'Relation Type': student.relationType || '',
+      'Mother Name': student.motherName || '',
+      'Abbreviation': student.abbreviation || '',
+      'Photo URL': student.studentPhoto || '',
+      'Signature URL': student.studentSignature || '',
+    }));
+  };
+
+  const exportToExcel = async () => {
+    try {
+      // Show loading state
+      setShowExportDropdown(false);
+      alert('Preparing Excel file... This may take a moment.');
+
+      // Use current filtered students or fetch detailed data if needed
+      const dataToExport = filteredStudents.length > 0 ? filteredStudents : students;
+      const exportData = prepareExportData(dataToExport);
+      
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      
+      // Set column widths
+      const colWidths = [
+        { wch: 5 },   // S/N
+        { wch: 15 },  // Franchise ID
+        { wch: 10 },  // Status
+        { wch: 25 },  // Student Name
+        { wch: 15 },  // Student ID
+        { wch: 30 },  // Course Name
+        { wch: 15 },  // Course ID
+        { wch: 15 },  // Mobile
+        { wch: 15 },  // Referral Code
+        { wch: 15 },  // Admission Date
+        { wch: 25 },  // Email
+        { wch: 15 },  // Date of Birth
+        { wch: 10 },  // Gender
+        { wch: 20 },  // City
+        { wch: 10 },  // Post Code
+        { wch: 40 },  // Permanent Address
+        { wch: 15 },  // Caste
+        { wch: 25 },  // Qualifications
+        { wch: 20 },  // Occupation
+        { wch: 15 },  // Relation Type
+        { wch: 20 },  // Mother Name
+        { wch: 15 },  // Abbreviation
+        { wch: 30 },  // Photo URL
+        { wch: 30 },  // Signature URL
+      ];
+      ws['!cols'] = colWidths;
+      
+      XLSX.utils.book_append_sheet(wb, ws, "Students");
+      
+      // Generate filename with current date
+      const currentDate = new Date().toISOString().split('T')[0];
+      const fileName = `Admin_Students_List_${currentDate}.xlsx`;
+      
+      XLSX.writeFile(wb, fileName);
+      
+      // Show success message
+      alert(`Excel file "${fileName}" has been downloaded successfully with ${exportData.length} student records!`);
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      alert('Error exporting to Excel. Please try again.');
+    }
+  };
+
+  const exportToPDF = async () => {
+    try {
+      // Show loading state
+      setShowExportDropdown(false);
+      alert('Preparing PDF file... This may take a moment.');
+
+      // Use current filtered students or all students
+      const dataToExport = filteredStudents.length > 0 ? filteredStudents : students;
+      
+      const doc = new jsPDF('l', 'mm', 'a4'); // landscape orientation
+      
+      // Add title
+      doc.setFontSize(16);
+      doc.text('Admin - Students List', 14, 20);
+      
+      // Add date and record count
+      const currentDate = new Date().toLocaleDateString();
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${currentDate}`, 14, 28);
+      doc.text(`Total Records: ${dataToExport.length}`, 14, 34);
+      
+      // Prepare data for PDF table
+      const exportData = prepareExportData(dataToExport);
+      
+      // Define columns for PDF (selecting key columns to fit better)
+      const columns = [
+        'S/N',
+        'Franchise ID',
+        'Status', 
+        'Student Name',
+        'Student ID',
+        'Course Name',
+        'Mobile',
+        'Referral Code',
+        'Admission Date'
+      ];
+      
+      const rows = exportData.map(student => [
+        student['S/N'],
+        student['Franchise ID'],
+        student['Status'],
+        student['Student Name'],
+        student['Student ID'],
+        student['Course Name'],
+        student['Mobile'],
+        student['Referral Code'],
+        student['Admission Date']
+      ]);
+
+      // Add table using autoTable
+      autoTable(doc, {
+        head: [columns],
+        body: rows,
+        startY: 40,
+        styles: { fontSize: 8 }, // Smaller font for more columns
+        headStyles: { fillColor: [41, 128, 185] },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        margin: { top: 40, right: 14, bottom: 20, left: 14 },
+        columnStyles: {
+          3: { cellWidth: 30 }, // Student Name column wider
+          5: { cellWidth: 35 }, // Course Name column wider
+        }
+      });
+
+      // Generate filename with current date
+      const currentDate2 = new Date().toISOString().split('T')[0];
+      const fileName = `Admin_Students_List_${currentDate2}.pdf`;
+      
+      doc.save(fileName);
+      
+      // Show success message
+      alert(`PDF file "${fileName}" has been downloaded successfully with ${dataToExport.length} student records!`);
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      alert('Error exporting to PDF. Please try again.');
+    }
+  };
+
+  // Toggle export dropdown
+  const toggleExportDropdown = () => {
+    setShowExportDropdown(!showExportDropdown);
+  };
+
+  // Close dropdown when clicking outside
+  const closeDropdownOnOutsideClick = (e) => {
+    if (showExportDropdown && !e.target.closest('.export-dropdown-container')) {
+      setShowExportDropdown(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('click', closeDropdownOnOutsideClick);
+    return () => {
+      document.removeEventListener('click', closeDropdownOnOutsideClick);
+    };
+  }, [showExportDropdown]);
+
   // Handle showing student profile popup
   const handleViewProfile = (students) => {
     setSelectedStudent(students);
@@ -148,7 +378,7 @@ const StudentAdmissionList = () => {
       // Navigate to edit page with student ID
       navigate(`/institute/edit-student/${studentID}`);
     } else {
-      console.error("Student not found with ID:", studentId);
+      console.error("Student not found with ID:", studentID);
     }
   };
 
@@ -182,10 +412,40 @@ const StudentAdmissionList = () => {
               </div>
             </div>
             
-            {/* Export Button */}
-            <button className="bg-sky-900 flex text-white font-medium px-4 py-2 rounded-md cursor-pointer">
-              Export <span className="text-md ml-1">▲</span>
-            </button>
+            {/* Updated Export Button with Dropdown */}
+            <div className="relative export-dropdown-container">
+              <button 
+                className="bg-sky-900 text-white font-medium px-4 py-2 rounded-md cursor-pointer flex items-center"
+                onClick={toggleExportDropdown}
+              >
+                Export 
+                <span className={`text-md ml-1 transition-transform duration-200 ${
+                  showExportDropdown ? 'rotate-180' : ''
+                }`}>
+                  ▼
+                </span>
+              </button>
+              
+              {/* Export Dropdown Menu */}
+              {showExportDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10">
+                  <div className="py-1">
+                    <button
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      onClick={exportToExcel}
+                    >
+                      📊 Export to Excel
+                    </button>
+                    <button
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      onClick={exportToPDF}
+                    >
+                      📄 Export to PDF
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -262,10 +522,10 @@ const StudentAdmissionList = () => {
                       {student.rollNumber}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
-                      {student.courseInterested.courseName}
+                      {student.courseInterested?.courseName}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
-                      {student.courseInterested.courseCode}
+                      {student.courseInterested?.courseCode}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
                       {student.studentMobile}

@@ -746,9 +746,11 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Student not found");
   }
 
-  const franchise = await Franchise.findOne({ franchiseId: student.franchiseId });
-  if (!franchise) {
-    throw new ApiError(404, "Franchise not found");
+  let franchise;
+  try {
+    franchise = await Franchise.findOne({ franchiseId: student.franchiseId });
+  } catch (error) {
+    console.error("Error fetching franchise:", error);
   }
 
   const pdfPath = "F:\\SK_for_course\\Sk_Edutech\\Frontend\\public\\assets\\blank_form.pdf";
@@ -781,7 +783,7 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
         photoImage = await pdfDoc.embedPng(photoBytes);
       }
       // Photo position in top right corner
-      page.drawImage(photoImage, { x: 460, y: 643, width: 90, height: 110 });
+      page.drawImage(photoImage, { x: 460, y: 625, width: 95, height: 110 });
     } catch (error) {
       console.error("Error fetching or embedding student photo:", error);
     }
@@ -800,14 +802,14 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
         signatureImage = await pdfDoc.embedPng(signatureBytes);
       }
       // Signature position in bottom right
-      page.drawImage(signatureImage, { x: 400, y: 230, width: 120, height: 40 });
+      page.drawImage(signatureImage, { x: 396, y: 316, width: 120, height: 40 });
     } catch (error) {
       console.error("Error fetching or embedding student signature:", error);
     }
   }
 
   // Fetch and embed franchise signature (bottom signature box)
-  if (franchise.instituteSignature) {
+  if (franchise && franchise.instituteSignature) {
     try {
       const franchiseSignatureUrl = franchise.instituteSignature;
       const signatureResponse = await axios.get(franchiseSignatureUrl, { responseType: 'arraybuffer' });
@@ -827,79 +829,81 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
 
   // TOP SECTION - Header Information
   // Admission Date (top left, after "ADMISSION DATE :")
-  drawText(student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('en-GB') : '', 22, 680);
+  drawText(student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('en-GB') : '', 24, 593);
 
   // Roll Number (top right, after "ROLL NUMBER :")
-  drawText(student.rollNumber, 45, 597);
+  drawText(student.rollNumber, 419, 593);
 
   // Course of Interest (below admission date, after "COURSE OF INTEREST:")
-  drawText(student.courseInterested?.courseName || '', 23, 554);
+  drawText(student.courseInterested?.courseName || '', 27, 546);
 
   // MAIN STUDENT DETAILS SECTION
   // First row - Student Name, Father/Husband Name, Surname
-  drawText(student.studentName, 23, 512);  // After "STUDENT NAME"
-  drawText(student.fatherHusbandName, 177, 52);  // After "FATHER/HUSBAND NAME"
-  drawText(student.surnameName, 336, 512);  // After "SURNAME"
+  drawText(student.studentName, 27, 505);  // After "STUDENT NAME"
+  drawText(student.fatherHusbandName, 180, 505);  // After "FATHER/HUSBAND NAME"
+  drawText(student.surnameName, 340, 505);  // After "SURNAME"
 
   // Second row - Mother Name
-  drawText(student.motherName, 465, 511);  // After "MOTHER NAME"
+  drawText(student.motherName, 469, 505);  // After "MOTHER NAME"
 
   // Third row - Mobile numbers
-  drawText(student.studentMobile, 200, 472);  // After "STUDENT MOBILE:"
-  drawText(student.alternateMobile, 389, 472);  // After "ALTERNATE MOBILE:"
+  drawText(student.studentMobile, 206, 464);  // After "STUDENT MOBILE:"
+  drawText(student.alternateMobile, 392, 464);  // After "ALTERNATE MOBILE:"
 
   // Fourth row - DOB, Gender, Email
-  drawText(student.dob ? new Date(student.dob).toLocaleDateString('en-GB') : '', 120, 505);  // After "DATE OF BIRTH.:"
-  drawText(student.gender, 379, 431);  // After "GENDER:"
-  drawText(student.email, 135, 432);  // After "E-MAIL:"
+  drawText(student.dob ? new Date(student.dob).toLocaleDateString('en-GB') : '', 384, 426);  // After "DATE OF BIRTH.:"
+  drawText(student.gender, 27, 426);  // After "GENDER:"
+  drawText(student.email, 138, 426);  // After "E-MAIL:"
 
   // Fifth row - Caste, Qualification, Occupation, State, Post Code
-  drawText(student.caste, 19, 395);  // After "CASTE:"
-  drawText(student.qualifications, 114, 392);  // After "QUALIFICATION.:"
-  drawText(student.occupation, 273, 394);  // After "OCCUPATION.:"
-  drawText(student.state || 'Haryana', 388, 394);  // After "STATE:"
-  drawText(student.postCode, 485, 394);  // After "POST CODE:"
+  drawText(student.caste, 27, 388);  // After "CASTE:"
+  drawText(student.qualifications, 116, 388);  // After "QUALIFICATION.:"
+  drawText(student.occupation, 277, 388);  // After "OCCUPATION.:"
+  drawText(student.state || 'Haryana', 390, 388);  // After "STATE:"
+  drawText(student.postCode, 486, 388);  // After "POST CODE:"
 
   // ADDRESS SECTION
   // Permanent Address (multiline field after "ADDRESS:-")
-  const addressLines = student.permanentAddress ? student.permanentAddress.split('\n') : [];
-  addressLines.forEach((line, index) => {
-    if (index < 2) { // Limit to 2 lines for current address
-      drawText(line, 22, 344 - (index * 15));
-    }
-  });
+  // const addressLines = student.permanentAddress ? student.permanentAddress.split('\n') : [];
+  // addressLines.forEach((line, index) => {
+  //   if (index < 2) { // Limit to 2 lines for current address
+  //     drawText(line, 22, 323 - (index * 15));
+  //   }
+  // });
 
   // Permanent Address (after "PERMANENT ADDRESS.:")
   const permAddressLines = student.permanentAddress ? student.permanentAddress.split('\n') : [];
   permAddressLines.forEach((line, index) => {
     if (index < 2) { // Limit to 2 lines for permanent address
-      drawText(line, 22, 344 - (index * 15));
+      drawText(line, 27, 344 - (index * 15));
     }
   });
 
   // LEFT SIDE - OFFICE USE ONLY SECTION
   // Aadhaar Card Number (after "ADHAR CARD NUMBER.:")
-  drawText(student.aadhaarNumber || '', 70, 415);
+  drawText(student.aadhaarNumber || '', 27, 466);
 
   // Batch Name (after "BATCH NAME")
   if (student.selectedBatch) {
-    drawText(student.selectedBatch.batchName || student.selectedBatch.batchTiming, 21, 202);
+    drawText(student.selectedBatch.batchName || student.selectedBatch.batchTiming, 71, 197);
   }
 
   // RIGHT SIDE - OFFICE USE ONLY SECTION
   // Course Fees (after "COURSE FEES :")
   if (student.feeDetails) {
-    drawText(`Rs${student.feeDetails.courseFees}`, 77, 241);
+    drawText(`Rs${student.feeDetails.courseFees}`, 77, 238);
   
     // Paid Fees (after "PAID FEES :")
-    drawText(`Rs${student.feeDetails.feesReceived}`, 269, 243);
+    drawText(`Rs${student.feeDetails.feesReceived}`, 269, 238);
   
     // Balance Fees (after "BALANCE FEES :")
-    drawText(`Rs${student.feeDetails.balance}`, 455, 242);
+    drawText(`Rs${student.feeDetails.balance}`, 455, 238);
   }
 
   // Contact Number (after "CONTACT NO. :")
-  drawText(franchise.mobileNumber, 420, 325);
+  if (franchise) {
+    drawText(franchise.mobileNumber, 206, 466);
+  }
 
   // // for director signn
   // instituteSignature

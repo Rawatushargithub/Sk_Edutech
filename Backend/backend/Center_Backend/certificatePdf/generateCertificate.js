@@ -1,57 +1,110 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import fetch from "node-fetch";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import Certificate from "../models/certificate.model.js"; // adjust path if needed
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const downloadCertificate = async (req, res) => {
+  const { certificateId } = req.params;
+  console.log("Certificate ID:", certificateId);
   try {
     // ✅ MOCK CERTIFICATE DATA FOR TESTING
-    const cert = {
-      studentName: "Ankur Kumar",
-      courseName: "Machine Learning",
-      rollNumber: "SKC1001",
-      session: "2025 - 2030",
-      percentage: "85",
-      grade: "A+",
-      instituteName: "AK CLASSES",
-      instituteEmail: "info@akclasses.com",
-      institutePhone: "+91-9876543210",
-      examDate: "2025-06-25",
-    };
+    // const cert = {
+    //   studentName: "Ankur Kumar",
+    //   courseName: "Machine Learning",
+    //   rollNumber: "SKC1001",
+    //   session: "2025 - 2030",
+    //   percentage: "85",
+    //   grade: "A+",
+    //   instituteName: "AK CLASSES",
+    //   instituteEmail: "info@akclasses.com",
+    //   institutePhone: "+91-9876543210",
+    //   examDate: "2025-06-25",
+    // };
 
-    const templatePath = path.join(__dirname, "..", "..", "templates", "certificate.pdf");
+    const cert = await Certificate.findOne({
+      "courses.results.certificateId": certificateId,
+    });
+    console.log("Certificate Data:", cert);
 
-    // Check if template exists
-    if (!fs.existsSync(templatePath)) {
-      return res.status(500).json({ error: "Certificate template file not found" });
+    if (!cert) return res.status(404).json({ error: "Certificate not found" });
+    
+// Step 1: Find the matching course and result
+let matchingResult = null;
+let matchingCourse = null;
+
+for (const course of cert.courses) {
+  for (const result of course.results) {
+    if (result.certificateId === certificateId) {
+      matchingResult = result;
+      matchingCourse = course;
+      break;
+    }
+  }
+  if (matchingResult) break;
+}
+
+if (!matchingResult) {
+  return res.status(404).json({ error: "Matching certificate result not found" });
+}
+
+// Step 2: Load and modify the PDF
+const templatePath = path.join(__dirname, "..", "..", "templates", "certificate.pdf");
+
+if (!fs.existsSync(templatePath)) {
+  return res.status(500).json({ error: "Certificate template file not found" });
+}
+
+const templateBytes = fs.readFileSync(templatePath);
+const pdfDoc = await PDFDocument.load(templateBytes);
+const page = pdfDoc.getPages()[0];
+const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+const { width, height } = page.getSize();
+
+const imageUrl = matchingResult.studentPhoto;
+    const imageRes = await fetch(imageUrl);
+    const imageBuffer = await imageRes.arrayBuffer();
+
+    // Check the image type (you can use other formats if needed)
+    let embeddedImage;
+    if (imageUrl.endsWith(".png")) {
+      embeddedImage = await pdfDoc.embedPng(imageBuffer);
+    } else {
+      embeddedImage = await pdfDoc.embedJpg(imageBuffer);
     }
 
-    const templateBytes = fs.readFileSync(templatePath);
-    const pdfDoc = await PDFDocument.load(templateBytes);
-    const page = pdfDoc.getPages()[0];
-    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    const { width, height } = page.getSize();
+    const imageDims = embeddedImage.scale(0.15);
 
-    // 🖊️ Draw the certificate fields
-    page.drawText(cert.studentName || "", { x: 210, y: height - 320, size: 32, font, color: rgb(0, 0, 0) });
-    page.drawText(cert.courseName || "", { x: 140, y: height - 395, size: 16, font });
-    page.drawText(`${cert.rollNumber || ""}`, { x: 485, y: height - 160, size: 16, font });
-    page.drawText(`${cert.session || ""}`, { x: 280, y: height - 248, size: 15, font });
-    page.drawText(`${cert.percentage || ""}%`, { x: 160, y: height - 420, size: 16, font });
-    page.drawText(`${cert.grade || ""}`, { x: 275, y: height - 415, size: 16, font });
-    page.drawText(`${cert.instituteName || ""}`, { x: 35, y: 325, size: 12, font });
-    // page.drawText(`${cert.rollNumber || ""}`, { x: 35, y: 325, size: 12, font });
-    page.drawText(`${cert.instituteEmail || ""}`, { x: 335, y: 50, size: 12, font });
-    page.drawText(`${cert.institutePhone || ""}`, { x: 360, y: 65, size: 12, font });
-    page.drawText(`${cert.examDate || ""}`, { x: 470, y: height - 357, size: 16, font });
+// 🖊️ Draw the certificate fields using `matchingResult` and `matchingCourse`
+page.drawText(matchingResult.studentName || "", { x: 210, y: height - 320, size: 32, font });
+page.drawImage(embeddedImage, {
+      x: 480,
+      y: height - 280,
+      width: imageDims.width - 15,
+      height: imageDims.height,
+    });
+page.drawText(matchingCourse.courseName || "", { x: 140, y: height - 395, size: 16, font });
+page.drawText(`${matchingResult.rollNumber || ""}`, { x: 485, y: height - 160, size: 16, font });
+page.drawText(`${matchingResult.certificateId || ""}`, { x: 180, y: height - 160, size: 16, font });
 
-    const pdfBytes = await pdfDoc.save();
+page.drawText(`${matchingResult.session || ""}`, { x: 280, y: height - 248, size: 15, font });
+page.drawText(`${matchingResult.percentage || ""}%`, { x: 160, y: height - 420, size: 16, font });
+page.drawText(`${matchingResult.grade || ""}`, { x: 275, y: height - 415, size: 16, font });
+page.drawText(`${matchingResult.courseSubject || ""}`, { x: 210, y: height - 450, size: 16, font });
 
-    res.setHeader("Content-Type", "application/pdf");
-res.setHeader("Content-Disposition", `attachment; filename=${cert.studentName}_certificate.pdf`);
+page.drawText(`${matchingResult.instituteName || ""}`, { x: 35, y: 325, size: 12, font });
+page.drawText(`${matchingResult.instituteEmail || ""}`, { x: 335, y: 50, size: 12, font });
+page.drawText(`${matchingResult.institutePhone || ""}`, { x: 360, y: 65, size: 12, font });
+page.drawText(`${matchingResult.examDate || ""}`, { x: 470, y: height - 357, size: 16, font });
+
+const pdfBytes = await pdfDoc.save();
+
+res.setHeader("Content-Type", "application/pdf");
+res.setHeader("Content-Disposition", `attachment; filename=${matchingResult.studentName}_certificate.pdf`);
 res.end(pdfBytes);
   } catch (err) {
     console.error("Download error:", err);

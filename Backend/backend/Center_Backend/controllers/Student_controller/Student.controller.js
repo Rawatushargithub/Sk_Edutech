@@ -6,7 +6,7 @@ import BatchModel from "../../models/batch.model.js"; // Import your Batch model
 import mongoose from "mongoose"; // Make sure to import mongoose for the transaction
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
-import { uploadOnCloudinary } from "../../utils/cloudinary.js";
+import { uploadOnCloudinary , deleteFromCloudinary } from "../../utils/cloudinary.js";
 import Wallet from "../../models/Payment/Wallet.js";
 import Transaction from "../../models/Payment/Transaction.js";
 // Add these validation functions at the top of your controller file
@@ -629,26 +629,99 @@ const getRecentsStudents = asyncHandler(async (req, res) => {
 
 })
 
+
 const updateStudent = asyncHandler(async (req, res) => {
   console.log("update is working")
   try {
     console.log("id value:: ", req.params.id);
     console.log(req.body)
-    // Find and update the student
-    const updatedStudent = await Student.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true, // Return the updated document
-      }
-    );
-
-    if (!updatedStudent) {
+    
+    // Find the existing student first
+    const existingStudent = await Student.findById(req.params.id);
+    if (!existingStudent) {
       return res.status(404).json({
         success: false,
         message: "Student not found"
       });
     }
+
+    // Prepare update data
+    let updateData = { ...req.body };
+    
+    // Handle photo upload if new photo is provided
+    if (req.files && req.files.studentPhoto && req.files.studentPhoto[0]) {
+      try {
+        // Delete old photo from Cloudinary if it exists
+        if (existingStudent.studentPhoto) {
+          console.log("Deleting old student photo from Cloudinary");
+          await deleteFromCloudinary(existingStudent.studentPhoto);
+        }
+        
+        // Upload new photo to Cloudinary
+        console.log("Uploading new student photo to Cloudinary");
+        const photoResponse = await uploadOnCloudinary(req.files.studentPhoto[0].path);
+        
+        if (photoResponse) {
+          updateData.studentPhoto = photoResponse.secure_url;
+          console.log("New student photo uploaded:", photoResponse.secure_url);
+        } else {
+          console.error("Failed to upload student photo");
+          return res.status(500).json({
+            success: false,
+            message: "Failed to upload student photo"
+          });
+        }
+      } catch (error) {
+        console.error("Error handling student photo:", error);
+        return res.status(500).json({
+          success: false,
+          message: "Error processing student photo"
+        });
+      }
+    }
+
+    // Handle signature upload if new signature is provided
+    if (req.files && req.files.studentSignature && req.files.studentSignature[0]) {
+      try {
+        // Delete old signature from Cloudinary if it exists
+        if (existingStudent.studentSignature) {
+          console.log("Deleting old student signature from Cloudinary");
+          await deleteFromCloudinary(existingStudent.studentSignature);
+        }
+        
+        // Upload new signature to Cloudinary
+        console.log("Uploading new student signature to Cloudinary");
+        const signatureResponse = await uploadOnCloudinary(req.files.studentSignature[0].path);
+        
+        if (signatureResponse) {
+          updateData.studentSignature = signatureResponse.secure_url;
+          console.log("New student signature uploaded:", signatureResponse.secure_url);
+        } else {
+          console.error("Failed to upload student signature");
+          return res.status(500).json({
+            success: false,
+            message: "Failed to upload student signature"
+          });
+        }
+      } catch (error) {
+        console.error("Error handling student signature:", error);
+        return res.status(500).json({
+          success: false,
+          message: "Error processing student signature"
+        });
+      }
+    }
+
+    // Update the student with new data
+    const updatedStudent = await Student.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      {
+        new: true, // Return the updated document
+        runValidators: true // Run model validators
+      }
+    );
+
     console.log("updated student in backend :: ", updatedStudent)
 
     res.status(200).json({

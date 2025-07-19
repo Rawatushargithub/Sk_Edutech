@@ -17,7 +17,7 @@ const Dashboard = () => {
     // Clear stored center data
     localStorage.removeItem("centerToken");
     localStorage.removeItem("franchiseName");
-    localStorage.removeItem("franchiseId");
+    localStorage.removeItem("franchiseID");
 
     // Redirect to login/home page
     navigate("/");

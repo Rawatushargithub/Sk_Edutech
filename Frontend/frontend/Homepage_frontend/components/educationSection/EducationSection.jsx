@@ -65,7 +65,10 @@ const EducationSection = () => {
       {/* Include the CSS animation */}
       <style>{scrollAnimationStyle}</style>
       
-      <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row gap-4">
+      <div 
+      // className="container mx-auto px-4 py-8 flex flex-col md:flex-row gap-4"
+      className="container mx-auto px-4 py-8   md:mx-auto flex flex-col md:flex-row w-full gap-4"
+      >
         {/* Left Side: Recently Joined Student */}
         <div className="bg-gray-100 rounded-lg shadow-md w-full md:w-1/4">
           <h2 className="text-lg font-bold text-center p-4 bg-gray-200 rounded-t-lg">
@@ -92,11 +95,11 @@ const EducationSection = () => {
         </div>
 
         {/* Center Content */}
-        <div className="bg-white p-6 rounded-lg shadow-md w-full md:w-1/2 text-justify">
+        <div className="bg-white p-6 rounded-lg shadow-md w-full lg:w-1/2 text-justify">
           <h2 className="text-2xl font-bold text-center text-[#003366] mb-4">
             No.1 Education Brand in India
           </h2>
-          <p className="text-gray-700 ">
+          <p className="text-gray-700 text-lg lg:text-lg md:text-sm  ">
             SK EDUTECH is critical in the 21st century. India, in the last two
             decades has seen a new dawn with the help of computers and
             technologies. The government is trying to reach out to every citizen
@@ -104,7 +107,6 @@ const EducationSection = () => {
             educate a family. In the same way, making one person in every family
             SK EDUTECH is the key to digital India. But this rage to become
             tech-savvy took off only after PM’s ‘Digital India’ programme.
-            <br />
             <br />
             The digital India is a flagship programme of the Government of
             India, with a vision to transform India into a digitally empowered
@@ -120,7 +122,7 @@ const EducationSection = () => {
             For buying pc institute franchise/ pc middle franchise/ pc coaching
             franchise, contact us anytime.
             <br />
-            <br />
+            
             No.1 Computer Center in India No.1 Computer institute Franchise |
             No.1 Education Brand in India SK EDUTECH is a dependable, one of a
             kind, Best Computer Education Franchise Brand in India, The

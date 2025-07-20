@@ -98,7 +98,7 @@ const TopMarquee = () => {
         }
         
         .animate-smooth-marquee {
-          animation: smooth-marquee 20s linear infinite;
+          animation: smooth-marquee 40s linear infinite;
         }
         
         /* Ensure smooth hardware acceleration */

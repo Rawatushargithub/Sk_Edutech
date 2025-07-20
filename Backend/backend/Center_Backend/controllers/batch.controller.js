@@ -119,13 +119,12 @@ export const updateBatch = asyncHandler(async (req, res) => {
 
 // Delete batch for a specific franchise
 export const deleteBatch = asyncHandler(async (req, res) => {
-    try {
+    try { 
+      
       const {franchiseId} = req.query;
       if (!franchiseId) {
         throw new ApiError(400, "Franchise ID is required");
       }
-      
-      console.log(req.params.batchId)
       
       const deletedBatch = await Batch.findOneAndDelete({
         _id: req.params.batchId,

@@ -1,340 +1,436 @@
-import React, { useState } from 'react';
-import { Search, Filter, ChevronDown, LayoutGrid, List } from 'lucide-react';
-import CourseView from './CourseView';
-import ListView from './ListView';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import API_BASE_URL from "../../../config.js";
 
-const CertificateManagement = () => {
-  // State management
-  const [view, setView] = useState('list');
-  const [activeTab, setActiveTab] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCourse, setSelectedCourse] = useState('all');
-  const [showFilters, setShowFilters] = useState(false); 
-  const [expandedCourses, setExpandedCourses] = useState({});
-  const [selectedStudents, setSelectedStudents] = useState([]);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [studentToRequest, setStudentToRequest] = useState(null);
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+const CertificateRequest = () => {
+  const [franchiseId, setFranchiseId] = useState("");
+  const [courses, setCourses] = useState([]);
+  const [selectedCourseCode, setSelectedCourseCode] = useState("");
+  const [exams, setExams] = useState([]);
+  const [selectedExamId, setSelectedExamId] = useState("");
+  const [studentResults, setStudentResults] = useState([]);
+  const [approvedCertificates, setApprovedCertificates] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [requestLoading, setRequestLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("request"); // "request" or "approved"
 
-  // Sample data
-  const courses = [
-    { 
-      id: 1, 
-      name: "Diploma in Computer Course",
-      totalStudents: 25,
-      pendingRequests: 5,
-      approvedRequests: 15
-    },
-    { 
-      id: 2, 
-      name: "Basic Course in Advance Excel",
-      totalStudents: 30,
-      pendingRequests: 8,
-      approvedRequests: 18
-    },
-    { 
-      id: 3, 
-      name: "BASIC COURSE IN MS-OFFICE",
-      totalStudents: 20,
-      pendingRequests: 3,
-      approvedRequests: 12
+  useEffect(() => {
+    const id = localStorage.getItem("franchiseID");
+    if (id) setFranchiseId(id);
+  }, []);
+
+  useEffect(() => {
+    if (franchiseId) fetchCourses();
+  }, [franchiseId]);
+
+  useEffect(() => {
+    if (franchiseId && selectedCourseCode) fetchExamsByCourse();
+  }, [franchiseId, selectedCourseCode]);
+
+  const fetchCourses = async () => {
+    try {
+      const res = await axios.get(
+        `${API_BASE_URL}/api/v1/institute_certificates/courses/by-franchise/${franchiseId}`
+      );
+      setCourses(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error fetching courses", err);
     }
-  ];
+  };
 
-  const [students, setStudents] = useState([
-    {
-      id: "STD001",
-      name: "Tushar Rawat",
-      course: "BASIC COURSE IN MS-OFFICE",
-      enrollmentDate: "2024-01-15",
-      completionDate: "2024-06-15",
-      result: "pass",
-      percentage: "85.5",
-      grade: "A",
-      certificateRequested: false,
-      requestStatus: null,
-      requestDate: null
-    },
-    {
-        id: "STD320",
-        name: "Aashish Thakur",
-        course: "Diploma in Computer Course",
-        enrollmentDate: "2024-01-20",
-        completionDate: "2024-09-08",
-        result: "pass",
-        percentage: "87",
-        grade: "A",
-        certificateRequested: false,
-        requestStatus: null,
-        requestDate: null
-    },
-    {
-        id: "STD329",
-        name: "Anil Kumar",
-        course: "Diploma in Computer Course",
-        enrollmentDate: "2024-01-20",
-        completionDate: "2024-09-08",
-        result: "pass",
-        percentage: "92",
-        grade: "A",
-        certificateRequested: false,
-        requestStatus: null,
-        requestDate: null
-    },
-    {
-        id: "STD388",
-        name: "Ankur Kushwaha",
-        course: "Diploma in Computer Course",
-        enrollmentDate: "2024-01-22",
-        completionDate: "2024-09-08",
-        result: "pass",
-        percentage: "90.5",
-        grade: "B",
-        certificateRequested: false,
-        requestStatus: null,
-        requestDate: null
-    },
-    {
-      id: "STD002",
-      name: "Pawan Kumar",
-      course: "BASIC COURSE IN MS-OFFICE",
-      enrollmentDate: "2024-02-01",
-      completionDate: "2024-07-01",
-      result: "pass",
-      percentage: "78.3",
-      grade: "B+",
-      certificateRequested: true,
-      requestStatus: "approved",
-      requestDate: "2024-07-02"
+  const fetchExamsByCourse = async () => {
+    try {
+      const res = await axios.get(
+        `${API_BASE_URL}/api/v1/institute_certificates/exams/by-course/${franchiseId}/${selectedCourseCode}`
+      );
+      setExams(Array.isArray(res.data) ? res.data : []);
+      setSelectedExamId(""); // Reset exam selection when course changes
+      setStudentResults([]); // Clear previous results
+    } catch (err) {
+      console.error("Error fetching exams by course", err);
     }
-  ]);
-
-  // Event handlers
-  const handleRequestCertificate = (studentId) => {
-    setStudentToRequest(studentId);
-    setShowConfirmDialog(true);
   };
 
-  const confirmRequestCertificate = () => {
-    setStudents(students.map(student => {
-      if (student.id === studentToRequest) {
-        return {
-          ...student,
-          certificateRequested: true,
-          requestStatus: 'pending',
-          requestDate: new Date().toISOString().split('T')[0]
-        };
-      }
-      return student;
-    }));
-    setShowConfirmDialog(false);
-    setShowSuccessMessage(true);
-    setTimeout(() => setShowSuccessMessage(false), 3000);
+  const fetchResults = async () => {
+    if (!selectedExamId) return;
+    setLoading(true);
+    try {
+      const res = await axios.get(
+        `${API_BASE_URL}/api/v1/institute_certificates/certificates/fetch?franchiseId=${franchiseId}&examId=${selectedExamId}`
+      );
+      const resultData = Array.isArray(res.data)
+        ? res.data
+        : res.data?.data || [];
+      setStudentResults(resultData);
+      console.log("Fetched Results:", resultData);
+    } catch (err) {
+      console.error("Error fetching results", err);
+      alert("Error fetching student results");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleCourseExpansion = (courseId) => {
-    setExpandedCourses(prev => ({
-      ...prev,
-      [courseId]: !prev[courseId]
-    }));
+  const fetchApprovedCertificates = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(
+        `${API_BASE_URL}/api/v1/institute_certificates/certificates/approved?franchiseId=${franchiseId}`
+      );
+      setApprovedCertificates(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error fetching approved certificates", err);
+      alert("Error fetching approved certificates");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleBulkSelect = (courseStudents, isSelected) => {
-    const studentIds = courseStudents
-      .filter(student => student.result === 'pass' && !student.certificateRequested)
-      .map(student => student.id);
+  const handleRequestCertificate = async () => {
+    if (requestLoading) return;
     
-    if (isSelected) {
-      setSelectedStudents(prev => [...new Set([...prev, ...studentIds])]);
+    try {
+      setRequestLoading(true);
+      console.log("Request Body:", studentResults);
+
+      const courseCode = studentResults[0]?.courseCode;
+      if (!courseCode) {
+        alert("Course code not found");
+        return;
+      }
+
+      // Only request for students who haven't been requested yet
+      const studentsToRequest = studentResults.filter(
+        (r) => r.requestedStatus !== "requested" && !r.isApproved
+      );
+
+      if (studentsToRequest.length === 0) {
+        alert("No students available to request certificates for");
+        return;
+      }
+
+      const body = {
+        franchiseId,
+        courseCode,
+        examId: selectedExamId,
+        results: studentsToRequest.map((r) => ({
+          ...r,
+          requestedStatus: "requested",
+          isApproved: false,
+        })),
+      };
+
+      const response = await axios.post(
+        `${API_BASE_URL}/api/v1/institute_certificates/certificates/request`,
+        body
+      );
+
+      if (response.data.success) {
+        alert("Certificate requested successfully");
+        
+        // Update the local state
+        const updated = studentResults.map((r) => {
+          if (studentsToRequest.some(s => s.rollNumber === r.rollNumber)) {
+            return {
+              ...r,
+              requestedStatus: "requested",
+              isApproved: false,
+            };
+          }
+          return r;
+        });
+        setStudentResults(updated);
+      }
+    } catch (err) {
+      console.error("Certificate request error:", err);
+      alert("Certificate request failed: " + (err.response?.data?.message || err.message));
+    } finally {
+      setRequestLoading(false);
+    }
+  };
+
+  const handleSingleRequest = async (index) => {
+    if (requestLoading) return;
+    
+    try {
+      setRequestLoading(true);
+      const student = studentResults[index];
+      const courseCode = studentResults[0]?.courseCode;
+
+      if (!courseCode) {
+        alert("Course code not found");
+        return;
+      }
+
+      const body = {
+        franchiseId,
+        courseCode,
+        examId: selectedExamId,
+        results: [
+          {
+            ...student,
+            requestedStatus: "requested",
+            isApproved: false,
+          },
+        ],
+      };
+
+      console.log("Single Request Body:", body);
+      const response = await axios.post(
+        `${API_BASE_URL}/api/v1/institute_certificates/certificates/request`,
+        body
+      );
+
+      if (response.data.success) {
+        alert("Certificate requested successfully");
+        
+        // Update the local state
+        const updatedResults = [...studentResults];
+        updatedResults[index] = {
+          ...updatedResults[index],
+          requestedStatus: "requested",
+          isApproved: false,
+        };
+        setStudentResults(updatedResults);
+      }
+    } catch (err) {
+      console.error("Single request failed:", err);
+      alert("Failed to request certificate: " + (err.response?.data?.message || err.message));
+    } finally {
+      setRequestLoading(false);
+    }
+  };
+
+  const getStatusDisplay = (student) => {
+    if (student.isApproved || student.requestedStatus === "approved") {
+      return <span className="text-green-600 font-semibold">Approved by Admin</span>;
+    } else if (student.requestedStatus === "requested") {
+      return <span className="text-yellow-600 font-semibold">Requested</span>;
     } else {
-      setSelectedStudents(prev => prev.filter(id => !studentIds.includes(id)));
+      return (
+        <button
+          onClick={() => handleSingleRequest(studentResults.indexOf(student))}
+          className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 text-sm disabled:opacity-50"
+          disabled={requestLoading}
+        >
+          {requestLoading ? "Requesting..." : "Request Certificate"}
+        </button>
+      );
     }
   };
 
-  const handleBulkRequest = () => {
-    setShowConfirmDialog(true);
+  const canRequestAll = () => {
+    return studentResults.some(
+      (s) => s.requestedStatus !== "requested" && !s.isApproved
+    );
   };
 
-  const confirmBulkRequest = () => {
-    setStudents(students.map(student => {
-      if (selectedStudents.includes(student.id)) {
-        return {
-          ...student,
-          certificateRequested: true,
-          requestStatus: 'pending',
-          requestDate: new Date().toISOString().split('T')[0]
-        };
-      }
-      return student;
-    }));
-    setSelectedStudents([]);
-    setShowConfirmDialog(false);
-    setShowSuccessMessage(true);
-    setTimeout(() => setShowSuccessMessage(false), 3000);
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === "approved") {
+      fetchApprovedCertificates();
+    }
   };
 
-  const filteredStudents = students.filter(student => {
-    const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCourse = selectedCourse === 'all' || student.course === selectedCourse;
-    const matchesTab = activeTab === 'all' ||
-                      (activeTab === 'pending' && student.requestStatus === 'pending') ||
-                      (activeTab === 'approved' && student.requestStatus === 'approved') ||
-                      (activeTab === 'rejected' && student.requestStatus === 'rejected');
-    
-    return matchesSearch && matchesCourse && matchesTab;
-  });
+  const renderRequestTab = () => (
+    <div>
+      <h2 className="text-xl font-semibold mb-4">Request Certificate</h2>
+
+      <div className="mb-4">
+        <label className="block mb-2">Select Course:</label>
+        <select
+          value={selectedCourseCode}
+          onChange={(e) => setSelectedCourseCode(e.target.value)}
+          className="border px-3 py-2 rounded w-full"
+        >
+          <option value="">-- Select Course --</option>
+          {Array.isArray(courses) &&
+            courses.map((course) => (
+              <option key={course.courseCode} value={course.courseCode}>
+                {course.courseCode} - {course.courseName}
+              </option>
+            ))}
+        </select>
+      </div>
+
+      <div className="mb-4">
+        <label className="block mb-2">Select Exam:</label>
+        <select
+          value={selectedExamId}
+          onChange={(e) => setSelectedExamId(e.target.value)}
+          className="border px-3 py-2 rounded w-full"
+          disabled={!selectedCourseCode}
+        >
+          <option value="">-- Select Exam --</option>
+          {Array.isArray(exams) &&
+            exams.map((exam) => (
+              <option key={exam._id} value={exam.ExamID}>
+                {exam.ExamID} ({exam.courseCode})
+              </option>
+            ))}
+        </select>
+      </div>
+
+      <button
+        onClick={fetchResults}
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+        disabled={loading || !selectedExamId}
+      >
+        {loading ? "Loading..." : "Load Student Results"}
+      </button>
+
+      {loading && <p className="mt-4">Loading results...</p>}
+
+      {studentResults.length > 0 && (
+        <>
+          <div className="mt-6 overflow-x-auto">
+            <table className="w-full border">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="border px-4 py-2">Roll No</th>
+                  <th className="border px-4 py-2">Name</th>
+                  <th className="border px-4 py-2">Father</th>
+                  <th className="border px-4 py-2">Institute</th>
+                  <th className="border px-4 py-2">% Marks</th>
+                  <th className="border px-4 py-2">Grade</th>
+                  <th className="border px-4 py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {studentResults.map((s, index) => (
+                  <tr key={s.rollNumber}>
+                    <td className="border px-4 py-2">{s.rollNumber}</td>
+                    <td className="border px-4 py-2">{s.studentName}</td>
+                    <td className="border px-4 py-2">{s.fatherName}</td>
+                    <td className="border px-4 py-2">{s.instituteName}</td>
+                    <td className="border px-4 py-2">{s.percentage}%</td>
+                    <td className="border px-4 py-2">{s.grade}</td>
+                    <td className="border px-4 py-2">
+                      {getStatusDisplay(s)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-6">
+            {canRequestAll() ? (
+              <button
+                onClick={handleRequestCertificate}
+                className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+                disabled={requestLoading}
+              >
+                {requestLoading ? "Requesting..." : "Request All Certificates"}
+              </button>
+            ) : (
+              <p className="text-yellow-600 font-semibold">
+                All certificates have been requested or approved.
+              </p>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  const renderApprovedTab = () => (
+    <div>
+      <h2 className="text-xl font-semibold mb-4">Approved Certificates</h2>
+
+      {loading && <p className="mt-4">Loading approved certificates...</p>}
+
+      {approvedCertificates.length > 0 ? (
+        <div className="space-y-6">
+          {approvedCertificates.map((cert, certIndex) => (
+            <div key={cert._id} className="border rounded-lg p-4 bg-gray-50">
+              <h3 className="text-lg font-semibold mb-3">
+                Franchise ID: {cert.franchiseId}
+              </h3>
+              
+              {cert.courses.map((course, courseIndex) => (
+                <div key={courseIndex} className="mb-4">
+                  <h4 className="text-md font-medium mb-2 text-blue-600">
+                    Course: {course.courseCode} - {course.courseName} (Exam: {course.examId})
+                  </h4>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full border">
+                      <thead>
+                        <tr className="bg-green-100">
+                          <th className="border px-4 py-2">Certificate ID</th>
+                          <th className="border px-4 py-2">Roll No</th>
+                          <th className="border px-4 py-2">Name</th>
+                          <th className="border px-4 py-2">Father</th>
+                          <th className="border px-4 py-2">Institute</th>
+                          <th className="border px-4 py-2">% Marks</th>
+                          <th className="border px-4 py-2">Grade</th>
+                          <th className="border px-4 py-2">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {course.results.map((result, resultIndex) => (
+                          <tr key={resultIndex}>
+                            <td className="border px-4 py-2">{result.certificateId}</td>
+                            <td className="border px-4 py-2">{result.rollNumber}</td>
+                            <td className="border px-4 py-2">{result.studentName}</td>
+                            <td className="border px-4 py-2">{result.fatherName}</td>
+                            <td className="border px-4 py-2">{result.instituteName}</td>
+                            <td className="border px-4 py-2">{result.percentage}%</td>
+                            <td className="border px-4 py-2">{result.grade}</td>
+                            <td className="border px-4 py-2">
+                              <span className="text-green-600 font-semibold">
+                                ✓ Approved
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : (
+        !loading && (
+          <p className="text-gray-600">No approved certificates found.</p>
+        )
+      )}
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-md">
-        <div className="p-6 space-y-6">
-          {/* Header */}
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Certificate Management</h1>
-            <div className="flex gap-2">
-              <div className="flex border rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setView('list')}
-                  className={`px-4 py-2 flex items-center gap-2 ${
-                    view === 'list' ? 'bg-blue-50 text-blue-600' : 'text-gray-600'
-                  }`}
-                >
-                  <List size={20} />
-                  List View
-                </button>
-                <button
-                  onClick={() => setView('course')}
-                  className={`px-4 py-2 flex items-center gap-2 ${
-                    view === 'course' ? 'bg-blue-50 text-blue-600' : 'text-gray-600'
-                  }`}
-                >
-                  <LayoutGrid size={20} />
-                  Course View
-                </button>
-              </div>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="px-4 py-2 flex items-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-              >
-                <Filter size={20} />
-                Filters
-              </button>
-            </div>
-          </div>
-
-          {/* Warning Note */}
-          <div className="text-red-600 font-medium text-sm bg-red-50 p-4 rounded-lg">
-            Note: Only after Applying For Approval of Certificates, you will able to view Student Certificates and Marksheets.
-          </div>
-
-          {/* Bulk Selection Banner */}
-          {selectedStudents.length > 0 && (
-            <div className="bg-blue-50 p-4 rounded-lg flex items-center justify-between">
-              <span className="text-blue-600">
-                {selectedStudents.length} students selected for certificate request
-              </span>
-              <button
-                onClick={handleBulkRequest}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-              >
-                Request Certificates for Selected Students
-              </button>
-            </div>
-          )}
-
-          {/* Filters */}
-          {showFilters && (
-            <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-              <div className="flex gap-4 items-center">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                  <input
-                    type="text"
-                    placeholder="Search by student name or ID..."
-                    className="w-full pl-10 pr-4 py-2 border rounded-lg"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                {view === 'list' && (
-                  <div className="relative">
-                    <select
-                      className="appearance-none bg-white border rounded-lg px-4 py-2 pr-10"
-                      value={selectedCourse}
-                      onChange={(e) => setSelectedCourse(e.target.value)}
-                    >
-                      <option value="all">All Courses</option>
-                      {courses.map(course => (
-                        <option key={course.id} value={course.name}>{course.name}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Main Content */}
-          {view === 'course' ? (
-            <CourseView
-              courses={courses}
-              students={students}
-              expandedCourses={expandedCourses}
-              selectedStudents={selectedStudents}
-              toggleCourseExpansion={toggleCourseExpansion}
-              handleBulkSelect={handleBulkSelect}
-              setSelectedStudents={setSelectedStudents}
-            />
-          ) : (
-            <ListView
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              filteredStudents={filteredStudents}
-              handleRequestCertificate={handleRequestCertificate}
-            />
-          )}
-        </div>
-
-        {/* Confirmation Dialog */}
-        {showConfirmDialog && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md">
-              <h3 className="text-lg font-medium mb-4">Confirm Certificate Request</h3>
-              <p className="text-gray-600 mb-6">
-                {selectedStudents.length > 0 
-                  ? `Are you sure you want to request certificates for ${selectedStudents.length} students?`
-                  : 'Are you sure you want to request a certificate?'
-                }
-              </p>
-              <div className="flex justify-end gap-4">
-                <button 
-                  onClick={() => setShowConfirmDialog(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={selectedStudents.length > 0 ? confirmBulkRequest : confirmRequestCertificate}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                >
-                  Confirm
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Success Message Toast */}
-        {showSuccessMessage && (
-          <div className="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
-            Certificate request submitted successfully!
-          </div>
-        )}
+    <div className="p-6">
+      {/* Tab Navigation */}
+      <div className="flex space-x-4 mb-6 border-b">
+        <button
+          onClick={() => handleTabChange("request")}
+          className={`px-4 py-2 font-medium ${
+            activeTab === "request"
+              ? "border-b-2 border-blue-500 text-blue-600"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Request Certificate
+        </button>
+        <button
+          onClick={() => handleTabChange("approved")}
+          className={`px-4 py-2 font-medium ${
+            activeTab === "approved"
+              ? "border-b-2 border-blue-500 text-blue-600"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Approved Certificates
+        </button>
       </div>
+
+      {/* Tab Content */}
+      {activeTab === "request" ? renderRequestTab() : renderApprovedTab()}
     </div>
   );
 };
 
-export default CertificateManagement;
+export default CertificateRequest;

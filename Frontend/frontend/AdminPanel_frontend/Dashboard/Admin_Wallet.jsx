@@ -12,7 +12,7 @@ const AdminWalletApproval = () => {
   useEffect(() => {
     fetchTransactions();
   }, [filter]);
-
+ 
   const fetchTransactions = async () => {
     setIsLoading(true);
     try {
@@ -144,7 +144,7 @@ console.log("filter transactions:: " , filteredTransactions)
                     {formatDate(transaction.timestamp)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{transaction.institute?.name}</div>
+                    <div className="text-sm font-medium text-gray-900">{transaction?.franchise?.franchiseName}</div>
                     <div className="text-sm text-gray-500">{transaction.institute?.email}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

@@ -67,10 +67,13 @@ export const getAllTransactions = asyncHandler(async(req , res) => {
         }
     
         // Populate institute details and sort by most recent first
-        const transactions = await Transaction.aggregate([
-          { $match: query },
-          { $sort: { timestamp: -1 } }
-        ]);
+        // const transactions = await Transaction.aggregate([
+        //   { $match: query },
+        //   { $sort: { timestamp: -1 } }
+        // ]);
+        const transactions = await Transaction.find(query)
+      .populate('franchise', 'franchiseName ownerName email mobile city state')
+      .sort({ timestamp: -1 });
     
         res.status(200).json(transactions);
       } catch (error) {

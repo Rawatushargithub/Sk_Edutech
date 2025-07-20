@@ -10,6 +10,7 @@ import ExamDetails from "../pages/ExamPage";
 import FeesDetails from "../pages/Fees";
 import FeedbackForm from "../pages/FeedbackForm";
 import HelpSupport from "../pages/HelpSupport";
+import CertificatePreview from "../pages/Certificate";
 
 const MainContent = () => {
   const [selectedComponent, setSelectedComponent] = useState("Dashboard");
@@ -44,7 +45,7 @@ const MainContent = () => {
       case "Exam":
         return <ExamDetails student={student} />;
       case "Certificate":
-        return <CertificatePage student={student} />;
+        return <CertificatePreview student={student} />;
       case "Feedback":
           return <FeedbackForm student={student} />;
       case "Help and Support":

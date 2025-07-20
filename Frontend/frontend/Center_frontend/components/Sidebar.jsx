@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutPanelLeft,
@@ -27,6 +27,8 @@ const Sidebar = () => {
   const toggleSection = (section) => { 
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
+
+    const franchiseImage = localStorage.getItem("franchiseImage");
 
   const menuItems = [
     { title: "Dashboard", icon: <LayoutPanelLeft className="w-5 h-5" />, link: "/institute" },
@@ -103,11 +105,24 @@ const Sidebar = () => {
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         } md:block`}
       >
-        {/* Logo */}
-        <div className="py-4 w-44 mx-auto ">
-          <img src="/assets/Logo.jpg" alt="Logo" className="cursor-pointer rounded-2xl" />
+        {/* Logo Container */}
+        <div className="p-4 border-b border-gray-700">
+          <div className="w-full max-w-[200px] mx-auto   ">
+            {franchiseImage ? (
+              <img 
+                src={franchiseImage} 
+                alt="Franchise Logo" 
+                className="h-auto max-h-16 object-contain ml-16 rounded-2xl border-2 border-black shadow-sm cursor-pointer hover:shadow-md transition-shadow duration-200" 
+              />
+            ) : (
+              <div className="w-full h-16 bg-gray-700 rounded-lg flex items-center justify-center text-gray-400 text-sm">
+                No Logo
+              </div>
+            )}
+          </div>
         </div>
-        <i className="text-xl p-4 mx-4 ">SK EDUTECH</i>
+
+        {/* <i className="text-xl p-4 mx-4 ">SK EDUTECH</i> */}
         <ul className="space-y-3.5 p-4">
           {menuItems.map((item, index) => (
             <li key={index}>

@@ -6,6 +6,12 @@ const TransactionSchema = new mongoose.Schema({
     ref: "Wallet",
     // required: true,
   },
+  franchise: {  // Add this field
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Franchise",
+    required: true,
+  },
+
   amount: {
     type: Number,
     required: true,
@@ -17,8 +23,8 @@ const TransactionSchema = new mongoose.Schema({
   },
   status: { 
     type: String,
-    enum: ["pending", "pending_approval", "approved", "rejected", "failed"],
-    default: "pending",
+    enum: [ "pending_approval", "approved", "rejected", "failed"],
+    default: "pending_approval",
   },
   purpose: {
     type: String,

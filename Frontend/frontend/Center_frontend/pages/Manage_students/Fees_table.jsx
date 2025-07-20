@@ -1,3 +1,5 @@
+// Modified Fees_table.js with auto-updating course fees
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../../config";
@@ -16,21 +18,20 @@ const Fees_table = ({
   isSubmitting,
 }) => {
   const [installments, setInstallments] = useState([]);
-  const [courseFees, setCourseFees] = useState(0);
+  // Remove local courseFees state - use formData.courseFees instead
   const [discountRate, setDiscountRate] = useState("amount-");
   const [discountAmount, setDiscountAmount] = useState(0);
   const [totalFees, setTotalFees] = useState(0);
   const [feesReceived, setFeesReceived] = useState(0);
-
   const [feesBalance, setfeeBalance] = useState(0);
   const [remarks, setRemarks] = useState("");
 
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   // Fetch all batches
   const fetchBatches = async () => {
     try {
-          const franchiseId = localStorage.getItem('franchiseID');
+      const franchiseId = localStorage.getItem('franchiseID');
       const response = await fetch(   
         `${API_BASE_URL}/api/v1/institute_batche/allBatches?franchiseId=${franchiseId}`
       );
@@ -58,7 +59,6 @@ const Fees_table = ({
     } catch (error) {
       console.error("Error fetching remaining seats:", error);
       setRemainingSeats("Error loading seats");
-    } finally {
     }
   };
 
@@ -75,7 +75,7 @@ const Fees_table = ({
     }
     setSelectedBatch(batchId);
 
-  console.log("Formdata data " , formData.batches)
+    console.log("Formdata data ", formData.batches);
 
     if (batchId) {
       fetchRemainingSeats(batchId);
@@ -84,27 +84,46 @@ const Fees_table = ({
     }
   };
 
+  // Handle course fees change
+  const handleCourseFeesChange = (e) => {
+    const newCourseFees = e.target.value;
+    setFormData({
+      ...formData,
+      courseFees: Number(newCourseFees)
+    });
+  };
+
   useEffect(() => {
     fetchBatches();
-  }, []); // Fetch batches on component mount
+  }, []);
 
-  // Calculate Total Fees
+  // Calculate Total Fees - use formData.courseFees instead of local courseFees
   const calculateTotalFees = () => {
-    let updatedTotal = Number(courseFees) || 0; // Default to 0 if courseFees is empty or invalid
+    let updatedTotal = Number(formData.courseFees) || 0;
     console.log("without if ", discountAmount);
     if (discountRate === "amount-") {
-      updatedTotal -= Number(discountAmount); // Subtract discount amount
-      console.log(" with in if ", updatedTotal);
+      updatedTotal -= Number(discountAmount);
+      console.log("with in if ", updatedTotal);
     } else if (discountRate === "amount+") {
-      updatedTotal += Number(discountAmount); // Add discount amount
+      updatedTotal += Number(discountAmount);
     } else if (discountRate === "percent-") {
-      const percentage = updatedTotal * (Number(discountAmount) / 100); // Calculate percentage discount
+      const percentage = updatedTotal * (Number(discountAmount) / 100);
       updatedTotal -= percentage;
     } else if (discountRate === "percent+") {
-      const percentage = updatedTotal * (Number(discountAmount) / 100); // Calculate percentage increase
+      const percentage = updatedTotal * (Number(discountAmount) / 100);
       updatedTotal += percentage;
     }
-    setTotalFees(updatedTotal); // Update the state for Total Fees
+    setTotalFees(updatedTotal);
+    
+    // Update formData with calculated values
+    setFormData(prev => ({
+      ...prev,
+      discountRate,
+      discountAmount,
+      totalFees: updatedTotal,
+      feesReceived,
+      installments
+    }));
   };
 
   // Handle Adding Installments
@@ -112,25 +131,27 @@ const Fees_table = ({
     setInstallments([...installments, { name: "", amount: 0, date: "" }]);
   };
 
-  // // Handle Removing Installments
+  // Handle Removing Installments
   const removeInstallment = (index) => {
     setInstallments(installments.filter((_, i) => i !== index));
   };
 
-  // // Handle Installment Change
+  // Handle Installment Change
   const handleInstallmentChange = (index, field, value) => {
     const updatedInstallments = [...installments];
     updatedInstallments[index][field] = value;
     setInstallments(updatedInstallments);
   };
 
+  // Recalculate when dependencies change - include formData.courseFees
   useEffect(() => {
     calculateTotalFees();
-  }, [discountAmount, discountRate]); // Recalculate whenever these dependencies change
+  }, [discountAmount, discountRate, formData.courseFees, feesReceived]);
+
   return (
     <div className="p-4 space-y-6">
-      {/* Table for Fees  */}
-      <div className="w-full  h-[120px] ">
+      {/* Table for Fees */}
+      <div className="w-full h-[120px]">
         <table className="table-fixed w-full h-[100px] text-m">
           <thead>
             <tr className="bg-gray-200">
@@ -163,8 +184,8 @@ const Fees_table = ({
                 <input
                   type="number"
                   className="border h-8 w-full rounded px-1 text-sm"
-                  value={courseFees}
-                  onChange={(e) => setCourseFees(e.target.value)}
+                  value={formData.courseFees || 0}
+                  onChange={handleCourseFeesChange}
                 />
               </td>
               <td className="border border-gray-300 py-2 px-2 text-center">
@@ -222,6 +243,7 @@ const Fees_table = ({
         </table>
       </div>
 
+      {/* Rest of the component remains the same */}
       {/* Installment Details */}
       <div>
         <h2 className="font-bold">Installment Details</h2>
@@ -365,7 +387,7 @@ const Fees_table = ({
       </button>
 
       <button
-      type="button"
+        type="button"
         className="bg-red-500 text-white ml-10 px-4 py-2 rounded-2xl hover:bg-red-600"
         onClick={() => navigate("/institute/student_list")}
       >

@@ -75,6 +75,7 @@ export const getAllStudentsFeeDetails = async (req, res) => {
       studentName: student.studentName,
       course: student.courseInterested,
       courseFee: student.feeDetails ? student.feeDetails.courseFees : 0,
+      totalFee: student.feeDetails ? student.feeDetails.totalFees : 0,
       paidFee: student.feeDetails ? student.feeDetails.feesReceived : 0,
       dueFee: student.feeDetails ? student.feeDetails.balance : 0,
       admissionDate: student.admissionDate,
@@ -168,15 +169,8 @@ export const getAllStudentsFeeDetails = async (req, res) => {
     try {
       const { studentId } = req.params;
       const { amount, date, paymentMode } = req.body;
-      const { franchiseId } = req.query;
+console.log(req.body);
 
-      // Add franchiseId validation if needed
-    if (!franchiseId) {
-      return res.status(400).json({
-        success: false,
-        message: "FranchiseID is required"
-      });
-    }
       
       // Validate required fields
       if (!amount || !date || !paymentMode) {
@@ -196,7 +190,7 @@ export const getAllStudentsFeeDetails = async (req, res) => {
       }
       
      
-      const feeDetails = await Fee.findOne({studentId ,franchiseId: franchiseId});
+      const feeDetails = await Fee.findOne({studentId});
       if (!feeDetails) {
         return res.status(404).json({
           success: false,

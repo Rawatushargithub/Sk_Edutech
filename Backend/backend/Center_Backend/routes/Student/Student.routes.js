@@ -21,7 +21,20 @@ try {
     .get(getStudents);
     router.route("/count").get(getStudentCount)
     router.route("/recent").get(getRecentsStudents);
-    router.route("/update/:id").put(updateStudent)
+    // Updated route to handle file uploads for student updates
+    router.route("/update/:id").put(
+        upload.fields([
+            {
+                name: "studentPhoto",
+                maxCount: 1
+            },
+            {
+                name: "studentSignature",
+                maxCount: 1
+            }
+        ]),
+        updateStudent
+    );
     router.patch("/toggle_status/:id", toggleStudentStatus);
     router.route("/:studentId/admission-form").get(generateAdmissionForm);
 

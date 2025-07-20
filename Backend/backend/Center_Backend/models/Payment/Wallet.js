@@ -1,12 +1,12 @@
   import mongoose from "mongoose";
 
 const WalletSchema = new mongoose.Schema({
-  // institute: { // changed to lowercase for consistency
-  //   type: mongoose.Schema.Types.ObjectId,
-  //   ref: "User",
-  //   required: true,
-  //   unique: true
-  // },
+  franchiseId: { // changed to lowercase for consistency
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+    unique: true
+  },
   balance: { 
     type: Number,
     default: 0,

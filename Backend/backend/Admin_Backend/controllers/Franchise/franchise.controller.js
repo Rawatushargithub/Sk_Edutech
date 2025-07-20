@@ -660,6 +660,7 @@ export const loginFranchise = async (req, res) => {
         email: franchise.email,
         mobile: franchise.mobile,
         franchiseName: franchise.franchiseName,
+        franchiseImage: franchise.ownerPhotoUrl,
         franchiseId: franchise.franchiseId,
         address: franchise.address,
         ownerName: franchise.ownerName,

@@ -5,6 +5,7 @@ import {
   FaLinkedinIn,
   FaInstagram,
   FaYoutube,
+  FaMapMarkerAlt,
 } from "react-icons/fa";
 
 const Footer = () => {
@@ -25,7 +26,7 @@ const Footer = () => {
     { code: "bho", name: "भोजपुरी*", flag: "🇮🇳" }, // *early‑access
   ];
 
-  /** Set Goog Translate cookie then reload */
+  /** Set Goog Translate cookie then reload */
   const translatePage = (lang) => {
     if (lang === "en") {
       // clear cookie → back to English
@@ -43,7 +44,7 @@ const Footer = () => {
     translatePage(lang.code);
   };
 
-  /* Load Google script once if the page doesn’t already have it */
+  /* Load Google script once if the page doesn't already have it */
   useEffect(() => {
     if (!window.google || !window.google.translate) {
       const s = document.createElement("script");
@@ -73,7 +74,7 @@ const Footer = () => {
                     </div>
 
                     {/* Quick Links */}
-                    <div className="w-full md:w-3/4 grid grid-cols-2 md:grid-cols-3 gap-6">
+                    <div className="w-[2000px] md:w-3/4 flex justify-between md:grid-cols-4 gap-10">
                         <div>
                             <h3 className="font-semibold text-lg mb-3">Quick Links</h3>
                             <ul className="space-y-2">
@@ -105,6 +106,61 @@ const Footer = () => {
                                 <li className="cursor-pointer hover:text-orange-400">Privacy Policy</li>
                                 <li className="cursor-pointer hover:text-orange-400">Refund Policy</li>
                             </ul>
+                        </div>
+
+                        {/* Location Section - Rightmost Column */}
+                        <div className="col-span-2 md:col-span-1">
+                            <h3 className="font-semibold text-lg mb-3 text-orange-400">Our Location</h3>
+                            
+                            {/* Interactive Map */}
+                            <div className="w-full mb-4">
+                                <div 
+                                    onClick={() => window.open('https://maps.app.goo.gl/3FJYX2azTzjdNfHC9', '_blank')}
+                                    className="w-full h-32 rounded-lg overflow-hidden border-2 border-gray-700 hover:border-orange-400 transition-all duration-300 cursor-pointer group relative bg-gray-800"
+                                >
+                                    <img
+                                        src="https://media.wired.com/photos/59269cd37034dc5f91bec0f1/master/pass/GoogleMapTA.jpg"
+                                        alt="SK Edutech Location Map"
+                                        className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                            e.target.nextSibling.style.display = 'flex';
+                                        }}
+                                    />
+                                    
+                                    {/* Fallback when image fails to load */}
+                                    <div className=" w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+                                        <div className="text-center">
+                                            <FaMapMarkerAlt className="text-orange-500 mx-auto mb-2" size={24} />
+                                            <p className="text-white text-xs">Click to view location</p>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Overlay for click indication */}
+                                    <div className="absolute inset-0  bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
+                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-orange-500 text-white px-3 py-1 rounded-full text-xs flex items-center gap-1">
+                                            <FaMapMarkerAlt size={12} />
+                                            Click for directions
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Location Link */}
+                            <a
+                                href="https://maps.app.goo.gl/3FJYX2azTzjdNfHC9"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-gray-400 hover:text-orange-400 transition-colors duration-300 group"
+                            >
+                                <FaMapMarkerAlt className="text-orange-500 group-hover:text-orange-400 transition-colors duration-300" size={16} />
+                                <span className="text-sm underline-offset-4 group-hover:underline">
+                                    View on Google Maps
+                                </span>
+                            </a>
+                            <p className="text-gray-500 text-xs mt-1 ml-6">
+                                Get directions to our office
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -194,7 +250,7 @@ const Footer = () => {
 
         {/* Copyright */}
         <p className="text-center text-gray-400 mt-6 text-sm">
-          © 2025 SK Edutech. All Rights Reserved.
+          © 2025 SK Edutech. All Rights Reserved.
         </p>
       </div>
     </footer>
@@ -202,7 +258,6 @@ const Footer = () => {
 };
 
 export default Footer;
-
 
 // import { useState } from "react";
 // import {

@@ -16,7 +16,13 @@ import Transaction from "../../models/Payment/Transaction.js";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import fs from "fs/promises";
 import axios from "axios";
-// Add these validation functions at the top of your controller file
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// For ES modules, get the current directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const validateRequiredFields = (fields) => {
   const missingFields = [];
 
@@ -874,7 +880,9 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
     console.error("Error fetching franchise:", error);
   }
 
-  const pdfPath = "F:\\SK_for_course\\Sk_Edutech\\Frontend\\public\\assets\\blank_form.pdf";
+    // ✅ Fixed PDF path
+  const pdfPath = path.join(__dirname, '../../../public/temp/blank_form.pdf');
+  console.log("PDF Path:", pdfPath);
   const existingPdfBytes = await fs.readFile(pdfPath);
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
   const page = pdfDoc.getPages()[0];

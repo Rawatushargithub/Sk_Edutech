@@ -1,4 +1,5 @@
 import { asyncHandler } from "../../utils/asynchanlder.js";
+import Franchise from "../../models/Franchise.model.js";
 import Student from "../../models/Student/Student_Detais.model.js";
 import Fees_studentModel from "../../models/Student/Fees_student.model.js";
 import installmentModel from "../../models/Student/installment.model.js";
@@ -12,6 +13,9 @@ import {
 } from "../../utils/cloudinary.js";
 import Wallet from "../../models/Payment/Wallet.js";
 import Transaction from "../../models/Payment/Transaction.js";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import fs from "fs/promises";
+import axios from "axios";
 // Add these validation functions at the top of your controller file
 const validateRequiredFields = (fields) => {
   const missingFields = [];
@@ -848,6 +852,189 @@ const toggleStudentStatus = async (req, res) => {
   }
 };
 
+const generateAdmissionForm = asyncHandler(async (req, res) => {
+  const { studentId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(studentId)) {
+    throw new ApiError(400, "Invalid student ID");
+  }
+
+  const student = await Student.findById(studentId)
+    .populate("feeDetails")
+    .populate("selectedBatch");
+
+  if (!student) {
+    throw new ApiError(404, "Student not found");
+  }
+
+  let franchise;
+  try {
+    franchise = await Franchise.findOne({ franchiseId: student.franchiseId });
+  } catch (error) {
+    console.error("Error fetching franchise:", error);
+  }
+
+  const pdfPath = "F:\\SK_for_course\\Sk_Edutech\\Frontend\\public\\assets\\blank_form.pdf";
+  const existingPdfBytes = await fs.readFile(pdfPath);
+  const pdfDoc = await PDFDocument.load(existingPdfBytes);
+  const page = pdfDoc.getPages()[0];
+
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const size = 10;
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  const drawText = (text, x, y, color = rgb(0, 0, 0), textFont = font, textSize = size) => {
+    if (text) {
+      // Replace unsupported characters before drawing
+      const sanitizedText = String(text).replace(/₹/g, 'Rs.').replace(/✓/g, 'Y');
+      page.drawText(sanitizedText, { x, y, font: textFont, size: textSize, color });
+    }
+  };
+
+  // Fetch and embed student photo (top right photo box)
+  if (student.studentPhoto) {
+    try {
+      const photoUrl = student.studentPhoto;
+      const photoResponse = await axios.get(photoUrl, { responseType: 'arraybuffer' });
+      const photoBytes = Buffer.from(photoResponse.data, 'binary');
+      let photoImage;
+      if (photoUrl.includes('.jpg') || photoUrl.includes('.jpeg')) {
+        photoImage = await pdfDoc.embedJpg(photoBytes);
+      } else {
+        photoImage = await pdfDoc.embedPng(photoBytes);
+      }
+      // Photo position in top right corner
+      page.drawImage(photoImage, { x: 460, y: 625, width: 95, height: 110 });
+    } catch (error) {
+      console.error("Error fetching or embedding student photo:", error);
+    }
+  }
+
+  // Fetch and embed student signature (bottom right signature box)
+  if (student.studentSignature) {
+    try {
+      const signatureUrl = student.studentSignature;
+      const signatureResponse = await axios.get(signatureUrl, { responseType: 'arraybuffer' });
+      const signatureBytes = Buffer.from(signatureResponse.data, 'binary');
+      let signatureImage;
+      if (signatureUrl.includes('.jpg') || signatureUrl.includes('.jpeg')) {
+        signatureImage = await pdfDoc.embedJpg(signatureBytes);
+      } else {
+        signatureImage = await pdfDoc.embedPng(signatureBytes);
+      }
+      // Signature position in bottom right
+      page.drawImage(signatureImage, { x: 396, y: 316, width: 120, height: 40 });
+    } catch (error) {
+      console.error("Error fetching or embedding student signature:", error);
+    }
+  }
+
+  // Fetch and embed franchise signature (bottom signature box)
+  if (franchise && franchise.instituteSignature) {
+    try {
+      const franchiseSignatureUrl = franchise.instituteSignature;
+      const signatureResponse = await axios.get(franchiseSignatureUrl, { responseType: 'arraybuffer' });
+      const signatureBytes = Buffer.from(signatureResponse.data, 'binary');
+      let franchiseSignatureImage;
+      if (franchiseSignatureUrl.includes('.jpg') || franchiseSignatureUrl.includes('.jpeg')) {
+        franchiseSignatureImage = await pdfDoc.embedJpg(signatureBytes);
+      } else {
+        franchiseSignatureImage = await pdfDoc.embedPng(signatureBytes);
+      }
+      // Signature position in bottom right
+      page.drawImage(franchiseSignatureImage, { x: 413, y: 100, width: 120, height: 40 });
+    } catch (error) {
+      console.error("Error fetching or embedding student signature:", error);
+    }
+  }
+
+  // TOP SECTION - Header Information
+  // Admission Date (top left, after "ADMISSION DATE :")
+  drawText(student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('en-GB') : '', 24, 593);
+
+  // Roll Number (top right, after "ROLL NUMBER :")
+  drawText(student.rollNumber, 419, 593);
+
+  // Course of Interest (below admission date, after "COURSE OF INTEREST:")
+  drawText(student.courseInterested?.courseName || '', 27, 546);
+
+  // MAIN STUDENT DETAILS SECTION
+  // First row - Student Name, Father/Husband Name, Surname
+  drawText(student.studentName, 27, 505);  // After "STUDENT NAME"
+  drawText(student.fatherHusbandName, 180, 505);  // After "FATHER/HUSBAND NAME"
+  drawText(student.surnameName, 340, 505);  // After "SURNAME"
+
+  // Second row - Mother Name
+  drawText(student.motherName, 469, 505);  // After "MOTHER NAME"
+
+  // Third row - Mobile numbers
+  drawText(student.studentMobile, 206, 464);  // After "STUDENT MOBILE:"
+  drawText(student.alternateMobile, 392, 464);  // After "ALTERNATE MOBILE:"
+
+  // Fourth row - DOB, Gender, Email
+  drawText(student.dob ? new Date(student.dob).toLocaleDateString('en-GB') : '', 384, 426);  // After "DATE OF BIRTH.:"
+  drawText(student.gender, 27, 426);  // After "GENDER:"
+  drawText(student.email, 138, 426);  // After "E-MAIL:"
+
+  // Fifth row - Caste, Qualification, Occupation, State, Post Code
+  drawText(student.caste, 27, 388);  // After "CASTE:"
+  drawText(student.qualifications, 116, 388);  // After "QUALIFICATION.:"
+  drawText(student.occupation, 277, 388);  // After "OCCUPATION.:"
+  drawText(student.state || 'Haryana', 390, 388);  // After "STATE:"
+  drawText(student.postCode, 486, 388);  // After "POST CODE:"
+
+  // ADDRESS SECTION
+  // Permanent Address (multiline field after "ADDRESS:-")
+  // const addressLines = student.permanentAddress ? student.permanentAddress.split('\n') : [];
+  // addressLines.forEach((line, index) => {
+  //   if (index < 2) { // Limit to 2 lines for current address
+  //     drawText(line, 22, 323 - (index * 15));
+  //   }
+  // });
+
+  // Permanent Address (after "PERMANENT ADDRESS.:")
+  const permAddressLines = student.permanentAddress ? student.permanentAddress.split('\n') : [];
+  permAddressLines.forEach((line, index) => {
+    if (index < 2) { // Limit to 2 lines for permanent address
+      drawText(line, 27, 344 - (index * 15));
+    }
+  });
+
+  // LEFT SIDE - OFFICE USE ONLY SECTION
+  // Aadhaar Card Number (after "ADHAR CARD NUMBER.:")
+  drawText(student.aadhaarNumber || '', 27, 466);
+
+  // Batch Name (after "BATCH NAME")
+  if (student.selectedBatch) {
+    drawText(student.selectedBatch.batchName || student.selectedBatch.batchTiming, 71, 197);
+  }
+
+  // RIGHT SIDE - OFFICE USE ONLY SECTION
+  // Course Fees (after "COURSE FEES :")
+  if (student.feeDetails) {
+    drawText(`Rs${student.feeDetails.courseFees}`, 77, 238);
+  
+    // Paid Fees (after "PAID FEES :")
+    drawText(`Rs${student.feeDetails.feesReceived}`, 269, 238);
+  
+    // Balance Fees (after "BALANCE FEES :")
+    drawText(`Rs${student.feeDetails.balance}`, 455, 238);
+  }
+
+  // Contact Number (after "CONTACT NO. :")
+  if (franchise) {
+    drawText(franchise.mobileNumber, 206, 466);
+  }
+
+  // // for director signn
+  // instituteSignature
+  const pdfBytes = await pdfDoc.save();
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename=admission_form_${student.studentName.replace(/\s+/g, '_')}.pdf`);
+  res.send(Buffer.from(pdfBytes));
+});
+
 export {
   registerStudent,
   getStudents,
@@ -855,4 +1042,6 @@ export {
   getRecentsStudents,
   updateStudent,
   toggleStudentStatus,
+  generateAdmissionForm
+
 };

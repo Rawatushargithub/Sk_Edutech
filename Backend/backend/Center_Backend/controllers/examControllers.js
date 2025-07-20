@@ -9,17 +9,20 @@ import mongoose from "mongoose";
 //       courseCode,
 //       batch,
 //       examDate,
+//       franchiseId,
 //       examDurationMinutes,
 //       totalQuestions,
+//       totalMarks,
 //       passingMarks,
 //       examMode = "Offline", // Default to Offline mode
 //       status = "Active", // Default to Active status
+//       selectedQuestions // This is expected from frontend for online exams
 //     } = req.body;
-
+    
 //     // Validate required fields
-//     if (!courseCode || !batch || !examDate || !examDurationMinutes || !totalQuestions || !passingMarks) {
+//     if (!courseCode || !batch || !examDate || !examDurationMinutes || !totalQuestions || !passingMarks || !totalMarks) {
 //       return res.status(400).json({ 
-//         message: "All fields are required: courseCode, batch, examDate, examDurationMinutes, totalQuestions, and passingMarks" 
+//         message: "All fields are required: courseCode, batch, examDate, examDurationMinutes, totalQuestions, and passingMarks and totalMarks" 
 //       });
 //     }
 
@@ -29,41 +32,75 @@ import mongoose from "mongoose";
 //         message: "Batch must be provided as an array"
 //       });
 //     }
-  
+//   console.log("Batch:", batch);
 //     // Extract day from the examDate
 //     const examDay = new Date(examDate).getDate();
     
 //     // Create an array to hold all created exams
 //     const createdExams = [];
     
+//     // Helper function to convert batch name to short code (e.g., "BATCH 3" to "B3")
+//     const getBatchCode = (batchName) => {
+//       if (!batchName) return "";
+      
+//       // Extract batch number from the name
+//       const batchNameUpperCase = batchName.toUpperCase();
+//       const matches = batchNameUpperCase.match(/BATCH\s+(\d+)/i);
+      
+//       if (matches && matches[1]) {
+//         return `B${matches[1]}`; // Format as B + number (e.g., B3)
+//       }
+      
+//       // Fallback: if the format is different, just use first letter + first number found
+//       const letterMatch = batchNameUpperCase.match(/[A-Z]/);
+//       const numberMatch = batchNameUpperCase.match(/\d+/);
+      
+//       if (letterMatch && numberMatch) {
+//         return `${letterMatch[0]}${numberMatch[0]}`;
+//       }
+      
+//       return batchNameUpperCase.slice(0, 2); // Last resort: take first two characters
+//     };
+    
 //     // For each batch, create a separate exam document
 //     for (const batchItem of batch) {
-//       // Generate ExamID in the format: courseCode + batchName + day (e.g., BCA01B112)
-//       const examID = `${courseCode}${batchItem}${examDay}`;
+//       // Extract the batch code from the name (e.g., "BATCH 3" to "B3")
       
-//       const newExam = new Exam({
+//       const batchCode = getBatchCode(batchItem.name);
+//       const examID = `${courseCode}_${batchCode}_${examDay}`;
+
+//       // Prepare exam object
+//       const examObj = {
 //         ExamID: examID,
-//         courseCode,
-//         batch: batchItem, // Store single batch per document
+//         courseCode, 
+//         batch: batchItem,
 //         examDate,
+//         franchiseId, // Add franchiseId to the exam object
 //         examDurationMinutes,
 //         totalQuestions,
+//         totalMarks,
 //         passingMarks,
 //         examMode,
 //         status,
 //         createdAt: new Date(),
-//         results: [] // Initialize with empty results array
-//       });
+//         results: []
+//       };
+
+//       // If online, add questions array (from selectedQuestions, which should be array of qNo)
+//       if (examMode === "Online" && Array.isArray(selectedQuestions)) {
+//         examObj.questions = selectedQuestions.map(q => Number(q));
+//       }
+
+//       const newExam = new Exam(examObj);
 
 //       // Save the exam to the database
 //       await newExam.save();
 //       createdExams.push(newExam);
 //     }
 
-//     console.log(`Added ${createdExams.length} exams successfully to database`);
-//     res.status(201).json({ 
-//       message: `${createdExams.length} exams added successfully`, 
-//       exams: createdExams 
+//     res.status(201).json({
+//       message: `${createdExams.length} exams added successfully`,
+//       exams: createdExams
 //     });
 
 //   } catch (error) {
@@ -75,7 +112,6 @@ import mongoose from "mongoose";
 //   }
 // });
 
-
 export const createExam = asyncHandler(async (req, res) => {
   try {
     const {
@@ -83,6 +119,7 @@ export const createExam = asyncHandler(async (req, res) => {
       batch,
       examDate,
       franchiseId,
+      examType = "Weekly Test", // New field for exam type
       examDurationMinutes,
       totalQuestions,
       totalMarks,
@@ -93,9 +130,9 @@ export const createExam = asyncHandler(async (req, res) => {
     } = req.body;
     
     // Validate required fields
-    if (!courseCode || !batch || !examDate || !examDurationMinutes || !totalQuestions || !passingMarks || !totalMarks) {
+    if (!courseCode || !batch || !examDate || !examDurationMinutes || !totalQuestions || !passingMarks || !totalMarks || !examType) {
       return res.status(400).json({ 
-        message: "All fields are required: courseCode, batch, examDate, examDurationMinutes, totalQuestions, and passingMarks and totalMarks" 
+        message: "All fields are required: courseCode, batch, examDate, examType, examDurationMinutes, totalQuestions, passingMarks and totalMarks" 
       });
     }
 
@@ -105,7 +142,17 @@ export const createExam = asyncHandler(async (req, res) => {
         message: "Batch must be provided as an array"
       });
     }
-  console.log("Batch:", batch);
+
+    // Validate exam type
+    const validExamTypes = ["Weekly Test", "Monthly Test", "Final Test"];
+    if (!validExamTypes.includes(examType)) {
+      return res.status(400).json({
+        message: "Invalid exam type. Must be one of: Weekly Test, Monthly Test, Final Test"
+      });
+    }
+  
+    console.log("Batch:", batch);
+    
     // Extract day from the examDate
     const examDay = new Date(examDate).getDate();
     
@@ -135,12 +182,29 @@ export const createExam = asyncHandler(async (req, res) => {
       return batchNameUpperCase.slice(0, 2); // Last resort: take first two characters
     };
     
+    // Helper function to get exam type code
+    const getExamTypeCode = (examType) => {
+      switch (examType) {
+        case "Weekly Test":
+          return "WT";
+        case "Monthly Test":
+          return "MT";
+        case "Final Test":
+          return "FT";
+        default:
+          return "EX";
+      }
+    };
+    
     // For each batch, create a separate exam document
     for (const batchItem of batch) {
       // Extract the batch code from the name (e.g., "BATCH 3" to "B3")
-      
       const batchCode = getBatchCode(batchItem.name);
-      const examID = `${courseCode}_${batchCode}_${examDay}`;
+      const examTypeCode = getExamTypeCode(examType);
+      
+      // Updated ExamID format: CourseCode_ExamType_BatchCode_Day
+      // Example: CS101_WT_B3_15 (Computer Science 101, Weekly Test, Batch 3, Day 15)
+      const examID = `${courseCode}_${examTypeCode}_${batchCode}_${examDay}`;
 
       // Prepare exam object
       const examObj = {
@@ -149,6 +213,7 @@ export const createExam = asyncHandler(async (req, res) => {
         batch: batchItem,
         examDate,
         franchiseId, // Add franchiseId to the exam object
+        examType, // Add exam type to the exam object
         examDurationMinutes,
         totalQuestions,
         totalMarks,
@@ -171,8 +236,18 @@ export const createExam = asyncHandler(async (req, res) => {
       createdExams.push(newExam);
     }
 
+    // Determine response message based on exam type and count
+    let message = `${createdExams.length} ${examType.toLowerCase()}`;
+    if (createdExams.length > 1) {
+      message += `s added successfully across ${createdExams.length} batches`;
+    } else {
+      message += ` added successfully`;
+    }
+
     res.status(201).json({
-      message: `${createdExams.length} exams added successfully`,
+      message: message,
+      examType: examType,
+      examsCreated: createdExams.length,
       exams: createdExams
     });
 

@@ -14,6 +14,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../../config";
 
+import ExamTypeSlider from "./ExamTypeSlider"; // Import the new ExamTypeSlider component
+
 const ExamManagement = () => {
   const navigate = useNavigate();
 
@@ -22,6 +24,7 @@ const ExamManagement = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("all");
+  const [selectedExamType, setSelectedExamType] = useState("all"); // New state for exam type filter
   const [showFilters, setShowFilters] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -36,6 +39,20 @@ const ExamManagement = () => {
 
   // Exam data from API
   const [exams, setExams] = useState([]);
+
+  // Exam types for filter dropdown
+  const examTypes = [
+    { value: "all", label: "All Exam Types" },
+    { value: "Weekly Test", label: "Weekly Test" },
+    { value: "Monthly Test", label: "Monthly Test" },
+    { value: "Final Test", label: "Final Test" },
+  ];
+
+  // Sample courses data (you might want to fetch this from API)
+  const courses = [
+    { id: 1, name: "BCA12H (Bachelor of Computer Application)" },
+    { id: 2, name: "MCA34P (Master of Computer Application)" },
+  ];
 
   // Function to update exam status to inactive
   const updateExamStatus = async (examId) => {
@@ -64,16 +81,19 @@ const ExamManagement = () => {
       throw err;
     }
   };
- 
+
   // Fetch exams from API with automatic status update
   const fetchExams = async (examMode = mode) => {
     try {
       setLoading(true);
       setError(null);
- const franchiseId = localStorage.getItem('franchiseID');
- console.log("Fetching exams for franchise:", franchiseId);
+      const franchiseId = localStorage.getItem("franchiseID");
+      console.log("Fetching exams for franchise:", franchiseId);
+
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/institute_exam/exams?examMode=${examMode === 'online' ? 'Online' : 'Offline'}&franchiseId=${franchiseId}`, 
+        `${API_BASE_URL}/api/v1/institute_exam/exams?examMode=${
+          examMode === "online" ? "Online" : "Offline"
+        }&franchiseId=${franchiseId}`,
         {
           method: "GET",
           headers: {
@@ -87,7 +107,7 @@ const ExamManagement = () => {
       }
 
       const data = await response.json();
-
+      console.log("Fetched exams:", data);
       // Transform API data and check for expired exams
       const transformedExams = await Promise.all(
         data.exams.map(async (exam) => {
@@ -110,6 +130,7 @@ const ExamManagement = () => {
             courseCode: exam.courseCode,
             batch: exam.batch || [],
             examDate: exam.examDate,
+            examType: exam.examType, // Include exam type in transformed data
             examDurationMinutes: exam.examDurationMinutes,
             totalQuestions: exam.totalQuestions,
             totalMarks: exam.totalMarks,
@@ -157,6 +178,7 @@ const ExamManagement = () => {
 
       const studentsData = await response.json();
       console.log("Fetched students for exam:", studentsData);
+
       // Transform student data and add marks field
       const transformedStudents = studentsData.students.map((student) => ({
         rollNumber: student.rollNumber,
@@ -209,7 +231,9 @@ const ExamManagement = () => {
         alert("Please enter marks for at least one student.");
         return;
       }
-console.log("Marks data to upload:", marksData);
+
+      console.log("Marks data to upload:", marksData);
+
       const response = await fetch(
         `${API_BASE_URL}/api/v1/institute_exam/exams/${selectedExam}/marks`,
         {
@@ -282,7 +306,7 @@ console.log("Marks data to upload:", marksData);
       .length,
   };
 
-  // Filter exams based on mode, search term, course and tab
+  // Filter exams based on mode, search term, course, exam type, and tab
   const filteredExams = exams.filter((exam) => {
     const matchesMode = mode === "online" ? exam.modeOnline : exam.modeOffline;
     const matchesSearch =
@@ -290,13 +314,35 @@ console.log("Marks data to upload:", marksData);
       exam.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCourse =
       selectedCourse === "all" || exam.courseName === selectedCourse;
+    const matchesExamType =
+      selectedExamType === "all" || exam.examType === selectedExamType; // New exam type filter
     const matchesTab =
       activeTab === "all" ||
       (activeTab === "active" && exam.status === "Active") ||
       (activeTab === "inactive" && exam.status === "Inactive");
 
-    return matchesMode && matchesSearch && matchesCourse && matchesTab;
+    return (
+      matchesMode &&
+      matchesSearch &&
+      matchesCourse &&
+      matchesExamType &&
+      matchesTab
+    );
   });
+
+  // Get exam type badge color
+  const getExamTypeBadgeColor = (examType) => {
+    switch (examType) {
+      case "Weekly Test":
+        return "bg-blue-100 text-blue-800";
+      case "Monthly Test":
+        return "bg-yellow-100 text-yellow-800";
+      case "Final Test":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
 
   // Retry function for error state
   const handleRetry = () => {
@@ -366,8 +412,8 @@ console.log("Marks data to upload:", marksData);
                     Upload Student Marks
                   </h1>
                   <p className="text-gray-600">
-                    Exam ID: {selectedExam} | Course: {currentExam?.courseCode}{" Code"}
-                    | Batch: {currentExam?.batch.timings}
+                    Exam ID: {selectedExam} | Course: {currentExam?.courseCode}{" "}
+                    Code | Batch: {currentExam?.batch.timings}
                   </p>
                 </div>
               </div>
@@ -488,6 +534,7 @@ console.log("Marks data to upload:", marksData);
       </div>
     );
   }
+
   // Main Exam Management Page
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -563,6 +610,7 @@ console.log("Marks data to upload:", marksData);
           {/* Filters */}
           {showFilters && (
             <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+              {/* Search and Course Dropdown */}
               <div className="flex gap-4 items-center">
                 <div className="relative flex-1">
                   <Search
@@ -572,14 +620,14 @@ console.log("Marks data to upload:", marksData);
                   <input
                     type="text"
                     placeholder="Search by exam ID or course code..."
-                    className="w-full pl-10 pr-4 py-2 border rounded-lg"
+                    className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
                 <div className="relative">
                   <select
-                    className="appearance-none bg-white border rounded-lg px-4 py-2 pr-10"
+                    className="appearance-none bg-white border rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={selectedCourse}
                     onChange={(e) => setSelectedCourse(e.target.value)}
                   >
@@ -594,10 +642,18 @@ console.log("Marks data to upload:", marksData);
                     ))}
                   </select>
                   <ChevronDown
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
                     size={20}
                   />
                 </div>
+              </div>
+              
+              {/* Exam Type Filter - Now properly positioned below search */}
+              <div className="w-full">
+                <ExamTypeSlider
+                  selectedExamType={selectedExamType}
+                  onExamTypeChange={setSelectedExamType}
+                />
               </div>
             </div>
           )}
@@ -647,13 +703,19 @@ console.log("Marks data to upload:", marksData);
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Exam ID 
+                    Exam ID
                   </th>
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Course Code
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Exam Type
                   </th>
                   <th
                     scope="col"
@@ -711,6 +773,9 @@ console.log("Marks data to upload:", marksData);
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {exam.courseCode}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {exam.examType}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {exam.batch.timings}
@@ -771,7 +836,9 @@ console.log("Marks data to upload:", marksData);
                     <td
                       colSpan={
                         7 +
-                        (filteredExams.some(exam => exam.status === "Active") ? 1 : 0) +
+                        (filteredExams.some((exam) => exam.status === "Active")
+                          ? 1
+                          : 0) +
                         (mode === "offline" ? 1 : 0)
                       }
                       className="px-6 py-4 text-center text-sm text-gray-500"

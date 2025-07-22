@@ -24,7 +24,7 @@ function ApplyFranchiseModal({ isOpen, onClose }) {
             country: 'INDIA',
             // No default for gstNumber, atcCode, totalComputers, totalStudents
             planValidityDays: '', // Add default for plan
-            agreeToTerms: false, // Add default for terms checkbox
+            confirmTerms: false, // Add default for terms confirmation checkbox
         }
     });
     const [isLoading, setIsLoading] = useState(false);
@@ -34,6 +34,8 @@ function ApplyFranchiseModal({ isOpen, onClose }) {
     const [userEmailForOtp, setUserEmailForOtp] = useState('');
     const [applicationId, setApplicationId] = useState('');
 
+    // Watch the confirmTerms checkbox to control submit button state
+    const confirmTermsValue = watch('confirmTerms');
 
     // Reset form and modal state when modal is opened/closed
     useEffect(() => {
@@ -355,29 +357,113 @@ function ApplyFranchiseModal({ isOpen, onClose }) {
                         {/* Terms and Conditions */}
                         <section>
                             <h3 className={sectionTitleClass}>Terms and Conditions</h3>
+                            
+                            {/* Scrollable Terms Content */}
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                                <div className="max-h-80 overflow-y-auto pr-2 space-y-4 text-sm text-gray-700 leading-relaxed">
+                                    <div className="font-semibold text-gray-900 mb-4">
+                                        I/We hereby solemnly affirm and declare as under:
+                                    </div>
+                                    
+                                    <div className="space-y-3">
+                                        <p>That I/We have established/opened a Centre at a fixed and verifiable location.</p>
+                                        
+                                        <p>That I/We have established/opened the above-mentioned Centre/Institute/NGO in accordance with the required norms.</p>
+                                        
+                                        <p>That I/We have fulfilled all requirements to run an authorized All Zone Course (Software Zone / Hardware Zone / Teacher Training Zone / Vocational Zone) under SK Edutech — an I.T. & Vocational Training Programme of SK Edutech I.T. & Educational Development - HR — in our Centre/Institute/NGO.</p>
+                                        
+                                        <p>That SK Edutech shall issue authorization to run the above-mentioned Zone(s)/Course(s) only for the single, officially registered location.</p>
+                                        
+                                        <p>This authorization shall not apply to any franchise or branch at different locations. For any other location, I/We shall submit a new application for center authorization. The branch shall not deal with any other organization on its own behalf.</p>
+                                        
+                                        <p>That I/We shall remain liable for all due payments towards SK Edutech under all circumstances.</p>
+                                        
+                                        <p>That SK Edutech has no share in student admission fees, tuition fees, or examination fees. All such fees shall be decided solely by us based on:</p>
+                                        <ul className="list-disc ml-6 space-y-1">
+                                            <li>Investment</li>
+                                            <li>Infrastructure facilities</li>
+                                            <li>Student-teacher ratio</li>
+                                            <li>Local geographic and economic conditions</li>
+                                        </ul>
+                                        
+                                        <p>SK Edutech shall not be held responsible for any disputes arising from the fees decided and collected by the Centre. I/We shall be solely liable.</p>
+                                        
+                                        <p>SK Edutech shall charge a one-time nominal registration fee per student, as per the course duration.</p>
+                                        
+                                        <p>That SK Edutech has not made, and shall not make, any investment in the setup of our Centre/Institute. Therefore, all investments, expenses, and operational responsibilities shall be fully managed and borne by us. These include but are not limited to:</p>
+                                        <ul className="list-disc ml-6 space-y-1">
+                                            <li>Computer systems</li>
+                                            <li>Center furniture</li>
+                                            <li>Teachers' salaries</li>
+                                            <li>Center building (rented or self-owned)</li>
+                                            <li>Licensed educational software</li>
+                                            <li>Centre audits, ITR filings, and taxes</li>
+                                            <li>Local-level approvals and documentation</li>
+                                        </ul>
+                                        
+                                        <p>That student diplomas/certificates issued under SK Edutech's I.T. & Vocational Training Programme shall be received at our center via postal service.</p>
+                                        
+                                        <p>That all payments made or to be made to SK Edutech are non-refundable under any circumstances.</p>
+                                        
+                                        <p>That SK Edutech shall not be held liable for any commitments, schemes, advertisements, or tie-ups conducted independently by us with:</p>
+                                        <ul className="list-disc ml-6 space-y-1">
+                                            <li>Students</li>
+                                            <li>Government bodies</li>
+                                            <li>Corporate entities</li>
+                                            <li>Universities</li>
+                                            <li>Public or private organizations</li>
+                                        </ul>
+                                        
+                                        <p>That if any person involved in our Centre is found guilty of criminal, financial, or social offenses, the authorization shall be terminated automatically.</p>
+                                        
+                                        <p>That the authorization for our Centre/Institute/NGO shall remain valid from the date of authorization and is subject to renewal each year in March, before the 31st of the month, as per the renewal terms.</p>
+                                        
+                                        <p>That SK Edutech reserves the right to modify, update, or introduce new rules and regulations regarding the authorization or association of our Centre.</p>
+                                        
+                                        <p>That I/We have read, understood, and accepted all the rules and regulations of SK Edutech. In the case of any non-compliance, the decision of the Director of SK Edutech regarding continuation or termination shall be final and binding.</p>
+                                        
+                                        <p>That all center data shall be submitted to the Head Office in Excel format before the 10th of every month.</p>
+                                        
+                                        <p>That a minimum of 30 student admissions shall be maintained in every financial year.</p>
+                                        
+                                        <p>That all financial dues shall be submitted to the Head Office before the 10th of each month.</p>
+                                        
+                                        <p>That identity cards are mandatory for both teachers and students.</p>
+                                        
+                                        <p>That no center head shall create any page on any social media platform or website using the name "SK Edutech." Any such action shall result in immediate termination and legal action.</p>
+                                        
+                                        <p>That if any individual is found guilty of wrongdoing at the center, the branch head shall be held accountable. The Head Office shall bear no responsibility.</p>
+                                        
+                                        <div className="font-semibold text-gray-900 mt-6 mb-3">
+                                            Declaration Clause
+                                        </div>
+                                        
+                                        <p>This declaration has been made with full understanding and shall serve legal purposes as required.</p>
+                                        <p>In the event of any dispute, it shall be resolved by a committee appointed by SK Edutech – HR.</p>
+                                        <p>The committee's decision shall be final and binding.</p>
+                                        <p>Jurisdiction shall rest with the courts in Gurugram (Haryana), and all legal expenses shall be borne by us.</p>
+                                        
+                                        <p>I/We declare that the information provided in this declaration, as well as in the Center Authorization Application and Center Head Profile, is true and accurate to the best of our knowledge.</p>
+                                        <p>This declaration shall remain binding on us and our successors throughout our association with SK Edutech.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Confirmation Checkbox */}
                             <div className="flex items-start space-x-3">
                                 <input
                                     type="checkbox"
-                                    id="agreeToTerms"
-                                    {...register("agreeToTerms", { 
-                                        required: "You must agree to the terms and conditions to proceed" 
+                                    id="confirmTerms"
+                                    {...register("confirmTerms", { 
+                                        required: "You must confirm that you have read and agreed to all terms and conditions" 
                                     })}
                                     className="mt-1 h-5 w-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
                                 />
-                                <label htmlFor="agreeToTerms" className="text-base text-gray-700">
-                                    I agree with the{' '}
-                                    <a 
-                                        href="https://docs.google.com/document/d/1xciHOAlAnvUgx6bGzeDZbMRqz1n7HgFm/edit?usp=drivesdk&ouid=112396720877106875734&rtpof=true&sd=true" 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="text-blue-600 hover:text-blue-800 underline"
-                                    >
-                                        terms and conditions
-                                    </a>
-                                    {' '}stated by SK EDUTECH <span className="text-red-500">*</span>
+                                <label htmlFor="confirmTerms" className="text-base font-semibold text-gray-700  leading-relaxed">
+                                     I/We hereby confirm that we have fully read, understood, and agreed to abide by all the terms and conditions mentioned above. <span className="text-red-500">*</span>
                                 </label>
                             </div>
-                            {errors.agreeToTerms && <p className={errorClass}>{errors.agreeToTerms.message}</p>}
+                            {errors.confirmTerms && <p className={errorClass}>{errors.confirmTerms.message}</p>}
                         </section>
 
                         <div className="flex justify-end space-x-4 pt-8 border-t border-gray-200 mt-10">
@@ -391,8 +477,12 @@ function ApplyFranchiseModal({ isOpen, onClose }) {
                             </button>
                             <button
                                 type="submit"
-                                className="px-6 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition duration-150 ease-in-out disabled:opacity-50"
-                                disabled={isLoading}
+                                className={`px-6 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white transition duration-150 ease-in-out disabled:opacity-50 ${
+                                    !confirmTermsValue || isLoading 
+                                        ? 'bg-gray-400 cursor-not-allowed' 
+                                        : 'bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black'
+                                }`}
+                                disabled={isLoading || !confirmTermsValue}
                             >
                                 {isLoading ? 'Processing...' : 'Proceed'}
                             </button>

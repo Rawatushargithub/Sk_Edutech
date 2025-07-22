@@ -1,5 +1,5 @@
 import Student from "../../Admin_Backend/models/Student/Student_Details.model.js";
-
+import Franchise from "../../Admin_Backend/models/franchise/franchise.models.js"
 export const getRecentStudents = async (req, res) => {
   try {
     const students = await Student.find()
@@ -30,14 +30,14 @@ export const getRecentStudents = async (req, res) => {
 
 export const getRecentCenterImgs = async (req, res) => {
   try {
-    const Centers = await Student.find()
-      .select('studentName studentPhoto')
+    const Centers = await Franchise.find()
+      .select('franchiseName ownerPhotoUrl')
       .sort({ createdAt: -1 })
       .limit(10);
 
-    const formattedCenters = Centers.map(student => ({
-      name: student.studentName,
-      image: student.studentPhoto
+    const formattedCenters = Centers.map(Centers => ({
+      name: Centers.franchiseName,
+      image:Centers.ownerPhotoUrl
     }));
 
 

@@ -24,6 +24,7 @@ const ExamManagement = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("all");
+  const [courses, setCourses] = useState([]);
   const [selectedExamType, setSelectedExamType] = useState("all"); // New state for exam type filter
   const [showFilters, setShowFilters] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
@@ -46,12 +47,6 @@ const ExamManagement = () => {
     { value: "Weekly Test", label: "Weekly Test" },
     { value: "Monthly Test", label: "Monthly Test" },
     { value: "Final Test", label: "Final Test" },
-  ];
-
-  // Sample courses data (you might want to fetch this from API)
-  const courses = [
-    { id: 1, name: "BCA12H (Bachelor of Computer Application)" },
-    { id: 2, name: "MCA34P (Master of Computer Application)" },
   ];
 
   // Function to update exam status to inactive
@@ -82,6 +77,48 @@ const ExamManagement = () => {
     }
   };
 
+  // Add this function after your existing API functions
+  const deleteExam = async (examId) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/institute_exam/exams/${examId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Exam deleted successfully:", result);
+
+      setSuccessMessage("Exam deleted successfully!");
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 3000);
+
+      // Refresh the exams list
+      fetchExams();
+    } catch (err) {
+      console.error("Error deleting exam:", err);
+      alert("Failed to delete exam. Please try again.");
+    }
+  };
+
+  // Add confirmation handler
+  const handleDeleteExam = (examId) => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this exam? This action cannot be undone."
+      )
+    ) {
+      deleteExam(examId);
+    }
+  };
   // Fetch exams from API with automatic status update
   const fetchExams = async (examMode = mode) => {
     try {
@@ -126,7 +163,8 @@ const ExamManagement = () => {
           }
 
           return {
-            id: exam.ExamID,
+            id: exam._id,
+            examId: exam.ExamID, // Optional: only if you still need ExamID elsewhere
             courseCode: exam.courseCode,
             batch: exam.batch || [],
             examDate: exam.examDate,
@@ -232,8 +270,6 @@ const ExamManagement = () => {
         return;
       }
 
-      console.log("Marks data to upload:", marksData);
-
       const response = await fetch(
         `${API_BASE_URL}/api/v1/institute_exam/exams/${selectedExam}/marks`,
         {
@@ -278,10 +314,35 @@ const ExamManagement = () => {
       return dateString;
     }
   };
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/institute_courses/getCourses`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const coursesData = await response.json();
+      console.log("Fetched courses:", coursesData);
+      setCourses(coursesData); // Assuming the response is directly an array
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+      // You might want to set a default or show an error
+      setCourses([]);
+    }
+  };
   // Fetch exams on component mount
   useEffect(() => {
     fetchExams();
+    fetchCourses();
   }, [mode]);
 
   function getDaysLeft(targetDateStr) {
@@ -364,6 +425,7 @@ const ExamManagement = () => {
       </div>
     );
   }
+  console.log("Exams data:", filteredExams);
 
   // Error state
   if (error && !showUploadPage) {
@@ -632,12 +694,12 @@ const ExamManagement = () => {
                     onChange={(e) => setSelectedCourse(e.target.value)}
                   >
                     <option value="all">All Courses</option>
-                    {courses.map((course) => (
+                    {courses.map((course, index) => (
                       <option
-                        key={course.id}
-                        value={course.id === 1 ? "BCA12H" : "MCA34P"}
+                        key={course.id || index}
+                        value={course.courseCode || course.name}
                       >
-                        {course.name}
+                        {course.courseName || course.name}
                       </option>
                     ))}
                   </select>
@@ -647,7 +709,7 @@ const ExamManagement = () => {
                   />
                 </div>
               </div>
-              
+
               {/* Exam Type Filter - Now properly positioned below search */}
               <div className="w-full">
                 <ExamTypeSlider
@@ -762,6 +824,15 @@ const ExamManagement = () => {
                       Actions
                     </th>
                   )}
+                  {/* Conditionally render Actions column for online exams */}
+                  {mode === "online" && (
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -769,7 +840,7 @@ const ExamManagement = () => {
                   filteredExams.map((exam) => (
                     <tr key={exam.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {exam.id}
+                        {exam.examId}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {exam.courseCode}
@@ -812,6 +883,12 @@ const ExamManagement = () => {
                             <button className="text-blue-600 hover:text-blue-900">
                               Edit
                             </button>
+                            <button
+                              onClick={() => handleDeleteExam(exam.id)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Delete
+                            </button>
                             {exam.status === "Inactive" && (
                               <button
                                 onClick={() => handleUploadMarks(exam.id)}
@@ -826,6 +903,25 @@ const ExamManagement = () => {
                               </span>
                             )}
                             {/* Remove View Results for online exams from Actions */}
+                          </div>
+                        </td>
+                      )} 
+                      {/* Only show Actions column for online exams */}
+                      {mode === "online" && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <button 
+                            onClick={() => navigate(`/institute/editExam` , { state: { exam } })}
+                            className="text-blue-600 hover:text-blue-900"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteExam(exam.id)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Delete
+                            </button>
                           </div>
                         </td>
                       )}

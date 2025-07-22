@@ -593,3 +593,89 @@ export const uploadMarks = async (req, res) => {
     });
   }
 };
+export const updateExam = async (req, res) => {
+  try {
+    const { examId } = req.params;
+    const updateData = req.body;
+console.log("Update Data:", updateData);  
+    const requiredFields = [
+      "ExamID",
+      "courseCode",
+      "batch",
+      "examDate",
+      "examType",
+      "examDurationMinutes",
+      "totalQuestions",
+      "totalMarks",
+      "passingMarks",
+      "examMode",
+    ];
+
+    for (const field of requiredFields) {
+      if (!updateData[field]) {
+        return res.status(400).json({ message: `Missing required field: ${field}` });
+      }
+    }
+
+    const validExamTypes = ["Weekly Test", "Monthly Test", "Final Test"];
+    if (!validExamTypes.includes(updateData.examType)) {
+      return res.status(400).json({ message: "Invalid exam type" });
+    }
+
+    if (!["Online", "Offline"].includes(updateData.examMode)) {
+      return res.status(400).json({ message: "Invalid exam mode" });
+    }
+
+    if (
+      !updateData.batch ||
+      !updateData.batch.timings ||
+      !updateData.batch.name ||
+      !updateData.batch.id
+    ) {
+      return res.status(400).json({ message: "Invalid batch data" });
+    }
+
+    if (
+      isNaN(updateData.examDurationMinutes) ||
+      isNaN(updateData.totalQuestions) ||
+      isNaN(updateData.totalMarks) ||
+      isNaN(updateData.passingMarks)
+    ) {
+      return res.status(400).json({ message: "Numeric fields must be valid numbers" });
+    }
+
+    if (updateData.passingMarks > updateData.totalMarks) {
+      return res.status(400).json({ message: "Passing marks cannot exceed total marks" });
+    }
+
+    const updatedExam = await Exam.findByIdAndUpdate(
+      examId,
+      {
+        ExamID: updateData.ExamID,
+        courseCode: updateData.courseCode,
+        batch: {
+          timings: updateData.batch.timings,
+          name: updateData.batch.name,
+          id: updateData.batch.id,
+        },
+        examDate: updateData.examDate,
+        examType: updateData.examType,
+        examDurationMinutes: parseInt(updateData.examDurationMinutes),
+        totalQuestions: parseInt(updateData.totalQuestions),
+        totalMarks: parseInt(updateData.totalMarks),
+        passingMarks: parseInt(updateData.passingMarks),
+        examMode: updateData.examMode,
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedExam) {
+      return res.status(404).json({ message: "Exam not found" });
+    }
+
+    res.status(200).json(updatedExam);
+  } catch (error) {
+    console.error("Error updating exam:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

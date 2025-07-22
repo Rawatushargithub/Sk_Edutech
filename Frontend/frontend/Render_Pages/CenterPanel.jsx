@@ -32,6 +32,7 @@ import NoteDetail from "../Center_frontend/pages/Notes/NoteDetail.jsx"
 
 import ExamManagement from "../Center_frontend/pages/Exam/ExamPage.jsx"
 import AddExam from "../Center_frontend/pages/Exam/AddExam.jsx"
+import EditExam from "../Center_frontend/pages/Exam/editExam.jsx"
 
 import Enquiries from "../Center_frontend/pages/Enquiry/EnquiryList.jsx"
 import Certificate from "../Center_frontend/pages/Certificate/Certificate.jsx"
@@ -100,8 +101,11 @@ useEffect(() => {
               <Route path="videos" element={<UploadCourseVideo1 />} /> 
               <Route path="AddVideoLink" element={<AddVideoLink />} /> {/* Route for new AddVideoLink page */}
 
-              <Route path="Exam" element={<ExamManagement />} />
+              <Route path="exam" element={<ExamManagement />} />
               <Route path="AddExam" element={<AddExam />} />
+              <Route path="editExam" element={<EditExam />} /> 
+
+
               <Route path="apply-certificate" element={<Certificate />} />
               <Route path="approve-certificate" element={<ApprovedCertificates />} />
               <Route path="Enquiries" element={< Enquiries/>} />

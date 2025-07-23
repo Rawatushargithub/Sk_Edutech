@@ -482,54 +482,54 @@ const Wallet = () => {
 
       {/* Add Money Dialog */}
       {showAddMoney && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-            <h2 className="text-2xl font-bold mb-4">Add Money to Wallet</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full relative animate-fadeIn">
+            <h2 className="text-2xl font-extrabold text-gray-900 mb-6 text-center">Add Money</h2>
             {transactionStatus === null && (
               <>
-                <form onSubmit={handleAddMoney}>
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">Amount (₹)</label>
+                <form onSubmit={handleAddMoney} className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₹)</label>
                     <input
                       type="number"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                       placeholder="Enter amount"
                       min="1"
                       required
                     />
                   </div>
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">Bank Reference/Transaction ID</label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Bank Reference/Transaction ID</label>
                     <input
                       id="referenceId"
                       type="text"
-                      className="w-full p-2 border border-gray-300 rounded"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                       placeholder="Enter payment reference/transaction ID"
                       required
                     />
                   </div>
-                  <div className="flex justify-end space-x-2">
+                  <div className="flex justify-between gap-3 pt-2">
                     <button
                       type="button"
                       onClick={() => setShowAddMoney(false)}
-                      className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
+                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition"
                     >
-                      Submit Request
+                      Submit
                     </button>
                   </div>
                 </form>
-                <div className="mt-4 text-center">
-                  <span className="text-gray-500">OR</span>
+                <div className="mt-6 flex flex-col items-center">
+                  <span className="text-gray-400 text-xs mb-2">or</span>
                   <button
-                    className="mt-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow cursor-pointer"
                     onClick={async () => {
                       if (!amount || parseFloat(amount) <= 0) {
                         alert("Please enter a valid amount");
@@ -616,438 +616,3 @@ const Wallet = () => {
 };
 
 export default Wallet;
-
-// import React, { useState, useEffect } from "react";
-// import { FaWallet, FaHistory, FaArrowLeft, FaRupeeSign } from "react-icons/fa";
-// import axios from "axios";
-// import { useNavigate } from "react-router-dom";
-// import API_BASE_URL from "../../../../config";
-
-// const Wallet = () => {
-//   const navigate = useNavigate();
-//   const [walletData, setWalletData] = useState({
-//     balance: 0,
-//     transactions: []
-//   });
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [amount, setAmount] = useState("");
-//   const [upiId, setUpiId] = useState("institute-upi@ybl"); // Pre-filled UPI ID
-//   const [showAddMoney, setShowAddMoney] = useState(false);
-//   const [transactionStatus, setTransactionStatus] = useState(null);
-
-//   // Fetch wallet data
-//   useEffect(() => {
-//     const fetchWalletData = async () => {
-//       setIsLoading(true);
-//       try {
-//          const franchiseId  = localStorage.getItem("franchiseID");
-//         const response = await axios.get(`${API_BASE_URL}/api/v1/institute_wallet/balance?franchiseId=${franchiseId}`);
-//         setWalletData(response.data);
-//       } catch (error) {
-//         console.error("Error fetching wallet data:", error);
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-
-//     fetchWalletData();
-//   }, []); 
-
-//   // Handle add money form submission
-//   const handleAddMoney = async (e) => {
-//     e.preventDefault();
-//     if (!amount || parseFloat(amount) <= 0) {
-//       alert("Please enter a valid amount");
-//       return;
-//     }
-//     const referenceId = document.getElementById("referenceId").value;
-//     if (!referenceId) {
-//       alert("Please enter the payment reference/transaction ID");
-//       return;
-//     }
-//     setTransactionStatus("processing");
-//     try {
-//       // Submit deposit request to backend
-//       await axios.post(`${API_BASE_URL}/api/v1/institute_wallet/deposit`, {
-//         amount: parseFloat(amount),
-//         referenceId
-//       }, { withCredentials: true });
-//       setTransactionStatus("success");
-//       setTimeout(() => {
-//         setShowAddMoney(false);
-//         setAmount("");
-//         setTransactionStatus(null);
-//         fetchWalletData();
-//       }, 2000);
-//     } catch (error) {
-//       setTransactionStatus("failed");
-//     }
-//   };
-
-//   // Handle transaction confirmation
-//   const handleConfirmTransaction = async (e) => {
-//     e.preventDefault();
-    
-//     const upiTransactionId = document.getElementById("upiTransactionId").value;
-    
-//     if (!upiTransactionId) {
-//       alert("Please enter the UPI Transaction ID");
-//       return;
-//     }
-    
-//     try {
-//       // Update the transaction with the UPI ID
-//       await axios.put(`${API_BASE_URL}/api/v1/institute_wallet/transaction/confirm`, {
-//         upiTransactionId
-//       });
-      
-//       setTransactionStatus("success");
-      
-//       // Refresh wallet data after 2 seconds
-//       setTimeout(() => {
-//         setShowAddMoney(false);
-//         setAmount("");
-//         setTransactionStatus(null);
-        
-//         // Refresh wallet data
-//         fetchWalletData();
-//       }, 2000);
-//     } catch (error) {
-//       console.error("Error confirming transaction:", error);
-//       setTransactionStatus("failed");
-//     }
-//   };
-
-//   // Helper function to fetch wallet data
-//   const fetchWalletData = async () => {
-//     try {
-//       const franchiseId  = localStorage.getItem("franchiseID");
-//       const response = await axios.get(`${API_BASE_URL}/api/v1/institute_wallet/balance?franchiseId=${franchiseId}`);
-//       console.log("Wallet data fetched:", response.data);
-//       setWalletData(response.data);
-//     } catch (error) {
-//       console.error("Error fetching wallet data:", error);
-//     }
-//   };
-
-//   // Format date for transactions
-//   const formatDate = (dateString) => {
-//     const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-//     return new Date(dateString).toLocaleDateString('en-IN', options);
-//   };
-
-//   // Function to dynamically load Razorpay checkout.js
-//   const loadRazorpayScript = () => {
-//     return new Promise((resolve) => {
-//       if (document.getElementById('razorpay-checkout-js')) {
-//         resolve(true);
-//         return;
-//       }
-//       const script = document.createElement('script');
-//       script.id = 'razorpay-checkout-js';
-//       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-//       script.onload = () => {
-//         resolve(true);
-//       };
-//       script.onerror = () => {
-//         resolve(false);
-//       };
-//       document.body.appendChild(script);
-//     });
-//   };
-
-//   // Function to verify Razorpay payment
-//   const verifyRazorpayPayment = async (response, amount) => {
-//     try {
-//       const franchiseId  = localStorage.getItem("franchiseID");
-//       await axios.post(`${API_BASE_URL}/api/v1/institute_wallet/razorpay/verify-payment?franchiseId=${franchiseId}`, {
-//         razorpayPaymentId: response.razorpay_payment_id,
-//         razorpayOrderId: response.razorpay_order_id,
-//         razorpaySignature: response.razorpay_signature,
-//         amount: amount
-//       });
-//       alert('Payment verified and submitted for admin approval!');
-//       navigate("/institute");
-//       fetchWalletData();
-//     } catch (error) {
-//       alert('Payment verification failed. Please contact support.');
-//     }
-//   };
-
-//   // Function to initiate Razorpay payment by hitting backend endpoint
-//   const handleRazorpayPayment = async (amount) => {
-//     const scriptLoaded = await loadRazorpayScript();
-//     if (!scriptLoaded) {
-//       alert('Failed to load Razorpay SDK. Please try again.');
-//       return;
-//     }
-//     try {
-//       // Call your backend endpoint to create a Razorpay order
-//       const franchiseId  = localStorage.getItem("franchiseID"); 
-//       const data  = await axios.post(`${API_BASE_URL}/api/v1/institute_wallet/razorpay/create-order?franchiseId=${franchiseId}`, { amount });
-//       console.log(data, "data from backend");
-//       const options = {
-//         key: data.data.razorpay_key_id, // Razorpay key_id from backend
-//         amount: amount,
-//         currency: "INR",
-//         order_id: data.data.order_id,
-//         name: 'SK Edutech',
-//         description: 'Wallet Topup',
-//         handler: async function (response) {
-//           // Call verify payment after successful payment
-//           await verifyRazorpayPayment(response, amount);
-//         },
-//         prefill: {
-//           // Optionally add user info
-//         },
-//         theme: {
-//           color: '#3399cc'
-//         }
-//       };
-//       const rzp = new window.Razorpay(options);
-//       rzp.open();
-//     } catch (error) {
-//       console.log(error.message , "message of error")
-//       console.log('Full error object:', error);
-//       console.log('Error response:', error.response?.data);
-//       console.log('Error status:', error.response?.status);
-//   alert('Error initiating payment.');
-//       alert('Error initiating payment.');
-//     }
-//   };
-
-//   return (
-//     <div className="container mx-auto p-6 max-w-4xl">
-//       {/* Header with back button */}
-//       <div className="flex items-center mb-6">
-//         <button 
-//           onClick={() => navigate("/institute")} 
-//           className="mr-4 p-2 rounded-full hover:bg-gray-200"
-//         >
-//           <FaArrowLeft className="text-gray-700" />
-//         </button>
-//         <h1 className="text-3xl font-bold flex items-center">
-//           <FaWallet className="mr-2" /> Wallet Management
-//         </h1>
-//       </div>
-
-//       {/* Wallet Balance Card */}
-//       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-//         <div className="flex justify-between items-center">
-//           <div>
-//             <h2 className="text-xl font-semibold text-gray-700">Current Balance</h2>
-//             <p className="text-4xl font-bold mt-2">
-//               ₹ {isLoading ? "..." : walletData.balance}
-//             </p>
-//             <p className="text-sm text-gray-500 mt-1">
-//               {walletData.transactions && walletData.transactions.length > 0 
-//                 ? `Last updated: ${formatDate(walletData.transactions[0].timestamp)}` 
-//                 : "No transactions yet"}
-//             </p>
-//           </div>
-//           <button
-//             onClick={() => setShowAddMoney(true)}
-//             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
-//           >
-//             <FaRupeeSign className="mr-1" /> Add Money
-//           </button>
-//         </div>
-//       </div>
-
-//       {/* Add Money Dialog */}
-//       {showAddMoney && (
-//         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-//           <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-//             <h2 className="text-2xl font-bold mb-4">Add Money to Wallet</h2>
-//             {transactionStatus === null && (
-//               <>
-//                 <form onSubmit={handleAddMoney}>
-//                   <div className="mb-4">
-//                     <label className="block text-gray-700 mb-2">Amount (₹)</label>
-//                     <input
-//                       type="number"
-//                       value={amount}
-//                       onChange={(e) => setAmount(e.target.value)}
-//                       className="w-full p-2 border border-gray-300 rounded"
-//                       placeholder="Enter amount"
-//                       min="1"
-//                       required
-//                     />
-//                   </div>
-//                   <div className="mb-4">
-//                     <label className="block text-gray-700 mb-2">Bank Reference/Transaction ID</label>
-//                     <input
-//                       id="referenceId"
-//                       type="text"
-//                       className="w-full p-2 border border-gray-300 rounded"
-//                       placeholder="Enter payment reference/transaction ID"
-//                       required
-//                     />
-//                   </div>
-//                   <div className="flex justify-end space-x-2">
-//                     <button
-//                       type="button"
-//                       onClick={() => setShowAddMoney(false)}
-//                       className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
-//                     >
-//                       Cancel
-//                     </button>
-//                     <button
-//                       type="submit"
-//                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-//                     >
-//                       Submit Request
-//                     </button>
-//                   </div>
-//                 </form>
-//                 <div className="mt-4 text-center">
-//                   <span className="text-gray-500">OR</span>
-//                   <button
-//                     className="mt-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-//                     onClick={async () => {
-//                       if (!amount || parseFloat(amount) <= 0) {
-//                         alert("Please enter a valid amount");
-//                         return;
-//                       }
-//                       await handleRazorpayPayment(amount * 100); // Razorpay expects paise
-//                     }}
-//                   >
-//                     Pay with Razorpay
-//                   </button>
-//                 </div>
-//               </>
-//             )}
-            
-//             {transactionStatus === "processing" && (
-//               <div className="text-center py-4">
-//                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-//                 <p>Redirecting to payment...</p>
-//               </div>
-//             )}
-            
-//             {transactionStatus === "confirm" && (
-//               <form onSubmit={handleConfirmTransaction}>
-//                 <p className="mb-4">After completing your payment through UPI app, please enter the UPI Transaction ID to confirm your payment.</p>
-                
-//                 <div className="mb-4">
-//                   <label className="block text-gray-700 mb-2">UPI Transaction ID</label>
-//                   <input
-//                     id="upiTransactionId"
-//                     type="text"
-//                     className="w-full p-2 border border-gray-300 rounded"
-//                     placeholder="Enter UPI Transaction ID"
-//                     required
-//                   />
-//                 </div>
-                
-//                 <div className="flex justify-end space-x-2">
-//                   <button
-//                     type="button"
-//                     onClick={() => setShowAddMoney(false)}
-//                     className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
-//                   >
-//                     Cancel
-//                   </button>
-//                   <button
-//                     type="submit"
-//                     className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-//                   >
-//                     Confirm Payment
-//                   </button>
-//                 </div>
-//               </form>
-//             )}
-            
-//             {transactionStatus === "success" && (
-//               <div className="text-center py-4">
-//                 <div className="bg-green-100 text-green-700 p-4 rounded-lg mb-4">
-//                   <p>Transaction submitted successfully!</p>
-//                   <p className="text-sm">Please allow some time for admin approval.</p>
-//                 </div>
-//               </div>
-//             )}
-            
-//             {transactionStatus === "failed" && (
-//               <div className="text-center py-4">
-//                 <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-4">
-//                   <p>Transaction failed. Please try again.</p>
-//                 </div>
-//                 <button
-//                   onClick={() => setTransactionStatus(null)}
-//                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-//                 >
-//                   Try Again
-//                 </button>
-//               </div>
-//             )}
-//           </div>
-//         </div>
-//       )}
-
-//       {/* Transaction History */}
-//       <div className="bg-white rounded-lg shadow-md p-6">
-//         <div className="flex items-center mb-4">
-//           <FaHistory className="mr-2 text-gray-700" />
-//           <h2 className="text-xl font-semibold">Transaction History</h2>
-//         </div>
-        
-//         {isLoading ? (
-//           <div className="text-center py-8">
-//             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-//             <p className="mt-2 text-gray-500">Loading transactions...</p>
-//           </div>
-//         ) : walletData.transactions && walletData.transactions.length > 0 ? (
-//           <div className="overflow-x-auto">
-//             <table className="min-w-full divide-y divide-gray-200">
-//               <thead>
-//                 <tr>
-//                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-//                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-//                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-//                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-//                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
-//                 </tr>
-//               </thead>
-//               <tbody className="bg-white divide-y divide-gray-200">
-//                 {walletData.transactions.map((transaction) => (
-//                   <tr key={transaction._id}>
-//                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-//                       {formatDate(transaction.timestamp)}
-//                     </td>
-//                     <td className="px-6 py-4 whitespace-nowrap">
-//                       <span className={`text-sm font-medium ${
-//                         transaction.type === 'deposit' ? 'text-green-600' : 'text-red-600'
-//                       }`}>
-//                         {transaction.type === 'deposit' ? '+' : '-'}₹{transaction.amount}
-//                       </span>
-//                     </td>
-//                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-//                       {transaction.type === 'deposit' ? 'Add Money' : 'Student Registration'}
-//                     </td>
-//                     <td className="px-6 py-4 whitespace-nowrap">
-//                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-//                         transaction.status === 'approved' ? 'bg-green-100 text-green-800' : 
-//                         transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-//                         'bg-red-100 text-red-800'
-//                       }`}>
-//                         {transaction.status}
-//                       </span>
-//                     </td>
-//                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-//                       {transaction.referenceId || '-'}
-//                     </td>
-//                   </tr>
-//                 ))}
-//               </tbody>
-//             </table>
-//           </div>
-//         ) : (
-//           <div className="text-center py-8">
-//             <p className="text-gray-500">No transactions found</p>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-// export default Wallet;

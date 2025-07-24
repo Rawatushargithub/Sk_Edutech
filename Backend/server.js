@@ -82,7 +82,7 @@ import adminCourseRouter from "./backend/Admin_Backend/routes/courses.routes.js"
 import paymentRouter from "./backend/Admin_Backend/routes/admin.routes.js"; // Import payment router
 import adminRoutes from "./backend/Admin_Backend/routes/AdminPanel/admin.panel.js"; // Import admin routes
 import adminstudentRouter from "./backend/Admin_Backend/routes/student.routes.js"; // Import student router
-
+import notificationRoutes from "./backend/Admin_Backend/routes/Notification/notification.routes.js"; // Import notification router
 // admin routes
 app.use("/api/v1/mainSliderImages",mainSliderRouter)
 app.use("/api/v1/marquee",marqueeRoutes)
@@ -94,7 +94,7 @@ app.use("/api/v1/franchises", franchiseRouter);
 app.use("/api/v1/gallery", galleryRouter);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/admin_courses", adminCourseRouter); // Add admin course routes
-
+app.use("/api/v1/notification", notificationRoutes);
 
 //Student Routes
 import StudentRoutes from "./backend/Student_backend/routes/studentRoutes.js"

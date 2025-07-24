@@ -7,6 +7,7 @@ import TabMenu from "./RecentlyAdded";
 import StatsCard from "./StatsCard";
 import { FaBell, FaUserCircle } from "react-icons/fa";
 import Header from "./Header";
+import NotificationMarqueeLine from "./NotificationMarqueeLine/NotificationMarqueeLine";
 // import { getFranchiseById } from "../../services/franchiseService"; // <-- Add this import
 
 const Dashboard = () => {
@@ -74,8 +75,12 @@ const Dashboard = () => {
           <div className="text-lg font-semibold">
             Welcome, <span className="text-blue-400">{franchiseName}</span>
           </div>
-        </div>
 
+        </div>
+        <div className="w-full">
+        <NotificationMarqueeLine/>
+
+        </div>
         {/* Right Section */}
         <div className="relative flex items-center space-x-6">
           {/* Profile Icon */}

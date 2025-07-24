@@ -22,11 +22,11 @@ function App() {
         <Route path="/gallery" element={<GalleryHomepage/>} />
         <Route path="/allreviews" element={<NAllReviewsPage/>} />
 
-
         {/* Admin Routes */}
         <Route path='/admin/login' element={<AdminLogin />} />
         <Route path="/admin/*" element={<AdminPanel />} />
         <Route path="/student/*" element={<StudentPanel />} />
+        
     
     {/* Institute Routes */}
         <Route path="/institute/*" element={<CenterPanel />} />

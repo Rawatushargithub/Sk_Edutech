@@ -9,6 +9,7 @@ const CourseList = () => {
   const [error, setError] = useState(null);
   const [displayCount, setDisplayCount] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,6 +59,7 @@ const CourseList = () => {
   // };
  
   const filteredCourses = courses.filter(course =>
+    (filterStatus === '' || course.adminApprovalStatus === filterStatus) &&
     Object.values(course).some(value =>
       value.toString().toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -106,6 +108,57 @@ const CourseList = () => {
             </div>
           </div>
 
+          {/* Tabs for filtering by status - below search, above table */}
+          <div className="w-full mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-0 border border-gray-300 rounded-lg overflow-hidden bg-gray-50">
+              <button
+                className={`w-full px-4 py-3 text-md font-bold transition-colors duration-150 focus:outline-none border-b-2 sm:border-b-0 sm:border-r-3 border-gray-200 last:border-r-0
+                  ${filterStatus === ''
+                    ? 'bg-gray-300 text-gray-700  border-b-4 sm:border-b-0 sm:border-r-4 border-slate-600 shadow font-bold z-10'
+                    : 'text-slate-700 hover:bg-black-100 hover:text-slate-900 bg-gray-50'}
+                `}
+                onClick={() => setFilterStatus('')}
+                type="button"
+              >
+                All Courses
+              </button>
+              <button
+                className={`w-full px-4 py-3 text-md font-bold transition-colors duration-150 focus:outline-none border-b-2 sm:border-b-0 sm:border-r-2 border-gray-200 last:border-r-0
+                  ${filterStatus === 'pending'
+                    ? 'bg-yellow-100 text-yellow-800 border-b-4 sm:border-b-0 sm:border-r-4 border-yellow-500 shadow font-bold z-10'
+                    : 'text-slate-700 hover:bg-yellow-50 hover:text-yellow-700 bg-gray-50'}
+                `}
+                onClick={() => setFilterStatus('pending')}
+                type="button"
+              >
+                Pending Courses
+              </button>
+              <button
+                className={`w-full px-4 py-3 text-md font-bold transition-colors duration-150 focus:outline-none border-b-2 sm:border-b-0 sm:border-r-2 border-gray-200 last:border-r-0
+                  ${filterStatus === 'approved'
+                    ? 'bg-emerald-100 text-emerald-800 border-b-4 sm:border-b-0 sm:border-r-4 border-green-700 shadow font-bold z-10'
+                    : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 bg-gray-50'}
+                `}
+                onClick={() => setFilterStatus('approved')}
+                type="button"
+              >
+                Approved Courses
+              </button>
+              <button
+                className={`w-full px-4 py-3 text-md font-bold transition-colors duration-150 focus:outline-none border-b-2 sm:border-b-0 border-gray-200
+                  ${filterStatus === 'rejected'
+                    ? 'bg-red-100 text-red-800 border-b-4 sm:border-b-0 sm:border-r-4 border-rose-700 shadow font-bold z-10'
+                    : 'text-slate-700 hover:bg-rose-50 hover:text-rose-700 bg-gray-50'}
+                `}
+                onClick={() => setFilterStatus('rejected')}
+                type="button"
+              >
+                Rejected Courses
+              </button>
+            </div>
+          </div>
+
+   
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">

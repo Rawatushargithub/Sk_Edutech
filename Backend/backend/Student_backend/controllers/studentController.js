@@ -1,7 +1,7 @@
 import asyncHandler from "express-async-handler";
 import Student from "../../Center_Backend/models/Student/Student_Detais.model.js";
 import Course from "../../Center_Backend/models/Courses/Courses.models.js"
-import { Franchise } from "../../Admin_Backend/models/franchise/franchise.models.js";
+import  Franchise  from "../../Admin_Backend/models/franchise/franchise.models.js";
 import bcrypt from 'bcryptjs';
 import crypto from "crypto";
 import nodemailer from "nodemailer";

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaWallet, FaHistory, FaArrowLeft, FaRupeeSign, FaCheckCircle, FaClock, FaTimesCircle, FaEye } from "react-icons/fa";
+import { FaWallet, FaHistory, FaArrowLeft, FaRupeeSign, FaCheckCircle, FaClock, FaTimesCircle, FaEye, FaCalendarAlt, FaFilter } from "react-icons/fa";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../../../config";
@@ -10,6 +10,7 @@ const Wallet = () => {
     balance: 0,
     transactions: []
   });
+  const [allTransactions, setAllTransactions] = useState([]); // Store all transactions
   const [paymentStatus, setPaymentStatus] = useState({
     pending: [],
     approved: [],
@@ -17,25 +18,59 @@ const Wallet = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [amount, setAmount] = useState("");
-  const [upiId, setUpiId] = useState("institute-upi@ybl");
   const [showAddMoney, setShowAddMoney] = useState(false);
   const [transactionStatus, setTransactionStatus] = useState(null);
   const [activeTab, setActiveTab] = useState("pending");
   const [selectedPayment, setSelectedPayment] = useState(null);
+  
+  // Date filtering state
+  const [dateFilter, setDateFilter] = useState("all");
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
+  const [filteredPaymentStatus, setFilteredPaymentStatus] = useState({
+    pending: [],
+    approved: [],
+    rejected: []
+  });
 
-  // Fetch wallet data
+  // Fetch wallet data and transactions
   useEffect(() => {
     const fetchWalletData = async () => {
       setIsLoading(true);
       try {
         const franchiseId = localStorage.getItem("franchiseID");
-        const response = await axios.get(`${API_BASE_URL}/api/v1/institute_wallet/balance?franchiseId=${franchiseId}`);
-        setWalletData(response.data);
         
-        // Fetch payment status data
-        await fetchPaymentStatus();
+        // Fetch wallet balance
+        const balanceResponse = await axios.get(`${API_BASE_URL}/api/v1/institute_wallet/balance?franchiseId=${franchiseId}`);
+        console.log("Wallet balance data:", balanceResponse.data);
+        
+        // Fetch all transactions for this franchise
+        const transactionsResponse = await axios.get(`${API_BASE_URL}/api/v1/institute_wallet/payment-status?franchiseId=${franchiseId}`);
+        console.log("All transactions data:", transactionsResponse.data);
+        
+        // Set wallet data with balance and transactions
+        setWalletData({
+          balance: balanceResponse.data.balance || 0,
+          transactions: transactionsResponse.data || []
+        });
+        
+        // Store all transactions for filtering
+        setAllTransactions(transactionsResponse.data || []);
+        
+        // Group transactions by status for payment status dashboard
+        const grouped = {
+          pending: (transactionsResponse.data || []).filter(t => t.status === 'pending_approval'),
+          approved: (transactionsResponse.data || []).filter(t => t.status === 'approved'),
+          rejected: (transactionsResponse.data || []).filter(t => t.status === 'rejected')
+        };
+        
+        setPaymentStatus(grouped);
+        
       } catch (error) {
         console.error("Error fetching wallet data:", error);
+        // Set default values on error
+        setWalletData({ balance: 0, transactions: [] });
+        setAllTransactions([]);
+        setPaymentStatus({ pending: [], approved: [], rejected: [] });
       } finally {
         setIsLoading(false);
       }
@@ -44,71 +79,77 @@ const Wallet = () => {
     fetchWalletData();
   }, []);
 
-  // Fetch payment status data
-  const fetchPaymentStatus = async () => {
-    try {
-      const franchiseId = localStorage.getItem("franchiseID");
-      const response = await axios.get(`${API_BASE_URL}/api/v1/institute_wallet/payment-status?franchiseId=${franchiseId}`);
-      console.log(response.data, "Payment status data fetched");
-      // Group transactions by status
-      const grouped = {
-        pending: response.data.filter(t => t.status === 'pending_approval'),
-        approved: response.data.filter(t => t.status === 'approved'),
-        rejected: response.data.filter(t => t.status === 'rejected')
-      };
-      
-      setPaymentStatus(grouped);
-    } catch (error) {
-      console.error("Error fetching payment status:", error);
-      // Mock data for demonstration
-      setPaymentStatus({
-        pending: [
-          {
-            _id: "1",
-            amount: 5000,
-            type: "deposit",
-            status: "pending_approval",
-            referenceId: "UPI123456789",
-            timestamp: new Date().toISOString(),
-            paymentId: "pay_123456",
-            purpose: "wallet_recharge"
-          },
-          {
-            _id: "2",
-            amount: 3000,
-            type: "deposit",
-            status: "pending_approval",
-            referenceId: "NEFT987654321",
-            timestamp: new Date(Date.now() - 86400000).toISOString(),
-            paymentId: "pay_789012",
-            purpose: "wallet_recharge"
-          }
-        ],
-        approved: [
-          {
-            _id: "3",
-            amount: 10000,
-            type: "deposit",
-            status: "approved",
-            referenceId: "UPI111222333",
-            timestamp: new Date(Date.now() - 172800000).toISOString(),
-            paymentId: "pay_345678",
-            purpose: "wallet_recharge"
-          }
-        ],
-        rejected: [
-          {
-            _id: "4",
-            amount: 2000,
-            type: "deposit",
-            status: "rejected",
-            referenceId: "UPI444555666",
-            timestamp: new Date(Date.now() - 259200000).toISOString(),
-            paymentId: "pay_901234",
-            purpose: "wallet_recharge"
-          }
-        ]
-      });
+  // Apply date filter whenever data or dateFilter changes
+  useEffect(() => {
+    applyDateFilter();
+  }, [allTransactions, dateFilter]);
+
+  // Fixed date filtering function
+  const applyDateFilter = () => {
+    const now = new Date();
+    let startDate;
+    
+    
+    switch (dateFilter) {
+      case "daily":
+        startDate = new Date(now);
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case "weekly":
+        startDate = new Date(now);
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case "monthly":
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      default:
+        startDate = null;
+    }
+    
+
+    
+    // Filter all transactions
+    let filtered = [];
+    if (allTransactions && allTransactions.length > 0) {
+      if (startDate) {
+        filtered = allTransactions.filter(transaction => {
+          const transactionDate = new Date(transaction.timestamp || transaction.createdAt || transaction.date);
+          return transactionDate >= startDate;
+        });
+      } else {
+        filtered = allTransactions;
+      }
+    }
+    
+    setFilteredTransactions(filtered);
+    
+    // Update wallet data with filtered transactions
+    setWalletData(prev => ({
+      ...prev,
+      transactions: filtered
+    }));
+    
+    // Filter payment status data
+    const filteredStatus = {
+      pending: filtered.filter(payment => payment.status === 'pending_approval'),
+      approved: filtered.filter(payment => payment.status === 'approved'),
+      rejected: filtered.filter(payment => payment.status === 'rejected')
+    };
+    
+    setFilteredPaymentStatus(filteredStatus);
+  };
+
+  // Get filter display text
+  const getFilterDisplayText = () => {
+    switch (dateFilter) {
+      case "daily":
+        return "Today";
+      case "weekly":
+        return "Last 7 Days";
+      case "monthly":
+        return "This Month";
+      default:
+        return "All Time";
     }
   };
 
@@ -135,7 +176,8 @@ const Wallet = () => {
         setShowAddMoney(false);
         setAmount("");
         setTransactionStatus(null);
-        fetchWalletData();
+        // Refresh data
+        window.location.reload(); // Simple way to refresh all data
       }, 2000);
     } catch (error) {
       setTransactionStatus("failed");
@@ -164,23 +206,12 @@ const Wallet = () => {
         setShowAddMoney(false);
         setAmount("");
         setTransactionStatus(null);
-        fetchWalletData();
+        // Refresh data
+        window.location.reload();
       }, 2000);
     } catch (error) {
       console.error("Error confirming transaction:", error);
       setTransactionStatus("failed");
-    }
-  };
-
-  // Helper function to fetch wallet data
-  const fetchWalletData = async () => {
-    try {
-      const franchiseId = localStorage.getItem("franchiseID");
-      const response = await axios.get(`${API_BASE_URL}/api/v1/institute_wallet/balance?franchiseId=${franchiseId}`);
-      console.log("Wallet data fetched:", response.data);
-      setWalletData(response.data);
-    } catch (error) {
-      console.error("Error fetching wallet data:", error);
     }
   };
 
@@ -221,8 +252,8 @@ const Wallet = () => {
         amount: amount
       });
       alert('Payment verified and submitted for admin approval!');
-      navigate("/institute");
-      fetchWalletData();
+      setShowAddMoney(false);
+      navigate("/institute/wallet");
     } catch (error) {
       alert('Payment verification failed. Please contact support.');
     }
@@ -238,7 +269,6 @@ const Wallet = () => {
     try {
       const franchiseId = localStorage.getItem("franchiseID");
       const data = await axios.post(`${API_BASE_URL}/api/v1/institute_wallet/razorpay/create-order?franchiseId=${franchiseId}`, { amount });
-      console.log(data, "data from backend");
       const options = {
         key: data.data.razorpay_key_id,
         amount: amount,
@@ -329,11 +359,45 @@ const Wallet = () => {
         </div>
       </div>
 
+      {/* Date Filter Section */}
+      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center">
+            <FaFilter className="mr-2 text-gray-600" />
+            <span className="text-lg font-medium text-gray-700">Filter by Date:</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: "all", label: "All Time", icon: FaCalendarAlt },
+              { key: "daily", label: "Today", icon: FaCalendarAlt },
+              { key: "weekly", label: "Last 7 Days", icon: FaCalendarAlt },
+              { key: "monthly", label: "This Month", icon: FaCalendarAlt }
+            ].map((filter) => (
+              <button
+                key={filter.key}
+                onClick={() => setDateFilter(filter.key)}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center ${
+                  dateFilter === filter.key
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <filter.icon className="mr-1 text-sm" />
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mt-2 text-sm text-gray-600">
+          Currently showing: <span className="font-semibold text-blue-600">{getFilterDisplayText()}</span>
+        </div>
+      </div>
+
       {/* Payment Status Dashboard */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4 flex items-center">
           <FaEye className="mr-2 text-gray-700" />
-          Payment Status 
+          Payment Status - {getFilterDisplayText()}
         </h2>
         
         {/* Status Summary Cards */}
@@ -342,7 +406,7 @@ const Wallet = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-yellow-800">Pending Approval</p>
-                <p className="text-2xl font-bold text-yellow-900">{paymentStatus.pending.length}</p>
+                <p className="text-2xl font-bold text-yellow-900">{filteredPaymentStatus.pending.length}</p>
               </div>
               <FaClock className="text-yellow-500 text-2xl" />
             </div>
@@ -352,7 +416,7 @@ const Wallet = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-green-800">Approved</p>
-                <p className="text-2xl font-bold text-green-900">{paymentStatus.approved.length}</p>
+                <p className="text-2xl font-bold text-green-900">{filteredPaymentStatus.approved.length}</p>
               </div>
               <FaCheckCircle className="text-green-500 text-2xl" />
             </div>
@@ -362,7 +426,7 @@ const Wallet = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-red-800">Rejected</p>
-                <p className="text-2xl font-bold text-red-900">{paymentStatus.rejected.length}</p>
+                <p className="text-2xl font-bold text-red-900">{filteredPaymentStatus.rejected.length}</p>
               </div>
               <FaTimesCircle className="text-red-500 text-2xl" />
             </div>
@@ -372,9 +436,9 @@ const Wallet = () => {
         {/* Tab Navigation */}
         <div className="flex space-x-1 mb-4">
           {[
-            { key: 'pending', label: 'Pending', count: paymentStatus.pending.length },
-            { key: 'approved', label: 'Approved', count: paymentStatus.approved.length },
-            { key: 'rejected', label: 'Rejected', count: paymentStatus.rejected.length }
+            { key: 'pending', label: 'Pending', count: filteredPaymentStatus.pending.length },
+            { key: 'approved', label: 'Approved', count: filteredPaymentStatus.approved.length },
+            { key: 'rejected', label: 'Rejected', count: filteredPaymentStatus.rejected.length }
           ].map((tab) => (
             <button
               key={tab.key}
@@ -392,8 +456,8 @@ const Wallet = () => {
 
         {/* Payment List */}
         <div className="space-y-3">
-          {paymentStatus[activeTab].length > 0 ? (
-            paymentStatus[activeTab].map((payment) => (
+          {filteredPaymentStatus[activeTab].length > 0 ? (
+            filteredPaymentStatus[activeTab].map((payment) => (
               <div key={payment._id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -411,9 +475,6 @@ const Wallet = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-gray-500">
-                      Ref: {payment.referenceId || 'N/A'}
-                    </p>
                     {payment.paymentId && (
                       <p className="text-xs text-gray-400">
                         Payment ID: {payment.paymentId}
@@ -431,15 +492,77 @@ const Wallet = () => {
             ))
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500">No {activeTab} payments found</p>
+              <p className="text-gray-500">No {activeTab} payments found for {getFilterDisplayText().toLowerCase()}</p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Transaction History */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center mb-4">
+          <FaHistory className="mr-2 text-gray-700" />
+          <h2 className="text-xl font-semibold">Transaction History - {getFilterDisplayText()}</h2>
+        </div>
+        
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-2 text-gray-500">Loading transactions...</p>
+          </div>
+        ) : walletData.transactions && walletData.transactions.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {walletData.transactions.map((transaction) => (
+                  <tr key={transaction._id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(transaction.timestamp)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`text-sm font-medium ${
+                        transaction.type === 'deposit' ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {transaction.type === 'deposit' ? '+' : '-'}₹{transaction.amount}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {transaction.type === 'deposit' ? 'Add Money' : 'Student Registration'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        transaction.status === 'approved' ? 'bg-green-100 text-green-800' : 
+                        transaction.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' : 
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {transaction.status}
+                      </span>
+                    </td>
+                    
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No transactions found for {getFilterDisplayText().toLowerCase()}</p>
+          </div>
+        )}
+      </div>
  
       {/* Payment Details Modal */}
       {selectedPayment && (
-        <div className="fixed inset-0 bg-grey-100 bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold mb-4">Payment Details</h3>
             <div className="space-y-3">
@@ -479,7 +602,6 @@ const Wallet = () => {
           </div>
         </div>
       )}
-
       {/* Add Money Dialog */}
       {showAddMoney && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
@@ -500,6 +622,7 @@ const Wallet = () => {
                       required
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Bank Reference/Transaction ID</label>
                     <input
@@ -518,12 +641,14 @@ const Wallet = () => {
                     >
                       Cancel
                     </button>
+
                     <button
                       type="submit"
                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition"
                     >
                       Submit
                     </button>
+
                   </div>
                 </form>
                 <div className="mt-6 flex flex-col items-center">

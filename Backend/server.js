@@ -103,10 +103,12 @@ import certificateRoutes from './backend/Student_backend/routes/certiifcateRoute
 import feesRoutes from "./backend/Student_backend/routes/feesRoutes.js";
 import feedbackRoutes from "./backend/Student_backend/routes/feedbackRoutes.js";
 import ExamRoutes from "./backend/Student_backend/routes/exam.routes.js";
+import videoRoutes from "./backend/Student_backend/routes/videoRoutes.js"
 
 // Student Routes 
 app.use("/api/v1/student", StudentRoutes);
 app.use("/api/notes", notesRoutes);
+app.use("/api/videos",videoRoutes );
 app.use("/api/v1/certificates", certificateRoutes);
 app.use("/api/v1/fees", feesRoutes);
 app.use("/api/exams", ExamRoutes);

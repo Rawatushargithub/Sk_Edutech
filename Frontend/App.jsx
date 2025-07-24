@@ -1,12 +1,12 @@
 import { Route,Routes } from 'react-router-dom'
 import './index.css'
-import Sidebar from './frontend/AdminPanel_frontend/Sidebar/Sidebar';
 import HomePage from './frontend/Render_Pages/Homepage'
 import AdminPanel from './frontend/Render_Pages/AdminPanel';
 import StudentPanel from './frontend/Render_Pages/StudentPanel'
 import GalleryHomepage from './frontend/Homepage_frontend/components/gallery/Gallery';
 import NAllReviewsPage from './frontend/Homepage_frontend/components/ReviewsSection/NewAllReviews';
 import CenterPanel from './frontend/Render_Pages/CenterPanel';
+
 
 import StudentAchievementsPanel from './frontend/AdminPanel_frontend/OurAchievers/Achievers';
 import MainSliderUploadPage from './frontend/AdminPanel_frontend/MainSlider/MainSliderImgUpload';
@@ -26,14 +26,9 @@ import PrivacyPolicy from './frontend/Homepage_frontend/components/navbar/links/
 import Message from './frontend/Homepage_frontend/components/navbar/links/Message';
 import TermAndConditions from './frontend/Homepage_frontend/components/navbar/links/TermAndConditions';
 
-// import NAllReviewsPage from './componenets/NewAllReviews'
 
-// import CertificateVerification from './componenets/Certificate'
-// import AboutUs from './componenets/AboutUs'
 
-// import GalleryHomepage from './componenets/Gallery/Gallery'
-// import MarqueeDisplay from './componenets/MarqueeLine/Marqueeline'
-// import Downloadpdf from './componenets/downloadpdf'
+
 
 function App() {
 
@@ -44,6 +39,7 @@ function App() {
         <Route path="/" element={<HomePage/>} />
         <Route path="/gallery" element={<GalleryHomepage/>} />
         <Route path="/allreviews" element={<NAllReviewsPage/>} />
+
         <Route path="/affiliation-process" element={<AffiliationProcess />} />
         <Route path="/how-to-get-franchise" element={<HowToGetFran />} />
         <Route path="/reason-partners" element={<ReasonPartner />} />

@@ -11,7 +11,7 @@ const AddNewStudent = () => {
     // Personal Details
     studentPhoto: null,
     studentSignature: null, 
-    rollNumber: "",
+    // rollNumber removed as it will be auto-generated in the backend
     abbreviation: "Mr.",
     studentName: "",
     relationType: "S/O",
@@ -77,10 +77,7 @@ const AddNewStudent = () => {
 const validateForm = (formData) => {
   const errors = {};
   
-  // Required field validation
-  if (!formData.rollNumber?.trim()) {
-    errors.rollNumber = "Roll number is required";
-  }
+  // Roll number validation removed as it will be auto-generated
   
   if (!formData.studentName?.trim()) {
     errors.studentName = "Student name is required";
@@ -204,10 +201,7 @@ const handleChange = (e) => {
     }
   }
   
-  if (name === 'rollNumber') {
-    // Remove any special characters except alphanumeric
-    processedValue = value.replace(/[^a-zA-Z0-9]/g, '');
-  }
+  // Roll number handling removed as it will be auto-generated
   
   if (name === 'postCode') {
     // Allow only numbers and limit to 6 digits
@@ -297,9 +291,15 @@ const handleSubmit = async (e) => {
   try {
     const formDataToSend = new FormData();
     const franchiseId = localStorage.getItem("franchiseID");
-    console.log(franchiseId)
+    const franchiseName = localStorage.getItem("franchiseName");
+    console.log("franchiseId:", franchiseId);
+    console.log("franchiseName:", franchiseName);
+    
     if (franchiseId) {
       formDataToSend.append("franchiseId", franchiseId);
+    }
+    if (franchiseName) {
+      formDataToSend.append("franchiseName", franchiseName);
     }
     
     // Append files
@@ -341,7 +341,7 @@ const handleSubmit = async (e) => {
       setFormData({
         studentPhoto: null,
         studentSignature: null,
-        rollNumber: "",
+        // rollNumber removed as it will be auto-generated
         abbreviation: "Mr.",
         studentName: "",
         relationType: "S/O",
@@ -402,8 +402,8 @@ const handleSubmit = async (e) => {
           Add New Student
         </h1>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Photo, Signature, and Roll Number Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Photo and Signature Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
               <label className="block mb-2 text-sm font-medium">Student Photo</label>
               <img
@@ -440,17 +440,7 @@ const handleSubmit = async (e) => {
                 className="p-2 w-full text-sm border rounded-md"
               />
             </div>
-            <div>
-              <label className="block mb-2 text-sm font-medium">Roll Number *</label>
-              <input 
-                type="text"
-                name="rollNumber"
-                value={formData.rollNumber}
-                onChange={handleChange}
-                className="border-gray-300 border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                required
-              />
-            </div>
+            {/* Roll Number field removed as it will be auto-generated in the backend */}
           </div>
 
           {/* Name Section */}

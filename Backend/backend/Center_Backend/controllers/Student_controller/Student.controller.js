@@ -16,6 +16,11 @@ import Transaction from "../../models/Payment/Transaction.js";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import fs from "fs/promises";
 import axios from "axios";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 // Add these validation functions at the top of your controller file
 const validateRequiredFields = (fields) => {
   const missingFields = [];
@@ -874,7 +879,7 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
     console.error("Error fetching franchise:", error);
   }
 
-  const pdfPath = "F:\\SK_for_course\\Sk_Edutech\\Frontend\\public\\assets\\blank_form.pdf";
+  const pdfPath = path.join(__dirname, "../../../templates/blank_form.pdf");
   const existingPdfBytes = await fs.readFile(pdfPath);
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
   const page = pdfDoc.getPages()[0];
@@ -930,9 +935,9 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   }
 
   // Fetch and embed franchise signature (bottom signature box)
-  if (franchise && franchise.instituteSignature) {
+  if (franchise && franchise.franchiseSignatureUrl) {
     try {
-      const franchiseSignatureUrl = franchise.instituteSignature;
+      const franchiseSignatureUrl = franchise.franchiseSignatureUrl;
       const signatureResponse = await axios.get(franchiseSignatureUrl, { responseType: 'arraybuffer' });
       const signatureBytes = Buffer.from(signatureResponse.data, 'binary');
       let franchiseSignatureImage;
@@ -942,7 +947,7 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
         franchiseSignatureImage = await pdfDoc.embedPng(signatureBytes);
       }
       // Signature position in bottom right
-      page.drawImage(franchiseSignatureImage, { x: 413, y: 100, width: 120, height: 40 });
+      page.drawImage(franchiseSignatureImage, { x: 452, y: 109, width: 120, height: 40 });
     } catch (error) {
       console.error("Error fetching or embedding student signature:", error);
     }
@@ -1023,7 +1028,8 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
 
   // Contact Number (after "CONTACT NO. :")
   if (franchise) {
-    drawText(franchise.mobileNumber, 206, 466);
+    drawText(franchise.mobile, 244, 74);
+    drawText(franchise.address, 215, 48);
   }
 
   // // for director signn

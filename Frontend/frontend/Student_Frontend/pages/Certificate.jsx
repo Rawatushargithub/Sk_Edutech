@@ -17,18 +17,27 @@ const CertificatePreview = () => {
       return;
     }
 
-    axios.post(`${API_BASE_URL}/api/v1/certificates/approvedcertificate`, {
-      franchiseId,
-      courseCode,
-      rollNumber
-    })
+    axios
+      .post(`${API_BASE_URL}/api/v1/certificates/approvedcertificate`, {
+        franchiseId,
+        courseCode,
+        rollNumber,
+      })
       .then((res) => {
-        setCertificateData(res.data);
+        if (!res.data || Object.keys(res.data).length === 0) {
+          setCertificateData(null);
+        } else {
+          setCertificateData(res.data);
+        }
         setError(null);
       })
       .catch((err) => {
         console.error(err);
-        setError(err.response?.data?.message || "Something went wrong");
+        const message =
+          err.response?.status === 404
+            ? "No certificate has been issued yet."
+            : err.response?.data?.message || "Something went wrong";
+        setError(message);
       });
   }, [franchiseId, courseCode, rollNumber]);
 
@@ -36,23 +45,44 @@ const CertificatePreview = () => {
     window.print();
   };
 
-  if (error) return <div className="text-red-600">{error}</div>;
-  if (!certificateData) return <div>Loading...</div>;
+  // Error Display
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-100">
+        <div className="text-red-600 text-lg font-medium text-center px-4">
+          {error}
+        </div>
+      </div>
+    );
+  }
 
+  // No Certificate Display
+  if (!certificateData) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-100">
+        <div className="text-gray-600 text-lg font-medium text-center px-4">
+          No certificate has been issued yet.
+        </div>
+      </div>
+    );
+  }
+
+  // Certificate Preview Display
   return (
     <div className="flex justify-center items-center py-10 bg-gray-100 min-h-screen">
       <div className="bg-white border-4 border-blue-600 rounded-lg shadow-lg w-full max-w-3xl px-10 py-8 text-center relative print:border-black print:shadow-none print:px-16 print:py-10">
         <div className="absolute top-4 left-6 text-sm font-medium text-gray-700 print:static print:mb-4 print:text-center">
-          Certificate ID: <span className="text-blue-700 font-semibold">{certificateData.certificateId}</span>
+          Certificate ID:{" "}
+          <span className="text-blue-700 font-semibold">
+            {certificateData.certificateId}
+          </span>
         </div>
 
         <h1 className="text-3xl font-bold text-blue-700 mb-6 mt-4 uppercase">
           Certificate of Completion
         </h1>
 
-        <p className="text-lg text-gray-800 mb-6">
-          This is to certify that
-        </p>
+        <p className="text-lg text-gray-800 mb-6">This is to certify that</p>
 
         <p className="text-2xl font-semibold text-gray-900 mb-1 underline">
           {certificateData.studentName}
@@ -70,16 +100,29 @@ const CertificatePreview = () => {
         </p>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-left text-sm text-gray-700 mb-8 max-w-xl mx-auto">
-          <p><strong>Roll Number:</strong> {certificateData.rollNumber}</p>
-          <p><strong>Exam ID:</strong> {certificateData.examId}</p>
-          <p><strong>Session:</strong> {certificateData.session}</p>
-          <p><strong>Institute:</strong> {certificateData.instituteName}</p>
-          <p><strong>Percentage:</strong> {certificateData.percentage}%</p>
-          <p><strong>Grade:</strong> {certificateData.grade}</p>
+          <p>
+            <strong>Roll Number:</strong> {certificateData.rollNumber}
+          </p>
+          <p>
+            <strong>Exam ID:</strong> {certificateData.examId}
+          </p>
+          <p>
+            <strong>Session:</strong> {certificateData.session}
+          </p>
+          <p>
+            <strong>Institute:</strong> {certificateData.instituteName}
+          </p>
+          <p>
+            <strong>Percentage:</strong> {certificateData.percentage}%
+          </p>
+          <p>
+            <strong>Grade:</strong> {certificateData.grade}
+          </p>
         </div>
 
         <p className="text-sm text-gray-500 mb-8 italic">
-          This certificate is awarded based on official examination results and approved status.
+          This certificate is awarded based on official examination results and
+          approved status.
         </p>
 
         <div className="flex justify-between items-center mt-8 px-6 print:hidden">

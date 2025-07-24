@@ -107,53 +107,204 @@ export const getExamWithQuestions = async (req, res) => {
 
 export const submitExamAnswers = async (req, res) => {
   const { id } = req.params;
-  const { answers, rollNumber } = req.body;
+  const { 
+    answers, 
+    rollNumber, 
+    autoSubmitted = false, 
+    reason = "", 
+    violations = 0 
+  } = req.body;
 
   try {
+    console.log("Submitting exam:", { id, rollNumber, autoSubmitted, reason });
+    console.log("Received answers:", answers);
+
+    // Validation
+    if (!rollNumber) {
+      return res.status(400).json({ message: "Roll number is required" });
+    }
+
+    if (!answers || typeof answers !== 'object') {
+      return res.status(400).json({ message: "Valid answers are required" });
+    }
+
     // Step 1: Fetch the exam
     const exam = await Exam.findById(id);
-    if (!exam) return res.status(404).json({ message: "Exam not found" });
+    if (!exam) {
+      return res.status(404).json({ message: "Exam not found" });
+    }
+
+    console.log("Exam found:", {
+      courseCode: exam.courseCode,
+      totalMarks: exam.totalMarks,
+      totalQuestions: exam.totalQuestions,
+      passingMarks: exam.passingMarks,
+      questionsCount: exam.questions?.length
+    });
 
     // Step 2: Get the question numbers
     const questionNumbers = exam.questions;
+    if (!questionNumbers || !Array.isArray(questionNumbers) || questionNumbers.length === 0) {
+      return res.status(400).json({ message: "No questions found in exam" });
+    }
 
     // Step 3: Fetch question bank
     const questionBank = await QuestionBank.findOne({ courseCode: exam.courseCode });
-    if (!questionBank) return res.status(404).json({ message: "Question bank not found" });
-
-    const correctQuestions = questionBank.questions.filter(q => questionNumbers.includes(q.qNo));
-
-    // Step 4: Compare answers
-    let correctCount = 0;
-
-    for (const q of correctQuestions) {
-      if (answers[q.qNo] && answers[q.qNo].toLowerCase() === q.answer.toLowerCase()) {
-        correctCount++;
-      }
+    if (!questionBank) {
+      return res.status(404).json({ message: "Question bank not found" });
     }
 
-    const perQuestionMarks = exam.totalMarks / exam.totalQuestions;
-    const marksObtained = correctCount * perQuestionMarks;
+    if (!questionBank.questions || !Array.isArray(questionBank.questions)) {
+      return res.status(400).json({ message: "No questions found in question bank" });
+    }
 
-    const resultStatus = marksObtained >= exam.passingMarks ? "Passed" : "Failed";
+    const correctQuestions = questionBank.questions.filter(q => 
+      questionNumbers.includes(q.qNo)
+    );
 
-    // Step 5: Save result inside exam.results[]
-    exam.results.push({
-      rollNumber,
-      marksObtained,
-      status: resultStatus
+    console.log("Questions found:", {
+      totalInBank: questionBank.questions.length,
+      selectedQuestions: correctQuestions.length,
+      questionNumbers: questionNumbers
     });
 
+    if (correctQuestions.length === 0) {
+      return res.status(400).json({ message: "No matching questions found" });
+    }
+
+    // Step 4: Compare answers and calculate score
+    let correctCount = 0;
+    const answerDetails = [];
+
+    for (const q of correctQuestions) {
+      const studentAnswer = answers[q.qNo];
+      const correctAnswer = q.answer;
+      const isCorrect = studentAnswer && correctAnswer && 
+        studentAnswer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
+      
+      if (isCorrect) {
+        correctCount++;
+      }
+
+      answerDetails.push({
+        qNo: q.qNo,
+        studentAnswer: studentAnswer || 'Not answered',
+        correctAnswer: correctAnswer,
+        isCorrect: isCorrect
+      });
+
+      console.log(`Q${q.qNo}: Student: "${studentAnswer}", Correct: "${correctAnswer}", Match: ${isCorrect}`);
+    }
+
+    // Step 5: Calculate marks with proper validation
+    const totalQuestions = correctQuestions.length;
+    const totalMarks = exam.totalMarks && exam.totalMarks > 0 ? exam.totalMarks : totalQuestions;
+    const passingMarks = exam.passingMarks && exam.passingMarks > 0 ? exam.passingMarks : (totalMarks * 0.4);
+
+    // Calculate marks per question
+    let perQuestionMarks = 1; // Default value
+    if (totalMarks > 0 && totalQuestions > 0) {
+      perQuestionMarks = totalMarks / totalQuestions;
+    }
+
+    // Calculate final marks
+    let marksObtained = correctCount * perQuestionMarks;
+
+    // Ensure marksObtained is a valid number
+    if (isNaN(marksObtained) || !isFinite(marksObtained) || marksObtained < 0) {
+      console.warn("Invalid marksObtained calculated:", marksObtained);
+      marksObtained = 0;
+    }
+
+    // Round to 2 decimal places
+    marksObtained = Math.round(marksObtained * 100) / 100;
+
+    // Calculate percentage
+    let percentage = 0;
+    if (totalMarks > 0) {
+      percentage = Math.round((marksObtained / totalMarks) * 100 * 100) / 100;
+    }
+
+    // Determine status
+    const resultStatus = marksObtained >= passingMarks ? "Passed" : "Failed";
+
+    console.log("Final calculation:", {
+      correctCount,
+      totalQuestions,
+      totalMarks,
+      perQuestionMarks,
+      marksObtained,
+      percentage,
+      passingMarks,
+      resultStatus
+    });
+
+    // Validate final values before saving
+    if (isNaN(marksObtained)) {
+      console.error("marksObtained is NaN - using 0 instead");
+      marksObtained = 0;
+    }
+
+    // Step 6: Check if student already submitted
+    const existingResultIndex = exam.results.findIndex(
+      result => result.rollNumber === rollNumber
+    );
+
+    const resultData = {
+      rollNumber,
+      marksObtained,
+      status: resultStatus,
+      submittedAt: new Date(),
+      autoSubmitted,
+      reason: reason || null,
+      violations: violations || 0,
+      correctAnswers: correctCount,
+      totalQuestions: totalQuestions,
+      percentage: percentage
+    };
+
+    if (existingResultIndex >= 0) {
+      // Update existing result
+      exam.results[existingResultIndex] = resultData;
+      console.log("Updated existing result for rollNumber:", rollNumber);
+    } else {
+      // Add new result
+      exam.results.push(resultData);
+      console.log("Added new result for rollNumber:", rollNumber);
+    }
+
+    // Save the exam
     await exam.save();
 
+    console.log("Exam saved successfully");
+
+    // Return success response
     return res.status(200).json({
-      message: "Test submitted successfully",
+      message: autoSubmitted ? 
+        `Test auto-submitted successfully. Reason: ${reason}` : 
+        "Test submitted successfully",
       marksObtained,
-      status: resultStatus
+      totalMarks,
+      percentage,
+      status: resultStatus,
+      correctAnswers: correctCount,
+      totalQuestions,
+      autoSubmitted,
+      reason: reason || null
     });
 
   } catch (error) {
     console.error("Error submitting exam:", error);
-    return res.status(500).json({ message: "Server error" });
+    console.error("Error stack:", error.stack);
+    return res.status(500).json({ 
+      message: "Server error while submitting exam",
+      error: error.message 
+    });
   }
+};
+
+// Helper function to validate numeric values
+const validateNumber = (value, fallback = 0) => {
+  const num = Number(value);
+  return isNaN(num) || !isFinite(num) ? fallback : num;
 };

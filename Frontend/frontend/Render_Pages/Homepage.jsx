@@ -15,12 +15,6 @@ import TopMarquee from '../Homepage_frontend/components/marqueeLine/TopMarquee';
 import BottomMarquee from '../Homepage_frontend/components/marqueeLine/BottomMarquee';
 import NAllReviewsPage from '../Homepage_frontend/components/ReviewsSection/NewAllReviews'
 import ApplyFranchiseModal from '../Homepage_frontend/ApplyFranchiseModal';
-// import EducationSection from "../componenets/EducationSection";
-// import OurAchievers from "../componenets/OurAchievers";
-// import ContactUsSection from "../componenets/ContactUsSection";
-// import ReviewsSection from "../componenets/ReviewsSection";
-// import Footer from "../componenets/Footer";
-
 
 function HomePage() {
 
@@ -38,15 +32,24 @@ function HomePage() {
     return (
       <div>
         <Navbar/>
-       
-        <MainSlider/>
-        <TopMarquee />
-        <LoginBoxes onApplyClick={handleOpenApplyModal}/>
-        <EducationSection/>
-        <BottomMarquee />
-        <OurAchievers/>
-        <ReviewsSection />
-        <ContactUsSection />
+        
+        <Routes>
+          {/* Default route for the main homepage content */}
+          <Route path="/" element={
+            <>
+              <MainSlider/>
+              <TopMarquee />
+              <LoginBoxes onApplyClick={handleOpenApplyModal}/>
+              <EducationSection/>
+              <BottomMarquee />
+              <OurAchievers/>
+              <ReviewsSection />
+              <ContactUsSection />
+            </>
+          } />
+
+        
+        </Routes>
         <Footer/>
 
         {/* Render the modal conditionally */}
@@ -54,14 +57,7 @@ function HomePage() {
             <ApplyFranchiseModal isOpen={isApplyModalOpen} onClose={handleCloseApplyModal} />
         )}
 
-      <Routes>
-        <Route path="/gallery" element={<GalleryHomepage/>} />
-        <Route path="/allreviews" element={<NAllReviewsPage/>} />
-
-      </Routes>
-  
       </div>
     );
   }
-  
   export default HomePage;

@@ -1,5 +1,6 @@
 import { asyncHandler } from "../../utils/asynchanlder.js";
-import Student from "../../../Center_Backend/models/Student/Student_Detais.model.js"
+import Franchise from "../../models/Franchise.model.js";
+import Student from "../../models/Student/Student_Detais.model.js";
 import Fees_studentModel from "../../models/Student/Fees_student.model.js";
 import installmentModel from "../../models/Student/installment.model.js";
 import BatchModel from "../../models/batch.model.js"; // Import your Batch model
@@ -9,9 +10,23 @@ import { ApiResponse } from "../../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 import Wallet from "../../models/Payment/Wallet.js";
 import Transaction from "../../models/Payment/Transaction.js";
+
 import bcrypt from 'bcryptjs';
 
+
 // Add these validation functions at the top of your controller file
+
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import fs from "fs/promises";
+import axios from "axios";
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// For ES modules, get the current directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+
 const validateRequiredFields = (fields) => {
   const missingFields = [];
   
@@ -36,16 +51,62 @@ const validateMobile = (mobile) => {
   return mobileRegex.test(mobile);
 };
 
-// Updated registerStudent function with better error handling
+
+// Function to generate roll number
+const generateRollNumber = async (franchiseName) => {
+  try {
+    // Use franchiseName from local storage (passed from frontend)
+    let franchisePrefix = "SK";
+    
+    // Extract first two letters from franchiseName, convert to uppercase (ignoring spaces)
+    let franchiseCode = "";
+    
+    if (franchiseName) {
+      // Remove all spaces from franchiseName
+      const nameWithoutSpaces = franchiseName.replace(/\s+/g, "");
+      
+      // Take first two letters and convert to uppercase
+      franchiseCode = nameWithoutSpaces.substring(0, 2).toUpperCase();
+    } else {
+      // Default if no franchiseName
+      franchiseCode = "XX";
+    }
+    
+    // Find the latest roll number with this prefix
+    const latestStudent = await Student.findOne({
+      rollNumber: new RegExp(`^${franchisePrefix}/${franchiseCode}/\\d+$`)
+    }).sort({ rollNumber: -1 });
+    
+    let nextNumber = 1001; // Default starting number
+    
+    if (latestStudent) {
+      // Extract the number part from the latest roll number
+      const parts = latestStudent.rollNumber.split('/');
+      if (parts.length === 3) {
+        const lastNumber = parseInt(parts[2], 10);
+        if (!isNaN(lastNumber)) {
+          nextNumber = lastNumber + 1;
+        }
+      }
+    }
+    
+    return `${franchisePrefix}/${franchiseCode}/${nextNumber}`;
+  } catch (error) {
+    console.error("Error generating roll number:", error);
+    throw new Error("Failed to generate roll number");
+  }
+};
+
 
 const registerStudent = asyncHandler(async (req, res) => {
   const {
-    rollNumber,
+    // rollNumber removed as it will be auto-generated
     studentName,
     relationType,
     fatherHusbandName,
     surnameName,
     franchiseId,
+    franchiseName, // Added franchiseName from frontend
     motherName,
     studentMobile,
     alternateMobile,
@@ -76,7 +137,8 @@ const registerStudent = asyncHandler(async (req, res) => {
   try {
     // Validate required fields
     const requiredFields = {
-      rollNumber,
+      franchiseId,
+      franchiseName,
       studentName,
       relationType,
       studentMobile,
@@ -113,15 +175,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       });
     }
 
-    // Check for duplicate roll number
-    const existingStudent = await Student.findOne({ rollNumber });
-    if (existingStudent) {
-      return res.status(409).json({
-        success: false,
-        message: "Student with this roll number already exists",
-        code: 'DUPLICATE_ROLL_NUMBER'
-      });
-    }
+    // Roll number will be auto-generated, so no need to check for duplicates here
 
     // Check for duplicate email if provided
     if (email) {
@@ -289,6 +343,16 @@ const registerStudent = asyncHandler(async (req, res) => {
       }
     }
 
+    // Find the franchise to get its ObjectId
+    const franchise = await Franchise.findOne({ franchiseId });
+    if (!franchise) {
+      return res.status(404).json({
+        success: false,
+        message: "Franchise not found",
+        code: 'FRANCHISE_NOT_FOUND'
+      });
+    }
+
     // Upload files to Cloudinary
     let studentPhoto, studentSignature;
     
@@ -328,14 +392,24 @@ const registerStudent = asyncHandler(async (req, res) => {
 
     // Check wallet balance
     const registrationFee = 300;
-    let wallet = await Wallet.findOne();
-    if (!wallet || wallet.balance < registrationFee) {
-      return res.status(400).json({
+    let wallet;
+    try {
+      wallet = await Wallet.findOne();
+      if (!wallet || wallet.balance < registrationFee) {
+        return res.status(400).json({
+          success: false,
+          message: "Insufficient wallet balance. Please add money to continue.",
+          code: 'INSUFFICIENT_BALANCE',
+          requiredAmount: registrationFee,
+          currentBalance: wallet ? wallet.balance : 0
+        });
+      }
+    } catch (walletError) {
+      console.error("Error checking wallet balance:", walletError);
+      return res.status(500).json({
         success: false,
-        message: "Insufficient wallet balance. Please add money to continue.",
-        code: 'INSUFFICIENT_BALANCE',
-        requiredAmount: registrationFee,
-        currentBalance: wallet ? wallet.balance : 0
+        message: "Error checking wallet balance",
+        code: 'WALLET_ERROR'
       });
     }
 
@@ -344,42 +418,56 @@ const registerStudent = asyncHandler(async (req, res) => {
     try {
       session = await mongoose.startSession();
       session.startTransaction();
-      console.log(franchiseId)
       
-      // ✅ Create student record with password set to phone number (will be auto-hashed by pre-save middleware)
-      const newStudent = await Student({
-        studentPhoto: studentPhoto.url,
-        studentSignature: studentSignature.url,
-        rollNumber,
-        abbreviation: req.body.abbreviation || "Mr.",
-        studentName,
-        franchiseId,
-        relationType,
-        fatherHusbandName,
-        includeFatherHusband: req.body.includeFatherHusband !== undefined ? req.body.includeFatherHusband : true,
-        surnameName,
-        includeSurname: req.body.includeSurname !== undefined ? req.body.includeSurname : true,
-        motherName,
-        courseInterested: parsedCourseInterested,
-        studentMobile,
-        alternateMobile,
-        email,
-        password: studentMobile.toString(), // ✅ Set password as phone number (will be hashed by pre-save middleware)
-        dob,
-        gender,
-        city,
-        postCode,
-        permanentAddress,
-        referralCode,
-        caste,
-        qualifications,
-        occupation,
-        admissionDate,
-        selectedBatch: batch._id,
-        displayAdmissionOptions: displayAdmissionOptions || false,
-      });
-
-      await newStudent.save({ session });
+      // Generate roll number without concurrency handling
+      // Use franchiseName for roll number generation
+      let rollNumber;
+      try {
+        rollNumber = await generateRollNumber(franchiseName);
+        console.log("Generated roll number:", rollNumber);
+        console.log("Franchise Name:", franchiseName);
+        console.log("Franchise ID:", franchiseId);
+      } catch (rollNumberError) {
+        console.error("Error generating roll number:", rollNumberError);
+        throw new Error("Failed to generate roll number: " + rollNumberError.message);
+      }
+      // Create student record with the auto-generated roll number
+      let student;
+      try {
+        student = await Student.create([{
+          studentPhoto: studentPhoto.url,
+          studentSignature: studentSignature.url,
+          rollNumber, // Auto-generated roll number
+          abbreviation: req.body.abbreviation || "Mr.",
+          studentName,
+          franchiseId,
+          relationType,
+          fatherHusbandName,
+          includeFatherHusband: req.body.includeFatherHusband !== undefined ? req.body.includeFatherHusband : true,
+          surnameName,
+          includeSurname: req.body.includeSurname !== undefined ? req.body.includeSurname : true,
+          motherName,
+          courseInterested: parsedCourseInterested,
+          studentMobile,
+          alternateMobile,
+          email,
+          dob,
+          gender,
+          city,
+          postCode,
+          permanentAddress,
+          referralCode,
+          caste,
+          qualifications,
+          occupation,
+          admissionDate,
+          selectedBatch: batch._id,
+          displayAdmissionOptions: displayAdmissionOptions || false,
+        }], { session });
+      } catch (studentCreateError) {
+        console.error("Error creating student record:", studentCreateError);
+        throw new Error("Failed to create student record: " + studentCreateError.message);
+      }
 
       const studentId = newStudent._id;
 
@@ -427,6 +515,7 @@ const registerStudent = asyncHandler(async (req, res) => {
 
       // Create transaction record
       await Transaction.create([{
+        franchise: franchise._id, // Add the franchise ObjectId
         amount: registrationFee,
         type: "withdrawal",
         status: "approved",
@@ -451,8 +540,12 @@ const registerStudent = asyncHandler(async (req, res) => {
 
     } catch (transactionError) {
       if (session) {
-        await session.abortTransaction();
-        session.endSession();
+        try {
+          await session.abortTransaction();
+          session.endSession();
+        } catch (abortError) {
+          console.error("Error aborting transaction:", abortError);
+        }
       }
       
       console.error("Transaction error:", transactionError);
@@ -467,7 +560,7 @@ const registerStudent = asyncHandler(async (req, res) => {
 
       return res.status(500).json({
         success: false,
-        message: "Database transaction failed",
+        message: "Database transaction failed: " + (transactionError.message || "Unknown error"),
         code: 'TRANSACTION_FAILED'
       });
     }
@@ -969,7 +1062,7 @@ console.log("filter value :: ", filter)
   // Query database with projections for only the fields we need
   const students = await Student.find(filter)
     .select(
-      "studentPhoto studentName franchiseId status courseInterested studentMobile referralCode email rollNumber admissionDate selectedBatch status"
+      "studentPhoto studentSignature studentName rollNumber abbreviation franchiseId status courseInterested studentMobile referralCode email dob city postCode permanentAddress admissionDate caste qualifications occupation relationType gender selectedBatch motherName "
     )
     .populate({
       path: 'selectedBatch',
@@ -1176,11 +1269,202 @@ console.log("Updated student status:", studentcheck);
   }
 };
 
+const generateAdmissionForm = asyncHandler(async (req, res) => {
+  const { studentId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(studentId)) {
+    throw new ApiError(400, "Invalid student ID");
+  }
+
+  const student = await Student.findById(studentId)
+    .populate("feeDetails")
+    .populate("selectedBatch");
+
+  if (!student) {
+    throw new ApiError(404, "Student not found");
+  }
+
+  let franchise;
+  try {
+    franchise = await Franchise.findOne({ franchiseId: student.franchiseId });
+  } catch (error) {
+    console.error("Error fetching franchise:", error);
+  }
+
+    // ✅ Fixed PDF path
+  const pdfPath = path.join(__dirname, '../../../public/temp/blank_form.pdf');
+  console.log("PDF Path:", pdfPath);
+  const existingPdfBytes = await fs.readFile(pdfPath);
+  const pdfDoc = await PDFDocument.load(existingPdfBytes);
+  const page = pdfDoc.getPages()[0];
+
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const size = 10;
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  const drawText = (text, x, y, color = rgb(0, 0, 0), textFont = font, textSize = size) => {
+    if (text) {
+      // Replace unsupported characters before drawing
+      const sanitizedText = String(text).replace(/₹/g, 'Rs.').replace(/✓/g, 'Y');
+      page.drawText(sanitizedText, { x, y, font: textFont, size: textSize, color });
+    }
+  };
+
+  // Fetch and embed student photo (top right photo box)
+  if (student.studentPhoto) {
+    try {
+      const photoUrl = student.studentPhoto;
+      const photoResponse = await axios.get(photoUrl, { responseType: 'arraybuffer' });
+      const photoBytes = Buffer.from(photoResponse.data, 'binary');
+      let photoImage;
+      if (photoUrl.includes('.jpg') || photoUrl.includes('.jpeg')) {
+        photoImage = await pdfDoc.embedJpg(photoBytes);
+      } else {
+        photoImage = await pdfDoc.embedPng(photoBytes);
+      }
+      // Photo position in top right corner
+      page.drawImage(photoImage, { x: 460, y: 625, width: 95, height: 110 });
+    } catch (error) {
+      console.error("Error fetching or embedding student photo:", error);
+    }
+  }
+
+  // Fetch and embed student signature (bottom right signature box)
+  if (student.studentSignature) {
+    try {
+      const signatureUrl = student.studentSignature;
+      const signatureResponse = await axios.get(signatureUrl, { responseType: 'arraybuffer' });
+      const signatureBytes = Buffer.from(signatureResponse.data, 'binary');
+      let signatureImage;
+      if (signatureUrl.includes('.jpg') || signatureUrl.includes('.jpeg')) {
+        signatureImage = await pdfDoc.embedJpg(signatureBytes);
+      } else {
+        signatureImage = await pdfDoc.embedPng(signatureBytes);
+      }
+      // Signature position in bottom right
+      page.drawImage(signatureImage, { x: 396, y: 316, width: 120, height: 40 });
+    } catch (error) {
+      console.error("Error fetching or embedding student signature:", error);
+    }
+  }
+
+  // Fetch and embed franchise signature (bottom signature box)
+  if (franchise && franchise.instituteSignature) {
+    try {
+      const franchiseSignatureUrl = franchise.instituteSignature;
+      const signatureResponse = await axios.get(franchiseSignatureUrl, { responseType: 'arraybuffer' });
+      const signatureBytes = Buffer.from(signatureResponse.data, 'binary');
+      let franchiseSignatureImage;
+      if (franchiseSignatureUrl.includes('.jpg') || franchiseSignatureUrl.includes('.jpeg')) {
+        franchiseSignatureImage = await pdfDoc.embedJpg(signatureBytes);
+      } else {
+        franchiseSignatureImage = await pdfDoc.embedPng(signatureBytes);
+      }
+      // Signature position in bottom right
+      page.drawImage(franchiseSignatureImage, { x: 413, y: 100, width: 120, height: 40 });
+    } catch (error) {
+      console.error("Error fetching or embedding student signature:", error);
+    }
+  }
+
+  // TOP SECTION - Header Information
+  // Admission Date (top left, after "ADMISSION DATE :")
+  drawText(student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('en-GB') : '', 24, 593);
+
+  // Roll Number (top right, after "ROLL NUMBER :")
+  drawText(student.rollNumber, 419, 593);
+
+  // Course of Interest (below admission date, after "COURSE OF INTEREST:")
+  drawText(student.courseInterested?.courseName || '', 27, 546);
+
+  // MAIN STUDENT DETAILS SECTION
+  // First row - Student Name, Father/Husband Name, Surname
+  drawText(student.studentName, 27, 505);  // After "STUDENT NAME"
+  drawText(student.fatherHusbandName, 180, 505);  // After "FATHER/HUSBAND NAME"
+  drawText(student.surnameName, 340, 505);  // After "SURNAME"
+
+  // Second row - Mother Name
+  drawText(student.motherName, 469, 505);  // After "MOTHER NAME"
+
+  // Third row - Mobile numbers
+  drawText(student.studentMobile, 206, 464);  // After "STUDENT MOBILE:"
+  drawText(student.alternateMobile, 392, 464);  // After "ALTERNATE MOBILE:"
+
+  // Fourth row - DOB, Gender, Email
+  drawText(student.dob ? new Date(student.dob).toLocaleDateString('en-GB') : '', 384, 426);  // After "DATE OF BIRTH.:"
+  drawText(student.gender, 27, 426);  // After "GENDER:"
+  drawText(student.email, 138, 426);  // After "E-MAIL:"
+
+  // Fifth row - Caste, Qualification, Occupation, State, Post Code
+  drawText(student.caste, 27, 388);  // After "CASTE:"
+  drawText(student.qualifications, 116, 388);  // After "QUALIFICATION.:"
+  drawText(student.occupation, 277, 388);  // After "OCCUPATION.:"
+  drawText(student.state || 'Haryana', 390, 388);  // After "STATE:"
+  drawText(student.postCode, 486, 388);  // After "POST CODE:"
+
+  // ADDRESS SECTION
+  // Permanent Address (multiline field after "ADDRESS:-")
+  // const addressLines = student.permanentAddress ? student.permanentAddress.split('\n') : [];
+  // addressLines.forEach((line, index) => {
+  //   if (index < 2) { // Limit to 2 lines for current address
+  //     drawText(line, 22, 323 - (index * 15));
+  //   }
+  // });
+
+  // Permanent Address (after "PERMANENT ADDRESS.:")
+  const permAddressLines = student.permanentAddress ? student.permanentAddress.split('\n') : [];
+  permAddressLines.forEach((line, index) => {
+    if (index < 2) { // Limit to 2 lines for permanent address
+      drawText(line, 27, 344 - (index * 15));
+    }
+  });
+
+  // LEFT SIDE - OFFICE USE ONLY SECTION
+  // Aadhaar Card Number (after "ADHAR CARD NUMBER.:")
+  drawText(student.aadhaarNumber || '', 27, 466);
+
+  // Batch Name (after "BATCH NAME")
+  if (student.selectedBatch) {
+    drawText(student.selectedBatch.batchName || student.selectedBatch.batchTiming, 71, 197);
+  }
+
+  // RIGHT SIDE - OFFICE USE ONLY SECTION
+  // Course Fees (after "COURSE FEES :")
+  if (student.feeDetails) {
+    drawText(`Rs${student.feeDetails.courseFees}`, 77, 238);
+  
+    // Paid Fees (after "PAID FEES :")
+    drawText(`Rs${student.feeDetails.feesReceived}`, 269, 238);
+  
+    // Balance Fees (after "BALANCE FEES :")
+    drawText(`Rs${student.feeDetails.balance}`, 455, 238);
+  }
+
+  // Contact Number (after "CONTACT NO. :")
+  if (franchise) {
+    drawText(franchise.mobileNumber, 206, 466);
+  }
+
+  // // for director signn
+  // instituteSignature
+  const pdfBytes = await pdfDoc.save();
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename=admission_form_${student.studentName.replace(/\s+/g, '_')}.pdf`);
+  res.send(Buffer.from(pdfBytes));
+});
+
 export {
   registerStudent,
   getStudents,
   getStudentCount,
   getRecentsStudents,
   updateStudent,
-  toggleStudentStatus
+
+  toggleStudentStatus,
+  generateAdmissionForm
+
+
 };
+
+

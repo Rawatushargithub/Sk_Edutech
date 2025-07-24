@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { sendEmail } from "../utils/mailer.js";
 import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
-import  {Franchise}  from "../../Admin_Backend/models/franchise/franchise.models.js"; // Use local Franchise model that shares the same Mongoose connection
+import  Franchise  from "../../Admin_Backend/models/franchise/franchise.models.js"; // Use local Franchise model that shares the same Mongoose connection
 import crypto from "crypto";
 
 // In-memory store for OTPs. In a production scenario, consider Redis or a temporary DB collection.

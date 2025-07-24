@@ -14,6 +14,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../../config";
 
+import ExamTypeSlider from "./ExamTypeSlider"; // Import the new ExamTypeSlider component
+
 const ExamManagement = () => {
   const navigate = useNavigate();
 
@@ -22,6 +24,8 @@ const ExamManagement = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("all");
+  const [courses, setCourses] = useState([]);
+  const [selectedExamType, setSelectedExamType] = useState("all"); // New state for exam type filter
   const [showFilters, setShowFilters] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -36,6 +40,14 @@ const ExamManagement = () => {
 
   // Exam data from API
   const [exams, setExams] = useState([]);
+
+  // Exam types for filter dropdown
+  const examTypes = [
+    { value: "all", label: "All Exam Types" },
+    { value: "Weekly Test", label: "Weekly Test" },
+    { value: "Monthly Test", label: "Monthly Test" },
+    { value: "Final Test", label: "Final Test" },
+  ];
 
   // Function to update exam status to inactive
   const updateExamStatus = async (examId) => {
@@ -64,16 +76,61 @@ const ExamManagement = () => {
       throw err;
     }
   };
- 
+
+  // Add this function after your existing API functions
+  const deleteExam = async (examId) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/institute_exam/exams/${examId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Exam deleted successfully:", result);
+
+      setSuccessMessage("Exam deleted successfully!");
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 3000);
+
+      // Refresh the exams list
+      fetchExams();
+    } catch (err) {
+      console.error("Error deleting exam:", err);
+      alert("Failed to delete exam. Please try again.");
+    }
+  };
+
+  // Add confirmation handler
+  const handleDeleteExam = (examId) => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this exam? This action cannot be undone."
+      )
+    ) {
+      deleteExam(examId);
+    }
+  };
   // Fetch exams from API with automatic status update
   const fetchExams = async (examMode = mode) => {
     try {
       setLoading(true);
       setError(null);
- const franchiseId = localStorage.getItem('franchiseID');
- console.log("Fetching exams for franchise:", franchiseId);
+      const franchiseId = localStorage.getItem("franchiseID");
+      console.log("Fetching exams for franchise:", franchiseId);
+
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/institute_exam/exams?examMode=${examMode === 'online' ? 'Online' : 'Offline'}&franchiseId=${franchiseId}`, 
+        `${API_BASE_URL}/api/v1/institute_exam/exams?examMode=${
+          examMode === "online" ? "Online" : "Offline"
+        }&franchiseId=${franchiseId}`,
         {
           method: "GET",
           headers: {
@@ -87,7 +144,7 @@ const ExamManagement = () => {
       }
 
       const data = await response.json();
-
+      console.log("Fetched exams:", data);
       // Transform API data and check for expired exams
       const transformedExams = await Promise.all(
         data.exams.map(async (exam) => {
@@ -106,10 +163,12 @@ const ExamManagement = () => {
           }
 
           return {
-            id: exam.ExamID,
+            id: exam._id,
+            examId: exam.ExamID, // Optional: only if you still need ExamID elsewhere
             courseCode: exam.courseCode,
             batch: exam.batch || [],
             examDate: exam.examDate,
+            examType: exam.examType, // Include exam type in transformed data
             examDurationMinutes: exam.examDurationMinutes,
             totalQuestions: exam.totalQuestions,
             totalMarks: exam.totalMarks,
@@ -157,6 +216,7 @@ const ExamManagement = () => {
 
       const studentsData = await response.json();
       console.log("Fetched students for exam:", studentsData);
+
       // Transform student data and add marks field
       const transformedStudents = studentsData.students.map((student) => ({
         rollNumber: student.rollNumber,
@@ -209,7 +269,7 @@ const ExamManagement = () => {
         alert("Please enter marks for at least one student.");
         return;
       }
-console.log("Marks data to upload:", marksData);
+
       const response = await fetch(
         `${API_BASE_URL}/api/v1/institute_exam/exams/${selectedExam}/marks`,
         {
@@ -254,10 +314,35 @@ console.log("Marks data to upload:", marksData);
       return dateString;
     }
   };
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/institute_courses/getCourses`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const coursesData = await response.json();
+      console.log("Fetched courses:", coursesData);
+      setCourses(coursesData); // Assuming the response is directly an array
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+      // You might want to set a default or show an error
+      setCourses([]);
+    }
+  };
   // Fetch exams on component mount
   useEffect(() => {
     fetchExams();
+    fetchCourses();
   }, [mode]);
 
   function getDaysLeft(targetDateStr) {
@@ -282,7 +367,7 @@ console.log("Marks data to upload:", marksData);
       .length,
   };
 
-  // Filter exams based on mode, search term, course and tab
+  // Filter exams based on mode, search term, course, exam type, and tab
   const filteredExams = exams.filter((exam) => {
     const matchesMode = mode === "online" ? exam.modeOnline : exam.modeOffline;
     const matchesSearch =
@@ -290,13 +375,35 @@ console.log("Marks data to upload:", marksData);
       exam.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCourse =
       selectedCourse === "all" || exam.courseName === selectedCourse;
+    const matchesExamType =
+      selectedExamType === "all" || exam.examType === selectedExamType; // New exam type filter
     const matchesTab =
       activeTab === "all" ||
       (activeTab === "active" && exam.status === "Active") ||
       (activeTab === "inactive" && exam.status === "Inactive");
 
-    return matchesMode && matchesSearch && matchesCourse && matchesTab;
+    return (
+      matchesMode &&
+      matchesSearch &&
+      matchesCourse &&
+      matchesExamType &&
+      matchesTab
+    );
   });
+
+  // Get exam type badge color
+  const getExamTypeBadgeColor = (examType) => {
+    switch (examType) {
+      case "Weekly Test":
+        return "bg-blue-100 text-blue-800";
+      case "Monthly Test":
+        return "bg-yellow-100 text-yellow-800";
+      case "Final Test":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
 
   // Retry function for error state
   const handleRetry = () => {
@@ -318,6 +425,7 @@ console.log("Marks data to upload:", marksData);
       </div>
     );
   }
+  console.log("Exams data:", filteredExams);
 
   // Error state
   if (error && !showUploadPage) {
@@ -366,8 +474,8 @@ console.log("Marks data to upload:", marksData);
                     Upload Student Marks
                   </h1>
                   <p className="text-gray-600">
-                    Exam ID: {selectedExam} | Course: {currentExam?.courseCode}{" Code"}
-                    | Batch: {currentExam?.batch.timings}
+                    Exam ID: {selectedExam} | Course: {currentExam?.courseCode}{" "}
+                    Code | Batch: {currentExam?.batch.timings}
                   </p>
                 </div>
               </div>
@@ -488,6 +596,7 @@ console.log("Marks data to upload:", marksData);
       </div>
     );
   }
+
   // Main Exam Management Page
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -563,6 +672,7 @@ console.log("Marks data to upload:", marksData);
           {/* Filters */}
           {showFilters && (
             <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+              {/* Search and Course Dropdown */}
               <div className="flex gap-4 items-center">
                 <div className="relative flex-1">
                   <Search
@@ -572,32 +682,40 @@ console.log("Marks data to upload:", marksData);
                   <input
                     type="text"
                     placeholder="Search by exam ID or course code..."
-                    className="w-full pl-10 pr-4 py-2 border rounded-lg"
+                    className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
                 <div className="relative">
                   <select
-                    className="appearance-none bg-white border rounded-lg px-4 py-2 pr-10"
+                    className="appearance-none bg-white border rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={selectedCourse}
                     onChange={(e) => setSelectedCourse(e.target.value)}
                   >
                     <option value="all">All Courses</option>
-                    {courses.map((course) => (
+                    {courses.map((course, index) => (
                       <option
-                        key={course.id}
-                        value={course.id === 1 ? "BCA12H" : "MCA34P"}
+                        key={course.id || index}
+                        value={course.courseCode || course.name}
                       >
-                        {course.name}
+                        {course.courseName || course.name}
                       </option>
                     ))}
                   </select>
                   <ChevronDown
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
                     size={20}
                   />
                 </div>
+              </div>
+
+              {/* Exam Type Filter - Now properly positioned below search */}
+              <div className="w-full">
+                <ExamTypeSlider
+                  selectedExamType={selectedExamType}
+                  onExamTypeChange={setSelectedExamType}
+                />
               </div>
             </div>
           )}
@@ -647,13 +765,19 @@ console.log("Marks data to upload:", marksData);
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Exam ID 
+                    Exam ID
                   </th>
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Course Code
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Exam Type
                   </th>
                   <th
                     scope="col"
@@ -700,6 +824,15 @@ console.log("Marks data to upload:", marksData);
                       Actions
                     </th>
                   )}
+                  {/* Conditionally render Actions column for online exams */}
+                  {mode === "online" && (
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -707,10 +840,13 @@ console.log("Marks data to upload:", marksData);
                   filteredExams.map((exam) => (
                     <tr key={exam.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {exam.id}
+                        {exam.examId}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {exam.courseCode}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {exam.examType}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {exam.batch.timings}
@@ -747,6 +883,12 @@ console.log("Marks data to upload:", marksData);
                             <button className="text-blue-600 hover:text-blue-900">
                               Edit
                             </button>
+                            <button
+                              onClick={() => handleDeleteExam(exam.id)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Delete
+                            </button>
                             {exam.status === "Inactive" && (
                               <button
                                 onClick={() => handleUploadMarks(exam.id)}
@@ -763,6 +905,25 @@ console.log("Marks data to upload:", marksData);
                             {/* Remove View Results for online exams from Actions */}
                           </div>
                         </td>
+                      )} 
+                      {/* Only show Actions column for online exams */}
+                      {mode === "online" && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <button 
+                            onClick={() => navigate(`/institute/editExam` , { state: { exam } })}
+                            className="text-blue-600 hover:text-blue-900"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteExam(exam.id)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
                       )}
                     </tr>
                   ))
@@ -771,7 +932,9 @@ console.log("Marks data to upload:", marksData);
                     <td
                       colSpan={
                         7 +
-                        (filteredExams.some(exam => exam.status === "Active") ? 1 : 0) +
+                        (filteredExams.some((exam) => exam.status === "Active")
+                          ? 1
+                          : 0) +
                         (mode === "offline" ? 1 : 0)
                       }
                       className="px-6 py-4 text-center text-sm text-gray-500"

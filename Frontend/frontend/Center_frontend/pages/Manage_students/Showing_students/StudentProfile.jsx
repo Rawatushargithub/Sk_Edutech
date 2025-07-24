@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
-const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard , onShare}) => {
+const StudentProfile = ({ student, onClose, onEdit, onViewForm, onViewIDCard, onShare }) => {
+  const [isCopied, setIsCopied] = useState(false);
 
   // Handle edit with student data
   const handleEditProfile = () => {
@@ -8,11 +9,29 @@ const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard ,
     localStorage.setItem('editStudentData', JSON.stringify(student));
     // Call the onEdit function from parent with student data
     if (onEdit) {
-      onEdit(student.id);
+      onEdit(student._id);
     }
+  };
+
+  const handleCopy = () => {
+        const studentDetails = `
+Student Name: ${student.studentName || 'N/A'}
+Roll Number: ${student.rollNumber || 'N/A'}
+Status: ${student.status ? 'Active' : 'Inactive'}
+Mobile: ${student.studentMobile || 'N/A'}
+Email: ${student.email || 'N/A'}
+Course: ${student.courseInterested?.courseName || 'N/A'}
+Batch: ${student.batch || 'N/A'}
+Admission Date: ${student.admissionDate || 'N/A'}
+Referral Code: ${student.referralCode || 'N/A'}
+    `.trim();
+    navigator.clipboard.writeText(studentDetails).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    });
   }; 
   
-  return (
+  return ( 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Overlay with blur effect */}
       <div
@@ -74,6 +93,8 @@ const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard ,
             <h2 className="text-xl font-bold text-gray-800 mb-2">
               {student.studentName || "Student Name"}
             </h2>
+            <div className={`font-medium text-gray-400 mb-2`}>{student.rollNumber}</div>
+
             <span
               className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
                 student.status 
@@ -107,15 +128,7 @@ const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard ,
               <span className="text-sm text-gray-800">{student.batch || "N/A"}</span>
             </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-sm font-medium text-gray-700">Username</span>
-              <span className="text-sm text-gray-800">{student.username || "N/A"}</span>
-            </div>
-
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-sm font-medium text-gray-700">Password</span>
-              <span className="text-sm text-gray-800">{student.username || "N/A"}</span>
-            </div>
+            
 
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <span className="text-sm font-medium text-gray-700">Admission Date</span>
@@ -130,6 +143,17 @@ const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard ,
 
           {/* Action Buttons */}
           <div className="flex flex-col space-y-3">
+            {/* Edit Profile Button */}
+            <button 
+              onClick={handleEditProfile}
+              className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <span>Edit Profile</span>
+            </button>
+
             {/* Certificate Button */}
             <button className="w-full py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
               Certificate
@@ -159,12 +183,14 @@ const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard ,
               
               <button
                 className="flex items-center justify-center w-10 h-10 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                onClick={onShare}
-                title="Share"
+                onClick={handleCopy}
+                title="Copy Details"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                </svg>
+                {isCopied ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                )}
               </button>
             </div>
           </div>

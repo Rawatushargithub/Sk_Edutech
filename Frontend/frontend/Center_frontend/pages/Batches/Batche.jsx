@@ -53,8 +53,9 @@ console.log(batch.batchName)
   };
 
   const deleteBatch = async (batchId) => {
-    try {
-      await axios.delete(`${API_BASE_URL}/api/v1/institute_batche/${batchId}`);
+    try { 
+        const franchiseId = localStorage.getItem("franchiseID");
+      await axios.delete(`${API_BASE_URL}/api/v1/institute_batche/${batchId}?franchiseId=${franchiseId}`);
       alert("Successfully deleted");
       // Refresh the batches list after deletion
       fetchBatches();

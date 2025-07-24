@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { registerStudent , getStudents , getStudentCount , getRecentsStudents , toggleStudentStatus ,updateStudent} from "../../controllers/Student_controller/Student.controller.js"
+import { registerStudent , getStudents , getStudentCount , getRecentsStudents , toggleStudentStatus ,updateStudent, generateAdmissionForm} from "../../controllers/Student_controller/Student.controller.js"
 import { upload } from "../../middlewares/multer.middleware.js"; 
 const router = Router()
 
@@ -21,8 +21,22 @@ try {
     .get(getStudents);
     router.route("/count").get(getStudentCount)
     router.route("/recent").get(getRecentsStudents);
-    router.route("/update/:id").put(updateStudent)
+    // Updated route to handle file uploads for student updates
+    router.route("/update/:id").put(
+        upload.fields([
+            {
+                name: "studentPhoto",
+                maxCount: 1
+            },
+            {
+                name: "studentSignature",
+                maxCount: 1
+            }
+        ]),
+        updateStudent
+    );
     router.patch("/toggle_status/:id", toggleStudentStatus);
+    router.route("/:studentId/admission-form").get(generateAdmissionForm);
 
 } catch (error) {
     console.log("error occured in students routes " , error)

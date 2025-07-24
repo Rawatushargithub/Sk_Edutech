@@ -25,6 +25,7 @@ const CenterLoginModal = () => {
       localStorage.setItem("centerToken", token);
       localStorage.setItem("franchiseID", franchise.franchiseId);
       localStorage.setItem("franchiseName", franchise.franchiseName);
+      localStorage.setItem("franchiseImage", franchise.franchiseImage);
       navigate("/institute");
     } catch (err) {
       setErrorMsg(err?.response?.data?.message || "Login failed");

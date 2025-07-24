@@ -142,24 +142,7 @@ const StudentProfile = ({
                   {student.batch || "N/A"}
                 </span>
               </div>
-
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-sm font-medium text-gray-700">
-                  Username
-                </span>
-                <span className="text-sm text-gray-800">
-                  {student.username || "N/A"}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-sm font-medium text-gray-700">
-                  Password
-                </span>
-                <span className="text-sm text-gray-800">
-                  {student.username || "N/A"}
-                </span>
-              </div>
+     
 
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
                 <span className="text-sm font-medium text-gray-700">

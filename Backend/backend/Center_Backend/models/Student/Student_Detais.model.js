@@ -7,9 +7,9 @@ const studentSchema = new mongoose.Schema({
   rollNumber: { type: String, required: true, unique: true },
   abbreviation: { type: String },
   franchiseId: { // System Generated ID
-            type: String,
-            default: true,
-        },
+    type: String,
+    required: true
+  },
   studentName: { type: String, required: true }, 
   relationType: { type: String , required: true }, 
   fatherHusbandName: { type: String },
@@ -40,7 +40,7 @@ const studentSchema = new mongoose.Schema({
   qualifications: { type: String },
   occupation: { type: String }, 
  
-  // Reference Fields
+  // Reference Fields 
   feeDetails: { type: mongoose.Schema.Types.ObjectId, ref: "Fee" }, // Linked Fee Schema
   installmentDetails: [{ type: mongoose.Schema.Types.ObjectId, ref: "Installment" }], // Linked Installments
   selectedBatch: { type: mongoose.Schema.Types.ObjectId, ref: "Batch" }, // Linked Batch

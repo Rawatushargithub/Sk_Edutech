@@ -153,4 +153,5 @@ franchiseSchema.pre('save', function (next) {
 });
 
 
-export const Franchise = mongoose.model('Franchise', franchiseSchema);
+const Franchise = mongoose.model('Franchise', franchiseSchema);
+export default Franchise;

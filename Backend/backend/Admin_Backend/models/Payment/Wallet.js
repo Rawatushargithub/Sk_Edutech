@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
 
 const WalletSchema = new mongoose.Schema({
-  Institute: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    // required: true,
-  },
+  franchiseId: { // System Generated ID
+            type: String,
+            // required: true, // Not required initially for applications
+            unique: true,
+        },
   balance: { 
     type: Number,
     default: 0,

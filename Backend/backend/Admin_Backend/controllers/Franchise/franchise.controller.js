@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
-import { Franchise } from '../../models/franchise/franchise.models.js';
+import Franchise  from '../../models/franchise/franchise.models.js';
 import { asyncHandler } from '../../utils/asynchanlder.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
@@ -13,7 +13,7 @@ const generateFranchiseId = async () => {
     let uniqueId = false;
     let franchiseId;
     while (!uniqueId) {
-        franchiseId = `SK${Math.floor(100000 + Math.random() * 900000)}`;
+        franchiseId = `SK/SKE-${Math.floor(100000 + Math.random() * 900000)}`;
         const existing = await Franchise.findOne({ franchiseId });
         if (!existing) {
             uniqueId = true;
@@ -660,6 +660,7 @@ export const loginFranchise = async (req, res) => {
         email: franchise.email,
         mobile: franchise.mobile,
         franchiseName: franchise.franchiseName,
+        franchiseImage: franchise.ownerPhotoUrl,
         franchiseId: franchise.franchiseId,
         address: franchise.address,
         ownerName: franchise.ownerName,

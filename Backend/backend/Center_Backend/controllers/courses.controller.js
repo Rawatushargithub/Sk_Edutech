@@ -1,5 +1,5 @@
 import Course from '../models/Courses/Courses.models.js';
-import  Institute from '../models/Franchise.model.js'; // Import Institute model for validation
+import  Franchise from '../models/Franchise.model.js'; // Import Franchise model for validation
 import { uploadOnCloudinary } from "../utils/cloudinary.js"; 
 import { asyncHandler } from "../utils/asynchanlder.js";
 // Create a new course
@@ -179,7 +179,7 @@ console.log(franchiseId, "franchiseId in createCourse");
 export const validateFranchiseAccess = async (franchiseId, courseId = null) => {
     try {
         // Validate franchise exists
-        const institute = await Institute.findOne({ 
+        const institute = await Franchise.findOne({ 
             $or: [
                 { instituteID: franchiseId },
                 { _id: franchiseId }

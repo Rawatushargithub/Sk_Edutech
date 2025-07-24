@@ -40,32 +40,59 @@ import fs from "fs" // fs is file system library provided by node js
         }
     };
 
-    // const deleteFromCloudinary = async(videoPublicId , thumbnailPublicId ) => {
-    //     try{
-    //         // console.log("public id of video and thumbnail :: " , videoPublicId , " " , thumbnailPublicId)
-    //         if( videoPublicId == "")
-    //         {
-    //             const response_2 =  await cloudinary.uploader.destroy( thumbnailPublicId );
-    //             console.log("Response 2 from deleted function :: ",response_2)
-    //             return response_2;
-    //         }
-    //         else if( thumbnailPublicId = "")
-    //         {
-    //             const response_1 =  await cloudinary.uploader.destroy( videoPublicId , { resource_type: 'video' });
-    //             console.log("Response 1 from deleted function :: ",response_1) 
-    //             return response_1
-    //         }
-    //          else{
-    //             const response_2 =  await cloudinary.uploader.destroy( thumbnailPublicId );
-    //             const response_1 =  await cloudinary.uploader.destroy( videoPublicId , { resource_type: 'video' });
-    //             return response_1 , response_2;
-    //          }
-          
-    //     }
-    //     catch(error){
-    //         console.log("error" , error);
-    //     }
-    // }
+    // Function to delete image from Cloudinary
+    const deleteFromCloudinary = async (imageUrl) => {
+        if (!imageUrl) return null;
+        
+        try {
+            // Extract public_id from Cloudinary URL
+            const publicId = extractPublicId(imageUrl);
+            
+            if (!publicId) {
+                console.error("Could not extract public_id from URL:", imageUrl);
+                return null;
+            }
+            
+            console.log("Deleting image from Cloudinary with public_id:", publicId);
+            
+            const response = await cloudinary.uploader.destroy(publicId);
+            console.log("Image deleted from Cloudinary:", response);
+            
+            return response;
+        } catch (error) {
+            console.error("Error deleting image from Cloudinary:", error);
+            return null;
+        }
+    };
 
-    export { uploadOnCloudinary };
+     // Helper function to extract public_id from Cloudinary URL
+    const extractPublicId = (cloudinaryUrl) => {
+        try {
+            console.log("Extracting public_id from Cloudinary URL:", cloudinaryUrl);
+            // Example URL: https://res.cloudinary.com/demo/image/upload/v1234567890/sample.jpg
+            // Extract the public_id which is the part after the last '/' and before the file extension
+            const urlParts = cloudinaryUrl.split('/');
+            const uploadIndex = urlParts.findIndex(part => part === 'upload');
+            
+            if (uploadIndex === -1) return null;
+            
+            // Get the part after 'upload' and version (if present)
+            let publicIdPart = urlParts.slice(uploadIndex + 1).join('/');
+            
+            // Remove version if present (starts with 'v' followed by numbers)
+            if (publicIdPart.match(/^v\d+\//)) {
+                publicIdPart = publicIdPart.split('/').slice(1).join('/');
+            }
+            
+            // Remove file extension
+            const publicId = publicIdPart.replace(/\.[^/.]+$/, '');
+            
+            return publicId;
+        } catch (error) {
+            console.error("Error extracting public_id:", error);
+            return null;
+        }
+    };
+
+    export { uploadOnCloudinary ,deleteFromCloudinary };
     

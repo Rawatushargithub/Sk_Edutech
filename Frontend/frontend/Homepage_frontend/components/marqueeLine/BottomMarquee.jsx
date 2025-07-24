@@ -4,23 +4,18 @@ import API_BASE_URL from "../../../config";
 const BottomMarquee = () => {
   const [marqueeData, setMarqueeData] = useState([]);
   const [isBlinking, setIsBlinking] = useState(false);
-  const [textWidth, setTextWidth] = useState(0);
+  const [scrollDuration, setScrollDuration] = useState(20); // default fallback
   const textRef = useRef(null);
-  const containerRef = useRef(null);
 
-  // Fetch marquee data from API
   useEffect(() => {
     const fetchMarqueeData = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/v1/marquee/active`);
         const data = await response.json();
-        
-        // Filter for active top marquees only
-        const BottomMarquees = data.filter(
+        const bottomMarquees = data.filter(
           item => item.position === "bottom" && item.isActive === true
         );
-        
-        setMarqueeData(BottomMarquees);
+        setMarqueeData(bottomMarquees);
       } catch (error) {
         console.error("Error fetching marquee data:", error);
       }
@@ -31,80 +26,76 @@ const BottomMarquee = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Calculate text width for smooth animation
   useEffect(() => {
-    if (textRef.current && containerRef.current) {
-      const textElement = textRef.current;
-      const containerWidth = containerRef.current.offsetWidth;
-      const fullTextWidth = textElement.scrollWidth;
-      
-      setTextWidth(fullTextWidth);
-      
-      // Calculate animation duration based on text length for consistent speed
-      const duration = Math.max(15, (fullTextWidth / 50)); // Adjust speed as needed
-      textElement.style.animationDuration = `${duration}s`;
+    if (textRef.current) {
+      const fullTextWidth = textRef.current.scrollWidth;
+      const isMobile = window.innerWidth <= 768;
+
+      // Slower on mobile, faster on desktop
+      const duration = isMobile
+        ? fullTextWidth / 30
+        : fullTextWidth / 60;
+
+      setScrollDuration(duration);
     }
   }, [marqueeData]);
 
-  // Blinking effect timer
   useEffect(() => {
-    const blinkingInterval = setInterval(() => {
+    const blinkInterval = setInterval(() => {
       setIsBlinking(prev => !prev);
     }, 800);
-    
-    return () => clearInterval(blinkingInterval);
+    return () => clearInterval(blinkInterval);
   }, []);
 
-  // Don't render if no active top marquees
-  if (marqueeData.length === 0) {
-    return null;
-  }
+  if (marqueeData.length === 0) return null;
 
-  const combinedText = marqueeData.map(item => item.text).join(' • ');
+  const combinedText = marqueeData.map(item => item.text).join(" • ");
 
   return (
-    <div 
-      ref={containerRef}
-      className="rounded-2xl mx-10 mb-8 bg-black py-4 overflow-hidden relative"
-    >
-      {/* Left fade gradient for smooth disappearing effect */}
+    <div className="relative overflow-hidden bg-black py-4 rounded-2xl mx-10 mb-8">
+      {/* Fade edges */}
       <div className="absolute left-0 top-0 w-20 h-full bg-gradient-to-r from-black to-transparent z-10 pointer-events-none" />
-      
-      {/* Right fade gradient for smooth appearing effect */}
       <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-black to-transparent z-10 pointer-events-none" />
-      
-      <div className="overflow-hidden whitespace-nowrap relative">
-        <div 
+
+      <div className="marquee-track">
+        <div
+          className={`marquee-content ${isBlinking ? 'text-orange-400' : 'text-white'}`}
           ref={textRef}
-          className={`inline-block animate-smooth-marquee ${isBlinking ? 'text-orange-400' : 'text-white'}`}
           style={{
-            willChange: 'transform',
+            animationDuration: `${scrollDuration}s`,
           }}
         >
-          <span className="text-lg font-medium">
-            {combinedText}
-          </span>
+          <span className="text-lg font-medium">{combinedText}</span>
         </div>
       </div>
-      
+
       <style jsx>{`
-        @keyframes smooth-marquee {
+        .marquee-track {
+          position: relative;
+          white-space: nowrap;
+          width: 100%;
+        }
+
+        .marquee-content {
+          display: inline-block;
+          padding-left: 100%;
+          will-change: transform;
+          animation-name: marqueeScroll;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+        }
+
+        .marquee-content:hover {
+          animation-play-state: paused;
+        }
+
+        @keyframes marqueeScroll {
           0% {
-            transform: translateX(800%);
+            transform: translateX(0%);
           }
           100% {
             transform: translateX(-100%);
           }
-        }
-        
-        .animate-smooth-marquee {
-          animation: smooth-marquee 40s linear infinite;
-        }
-        
-        /* Ensure smooth hardware acceleration */
-        .animate-smooth-marquee {
-          backface-visibility: hidden;
-          perspective: 1000px;
         }
       `}</style>
     </div>
@@ -112,6 +103,123 @@ const BottomMarquee = () => {
 };
 
 export default BottomMarquee;
+
+
+
+// import React, { useState, useEffect, useRef } from 'react';
+// import API_BASE_URL from "../../../config";
+
+// const BottomMarquee = () => {
+//   const [marqueeData, setMarqueeData] = useState([]);
+//   const [isBlinking, setIsBlinking] = useState(false);
+//   const [textWidth, setTextWidth] = useState(0);
+//   const textRef = useRef(null);
+//   const containerRef = useRef(null);
+
+//   // Fetch marquee data from API
+//   useEffect(() => {
+//     const fetchMarqueeData = async () => {
+//       try {
+//         const response = await fetch(`${API_BASE_URL}/api/v1/marquee/active`);
+//         const data = await response.json();
+        
+//         // Filter for active top marquees only
+//         const BottomMarquees = data.filter(
+//           item => item.position === "bottom" && item.isActive === true
+//         );
+        
+//         setMarqueeData(BottomMarquees);
+//       } catch (error) {
+//         console.error("Error fetching marquee data:", error);
+//       }
+//     };
+
+//     fetchMarqueeData();
+//     const intervalId = setInterval(fetchMarqueeData, 5 * 60 * 1000);
+//     return () => clearInterval(intervalId);
+//   }, []);
+
+//   // Calculate text width for smooth animation
+//   useEffect(() => {
+//     if (textRef.current && containerRef.current) {
+//       const textElement = textRef.current;
+//       const containerWidth = containerRef.current.offsetWidth;
+//       const fullTextWidth = textElement.scrollWidth;
+      
+//       setTextWidth(fullTextWidth);
+      
+//       // Calculate animation duration based on text length for consistent speed
+//       const duration = Math.max(15, (fullTextWidth / 50)); // Adjust speed as needed
+//       textElement.style.animationDuration = `${duration}s`;
+//     }
+//   }, [marqueeData]);
+
+//   // Blinking effect timer
+//   useEffect(() => {
+//     const blinkingInterval = setInterval(() => {
+//       setIsBlinking(prev => !prev);
+//     }, 800);
+    
+//     return () => clearInterval(blinkingInterval);
+//   }, []);
+
+//   // Don't render if no active top marquees
+//   if (marqueeData.length === 0) {
+//     return null;
+//   }
+
+//   const combinedText = marqueeData.map(item => item.text).join(' • ');
+
+//   return (
+//     <div 
+//       ref={containerRef}
+//       className="rounded-2xl mx-10 mb-8 bg-black py-4 overflow-hidden relative"
+//     >
+//       {/* Left fade gradient for smooth disappearing effect */}
+//       <div className="absolute left-0 top-0 w-20 h-full bg-gradient-to-r from-black to-transparent z-10 pointer-events-none" />
+      
+//       {/* Right fade gradient for smooth appearing effect */}
+//       <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-black to-transparent z-10 pointer-events-none" />
+      
+//       <div className="overflow-hidden whitespace-nowrap relative">
+//         <div 
+//           ref={textRef}
+//           className={`inline-block animate-smooth-marquee ${isBlinking ? 'text-orange-400' : 'text-white'}`}
+//           style={{
+//             willChange: 'transform',
+//           }}
+//         >
+//           <span className="text-lg font-medium">
+//             {combinedText}
+//           </span>
+//         </div>
+//       </div>
+      
+//       <style jsx>{`
+//         @keyframes smooth-marquee {
+//           0% {
+//             transform: translateX(800%);
+//           }
+//           100% {
+//             transform: translateX(-100%);
+//           }
+//         }
+        
+//         .animate-smooth-marquee {
+//           animation: smooth-marquee 40s linear infinite;
+//         }
+        
+//         /* Ensure smooth hardware acceleration */
+//         .animate-smooth-marquee {
+//           backface-visibility: hidden;
+//           perspective: 1000px;
+//         }
+//       `}</style>
+//     </div>
+//   );
+// };
+
+// export default BottomMarquee;
 
 
 // import React, { useState, useEffect } from 'react';

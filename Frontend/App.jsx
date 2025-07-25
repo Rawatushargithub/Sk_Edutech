@@ -56,6 +56,7 @@ function App() {
         <Route path='/admin/login' element={<AdminLogin />} />
         <Route path="/admin/*" element={<AdminPanel />} />
         <Route path="/student/*" element={<StudentPanel />} />
+        
     
     {/* Institute Routes */}
         <Route path="/institute/*" element={<CenterPanel />} />

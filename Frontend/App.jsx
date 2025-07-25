@@ -1,4 +1,5 @@
-import { Route,Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom';
+import ApplyFranchiseModal from './frontend/Homepage_frontend/ApplyFranchiseModal';
 import './index.css'
 import Sidebar from './frontend/AdminPanel_frontend/Sidebar/Sidebar';
 import HomePage from './frontend/Render_Pages/Homepage'
@@ -40,7 +41,7 @@ function App() {
   return (
     <>
       <Routes>
-        {/* Homepage Routes */}
+        <Route path="/apply" element={<ApplyFranchiseModal />} />        {/* Homepage Routes */}
         <Route path="/" element={<HomePage/>} />
         <Route path="/gallery" element={<GalleryHomepage/>} />
         <Route path="/allreviews" element={<NAllReviewsPage/>} />

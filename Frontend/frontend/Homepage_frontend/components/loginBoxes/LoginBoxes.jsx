@@ -14,7 +14,7 @@ import FranchiseVerificationModal from "./FranchiseVerificationModal";
 import API_BASE_URL  from "../../../config.js"; // Adjust the import based on your project structure
 
 
-const LoginBoxes = ({ onApplyClick }) => {
+const LoginBoxes = ({ onStudentClick, onTeacherClick }) => {
   const navigate = useNavigate();
   const ApplyFranchise = () => {
     navigate("/ApplyforFranchise");
@@ -245,7 +245,7 @@ const LoginBoxes = ({ onApplyClick }) => {
 
       {/* Apply for Franchise */}
       <div
-        onClick={onApplyClick}
+        onClick={() => navigate('/apply')}
         className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 lg:h-auto"
       >
         <FaFolderPlus className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]" />

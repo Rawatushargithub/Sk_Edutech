@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Phone, LogIn, AlertCircle } from "lucide-react";
+import { User, Lock, LogIn, AlertCircle, Eye, EyeOff } from "lucide-react";
 import API_BASE_URL from "../../config";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [studentMobile, setStudentMobile] = useState("");
+  const [rollNumber, setRollNumber] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -24,10 +25,12 @@ const Login = () => {
     setError("");
 
     try {
+        console.log("Sending login request with rollNumber:", rollNumber, password);
+
       const response = await fetch(`${API_BASE_URL}/api/v1/student/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, studentMobile }),
+        body: JSON.stringify({ rollNumber, password }),
       });
 
       const data = await response.json();
@@ -39,8 +42,17 @@ const Login = () => {
           throw new Error("Student data not found in response!");
         }
 
-        const { studentName, dob, courseInterested, email, studentMobile, _id, rollNumber, franchiseId, 
-admissionDate } = data.student;
+        const { 
+          studentName, 
+          dob, 
+          courseInterested, 
+          email, 
+          studentMobile, 
+          _id, 
+          rollNumber: studentRollNumber, 
+          franchiseId,
+          admissionDate 
+        } = data.student;
 
         const birthYear = dob ? new Date(dob).getFullYear() : null;
         const currentYear = new Date().getFullYear();
@@ -57,7 +69,7 @@ admissionDate } = data.student;
             email: email,
             phone: studentMobile,
             studentId: _id,
-            rollNumber: rollNumber,
+            rollNumber: studentRollNumber,
             franchiseId: franchiseId,
           })
         );
@@ -73,9 +85,13 @@ admissionDate } = data.student;
     }
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
     <div className="w-full max-w-md pb-1">
-      <div className="bg-white rounded-xl  overflow-hidden ">
+      <div className="bg-white rounded-xl overflow-hidden">
         {/* Header */}
         <div className="bg-sky-500 p-6 text-white text-center">
           <div className="flex justify-center mb-3">
@@ -84,7 +100,7 @@ admissionDate } = data.student;
             </div>
           </div>
           <h2 className="text-2xl font-bold">Student Login</h2>
-          <p className="text-sky-100 mt-1">Please enter your credentials to continue</p>
+          <p className="text-sky-100 mt-1">Enter your roll number and password</p>
         </div>
 
         {/* Form Section */}
@@ -98,19 +114,19 @@ admissionDate } = data.student;
 
           <form onSubmit={handleLogin}>
             <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-medium text-sky-800 mb-1">
-                Email Address
+              <label htmlFor="rollNumber" className="block text-sm font-medium text-sky-800 mb-1">
+                Roll Number
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail size={16} className="text-sky-400" />
+                  <User size={16} className="text-sky-400" />
                 </div>
                 <input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="rollNumber"
+                  type="text"
+                  placeholder="Enter your roll number"
+                  value={rollNumber}
+                  onChange={(e) => setRollNumber(e.target.value)}
                   required
                   className="w-full pl-10 pr-3 py-3 border border-sky-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all"
                 />
@@ -118,29 +134,39 @@ admissionDate } = data.student;
             </div>
 
             <div className="mb-6">
-              <label htmlFor="mobile" className="block text-sm font-medium text-sky-800 mb-1">
-                Mobile Number
+              <label htmlFor="password" className="block text-sm font-medium text-sky-800 mb-1">
+                Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Phone size={16} className="text-sky-400" />
+                  <Lock size={16} className="text-sky-400" />
                 </div>
                 <input
-                  id="mobile"
-                  type="text"
-                  placeholder="Enter your mobile number"
-                  value={studentMobile}
-                  onChange={(e) => setStudentMobile(e.target.value)}
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full pl-10 pr-3 py-3 border border-sky-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all"
+                  className="w-full pl-10 pr-12 py-3 border border-sky-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all"
                 />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-sky-400 hover:text-sky-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
+              <p className="text-xs text-sky-600 mt-1">
+                Default password is your mobile number
+              </p>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-sky-500 hover:bg-sky-600 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
+              className="w-full bg-sky-500 hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
             >
               {isLoading ? (
                 <>
@@ -157,8 +183,8 @@ admissionDate } = data.student;
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-sky-700">
-              Having trouble logging in?{" "}
+            <p onClick={() => navigate("/student/forgot-password")} className="text-sm text-sky-700">
+              Forgot your password?{" "}
               <a href="#contact-support" className="text-sky-600 hover:text-sky-800 font-medium">
                 Contact Support
               </a>

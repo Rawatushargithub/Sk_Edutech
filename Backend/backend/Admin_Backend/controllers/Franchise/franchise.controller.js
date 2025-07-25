@@ -13,7 +13,7 @@ const generateFranchiseId = async () => {
     let uniqueId = false;
     let franchiseId;
     while (!uniqueId) {
-        franchiseId = `SK${Math.floor(100000 + Math.random() * 900000)}`;
+        franchiseId = `SK/SKE-${Math.floor(100000 + Math.random() * 900000)}`;
         const existing = await Franchise.findOne({ franchiseId });
         if (!existing) {
             uniqueId = true;

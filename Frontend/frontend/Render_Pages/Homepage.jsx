@@ -16,14 +16,6 @@ import BottomMarquee from '../Homepage_frontend/components/marqueeLine/BottomMar
 import NAllReviewsPage from '../Homepage_frontend/components/ReviewsSection/NewAllReviews'
 import ApplyFranchiseModal from '../Homepage_frontend/ApplyFranchiseModal';
 
-
-// import EducationSection from "../componenets/EducationSection";
-// import OurAchievers from "../componenets/OurAchievers";
-// import ContactUsSection from "../componenets/ContactUsSection";
-// import ReviewsSection from "../componenets/ReviewsSection";
-// import Footer from "../componenets/Footer";
-
-
 function HomePage() {
 
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false); // State for modal visibility

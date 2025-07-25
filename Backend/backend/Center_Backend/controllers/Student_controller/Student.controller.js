@@ -451,6 +451,7 @@ const registerStudent = asyncHandler(async (req, res) => {
           studentMobile,
           alternateMobile,
           email,
+          password: studentMobile.toString(),
           dob,
           gender,
           city,
@@ -469,7 +470,7 @@ const registerStudent = asyncHandler(async (req, res) => {
         throw new Error("Failed to create student record: " + studentCreateError.message);
       }
 
-      const studentId = newStudent._id;
+      const studentId = student[0]._id;
 
       // Create fee record
       const fee = await Fees_studentModel.create([{

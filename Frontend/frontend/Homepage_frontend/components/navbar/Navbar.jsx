@@ -6,6 +6,7 @@ import centerLogin from "../../../Center_frontend/pages/centerLogin";
 
 const Navbar = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [activeNestedDropdown, setActiveNestedDropdown] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openDropdownMobile, setOpenDropdownMobile] = useState(null);
 
@@ -46,9 +47,13 @@ const Navbar = () => {
       dropdownItems: [
         { title: "About Us", link: "/about-us" },
         { title: "Our Aim", link: "/our-aim" },
-        { title: "Accreditation", link: "/accreditation" },
+    //  { title: "Accreditation", link: "/accreditation" },
+        { title: "Privacy", link: "/privacy-policy" },
+        { title: "Message", link: "/message"},
         { title: "Refund & Cancellation Policy", link: "/refund-policy" },
         { title: "Public Note", link: "/public-note" },
+        { title: "Term & Conditions" , link : "/term-condition"},
+
       ],
     },
     {
@@ -76,20 +81,44 @@ const Navbar = () => {
       title: "AFFILIATION PROCESS",
       hasDropdown: true,
       dropdownItems: [
-        { title: "Affiliation Process for registration", link: "/affiliation/process" },
-        { title: "Reason Partners", link: "/affiliation/partners" },
-        { title: "How To Get Franchise (Affiliation)", link: "/affiliation/franchise" },
+        { title: "Affiliation Process for registration", link: "/affiliation-process" },
+        { title: "Reason Partners", link: "/reason-partners" },
+        { title: "How To Get Franchise (Affiliation)", link: "/how-to-get-franchise" },
         { title: "How to Register Institute", link: "/affiliation/register-institute" },
-        { title: "NTT Franchise Process", link: "/affiliation/ntt-franchise" },
+    //  { title: "NTT Franchise Process", link: "/affiliation/ntt-franchise" },
         { title: "Institute List in India", link: "/affiliation/institute-list" },
         { title: "Live: Top Center List", link: "/affiliation/top-centers" },
       ],
-    },
+    },  
     {
       title: "DOWNLOAD",
       hasDropdown: true,
       dropdownItems: [
-        { title: "Download", link: "/downloads" },
+        {
+          title: "Study Material",
+          hasNestedDropdown: true,
+          nestedDropdownItems: [
+            { title: "For Institute", link: "#" },
+            { title: "For Students", link: "#" },
+          ],
+        },
+        {
+          title: "Android App",
+          hasNestedDropdown: true,
+          nestedDropdownItems: [
+            { title: "For Institute", link: "#" },
+            { title: "For Students", link: "#" },
+          ],
+        },
+        {
+          title: "Institute Banner",
+          hasNestedDropdown: true,
+          nestedDropdownItems: [
+            { title: "Daily Status", link: "#" },
+            { title: "Banner Gallery", link: "#" },
+            { title: "Daily Update", link: "#" },
+          ],
+        },
         { title: "Admission Form", link: "/downloads/admission-form" },
         { title: "Franchise Form", link: "/downloads/franchise-form" },
       ],
@@ -134,6 +163,7 @@ const Navbar = () => {
     <div>
       {/* Static navbar that's always visible at the top of the page on initial load */}
       <div className="top-0 left-0 w-full z-20 flex gap-15 shadow-md items-center bg-white">
+
         {/* Logo */}
         <div className="py-4 w-44 ml-15">
           <img src="/assets/Logo.jpg" alt="Logo" onClick={() => navigate("/")} className="cursor-pointer" />
@@ -195,19 +225,49 @@ const Navbar = () => {
                         : "opacity-0 scale-y-0 invisible"
                     }`}
                   >
-                    {item.dropdownItems.map((dropdownItem, idx) => (
-                      <a
-                        key={idx}
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleLinkClick(dropdownItem.link);
-                          setActiveDropdown(null);
-                        }}
-                        className="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-500 transition-colors duration-300"
+                    {item.dropdownItems.map((dropdownItem, dropdownIndex) => (
+                      <li 
+                        key={dropdownIndex}
+                        className="relative"
+                        onMouseEnter={() => dropdownItem.hasNestedDropdown && setActiveNestedDropdown(dropdownIndex)}
+                        onMouseLeave={() => dropdownItem.hasNestedDropdown && setActiveNestedDropdown(null)}
                       >
-                        {dropdownItem.title}
-                      </a>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (!dropdownItem.hasNestedDropdown) {
+                                handleLinkClick(dropdownItem.link);
+                                setActiveDropdown(null);
+                            }
+                          }}
+                          className="flex justify-between items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-500 transition-colors duration-300"
+                        >
+                          {dropdownItem.title}
+                          {dropdownItem.hasNestedDropdown && <span className="text-xs">▶</span>}
+                        </a>
+                        {/* Nested Dropdown */}
+                        {dropdownItem.hasNestedDropdown && activeNestedDropdown === dropdownIndex && (
+                          <ul className="absolute left-full -top-2 mt-0 w-56 bg-white shadow-lg rounded-md py-2 z-50">
+                            {dropdownItem.nestedDropdownItems.map((nestedItem, nestedIndex) => (
+                              <li key={nestedIndex}>
+                                <a
+                                  href="#"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleLinkClick(nestedItem.link);
+                                    setActiveDropdown(null);
+                                    setActiveNestedDropdown(null);
+                                  }}
+                                  className="block px-4 py-2 text-gray-800 hover:bg-blue-50"
+                                >
+                                  {nestedItem.title}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
                     ))}
                   </div>
                 )}
@@ -376,8 +436,8 @@ const Navbar = () => {
       </div>
 
       {/* Scrolling navbar that appears/disappears based on scroll position */}
-      <div
-        className={`fixed top-0 left-0 w-full z-20 flex gap-15 shadow-md items-center transition-transform duration-400 ${
+            <div
+        className={`fixed top-0 left-0 w-full z-30 flex gap-15 shadow-lg items-center transition-transform duration-400 ${
           isScrolled ? "translate-y-0 bg-white shadow-lg" : "-translate-y-full"
         }`}
         style={{ display: hasScrolled ? "flex" : "none" }}
@@ -448,19 +508,49 @@ const Navbar = () => {
                         : "opacity-0 scale-y-0 invisible"
                     }`}
                   >
-                    {item.dropdownItems.map((dropdownItem, idx) => (
-                      <a
-                        key={idx}
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleLinkClick(dropdownItem.link);
-                          setActiveDropdown(null);
-                        }}
-                        className="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-500 transition-colors duration-300"
+                    {item.dropdownItems.map((dropdownItem, dropdownIndex) => (
+                      <li 
+                        key={dropdownIndex}
+                        className="relative"
+                        onMouseEnter={() => dropdownItem.hasNestedDropdown && setActiveNestedDropdown(dropdownIndex)}
+                        onMouseLeave={() => dropdownItem.hasNestedDropdown && setActiveNestedDropdown(null)}
                       >
-                        {dropdownItem.title}
-                      </a>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (!dropdownItem.hasNestedDropdown) {
+                                handleLinkClick(dropdownItem.link);
+                                setActiveDropdown(null);
+                            }
+                          }}
+                          className="flex justify-between items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-500 transition-colors duration-300"
+                        >
+                          {dropdownItem.title}
+                          {dropdownItem.hasNestedDropdown && <span className="text-xs">▶</span>}
+                        </a>
+                        {/* Nested Dropdown */}
+                        {dropdownItem.hasNestedDropdown && activeNestedDropdown === dropdownIndex && (
+                          <ul className="absolute left-full -top-2 mt-0 w-56 bg-white shadow-lg rounded-md py-2 z-50">
+                            {dropdownItem.nestedDropdownItems.map((nestedItem, nestedIndex) => (
+                              <li key={nestedIndex}>
+                                <a
+                                  href="#"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleLinkClick(nestedItem.link);
+                                    setActiveDropdown(null);
+                                    setActiveNestedDropdown(null);
+                                  }}
+                                  className="block px-4 py-2 text-gray-800 hover:bg-blue-50"
+                                >
+                                  {nestedItem.title}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
                     ))}
                   </div>
                 )}

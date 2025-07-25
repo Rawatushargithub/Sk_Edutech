@@ -79,6 +79,8 @@ const CourseListAdmin = () => {
   const [filterStatus, setFilterStatus] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCourseForDetails, setSelectedCourseForDetails] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [displayCount, setDisplayCount] = useState(10);
 
   const openDetailsModal = (course) => {
     setSelectedCourseForDetails(course);
@@ -116,6 +118,7 @@ const CourseListAdmin = () => {
   useEffect(() => {
     fetchCoursesAdmin();
   }, [filterStatus]);
+  
 
   const handleUpdateStatus = async (courseId, newStatus) => {
     if (!window.confirm(`Are you sure you want to set this course to "${newStatus}"?`)) {
@@ -153,27 +156,97 @@ const CourseListAdmin = () => {
 
   const inputStyle = "rounded-md border-gray-300 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm";
   // Updated button base style for consistent padding and text size
-  const buttonActionStyle = "px-3 py-2 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-offset-1 flex items-center justify-center leading-4"; 
+  const buttonActionStyle = "w-24 h-10 px-3 py-2 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-offset-1 flex items-center justify-center leading-4"; 
+
+  // Filter courses by status and search term
+  const filteredCourses = courses.filter(course =>
+    (filterStatus === '' || course.adminApprovalStatus === filterStatus) &&
+    Object.values(course).some(value =>
+      value && value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+  const displayedCourses = filteredCourses.slice(0, displayCount);
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-full mx-auto">
         <div className="bg-white rounded-xl shadow-2xl p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-            <h1 className="text-3xl font-bold text-slate-800">Admin Course Management</h1>
-            <div className="flex items-center gap-4">
-              <label htmlFor="statusFilter" className="text-sm font-medium text-gray-700">Filter by status:</label>
-              <select
-                id="statusFilter"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className={`${inputStyle} py-2`}
+            <h1 className="text-3xl font-bold text-slate-800 w-full">Admin Course Management</h1>
+          </div>
+          
+          {/* Search and count controls above tabs */}
+          <div className="w-full flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Show</label>
+              <input
+                type="number"
+                min="1"
+                max={filteredCourses.length}
+                value={displayCount}
+                onChange={e => setDisplayCount(Math.min(Math.max(1, parseInt(e.target.value) || 1), filteredCourses.length))}
+                className="w-16 rounded-md border-gray-300 shadow-sm focus:border-slate-500 focus:ring-slate-500"
+              />
+              <span className="text-sm text-gray-600">entries</span>
+            </div>
+            <div className="relative">
+              <input
+                type="search"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="border rounded-md p-3 w-80 focus:border-slate-500 focus:ring-slate-500"
+              />
+            </div>
+          </div>
+
+          {/* Tabs for filtering by status - now below the heading and full width */}
+          <div className="w-full mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-0 border border-gray-300 rounded-lg overflow-hidden bg-gray-50">
+              <button
+                className={`w-full px-4 py-3 text-md font-bold transition-colors duration-150 focus:outline-none border-b-2 sm:border-b-0 sm:border-r-3 border-gray-200 last:border-r-0
+                  ${filterStatus === ''
+                    ? 'bg-gray-300 text-gray-700  border-b-4 sm:border-b-0 sm:border-r-4 border-slate-600 shadow font-bold z-10'
+                    : 'text-slate-700 hover:bg-black-100 hover:text-slate-900 bg-gray-50'}
+                `}
+                onClick={() => setFilterStatus('')}
+                type="button"
               >
-                <option value="">All</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
+                All Courses
+              </button>
+              <button
+                className={`w-full px-4 py-3 text-md font-bold transition-colors duration-150 focus:outline-none border-b-2 sm:border-b-0 sm:border-r-2 border-gray-200 last:border-r-0
+                  ${filterStatus === 'pending'
+                    ? 'bg-yellow-100 text-yellow-800 border-b-4 sm:border-b-0 sm:border-r-4 border-yellow-500 shadow font-bold z-10'
+                    : 'text-slate-700 hover:bg-yellow-50 hover:text-yellow-700 bg-gray-50'}
+                `}
+                onClick={() => setFilterStatus('pending')}
+                type="button"
+              >
+                Pending Courses
+              </button>
+              <button
+                className={`w-full px-4 py-3 text-md font-bold transition-colors duration-150 focus:outline-none border-b-2 sm:border-b-0 sm:border-r-2 border-gray-200 last:border-r-0
+                  ${filterStatus === 'approved'
+                    ? 'bg-emerald-100 text-emerald-800 border-b-4 sm:border-b-0 sm:border-r-4 border-green-700 shadow font-bold z-10'
+                    : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 bg-gray-50'}
+                `}
+                onClick={() => setFilterStatus('approved')}
+                type="button"
+              >
+                Approved Courses
+              </button>
+              <button
+                className={`w-full px-4 py-3 text-md font-bold transition-colors duration-150 focus:outline-none border-b-2 sm:border-b-0 border-gray-200
+                  ${filterStatus === 'rejected'
+                    ? 'bg-red-100 text-red-800 border-b-4 sm:border-b-0 sm:border-r-4 border-rose-700 shadow font-bold z-10'
+                    : 'text-slate-700 hover:bg-rose-50 hover:text-rose-700 bg-gray-50'}
+                `}
+                onClick={() => setFilterStatus('rejected')}
+                type="button"
+              >
+                Rejected Courses
+              </button>
             </div>
           </div>
 
@@ -195,12 +268,12 @@ const CourseListAdmin = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {courses.length === 0 && !loading && (
+                  {displayedCourses.length === 0 && !loading && (
                     <tr>
                       <td colSpan="7" className="px-6 py-10 text-center text-gray-500">No courses found for the selected filter.</td>
                     </tr>
                   )}
-                  {courses.map((course) => (
+                  {displayedCourses.map((course) => (
                     <tr key={course._id} className="hover:bg-gray-50 group">
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">{course.courseCode}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{course.courseName}</td>
@@ -217,7 +290,7 @@ const CourseListAdmin = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm font-medium sticky right-0 bg-white group-hover:bg-gray-50 z-10 border-l">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 justify-center">
                           <button
                               onClick={() => openDetailsModal(course)}
                               className={`${buttonActionStyle} bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-500`}

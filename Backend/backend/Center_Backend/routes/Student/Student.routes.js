@@ -1,6 +1,6 @@
 import { Router } from "express"
-import { registerStudent , getStudents , getStudentCount , getRecentsStudents , toggleStudentStatus ,updateStudent, generateAdmissionForm} from "../../controllers/Student_controller/Student.controller.js"
-import { upload } from "../../middlewares/multer.middleware.js"; 
+import { registerStudent , getStudents , getStudentCount , getRecentsStudents , toggleStudentStatus ,updateStudent, generateAdmissionForm, generateIdCard} from "../../controllers/Student_controller/Student.controller.js"
+import { upload } from "../../middlewares/multer.middleware.js";
 const router = Router()
 
 try {
@@ -37,6 +37,7 @@ try {
     );
     router.patch("/toggle_status/:id", toggleStudentStatus);
     router.route("/:studentId/admission-form").get(generateAdmissionForm);
+    router.route("/:studentId/id-card").get(generateIdCard);
 
 } catch (error) {
     console.log("error occured in students routes " , error)

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import API_BASE_URL from '../../../../config';
+import API_BASE_URL from '../../config';
 
 
 // Define the base URL for the SK_Merged_landing backend API

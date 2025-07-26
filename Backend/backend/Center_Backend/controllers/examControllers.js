@@ -1,4 +1,5 @@
 import Exam from "../models/Exam.models.js"
+import QuestionBank from "../models/Questionbank.model.js"
 import Student from "../models/Student/Student_Detais.model.js";
 import { asyncHandler } from "../utils/asynchanlder.js";
 import mongoose from "mongoose";
@@ -586,6 +587,250 @@ export const updateExam = async (req, res) => {
 };
 
 
+export const getExamQuestions = async (req, res) => {
+  try {
+    const { examId } = req.params;
+
+    // Find the exam by ID
+    const exam = await Exam.findById(examId);
+    if (!exam) {
+      return res.status(404).json({
+        success: false,
+        message: 'Exam not found'
+      });
+    }
+
+    // Check if it's an online exam
+    if (exam.examMode !== 'Online') {
+      return res.status(400).json({
+        success: false,
+        message: 'Questions are only available for online exams'
+      });
+    }
+
+    // If no questions are assigned to this exam
+    if (!exam.questions || exam.questions.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'No questions found for this exam',
+        questions: [],
+        examDetails: {
+          examId: exam._id,
+          courseCode: exam.courseCode,
+          totalQuestions: exam.totalQuestions,
+          totalMarks: exam.totalMarks
+        }
+      });
+    }
+
+    // Find the question bank for this course
+    const questionBank = await QuestionBank.findOne({ 
+      courseCode: exam.courseCode 
+    });
+
+    if (!questionBank) {
+      return res.status(404).json({
+        success: false,
+        message: `Question bank not found for course: ${exam.courseCode}`
+      });
+    }
+ 
+    // Filter questions based on question numbers stored in exam.questions array
+    const examQuestions = exam.questions.map(qNo => {
+      const question = questionBank.questions.find(q => q.qNo === qNo);
+      if (question) {
+        return {
+          _id: question._id,
+          qNo: question.qNo,
+          questionText: question.question,
+          options: [
+            question.options.a,
+            question.options.b,
+            question.options.c,
+            question.options.d
+          ],
+          correctAnswer: ['a', 'b', 'c', 'd'].indexOf(question.answer),
+          // marks: 1, // Default marks per question
+          // questionType: 'multiple-choice'
+        };
+      }
+      return null;
+    }).filter(q => q !== null); // Remove null entries for missing questions
+
+    // Check if all questions were found
+    const foundQuestionNumbers = examQuestions.map(q => q.qNo);
+    const missingQuestions = exam.questions.filter(qNo => !foundQuestionNumbers.includes(qNo));
+
+    return res.status(200).json({
+      success: true,
+      message: 'Questions fetched successfully',
+      questions: examQuestions,
+      examDetails: {
+        examId: exam._id,
+        courseCode: exam.courseCode,
+        totalQuestions: exam.totalQuestions,
+        totalMarks: exam.totalMarks,
+        assignedQuestions: exam.questions.length,
+        foundQuestions: examQuestions.length
+      },
+      ...(missingQuestions.length > 0 && {
+        warning: `Some questions not found in question bank: ${missingQuestions.join(', ')}`
+      })
+    });
+
+  } catch (error) {
+    console.error('Error fetching exam questions:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error while fetching questions',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * Add a question to an exam (assign question number to exam)
+ * @route POST /api/v1/institute_exam/exams/:examId/questions
+ */
+export const addQuestionToExam = async (req, res) => {
+  try {
+    const { examId } = req.params;
+    const { qNo } = req.body;
+
+    if (!qNo) {
+      return res.status(400).json({
+        success: false,
+        message: 'Question number (qNo) is required'
+      });
+    }
+
+    // Find the exam
+    const exam = await Exam.findById(examId);
+    if (!exam) {
+      return res.status(404).json({
+        success: false,
+        message: 'Exam not found'
+      });
+    }
+
+    // Check if it's an online exam
+    if (exam.examMode !== 'Online') {
+      return res.status(400).json({
+        success: false,
+        message: 'Questions can only be added to online exams'
+      });
+    }
+
+    // Check if question already exists in exam
+    if (exam.questions.includes(qNo)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Question already exists in this exam'
+      });
+    }
+
+    // Verify the question exists in question bank
+    const questionBank = await QuestionBank.findOne({ 
+      courseCode: exam.courseCode 
+    });
+
+    if (!questionBank) {
+      return res.status(404).json({
+        success: false,
+        message: `Question bank not found for course: ${exam.courseCode}`
+      });
+    }
+
+    const questionExists = questionBank.questions.some(q => q.qNo === qNo);
+    if (!questionExists) {
+      return res.status(404).json({
+        success: false,
+        message: `Question with number ${qNo} not found in question bank`
+      });
+    }
+
+    // Add question number to exam
+    exam.questions.push(qNo);
+    await exam.save();
+
+    // Get the added question details
+    const addedQuestion = questionBank.questions.find(q => q.qNo === qNo);
+    const formattedQuestion = {
+      _id: addedQuestion._id,
+      qNo: addedQuestion.qNo,
+      questionText: addedQuestion.question,
+      options: [
+        addedQuestion.options.a,
+        addedQuestion.options.b,
+        addedQuestion.options.c,
+        addedQuestion.options.d
+      ],
+      correctAnswer: ['a', 'b', 'c', 'd'].indexOf(addedQuestion.answer),
+      marks: 1,
+      questionType: 'multiple-choice'
+    };
+
+    return res.status(201).json({
+      success: true,
+      message: 'Question added to exam successfully',
+      question: formattedQuestion
+    });
+
+  } catch (error) {
+    console.error('Error adding question to exam:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error while adding question',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * Remove a question from an exam
+ * @route DELETE /api/v1/institute_exam/exams/:examId/questions/:qNo
+ */
+export const removeQuestionFromExam = async (req, res) => {
+  try {
+    const { examId, qNo } = req.params;
+    const questionNumber = parseInt(qNo);
+
+    // Find the exam
+    const exam = await Exam.findById(examId);
+    if (!exam) {
+      return res.status(404).json({
+        success: false,
+        message: 'Exam not found'
+      });
+    }
+
+    // Check if question exists in exam
+    const questionIndex = exam.questions.indexOf(questionNumber);
+    if (questionIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Question not found in this exam'
+      });
+    }
+
+    // Remove question from exam
+    exam.questions.splice(questionIndex, 1);
+    await exam.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Question removed from exam successfully'
+    });
+
+  } catch (error) {
+    console.error('Error removing question from exam:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error while removing question',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
 
 // // Alternative: Separate endpoints for online and offline exams
 // export const getOnlineExams = asyncHandler(async (req, res) => {

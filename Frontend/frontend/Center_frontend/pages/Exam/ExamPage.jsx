@@ -169,6 +169,8 @@ const ExamManagement = () => {
             batch: exam.batch || [],
             examDate: exam.examDate,
             examType: exam.examType, // Include exam type in transformed data
+            examStartTime: exam.examStartTime,
+            examEndTime: exam.examEndTime,
             examDurationMinutes: exam.examDurationMinutes,
             totalQuestions: exam.totalQuestions,
             totalMarks: exam.totalMarks,
@@ -193,6 +195,17 @@ const ExamManagement = () => {
       setLoading(false);
     }
   };
+
+  // Helper function to convert 24-hour time to 12-hour format with AM/PM
+  const formatTimeToAMPM = (time24) => {
+    if (!time24) return "";
+    const [hours, minutes] = time24.split(':');
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
 
   // Fetch students for a specific exam
   const fetchStudentsForExam = async (examId) => {
@@ -795,6 +808,18 @@ const ExamManagement = () => {
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
+                    Start time
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    End Time
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Duration
                   </th>
                   <th
@@ -849,10 +874,16 @@ const ExamManagement = () => {
                         {exam.examType}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {exam.batch.timings}
+                        {exam.batch.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {exam.examDate}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatTimeToAMPM(exam.examStartTime)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatTimeToAMPM(exam.examEndTime)} 
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {exam.examDurationMinutes} mins
@@ -880,7 +911,9 @@ const ExamManagement = () => {
                       {mode === "offline" && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900">
+                            <button className="text-blue-600 hover:text-blue-900"
+                            onClick={() => navigate(`/institute/editExam` , { state: { exam } })}
+                            > 
                               Edit
                             </button>
                             <button

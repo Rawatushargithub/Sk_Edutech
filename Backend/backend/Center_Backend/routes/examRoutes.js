@@ -3,13 +3,13 @@ import { createExam, getAllExams, deleteExam, updateExamStatus ,getStudentsByCou
 
 const router = express.Router();
 
-router.post("/exams", createExam);
+router.post("/create-exams", createExam);
 router.get("/students", getStudentsByCourseAndBatch); // ✅ Ensure this exists!
-
+ 
 router.get("/exams", getAllExams); 
 router.patch("/exams/:examId/status", updateExamStatus); // ✅ Ensure this exists!
 router.delete("/exams/:id", deleteExam); // ✅ Ensure this exists!
 router.post("/exams/:selectedExam/marks", uploadMarks); 
-router.put("/exams/updateExam", updateExam); 
+router.put("/exams/updateExam/:examId", updateExam);  
 
 export default router; 

@@ -20,6 +20,8 @@ const ExamSchema = new mongoose.Schema({
     enum: ["Weekly Test", "Monthly Test", "Final Test"],
     default: "Weekly Test",
   },
+  examStartTime: { type: String, required: true }, // NEW: Exam start time (HH:MM format)
+  examEndTime: { type: String, required: true }, // NEW: Exam end time (HH:MM format)
   examDurationMinutes: { type: Number, required: true },
   totalQuestions: { type: Number, required: true },
   totalMarks: { type: Number, required: true },

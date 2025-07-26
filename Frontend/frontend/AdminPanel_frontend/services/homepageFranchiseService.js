@@ -1,9 +1,11 @@
 import axios from 'axios';
+import API_BASE_URL from '../../../config';
+
 
 // Define the base URL for the SK_Merged_landing backend API
 // This backend is located at f:/SK Project/SK_Merged_landing/Backend
 // Port is 8000 as per SK_Merged_landing/Backend/.env
-const SK_MERGED_API_BASE_URL = 'http://localhost:8000/api/v1/homepage-franchises';
+const SK_MERGED_API_BASE_URL = `${API_BASE_URL}/api/v1/homepage-franchises`;
 
 const skMergedHomepageFranchiseApi = axios.create({
     baseURL: SK_MERGED_API_BASE_URL,
@@ -48,29 +50,3 @@ export const submitFranchiseApplicationWithOtp = async (formData) => {
         throw error.response?.data || new Error("Failed to submit application with OTP");
     }
 };
-
-
-// --- Original applyForFranchise function (if still needed for other purposes or as a reference) ---
-// This points to the f:/SK Project/backend (presumably port 8002)
-const ORIGINAL_API_BASE_URL = 'http://localhost:8002/api/v1';
-const originalFranchiseApi = axios.create({
-    baseURL: `${ORIGINAL_API_BASE_URL}/franchises`,
-});
-
-export const applyForFranchise_Legacy = async (formData) => { // Renamed to avoid conflict
-    const url = '/apply';
-    console.log(`[HomepageFranchiseService] Legacy: Submitting to: ${originalFranchiseApi.defaults.baseURL}${url}`);
-    try {
-        const response = await originalFranchiseApi.post(url, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        return response.data;
-    } catch (error) {
-        console.error("[HomepageFranchiseService] Legacy Error:", error.response?.data || error.message);
-        throw error.response?.data || new Error("Legacy: Failed to submit application");
-    }
-};
-// Note: The ApplyFranchiseModal.jsx was updated to use the new OTP flow functions.
-// If applyForFranchise is no longer used by ApplyFranchiseModal.jsx, it could be removed or kept as _Legacy.
-// For now, I've renamed it to applyForFranchise_Legacy to avoid breaking anything that might still import it by the old name,
-// though the modal itself now imports requestFranchiseOtp and submitFranchiseApplicationWithOtp.

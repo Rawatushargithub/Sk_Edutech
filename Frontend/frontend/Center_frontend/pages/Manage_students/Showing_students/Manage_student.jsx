@@ -29,7 +29,12 @@ const StudentAdmissionList = () => {
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [showStatusPopup, setShowStatusPopup] = useState(false);
   const [statusToggleStudent, setStatusToggleStudent] = useState(null);
-  
+
+  // Filter and Search states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [timeFilter, setTimeFilter] = useState("all");
+  const [filteredStudents, setFilteredStudents] = useState([]);
+
   // New state for export dropdown
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   // State for detailed students data
@@ -92,12 +97,55 @@ const StudentAdmissionList = () => {
     fetchStudents();
   }, []);
 
+  useEffect(() => {
+    let tempStudents = students;
+
+    // Apply search term filter
+    if (searchTerm.trim() !== "") {
+      tempStudents = tempStudents.filter(s =>
+        s.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.rollNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.courseInterested?.courseName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.courseInterested?.courseCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.studentMobile?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply time filter
+    if (timeFilter !== "all") {
+      const now = new Date();
+      tempStudents = tempStudents.filter(student => {
+        const admissionDate = new Date(student.admissionDate);
+        if (isNaN(admissionDate.getTime())) return false; // Skip invalid dates
+
+        switch (timeFilter) {
+          case "week":
+            return admissionDate >= new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+          case "month":
+            return admissionDate >= new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+          case "last_month":
+            const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const end = new Date(now.getFullYear(), now.getMonth(), 0);
+            return admissionDate >= start && admissionDate <= end;
+          case "three_months":
+            return admissionDate >= new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+          case "year":
+            return admissionDate >= new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+          default: return true;
+        }
+      });
+    }
+
+    setFilteredStudents(tempStudents);
+    setCurrentPage(1); // Reset to first page whenever filter changes
+  }, [students, searchTerm, timeFilter]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const entriesPerPage = 10;
 
-  const totalPages = students && students.length ? Math.ceil(students.length / entriesPerPage) : 0;
+  const totalPages = filteredStudents.length > 0 ? Math.ceil(filteredStudents.length / entriesPerPage) : 1;
   const startIndex = (currentPage - 1) * entriesPerPage;
-  const currentEntries = Array.isArray(students) ? students.slice(startIndex, startIndex + entriesPerPage) : [];
+  const currentEntries = filteredStudents.slice(startIndex, startIndex + entriesPerPage);
 
   const nextPage = () => {
     if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
@@ -432,6 +480,57 @@ const StudentAdmissionList = () => {
             </div>
           </div>
         </div>
+
+        {/* Filter and Search Controls */}
+        <div className="flex flex-col md:flex-row justify-between items-center my-4 gap-4">
+  {/* Left: Showing X of Y */}
+  <div className="text-lg font-semibold text-gray-700">
+    Showing {currentEntries.length} of {filteredStudents.length} students.
+  </div>
+
+  {/* Right: Search and Filter */}
+  <div className="flex flex-col md:flex-row items-center gap-4">
+    {/* Search Box */}
+    <div className="relative w-full md:w-[400px]">
+      <input
+        type="text"
+        placeholder="Search by Name, ID, Course, Mobile..."
+        value={searchTerm}
+        onChange={e => setSearchTerm(e.target.value)}
+        className="p-2 pl-8 border border-gray-300 rounded-md w-full"
+      />
+      <svg
+        className="w-5 h-5 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"
+        />
+      </svg>
+    </div>
+
+    {/* Filter Dropdown */}
+    <select
+      value={timeFilter}
+      onChange={e => setTimeFilter(e.target.value)}
+      className="p-2 border border-gray-300 rounded-md"
+    >
+      <option value="all">All Time</option>
+      <option value="week">This Week</option>
+      <option value="month">This Month</option>
+      <option value="last_month">Last Month</option>
+      <option value="three_months">Last 3 Months</option>
+      <option value="year">This Year</option>
+    </select>
+  </div>
+</div>
+
+
 
         {/* Updated table to use correct field names */}
         <div className="w-full overflow-auto max-h-[550px] border border-gray-300 rounded-md">
@@ -1095,3 +1194,4 @@ export default StudentAdmissionList;
 
 // export default StudentAdmissionList;
 
+ 

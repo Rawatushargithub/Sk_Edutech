@@ -1,5 +1,5 @@
 import express from "express"
-import { createExam, getAllExams, deleteExam, updateExamStatus ,getStudentsByCourseAndBatch, uploadMarks ,updateExam ,getExamQuestions } from "../controllers/examControllers.js"
+import { createExam, getAllExams, deleteExam, updateExamStatus ,getStudentsByCourseAndBatch, uploadMarks ,updateExam ,getExamQuestions ,addQuestionToExam ,removeQuestionFromExam } from "../controllers/examControllers.js"
 
 const router = express.Router();
 
@@ -14,5 +14,11 @@ router.put("/exams/updateExam/:examId", updateExam);
 
 // Get questions for a specific exam
 router.get('/exams/:examId/questions', getExamQuestions);
+
+// Add a question to an exam (by question number)
+router.post('/exams/:examId/questions', addQuestionToExam);
+
+// Remove a question from an exam
+router.delete('/exams/:examId/questions/:qNo', removeQuestionFromExam);
 
 export default router; 

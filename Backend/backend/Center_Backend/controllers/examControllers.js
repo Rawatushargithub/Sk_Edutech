@@ -693,7 +693,7 @@ export const getExamQuestions = async (req, res) => {
  * @route POST /api/v1/institute_exam/exams/:examId/questions
  */
 export const addQuestionToExam = async (req, res) => {
-  try {
+  try { 
     const { examId } = req.params;
     const { qNo } = req.body;
 

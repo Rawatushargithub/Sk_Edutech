@@ -28,7 +28,9 @@ const ProfileSection = () => {
       if (!storedId) return;
       console.log("Stored Franchise ID:", storedId);
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/franchises/getprofile/${storedId}`);
+        const encodedFranchiseId = encodeURIComponent(storedId);
+
+        const response = await fetch(`${API_BASE_URL}/api/v1/franchises/getprofile/${encodedFranchiseId}`);
         const data = await response.json();
         setFranchiseData(data);
       } catch (error) {

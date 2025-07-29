@@ -24,7 +24,8 @@ const [isSubmitting, setIsSubmitting] = useState(false);
 
       try {
         setIsLoading(true);
-        const response = await axios.get(`${API_BASE_URL}/api/v1/franchises/getprofile/${franchiseId}`);
+        const encodedFranchiseId = encodeURIComponent(franchiseId);
+        const response = await axios.get(`${API_BASE_URL}/api/v1/franchises/getprofile/${encodedFranchiseId}`);
         const data = response.data;
         setFormData(data);
         if (data?.ownerPhotoUrl) setProfilePic(data.ownerPhotoUrl);
@@ -51,7 +52,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
   const handleSubmit = async () => {
     try {
 
-      const franchiseId = localStorage.getItem('franchiseId'); // retrieve from local storage
+      const franchiseId = localStorage.getItem('franchiseID'); // retrieve from local storage
       console.log("Franchise ID:", franchiseId);
 
       if (!franchiseId) {

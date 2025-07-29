@@ -1,6 +1,7 @@
 // src/pages/ApprovedCertificates.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../config";
 
@@ -175,10 +176,29 @@ const ApprovedCertificates = () => {
                             <td className="border px-2 py-1">{r.grade}</td>
                             <td className="border px-2 py-1">{r.session}</td>
                             <td className="border px-2 py-1 text-center">
-                              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                                Approved
-                              </span>
-                            </td>
+  <div className="flex flex-col items-center justify-center gap-2">
+    <span className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+      Approved
+    </span>
+
+    <button
+      type="button"
+      className="flex items-center justify-center gap-1 rounded-md border border-blue-900 bg-blue-900 px-3 py-1 text-xs text-white hover:bg-blue-800 transition-colors"
+      onClick={() =>
+        window.open(
+          `${API_BASE_URL}/api/v1/institute_certificates/download/${r.certificateId}`,
+          "_blank"
+        )
+      }
+      aria-label="Download certificate"
+    >
+      <Download className="w-4 h-4" />
+      <span>Download</span>
+    </button>
+  </div>
+</td>
+
+
                             {/* <td className="border px-2 py-1 text-center">
                               <div className="flex gap-2 justify-center">
                                 <button

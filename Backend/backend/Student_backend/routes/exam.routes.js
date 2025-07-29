@@ -1,11 +1,11 @@
 
 import express from "express";
-import { getExamsByCourseCode, getExamById,
+import { getExamsByStudentDetails, getExamById,
   submitExamAnswers, getExamWithQuestions, getExamQuestionsForExam } from "../controllers/exam.controller.js";
 
 const router = express.Router();
 
-router.get("/by-course/:courseCode", getExamsByCourseCode);
+router.post("/by-student-details", getExamsByStudentDetails);
 router.get("/online/:id", getExamById);
 
 // routes/exam.routes.js

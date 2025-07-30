@@ -1,7 +1,9 @@
 import asyncHandler from "express-async-handler";
 import Student from "../../Center_Backend/models/Student/Student_Detais.model.js";
 import Course from "../../Center_Backend/models/Courses/Courses.models.js"
+
 import  Franchise  from "../../Admin_Backend/models/franchise/franchise.models.js";
+
 import bcrypt from 'bcryptjs';
 import crypto from "crypto";
 import nodemailer from "nodemailer";
@@ -144,20 +146,20 @@ export const sendOtp = async (req, res) => {
     await student.save();
 
     // ✅ Send email using nodemailer
-    // const transporter = nodemailer.createTransport({
-    //   service: "gmail", // Or use SMTP provider like SendGrid, Mailgun
-    //   auth: {
-    //     user: process.env.EMAIL_USER,
-    //     pass: process.env.EMAIL_PASS,
-    //   },
-    // });
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // Or use SMTP provider like SendGrid, Mailgun
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-    // await transporter.sendMail({
-    //   from: `"Student Support" <${process.env.EMAIL_USER}>`,
-    //   to: email,
-    //   subject: "Your OTP for Password Reset",
-    //   text: `Your OTP is: ${otp}. It expires in 10 minutes.`,
-    // });
+    await transporter.sendMail({
+      from: `"SK EDUTECH Student Support" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Your OTP for Student Password Reset",
+      text: `Your OTP fro Password Reset is: ${otp}. It expires in 10 minutes.`,
+    });
 
     res.status(200).json({ message: "OTP sent to your email." });
   } catch (error) {

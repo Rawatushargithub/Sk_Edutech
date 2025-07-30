@@ -1,25 +1,75 @@
 
 import Exam from "../../Center_Backend/models/Exam.models.js";
 import QuestionBank from "../../Center_Backend/models/Questionbank.model.js";
+import Student from "../../Center_Backend/models/Student/Student_Detais.model.js"
 
-export const getExamsByCourseCode = async (req, res) => {
+
+export const getExamsByStudentDetails = async (req, res) => {
   try {
-    const { courseCode } = req.params;
-    const exams = await Exam.find({ courseCode: courseCode.trim().toUpperCase(),});
+    const { rollNumber, courseCode } = req.body;
+    console.log("Fetching exams for student:", { rollNumber, courseCode });
+    if (!rollNumber || !courseCode) {
+      return res.status(400).json({ 
+        message: "Roll number and course code are required" 
+      });
+    }
+
+    // First, find the student to get their batch information
+    const student = await Student.findOne({ 
+      rollNumber: rollNumber.trim(), 
+      'courseInterested.courseCode': courseCode.trim().toUpperCase() 
+    }).populate('selectedBatch');
+    
+    if (!student) {
+      return res.status(404).json({ 
+        message: "Student not found with provided roll number and course code" 
+      });
+    }
+
+    const batchName = student.selectedBatch?.batchName;
+
+    // Find exams that match both course code and student's batch
+    const exams = await Exam.find({ 
+      courseCode: courseCode.trim().toUpperCase(),
+      'batch.name': batchName, // Assuming student has batchId field
+      // Alternative if student has batch object: 'batch.id': student.batch.id
+    }).sort({ examDate: 1 }); // Sort by exam date
 
     if (!exams || exams.length === 0) {
-      return res.status(404).json({ message: "No exams found for this course" });
+      return res.status(404).json({ 
+        message: "No exams found for this student's course and batch" 
+      });
     }
     
     res.status(200).json({
       message: "Exams fetched successfully",
       exams,
+      studentBatch: student.batch || student.batchId, // Return batch info for reference
     });
   } catch (error) {
     console.error("Error fetching exams:", error);
     res.status(500).json({ message: "Internal Server Error", error });
   }
 };
+
+// export const getExamsByCourseCode = async (req, res) => {
+//   try {
+//     const { courseCode } = req.params;
+//     const exams = await Exam.find({ courseCode: courseCode.trim().toUpperCase(),});
+
+//     if (!exams || exams.length === 0) {
+//       return res.status(404).json({ message: "No exams found for this course" });
+//     }
+    
+//     res.status(200).json({
+//       message: "Exams fetched successfully",
+//       exams,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching exams:", error);
+//     res.status(500).json({ message: "Internal Server Error", error });
+//   }
+// };
 
 
 // ✅ GET /exams/:id — Get exam by ID

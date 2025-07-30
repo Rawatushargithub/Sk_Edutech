@@ -127,11 +127,33 @@ const CertificatePreview = () => {
 
         <div className="flex justify-between items-center mt-8 px-6 print:hidden">
           <button
-            onClick={handlePrint}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded shadow"
+            type="button"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded shadow text-sm"
+            onClick={() =>
+              window.open(
+                `${API_BASE_URL}/api/v1/institute_certificates/download/${certificateData.certificateId}`,
+                "_blank"
+              )
+            }
+            aria-label="Download certificate"
           >
-            Print Certificate
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
+              />
+            </svg>
+            Download Certificate
           </button>
+
 
           <div className="text-xs text-gray-400">Powered by YourSystemName</div>
         </div>

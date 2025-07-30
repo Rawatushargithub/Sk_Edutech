@@ -89,7 +89,7 @@ router.route('/me').get(
     }
 );
 
-router.get("/getprofile/:getfranchisedetails", getFranchiseByFranchiseId);
+router.get("/getprofile/:franchiseId", getFranchiseByFranchiseId);
 
 
 // --- Franchise Application Route (Future Implementation) ---

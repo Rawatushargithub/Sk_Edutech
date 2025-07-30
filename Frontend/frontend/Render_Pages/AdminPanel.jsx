@@ -22,6 +22,7 @@ import RequestedCertificates from "../AdminPanel_frontend/Certificate/Admin.cert
 import ApprovedCertificates from "../AdminPanel_frontend/Certificate/ApproveCertificates";
 import AdminWallet from "../AdminPanel_frontend/Dashboard/Admin_Wallet"; // Import Admin Wallet
 import StudentAdmissionList from "../AdminPanel_frontend/Showing_students/Manage_student";
+import NotificationAdminPanel from "../AdminPanel_frontend/Notification/NotificationMarquee";
 
 const AdminPanel = () => {
 
@@ -75,6 +76,7 @@ const AdminPanel = () => {
 
               <Route path="Certificates" element={<RequestedCertificates />} />
               <Route path="approved-certificates" element={<ApprovedCertificates />} />
+              <Route path="notification" element={<NotificationAdminPanel />} />
 
             </Routes>
           </div>

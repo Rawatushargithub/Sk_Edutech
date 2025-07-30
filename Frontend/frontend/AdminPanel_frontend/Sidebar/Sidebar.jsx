@@ -7,7 +7,7 @@ import {
   ChevronUp,
   BookOpenCheck,
 } from "lucide-react";
-import { TbCertificate, TbLadder, TbUserQuestion } from "react-icons/tb";
+import { TbCertificate, TbLadder, TbNotification, TbUserQuestion } from "react-icons/tb";
 import { MdOutlineCommentBank } from "react-icons/md";
 import { PiExam, PiStudentBold, PiUserListBold } from "react-icons/pi";
 import { FaCertificate, FaHandshake, FaMoneyBill1Wave } from "react-icons/fa6";
@@ -17,6 +17,7 @@ import { BiSolidInstitution } from "react-icons/bi";
 import { GrAchievement, GrGallery } from "react-icons/gr";
 import { TbHomePlus } from "react-icons/tb";
 import { RiBookShelfLine } from "react-icons/ri";
+
 
 
 const Sidebar = () => {
@@ -43,6 +44,8 @@ const Sidebar = () => {
         { title: "Wallet approval", icon: <FaMoneyBill1Wave className="w-5 h-5" />, link: "/admin/wallet" },
         { title: "Courses", icon: <RiBookShelfLine className="w-5 h-5" />, link: "/admin/courses" },
         { title: "Certificates", icon: <TbCertificate className="w-5 h-5" />, link: "/admin/Certificates" },
+        { title: "Notification", icon: <TbNotification className="w-5 h-5" />, link: "/admin/notification" },
+
       ],
       stateKey: "manageStudent",
     },
@@ -55,7 +58,6 @@ const Sidebar = () => {
         { title: "Gallery", icon: <GrGallery className="w-5 h-5" />, link: "/admin/gallery" },
         { title: "Achievers", icon: <GrAchievement className="w-5 h-5" />, link: "/admin/achievers" },
         { title: "EventBox", icon: <GrGallery className="w-5 h-5" />, link: "/admin/EventBox" },
-
 
       ],
       stateKey: "examination",

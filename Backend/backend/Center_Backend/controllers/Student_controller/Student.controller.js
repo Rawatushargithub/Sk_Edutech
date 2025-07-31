@@ -2,6 +2,7 @@ import { asyncHandler } from "../../utils/asynchanlder.js";
 import Franchise from "../../models/Franchise.model.js";
 import Student from "../../models/Student/Student_Detais.model.js";
 import Fees_studentModel from "../../models/Student/Fees_student.model.js";
+import FeeTransactionModel from "../../models/Student/FeeTransaction.model.js";
 import installmentModel from "../../models/Student/installment.model.js";
 import BatchModel from "../../models/batch.model.js"; // Import your Batch model
 import mongoose from "mongoose"; // Make sure to import mongoose for the transaction
@@ -11,31 +12,29 @@ import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 import Wallet from "../../models/Payment/Wallet.js";
 import Transaction from "../../models/Payment/Transaction.js";
 
-import bcrypt from 'bcryptjs';
-
+import bcrypt from "bcryptjs";
 
 // Add these validation functions at the top of your controller file
 
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import fs from "fs/promises";
 import axios from "axios";
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from "path";
+import { fileURLToPath } from "url";
 
 // For ES modules, get the current directory
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
 const validateRequiredFields = (fields) => {
   const missingFields = [];
-  
+
   for (const [key, value] of Object.entries(fields)) {
-    if (!value || (typeof value === 'string' && !value.trim())) {
+    if (!value || (typeof value === "string" && !value.trim())) {
       missingFields.push(key);
     }
   }
-  
+
   return missingFields;
 };
 
@@ -51,37 +50,36 @@ const validateMobile = (mobile) => {
   return mobileRegex.test(mobile);
 };
 
-
 // Function to generate roll number
 const generateRollNumber = async (franchiseName) => {
   try {
     // Use franchiseName from local storage (passed from frontend)
     let franchisePrefix = "SK";
-    
+
     // Extract first two letters from franchiseName, convert to uppercase (ignoring spaces)
     let franchiseCode = "";
-    
+
     if (franchiseName) {
       // Remove all spaces from franchiseName
       const nameWithoutSpaces = franchiseName.replace(/\s+/g, "");
-      
+
       // Take first two letters and convert to uppercase
       franchiseCode = nameWithoutSpaces.substring(0, 2).toUpperCase();
     } else {
       // Default if no franchiseName
       franchiseCode = "XX";
     }
-    
+
     // Find the latest roll number with this prefix
     const latestStudent = await Student.findOne({
-      rollNumber: new RegExp(`^${franchisePrefix}/${franchiseCode}/\\d+$`)
+      rollNumber: new RegExp(`^${franchisePrefix}/${franchiseCode}/\\d+$`),
     }).sort({ rollNumber: -1 });
-    
+
     let nextNumber = 1001; // Default starting number
-    
+
     if (latestStudent) {
       // Extract the number part from the latest roll number
-      const parts = latestStudent.rollNumber.split('/');
+      const parts = latestStudent.rollNumber.split("/");
       if (parts.length === 3) {
         const lastNumber = parseInt(parts[2], 10);
         if (!isNaN(lastNumber)) {
@@ -89,14 +87,13 @@ const generateRollNumber = async (franchiseName) => {
         }
       }
     }
-    
+
     return `${franchisePrefix}/${franchiseCode}/${nextNumber}`;
   } catch (error) {
     console.error("Error generating roll number:", error);
     throw new Error("Failed to generate roll number");
   }
 };
-
 
 const registerStudent = asyncHandler(async (req, res) => {
   const {
@@ -128,6 +125,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     discountAmount,
     totalFees,
     feesReceived,
+    paymentMode,
     balance,
     remarks,
     selectedBatch,
@@ -144,16 +142,16 @@ const registerStudent = asyncHandler(async (req, res) => {
       studentMobile,
       dob,
       gender,
-      admissionDate
+      admissionDate,
     };
 
     const missingFields = validateRequiredFields(requiredFields);
     if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
-        message: `Missing required fields: ${missingFields.join(', ')}`,
-        code: 'MISSING_REQUIRED_FIELDS',
-        missingFields
+        message: `Missing required fields: ${missingFields.join(", ")}`,
+        code: "MISSING_REQUIRED_FIELDS",
+        missingFields,
       });
     }
 
@@ -161,8 +159,9 @@ const registerStudent = asyncHandler(async (req, res) => {
     if (!validateMobile(studentMobile)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid mobile number format. Please enter a valid 10-digit Indian mobile number.",
-        code: 'INVALID_MOBILE_FORMAT'
+        message:
+          "Invalid mobile number format. Please enter a valid 10-digit Indian mobile number.",
+        code: "INVALID_MOBILE_FORMAT",
       });
     }
 
@@ -171,7 +170,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Invalid email format",
-        code: 'INVALID_EMAIL_FORMAT'
+        code: "INVALID_EMAIL_FORMAT",
       });
     }
 
@@ -184,7 +183,7 @@ const registerStudent = asyncHandler(async (req, res) => {
         return res.status(409).json({
           success: false,
           message: "Student with this email already exists",
-          code: 'DUPLICATE_EMAIL'
+          code: "DUPLICATE_EMAIL",
         });
       }
     }
@@ -193,18 +192,21 @@ const registerStudent = asyncHandler(async (req, res) => {
     let parsedCourseInterested;
     try {
       parsedCourseInterested = JSON.parse(courseInterested);
-      if (!parsedCourseInterested.courseName || !parsedCourseInterested.courseCode) {
+      if (
+        !parsedCourseInterested.courseName ||
+        !parsedCourseInterested.courseCode
+      ) {
         return res.status(400).json({
           success: false,
           message: "Course selection is required",
-          code: 'INVALID_COURSE_SELECTION'
+          code: "INVALID_COURSE_SELECTION",
         });
       }
     } catch (err) {
       return res.status(400).json({
         success: false,
         message: "Invalid course selection format",
-        code: 'INVALID_COURSE_FORMAT'
+        code: "INVALID_COURSE_FORMAT",
       });
     }
 
@@ -222,7 +224,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Invalid installments format",
-        code: 'INVALID_INSTALLMENTS_FORMAT'
+        code: "INVALID_INSTALLMENTS_FORMAT",
       });
     }
 
@@ -231,23 +233,20 @@ const registerStudent = asyncHandler(async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Batch selection is required",
-        code: 'BATCH_REQUIRED'
+        code: "BATCH_REQUIRED",
       });
     }
 
     // Find and validate batch
     const batch = await BatchModel.findOne({
-      $or: [
-        { batchTiming: selectedBatch },
-        { batchName: selectedBatch },
-      ],
+      $or: [{ batchTiming: selectedBatch }, { batchName: selectedBatch }],
     });
 
     if (!batch) {
       return res.status(404).json({
         success: false,
         message: "Selected batch not found",
-        code: 'BATCH_NOT_FOUND'
+        code: "BATCH_NOT_FOUND",
       });
     }
 
@@ -255,7 +254,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Selected batch has no available seats",
-        code: 'BATCH_FULL'
+        code: "BATCH_FULL",
       });
     }
 
@@ -267,7 +266,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Student photo is required",
-        code: 'PHOTO_REQUIRED'
+        code: "PHOTO_REQUIRED",
       });
     }
 
@@ -275,7 +274,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Student signature is required",
-        code: 'SIGNATURE_REQUIRED'
+        code: "SIGNATURE_REQUIRED",
       });
     }
 
@@ -284,14 +283,14 @@ const registerStudent = asyncHandler(async (req, res) => {
       courseFees: Number(courseFees),
       discountAmount: Number(discountAmount) || 0,
       totalFees: Number(totalFees),
-      feesReceived: Number(feesReceived) || 0
+      feesReceived: Number(feesReceived) || 0,
     };
 
     if (isNaN(numericFees.courseFees) || numericFees.courseFees < 0) {
       return res.status(400).json({
         success: false,
         message: "Invalid course fees amount",
-        code: 'INVALID_COURSE_FEES'
+        code: "INVALID_COURSE_FEES",
       });
     }
 
@@ -299,7 +298,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Invalid total fees amount",
-        code: 'INVALID_TOTAL_FEES'
+        code: "INVALID_TOTAL_FEES",
       });
     }
 
@@ -307,7 +306,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Fees received cannot be greater than total fees",
-        code: 'INVALID_FEES_RECEIVED'
+        code: "INVALID_FEES_RECEIVED",
       });
     }
 
@@ -315,12 +314,12 @@ const registerStudent = asyncHandler(async (req, res) => {
     if (parsedInstallments.length > 0) {
       for (let i = 0; i < parsedInstallments.length; i++) {
         const installment = parsedInstallments[i];
-        
+
         if (!installment.name || !installment.name.trim()) {
           return res.status(400).json({
             success: false,
             message: `Installment name is required for installment ${i + 1}`,
-            code: 'INSTALLMENT_NAME_REQUIRED'
+            code: "INSTALLMENT_NAME_REQUIRED",
           });
         }
 
@@ -329,7 +328,7 @@ const registerStudent = asyncHandler(async (req, res) => {
           return res.status(400).json({
             success: false,
             message: `Invalid amount for installment: ${installment.name}`,
-            code: 'INVALID_INSTALLMENT_AMOUNT'
+            code: "INVALID_INSTALLMENT_AMOUNT",
           });
         }
 
@@ -337,7 +336,7 @@ const registerStudent = asyncHandler(async (req, res) => {
           return res.status(400).json({
             success: false,
             message: `Date is required for installment: ${installment.name}`,
-            code: 'INSTALLMENT_DATE_REQUIRED'
+            code: "INSTALLMENT_DATE_REQUIRED",
           });
         }
       }
@@ -349,27 +348,27 @@ const registerStudent = asyncHandler(async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Franchise not found",
-        code: 'FRANCHISE_NOT_FOUND'
+        code: "FRANCHISE_NOT_FOUND",
       });
     }
 
     // Upload files to Cloudinary
     let studentPhoto, studentSignature;
-    
+
     try {
       studentPhoto = await uploadOnCloudinary(studentPhotoLocalPath);
       if (!studentPhoto) {
         return res.status(500).json({
           success: false,
           message: "Failed to upload student photo",
-          code: 'PHOTO_UPLOAD_FAILED'
+          code: "PHOTO_UPLOAD_FAILED",
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
         message: "Error uploading student photo",
-        code: 'PHOTO_UPLOAD_ERROR'
+        code: "PHOTO_UPLOAD_ERROR",
       });
     }
 
@@ -379,14 +378,14 @@ const registerStudent = asyncHandler(async (req, res) => {
         return res.status(500).json({
           success: false,
           message: "Failed to upload student signature",
-          code: 'SIGNATURE_UPLOAD_FAILED'
+          code: "SIGNATURE_UPLOAD_FAILED",
         });
       }
     } catch (error) {
       return res.status(500).json({
         success: false,
         message: "Error uploading student signature",
-        code: 'SIGNATURE_UPLOAD_ERROR'
+        code: "SIGNATURE_UPLOAD_ERROR",
       });
     }
 
@@ -399,9 +398,9 @@ const registerStudent = asyncHandler(async (req, res) => {
         return res.status(400).json({
           success: false,
           message: "Insufficient wallet balance. Please add money to continue.",
-          code: 'INSUFFICIENT_BALANCE',
+          code: "INSUFFICIENT_BALANCE",
           requiredAmount: registrationFee,
-          currentBalance: wallet ? wallet.balance : 0
+          currentBalance: wallet ? wallet.balance : 0,
         });
       }
     } catch (walletError) {
@@ -409,7 +408,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       return res.status(500).json({
         success: false,
         message: "Error checking wallet balance",
-        code: 'WALLET_ERROR'
+        code: "WALLET_ERROR",
       });
     }
 
@@ -418,7 +417,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     try {
       session = await mongoose.startSession();
       session.startTransaction();
-      
+
       // Generate roll number without concurrency handling
       // Use franchiseName for roll number generation
       let rollNumber;
@@ -429,100 +428,153 @@ const registerStudent = asyncHandler(async (req, res) => {
         console.log("Franchise ID:", franchiseId);
       } catch (rollNumberError) {
         console.error("Error generating roll number:", rollNumberError);
-        throw new Error("Failed to generate roll number: " + rollNumberError.message);
+        throw new Error(
+          "Failed to generate roll number: " + rollNumberError.message
+        );
       }
       // Create student record with the auto-generated roll number
       let student;
       try {
-        student = await Student.create([{
-          studentPhoto: studentPhoto.url,
-          studentSignature: studentSignature.url,
-          rollNumber, // Auto-generated roll number
-          abbreviation: req.body.abbreviation || "Mr.",
-          studentName,
-          franchiseId,
-          relationType,
-          fatherHusbandName,
-          includeFatherHusband: req.body.includeFatherHusband !== undefined ? req.body.includeFatherHusband : true,
-          surnameName,
-          includeSurname: req.body.includeSurname !== undefined ? req.body.includeSurname : true,
-          motherName,
-          courseInterested: parsedCourseInterested,
-          studentMobile,
-          alternateMobile,
-          email,
-          password: studentMobile.toString(),
-          dob,
-          gender,
-          city,
-          postCode,
-          permanentAddress,
-          referralCode,
-          caste,
-          qualifications,
-          occupation,
-          admissionDate,
-          selectedBatch: batch._id,
-          displayAdmissionOptions: displayAdmissionOptions || false,
-        }], { session });
+        student = await Student.create(
+          [
+            {
+              studentPhoto: studentPhoto.url,
+              studentSignature: studentSignature.url,
+              rollNumber, // Auto-generated roll number
+              abbreviation: req.body.abbreviation || "Mr.",
+              studentName,
+              franchiseId,
+              relationType,
+              fatherHusbandName,
+              includeFatherHusband:
+                req.body.includeFatherHusband !== undefined
+                  ? req.body.includeFatherHusband
+                  : true,
+              surnameName,
+              includeSurname:
+                req.body.includeSurname !== undefined
+                  ? req.body.includeSurname
+                  : true,
+              motherName,
+              courseInterested: parsedCourseInterested,
+              studentMobile,
+              alternateMobile,
+              email,
+              password: studentMobile.toString(),
+              dob,
+              gender,
+              city,
+              postCode,
+              permanentAddress,
+              referralCode,
+              caste,
+              qualifications,
+              occupation,
+              admissionDate,
+              selectedBatch: batch._id,
+              displayAdmissionOptions: displayAdmissionOptions || false,
+            },
+          ],
+          { session }
+        );
       } catch (studentCreateError) {
         console.error("Error creating student record:", studentCreateError);
-        throw new Error("Failed to create student record: " + studentCreateError.message);
+        throw new Error(
+          "Failed to create student record: " + studentCreateError.message
+        );
       }
 
       const studentId = student[0]._id;
 
       // Create fee record
-      const fee = await Fees_studentModel.create([{
-        studentId: studentId,
-        courseFees: numericFees.courseFees,
-        discountType: discountType || "amount-",
-        discountAmount: numericFees.discountAmount,
-        totalFees: numericFees.totalFees,
-        feesReceived: numericFees.feesReceived,
-        balance: numericFees.totalFees - numericFees.feesReceived,
-        remarks: remarks || "",
-      }], { session });
+      const fee = await Fees_studentModel.create(
+        [
+          {
+            studentId: studentId,
+            courseFees: numericFees.courseFees,
+            discountType: discountType || "amount-",
+            discountAmount: numericFees.discountAmount,
+            totalFees: numericFees.totalFees,
+            feesReceived: numericFees.feesReceived,
+            balance: numericFees.totalFees - numericFees.feesReceived,
+            remarks: remarks || "",
+          },
+        ],
+        { session }
+      );
 
+      // Create initial fee transaction if fees were received during registration
+      if (numericFees.feesReceived) {
+        await FeeTransactionModel.create(
+          [
+            {
+              studentId: studentId,
+              feeId: fee[0]._id,
+              amount: numericFees.feesReceived,
+              date: admissionDate, // or new Date().toISOString().slice(0, 10)
+              paymentMode: paymentMode, // or add paymentMode field in registration form
+            },
+          ],
+          { session }
+        );
+      }
       // Create installment records
       const installmentRecords = [];
       if (parsedInstallments.length > 0) {
         for (const installment of parsedInstallments) {
-          const newInstallment = await installmentModel.create([{
-            studentId: studentId,
-            installmentName: installment.name,
-            amount: Number(installment.amount),
-            date: installment.date,
-            paid: false,
-          }], { session });
+          const newInstallment = await installmentModel.create(
+            [
+              {
+                studentId: studentId,
+                installmentName: installment.name,
+                amount: Number(installment.amount),
+                date: installment.date,
+                paid: false,
+              },
+            ],
+            { session }
+          );
           installmentRecords.push(newInstallment[0]._id);
         }
       }
 
       // Update student with references
-      await Student.findByIdAndUpdate(studentId, {
-        feeDetails: fee[0]._id,
-        installmentDetails: installmentRecords,
-      }, { session });
+      await Student.findByIdAndUpdate(
+        studentId,
+        {
+          feeDetails: fee[0]._id,
+          installmentDetails: installmentRecords,
+        },
+        { session }
+      );
 
       // Update batch
-      await BatchModel.findByIdAndUpdate(batch._id, {
-        $inc: { currentStudents: 1 }
-      }, { session });
+      await BatchModel.findByIdAndUpdate(
+        batch._id,
+        {
+          $inc: { currentStudents: 1 },
+        },
+        { session }
+      );
 
       // Update wallet
       wallet.balance -= registrationFee;
       await wallet.save({ session });
 
       // Create transaction record
-      await Transaction.create([{
-        franchise: franchise._id, // Add the franchise ObjectId
-        amount: registrationFee,
-        type: "withdrawal",
-        status: "approved",
-        referenceId: "Student Registration",
-        timestamp: new Date(),
-      }], { session });
+      await Transaction.create(
+        [
+          {
+            franchise: franchise._id, // Add the franchise ObjectId
+            amount: registrationFee,
+            type: "withdrawal",
+            status: "approved",
+            referenceId: "Student Registration",
+            timestamp: new Date(),
+          },
+        ],
+        { session }
+      );
 
       await session.commitTransaction();
       session.endSession();
@@ -536,9 +588,8 @@ const registerStudent = asyncHandler(async (req, res) => {
       return res.status(201).json({
         success: true,
         message: "Student registered successfully",
-        data: completeStudent
+        data: completeStudent,
       });
-
     } catch (transactionError) {
       if (session) {
         try {
@@ -548,32 +599,33 @@ const registerStudent = asyncHandler(async (req, res) => {
           console.error("Error aborting transaction:", abortError);
         }
       }
-      
+
       console.error("Transaction error:", transactionError);
-      
+
       if (transactionError.code === 11000) {
         return res.status(409).json({
           success: false,
           message: "Duplicate entry detected",
-          code: 'DUPLICATE_ENTRY'
+          code: "DUPLICATE_ENTRY",
         });
       }
 
       return res.status(500).json({
         success: false,
-        message: "Database transaction failed: " + (transactionError.message || "Unknown error"),
-        code: 'TRANSACTION_FAILED'
+        message:
+          "Database transaction failed: " +
+          (transactionError.message || "Unknown error"),
+        code: "TRANSACTION_FAILED",
       });
     }
-
   } catch (error) {
     console.error("Registration error:", error);
-    
+
     return res.status(500).json({
       success: false,
       message: "Student registration failed",
-      code: 'REGISTRATION_FAILED',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      code: "REGISTRATION_FAILED",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 });
@@ -801,7 +853,7 @@ const registerStudent = asyncHandler(async (req, res) => {
 //     if (parsedInstallments.length > 0) {
 //       for (let i = 0; i < parsedInstallments.length; i++) {
 //         const installment = parsedInstallments[i];
-        
+
 //         if (!installment.name || !installment.name.trim()) {
 //           return res.status(400).json({
 //             success: false,
@@ -831,7 +883,7 @@ const registerStudent = asyncHandler(async (req, res) => {
 
 //     // Upload files to Cloudinary
 //     let studentPhoto, studentSignature;
-    
+
 //     try {
 //       studentPhoto = await uploadOnCloudinary(studentPhotoLocalPath);
 //       if (!studentPhoto) {
@@ -990,9 +1042,9 @@ const registerStudent = asyncHandler(async (req, res) => {
 //         await session.abortTransaction();
 //         session.endSession();
 //       }
-      
+
 //       console.error("Transaction error:", transactionError);
-      
+
 //       if (transactionError.code === 11000) {
 //         return res.status(409).json({
 //           success: false,
@@ -1010,7 +1062,7 @@ const registerStudent = asyncHandler(async (req, res) => {
 
 //   } catch (error) {
 //     console.error("Registration error:", error);
-    
+
 //     return res.status(500).json({
 //       success: false,
 //       message: "Student registration failed",
@@ -1023,25 +1075,25 @@ const registerStudent = asyncHandler(async (req, res) => {
 const getStudents = asyncHandler(async (req, res) => {
   // Get pagination parameters from query string with defaults
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 10;
+  const limit = parseInt(req.query.limit, 10) || 20;
   const skip = (page - 1) * limit;
 
   // Get filter parameters if any
-  const { course, batch, searchTerm ,franchiseId } = req.query;
+  const { course, batch, searchTerm, franchiseId } = req.query;
 
   // Build filter object
   let filter = {};
-console.log("franchiseId value :: ", franchiseId)
-// Add franchiseID filter - this is the key change
+  console.log("franchiseId value :: ", franchiseId);
+  // Add franchiseID filter - this is the key change
   if (franchiseId) {
     filter.franchiseId = franchiseId;
   } else {
     // If no franchiseID is provided, return an error or empty result
-    return res.status(400).json(
-      new ApiResponse(400, [], "FranchiseID is required")
-    );
+    return res
+      .status(400)
+      .json(new ApiResponse(400, [], "FranchiseID is required"));
   }
-console.log("filter value :: ", filter)
+  console.log("filter value :: ", filter);
   if (course) {
     filter.courseInterested = course;
   }
@@ -1066,15 +1118,15 @@ console.log("filter value :: ", filter)
       "studentPhoto studentSignature studentName rollNumber abbreviation franchiseId status courseInterested studentMobile referralCode email dob city postCode permanentAddress admissionDate caste qualifications occupation relationType gender selectedBatch motherName "
     )
     .populate({
-      path: 'selectedBatch',
-      select: 'batchName' // Only select the batchName field
+      path: "selectedBatch",
+      select: "batchName", // Only select the batchName field
     })
     .skip(skip)
     .limit(limit)
     .sort({ admissionDate: -1 }); // Sort by admission date, newest first
-console.log("students value :: ", students)
-     // Format the results to include the batch name in a new field
-  const formattedStudents = students.map(student => {
+  console.log("students value :: ", students);
+  // Format the results to include the batch name in a new field
+  const formattedStudents = students.map((student) => {
     // Convert to plain JavaScript object
     const studentObj = student.toObject();
 
@@ -1090,19 +1142,16 @@ console.log("students value :: ", students)
 
     return studentObj;
   });
- 
+
   // Get total count for pagination
   const totalStudents = await Student.countDocuments(filter);
 
   // Check if students were found
-    if (!formattedStudents || formattedStudents.length === 0) {
-      return res
-        .status(200)
-        .json(
-          new ApiResponse(200, [], "No students found for this franchise")
-        );
-    }
-
+  if (!formattedStudents || formattedStudents.length === 0) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, [], "No students found for this franchise"));
+  }
 
   // Return the student data
   return res.status(200).json(
@@ -1123,60 +1172,58 @@ console.log("students value :: ", students)
 const getStudentCount = asyncHandler(async (req, res) => {
   try {
     const { franchiseId } = req.query;
-    
+
     if (!franchiseId) {
       return res.status(400).json({ message: "Franchise ID is required" });
     }
-    const count = await Student.countDocuments({franchiseId});   // { instituteId: req.user.instituteId } <= when add the instituteID to the students
+    const count = await Student.countDocuments({ franchiseId }); // { instituteId: req.user.instituteId } <= when add the instituteID to the students
 
     res.status(200).json({ count });
   } catch (error) {
     res.status(500).json({ message: "Error fetching student count", error });
   }
-})
+});
 
 const getRecentsStudents = asyncHandler(async (req, res) => {
-
   try {
     const limit = parseInt(req.query.limit) || 5;
     const { franchiseId } = req.query;
-    console.log("franchiseId value :: ", franchiseId)
+    console.log("franchiseId value :: ", franchiseId);
     if (!franchiseId) {
       return res.status(400).json({ message: "Franchise ID is required" });
     }
 
-    const students = await Student.find({franchiseId: franchiseId})
+    const students = await Student.find({ franchiseId: franchiseId })
       .sort({ createdAt: -1 }) // Sort by creation date, newest first
       .limit(limit)
       .select("studentName courseInterested rollNumber createdAt studentPhoto");
-    console.log("students value :: ", students)
+    console.log("students value :: ", students);
     if (students.length === 0) {
       return res.status(404).json({ message: "No students found" });
     }
 
     // Format the response data
-    const formattedStudents = students.map(student => ({
+    const formattedStudents = students.map((student) => ({
       id: student._id,
       name: student.studentName,
       course: student.courseInterested,
       rollNumber: student.rollNumber,
       photoUrl: student.studentPhoto,
-      addedOn: student.createdAt
+      addedOn: student.createdAt,
     }));
 
-    console.log(formattedStudents)
+    console.log(formattedStudents);
     res.status(200).json(formattedStudents);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
-
-})
+});
 
 const updateStudent = asyncHandler(async (req, res) => {
-  console.log("update is working")
+  console.log("update is working");
   try {
     console.log("id value:: ", req.params.id);
-    console.log(req.body)
+    console.log(req.body);
     // Find and update the student
     const updatedStudent = await Student.findByIdAndUpdate(
       req.params.id,
@@ -1189,83 +1236,89 @@ const updateStudent = asyncHandler(async (req, res) => {
     if (!updatedStudent) {
       return res.status(404).json({
         success: false,
-        message: "Student not found"
+        message: "Student not found",
       });
     }
-    console.log("updated student in backend :: ", updatedStudent)
+    console.log("updated student in backend :: ", updatedStudent);
 
     res.status(200).json({
       success: true,
       message: "Student updated successfully",
-      data: updatedStudent
+      data: updatedStudent,
     });
   } catch (error) {
     console.error("Error updating student:", error);
     res.status(500).json({
       success: false,
       message: "Failed to update student",
-      error: error.message
+      error: error.message,
     });
   }
-})
+});
 
 const toggleStudentStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-console.log("toggleStudentStatus called with id:", id, "status:", status);  
+    console.log("toggleStudentStatus called with id:", id, "status:", status);
     // Validate student ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid student ID format"
+        message: "Invalid student ID format",
       });
     }
-console.log("Type of status:", typeof status, "Value:", status);
+    console.log("Type of status:", typeof status, "Value:", status);
 
     // Validate status
     if (typeof status !== "boolean") {
       return res.status(400).json({
         success: false,
-        message: "Status must be a boolean value"
+        message: "Status must be a boolean value",
       });
     }
 
     // Find and update student
     const student = await Student.findByIdAndUpdate(
-  {_id: id} ,
-  { status },
-  { new: true, runValidators: true }
-);
+      { _id: id },
+      { status },
+      { new: true, runValidators: true }
+    );
 
     console.log("Found student:", student);
     if (!student) {
       return res.status(404).json({
         success: false,
-        message: "Student not found"
+        message: "Student not found",
       });
     }
     console.log(student.toObject()); // Safely prints the raw document
-    console.log("Updated student:", student.status , "roll number: ", student.rollNumber);
-    const studentcheck = await Student.findById(id) 
-console.log("Updated student status:", studentcheck);
+    console.log(
+      "Updated student:",
+      student.status,
+      "roll number: ",
+      student.rollNumber
+    );
+    const studentcheck = await Student.findById(id);
+    console.log("Updated student status:", studentcheck);
     res.status(200).json({
       success: true,
-      message: `Student status updated to ${status ? 'Active' : 'Inactive'} successfully`,
+      message: `Student status updated to ${
+        status ? "Active" : "Inactive"
+      } successfully`,
       data: {
         id: student._id,
         studentName: student.studentName,
         status: student.status,
-        updatedAt: student.updatedAt
-      }
+        updatedAt: student.updatedAt,
+      },
     });
-
   } catch (error) {
     console.error("Error toggling student status:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -1292,8 +1345,8 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
     console.error("Error fetching franchise:", error);
   }
 
-    // ✅ Fixed PDF path
-  const pdfPath = path.join(__dirname, '../../../public/temp/blank_form.pdf');
+  // ✅ Fixed PDF path
+  const pdfPath = path.join(__dirname, "../../../public/temp/blank_form.pdf");
   console.log("PDF Path:", pdfPath);
   const existingPdfBytes = await fs.readFile(pdfPath);
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
@@ -1303,11 +1356,26 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   const size = 10;
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  const drawText = (text, x, y, color = rgb(0, 0, 0), textFont = font, textSize = size) => {
+  const drawText = (
+    text,
+    x,
+    y,
+    color = rgb(0, 0, 0),
+    textFont = font,
+    textSize = size
+  ) => {
     if (text) {
       // Replace unsupported characters before drawing
-      const sanitizedText = String(text).replace(/₹/g, 'Rs.').replace(/✓/g, 'Y');
-      page.drawText(sanitizedText, { x, y, font: textFont, size: textSize, color });
+      const sanitizedText = String(text)
+        .replace(/₹/g, "Rs.")
+        .replace(/✓/g, "Y");
+      page.drawText(sanitizedText, {
+        x,
+        y,
+        font: textFont,
+        size: textSize,
+        color,
+      });
     }
   };
 
@@ -1315,10 +1383,12 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   if (student.studentPhoto) {
     try {
       const photoUrl = student.studentPhoto;
-      const photoResponse = await axios.get(photoUrl, { responseType: 'arraybuffer' });
-      const photoBytes = Buffer.from(photoResponse.data, 'binary');
+      const photoResponse = await axios.get(photoUrl, {
+        responseType: "arraybuffer",
+      });
+      const photoBytes = Buffer.from(photoResponse.data, "binary");
       let photoImage;
-      if (photoUrl.includes('.jpg') || photoUrl.includes('.jpeg')) {
+      if (photoUrl.includes(".jpg") || photoUrl.includes(".jpeg")) {
         photoImage = await pdfDoc.embedJpg(photoBytes);
       } else {
         photoImage = await pdfDoc.embedPng(photoBytes);
@@ -1334,16 +1404,23 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   if (student.studentSignature) {
     try {
       const signatureUrl = student.studentSignature;
-      const signatureResponse = await axios.get(signatureUrl, { responseType: 'arraybuffer' });
-      const signatureBytes = Buffer.from(signatureResponse.data, 'binary');
+      const signatureResponse = await axios.get(signatureUrl, {
+        responseType: "arraybuffer",
+      });
+      const signatureBytes = Buffer.from(signatureResponse.data, "binary");
       let signatureImage;
-      if (signatureUrl.includes('.jpg') || signatureUrl.includes('.jpeg')) {
+      if (signatureUrl.includes(".jpg") || signatureUrl.includes(".jpeg")) {
         signatureImage = await pdfDoc.embedJpg(signatureBytes);
       } else {
         signatureImage = await pdfDoc.embedPng(signatureBytes);
       }
       // Signature position in bottom right
-      page.drawImage(signatureImage, { x: 396, y: 316, width: 120, height: 40 });
+      page.drawImage(signatureImage, {
+        x: 396,
+        y: 316,
+        width: 120,
+        height: 40,
+      });
     } catch (error) {
       console.error("Error fetching or embedding student signature:", error);
     }
@@ -1353,16 +1430,26 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   if (franchise && franchise.instituteSignature) {
     try {
       const franchiseSignatureUrl = franchise.instituteSignature;
-      const signatureResponse = await axios.get(franchiseSignatureUrl, { responseType: 'arraybuffer' });
-      const signatureBytes = Buffer.from(signatureResponse.data, 'binary');
+      const signatureResponse = await axios.get(franchiseSignatureUrl, {
+        responseType: "arraybuffer",
+      });
+      const signatureBytes = Buffer.from(signatureResponse.data, "binary");
       let franchiseSignatureImage;
-      if (franchiseSignatureUrl.includes('.jpg') || franchiseSignatureUrl.includes('.jpeg')) {
+      if (
+        franchiseSignatureUrl.includes(".jpg") ||
+        franchiseSignatureUrl.includes(".jpeg")
+      ) {
         franchiseSignatureImage = await pdfDoc.embedJpg(signatureBytes);
       } else {
         franchiseSignatureImage = await pdfDoc.embedPng(signatureBytes);
       }
       // Signature position in bottom right
-      page.drawImage(franchiseSignatureImage, { x: 413, y: 100, width: 120, height: 40 });
+      page.drawImage(franchiseSignatureImage, {
+        x: 413,
+        y: 100,
+        width: 120,
+        height: 40,
+      });
     } catch (error) {
       console.error("Error fetching or embedding student signature:", error);
     }
@@ -1370,38 +1457,48 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
 
   // TOP SECTION - Header Information
   // Admission Date (top left, after "ADMISSION DATE :")
-  drawText(student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('en-GB') : '', 24, 593);
+  drawText(
+    student.admissionDate
+      ? new Date(student.admissionDate).toLocaleDateString("en-GB")
+      : "",
+    24,
+    593
+  );
 
   // Roll Number (top right, after "ROLL NUMBER :")
   drawText(student.rollNumber, 419, 593);
 
   // Course of Interest (below admission date, after "COURSE OF INTEREST:")
-  drawText(student.courseInterested?.courseName || '', 27, 546);
+  drawText(student.courseInterested?.courseName || "", 27, 546);
 
   // MAIN STUDENT DETAILS SECTION
   // First row - Student Name, Father/Husband Name, Surname
-  drawText(student.studentName, 27, 505);  // After "STUDENT NAME"
-  drawText(student.fatherHusbandName, 180, 505);  // After "FATHER/HUSBAND NAME"
-  drawText(student.surnameName, 340, 505);  // After "SURNAME"
+  drawText(student.studentName, 27, 505); // After "STUDENT NAME"
+  drawText(student.fatherHusbandName, 180, 505); // After "FATHER/HUSBAND NAME"
+  drawText(student.surnameName, 340, 505); // After "SURNAME"
 
   // Second row - Mother Name
-  drawText(student.motherName, 469, 505);  // After "MOTHER NAME"
+  drawText(student.motherName, 469, 505); // After "MOTHER NAME"
 
   // Third row - Mobile numbers
-  drawText(student.studentMobile, 206, 464);  // After "STUDENT MOBILE:"
-  drawText(student.alternateMobile, 392, 464);  // After "ALTERNATE MOBILE:"
+  drawText(student.studentMobile, 206, 464); // After "STUDENT MOBILE:"
+  drawText(student.alternateMobile, 392, 464); // After "ALTERNATE MOBILE:"
 
   // Fourth row - DOB, Gender, Email
-  drawText(student.dob ? new Date(student.dob).toLocaleDateString('en-GB') : '', 384, 426);  // After "DATE OF BIRTH.:"
-  drawText(student.gender, 27, 426);  // After "GENDER:"
-  drawText(student.email, 138, 426);  // After "E-MAIL:"
+  drawText(
+    student.dob ? new Date(student.dob).toLocaleDateString("en-GB") : "",
+    384,
+    426
+  ); // After "DATE OF BIRTH.:"
+  drawText(student.gender, 27, 426); // After "GENDER:"
+  drawText(student.email, 138, 426); // After "E-MAIL:"
 
   // Fifth row - Caste, Qualification, Occupation, State, Post Code
-  drawText(student.caste, 27, 388);  // After "CASTE:"
-  drawText(student.qualifications, 116, 388);  // After "QUALIFICATION.:"
-  drawText(student.occupation, 277, 388);  // After "OCCUPATION.:"
-  drawText(student.state || 'Haryana', 390, 388);  // After "STATE:"
-  drawText(student.postCode, 486, 388);  // After "POST CODE:"
+  drawText(student.caste, 27, 388); // After "CASTE:"
+  drawText(student.qualifications, 116, 388); // After "QUALIFICATION.:"
+  drawText(student.occupation, 277, 388); // After "OCCUPATION.:"
+  drawText(student.state || "Haryana", 390, 388); // After "STATE:"
+  drawText(student.postCode, 486, 388); // After "POST CODE:"
 
   // ADDRESS SECTION
   // Permanent Address (multiline field after "ADDRESS:-")
@@ -1413,30 +1510,37 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   // });
 
   // Permanent Address (after "PERMANENT ADDRESS.:")
-  const permAddressLines = student.permanentAddress ? student.permanentAddress.split('\n') : [];
+  const permAddressLines = student.permanentAddress
+    ? student.permanentAddress.split("\n")
+    : [];
   permAddressLines.forEach((line, index) => {
-    if (index < 2) { // Limit to 2 lines for permanent address
-      drawText(line, 27, 344 - (index * 15));
+    if (index < 2) {
+      // Limit to 2 lines for permanent address
+      drawText(line, 27, 344 - index * 15);
     }
   });
 
   // LEFT SIDE - OFFICE USE ONLY SECTION
   // Aadhaar Card Number (after "ADHAR CARD NUMBER.:")
-  drawText(student.aadhaarNumber || '', 27, 466);
+  drawText(student.aadhaarNumber || "", 27, 466);
 
   // Batch Name (after "BATCH NAME")
   if (student.selectedBatch) {
-    drawText(student.selectedBatch.batchName || student.selectedBatch.batchTiming, 71, 197);
+    drawText(
+      student.selectedBatch.batchName || student.selectedBatch.batchTiming,
+      71,
+      197
+    );
   }
 
   // RIGHT SIDE - OFFICE USE ONLY SECTION
   // Course Fees (after "COURSE FEES :")
   if (student.feeDetails) {
     drawText(`Rs${student.feeDetails.courseFees}`, 77, 238);
-  
+
     // Paid Fees (after "PAID FEES :")
     drawText(`Rs${student.feeDetails.feesReceived}`, 269, 238);
-  
+
     // Balance Fees (after "BALANCE FEES :")
     drawText(`Rs${student.feeDetails.balance}`, 455, 238);
   }
@@ -1451,7 +1555,13 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   const pdfBytes = await pdfDoc.save();
 
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=admission_form_${student.studentName.replace(/\s+/g, '_')}.pdf`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=admission_form_${student.studentName.replace(
+      /\s+/g,
+      "_"
+    )}.pdf`
+  );
   res.send(Buffer.from(pdfBytes));
 });
 
@@ -1461,11 +1571,6 @@ export {
   getStudentCount,
   getRecentsStudents,
   updateStudent,
-
   toggleStudentStatus,
-  generateAdmissionForm
-
-
+  generateAdmissionForm,
 };
-
-

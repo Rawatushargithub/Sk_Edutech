@@ -446,7 +446,7 @@ const FeesManagementSystem = () => {
                       <td className="py-3 px-4 border-b">{student.rollNumber}</td>
                       <td className="py-3 px-4 border-b font-medium">{student.studentName}</td>
                       <td className="py-3 px-4 border-b">{student.course.courseName}</td>
-                      <td className="py-3 px-4 border-b">{student.courseFee.toLocaleString()}</td>
+                      <td className="py-3 px-4 border-b">₹{student.courseFee.toLocaleString()}</td>
                       <td className="py-3 px-4 border-b">₹{student.totalFee.toLocaleString()}</td>
                       <td className="py-3 px-4 border-b text-green-600">₹{student.paidFee.toLocaleString()}</td>
                       <td className="py-3 px-4 border-b text-red-600">₹{student.dueFee.toLocaleString()}</td>

@@ -698,7 +698,8 @@ export const verificationCheck = async (req, res) => {
 // controllers/franchise.controller.js
 export const getFranchiseByFranchiseId = async (req, res) => {
   try {
-    const id = req.params.getfranchisedetails;
+    const id = req.params.franchiseId; 
+    console.log("Fetching franchise by ID:", id);
     const franchise = await Franchise.findOne({ franchiseId: id });
 
     if (!franchise) {

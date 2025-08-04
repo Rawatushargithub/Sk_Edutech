@@ -4,12 +4,12 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../../config";
 
-const Fees_table = ({ 
+const Fees_table = ({
   handleSubmit,
   formData,
   setFormData,
   handleChange,
-  batches, 
+  batches,
   selectedBatch,
   remainingSeats,
   setBatches,
@@ -31,8 +31,8 @@ const Fees_table = ({
   // Fetch all batches
   const fetchBatches = async () => {
     try {
-      const franchiseId = localStorage.getItem('franchiseID');
-      const response = await fetch(   
+      const franchiseId = localStorage.getItem("franchiseID");
+      const response = await fetch(
         `${API_BASE_URL}/api/v1/institute_batche/allBatches?franchiseId=${franchiseId}`
       );
       if (!response.ok) throw new Error("Failed to fetch batches");
@@ -43,12 +43,12 @@ const Fees_table = ({
     } catch (error) {
       console.error("Error fetching batches:", error);
     }
-  }; 
+  };
 
   // Fetch remaining seats for selected batch
-  const fetchRemainingSeats = async (batchId) => { 
+  const fetchRemainingSeats = async (batchId) => {
     try {
-      const franchiseId = localStorage.getItem('franchiseID');
+      const franchiseId = localStorage.getItem("franchiseID");
       const response = await fetch(
         `${API_BASE_URL}/api/v1/institute_batche/${batchId}/seats?franchiseId=${franchiseId}`
       );
@@ -65,12 +65,12 @@ const Fees_table = ({
   // Handle batch selection change
   const handleBatchChange = (e) => {
     const batchId = e.target.value;
-    const selectedBatchObject = batches.find(batch => batch.id === batchId);
-  
+    const selectedBatchObject = batches.find((batch) => batch.id === batchId);
+
     if (selectedBatchObject) {
       setFormData({
         ...formData,
-        selectedBatch: selectedBatchObject.name
+        selectedBatch: selectedBatchObject.name,
       });
     }
     setSelectedBatch(batchId);
@@ -89,7 +89,7 @@ const Fees_table = ({
     const newCourseFees = e.target.value;
     setFormData({
       ...formData,
-      courseFees: Number(newCourseFees)
+      courseFees: Number(newCourseFees),
     });
   };
 
@@ -114,15 +114,15 @@ const Fees_table = ({
       updatedTotal += percentage;
     }
     setTotalFees(updatedTotal);
-    
+
     // Update formData with calculated values
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       discountRate,
       discountAmount,
       totalFees: updatedTotal,
       feesReceived,
-      installments
+      installments,
     }));
   };
 
@@ -171,6 +171,9 @@ const Fees_table = ({
                 Fees Received
               </th>
               <th className="border border-gray-300 px-1 py-1 w-[100px]">
+                Payment Mode
+              </th>
+              <th className="border border-gray-300 px-1 py-1 w-[100px]">
                 Balance
               </th>
               <th className="border border-gray-300 px-1 py-1 w-[120px]">
@@ -210,7 +213,7 @@ const Fees_table = ({
               </td>
               <td className="border border-gray-300 py-2 px-2 text-center">
                 <input
-                  type="number"
+                  type="number" 
                   className="w-full h-8 text-black border rounded px-1 text-sm bg-gray-300"
                   value={totalFees}
                   readOnly
@@ -223,6 +226,18 @@ const Fees_table = ({
                   value={feesReceived}
                   onChange={(e) => setFeesReceived(e.target.value)}
                 />
+              </td>
+              <td className="border border-gray-300 py-2 px-2 text-center">
+                <select
+                  className="w-full h-8 border rounded px-1 text-sm"
+                  value={formData.paymentMode || "Cash"}
+                  onChange={(e) =>
+                    setFormData({ ...formData, paymentMode: e.target.value })
+                  }
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="Online">Online</option>
+                </select>
               </td>
               <td className="border border-gray-300 py-2 px-2 text-center">
                 <input
@@ -306,7 +321,7 @@ const Fees_table = ({
             {batches.map((batch) => (
               <option key={batch.id} value={batch.id}>
                 {batch.name} ({batch.timings})
-              </option> 
+              </option>
             ))}
           </select>
         </div>

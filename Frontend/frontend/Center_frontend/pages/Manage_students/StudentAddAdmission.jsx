@@ -48,6 +48,7 @@ const AddNewStudent = () => {
     discountAmount: 0,
     totalFees: 0,
     feesReceived: 0, 
+    paymentMode: "Cash", 
     installments: [],
   });
  

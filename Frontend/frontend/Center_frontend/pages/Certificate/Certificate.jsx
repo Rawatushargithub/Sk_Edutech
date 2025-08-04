@@ -28,20 +28,24 @@ const CertificateRequest = () => {
   }, [franchiseId, selectedCourseCode]);
 
   const fetchCourses = async () => {
-    try {
-      const res = await axios.get(
-        `${API_BASE_URL}/api/v1/institute_certificates/courses/by-franchise/${franchiseId}`
-      );
-      setCourses(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
-      console.error("Error fetching courses", err);
-    }
-  };
+  try {
+    const encodedFranchiseId = encodeURIComponent(franchiseId);
+    const res = await axios.get(
+      `${API_BASE_URL}/api/v1/institute_certificates/courses/by-franchise/${encodedFranchiseId}`
+    );
+    setCourses(Array.isArray(res.data) ? res.data : []);
+  } catch (err) {
+    console.error("Error fetching courses", err);
+  }
+};
+
 
   const fetchExamsByCourse = async () => {
     try {
+    const encodedFranchiseId = encodeURIComponent(franchiseId);
+
       const res = await axios.get(
-        `${API_BASE_URL}/api/v1/institute_certificates/exams/by-course/${franchiseId}/${selectedCourseCode}`
+        `${API_BASE_URL}/api/v1/institute_certificates/exams/by-course/${encodedFranchiseId}/${selectedCourseCode}`
       );
       setExams(Array.isArray(res.data) ? res.data : []);
       setSelectedExamId(""); // Reset exam selection when course changes

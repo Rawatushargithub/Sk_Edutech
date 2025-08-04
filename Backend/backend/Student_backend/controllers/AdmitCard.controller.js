@@ -114,9 +114,9 @@ export const fillAdmitCardTemplate = async (data) => {
             
             // Image positions based on template layout
             studentPhoto: { x: 455, y: height - 195, width: 100, height: 120 }, // Right side, upper area
-            // studentSignature: { x: 200, y: 167, width: 120, height: 40 }, // After "STUDENT'S SIGNATURE :"
-            instituteSeal: { x: 400, y: height - 583, width: 100, height: 40 }, // "SEAL & SINGNATURE DIRECTOR" area
-            examinerSignature: { x: 200, y: height - 755, width: 120, height: 40 } // After "EXAMINER SIGNATURE:-"
+            studentSignature: { x: 400, y: height - 583, width: 120, height: 40 }, // After "STUDENT'S SIGNATURE :"
+            instituteSeal: { x: 200, y: height - 755, width: 100, height: 40 }, // "SEAL & SINGNATURE DIRECTOR" area
+            // examinerSignature: { x: 200, y: height - 755, width: 120, height: 40 } // After "EXAMINER SIGNATURE:-"
         };
 
         // Fill Institute/Center Details

@@ -546,6 +546,7 @@ const resendFranchiseCredentials = asyncHandler(async (req, res) => {
 
     // Generate a new temporary password
     const newRawPassword = generatePassword();
+    console.log("gnearate: ", newRawPassword);
     const newHashedPassword = await bcrypt.hash(newRawPassword, 10);
 
     // Update the franchise's password in the database
@@ -698,8 +699,10 @@ export const verificationCheck = async (req, res) => {
 // controllers/franchise.controller.js
 export const getFranchiseByFranchiseId = async (req, res) => {
   try {
-    const id = req.params.franchiseId; 
-    console.log("Fetching franchise by ID:", id);
+
+    // const id = req.params.getfranchisedetails;
+    const id = decodeURIComponent(req.params.franchiseId);
+
     const franchise = await Franchise.findOne({ franchiseId: id });
 
     if (!franchise) {

@@ -16,12 +16,16 @@ const Feedback = () => {
   const studentId = student?.studentId;
   const rollNumber = student?.rollNumber;
   const studentName = student?.name;
+  const franchiseId = student?.franchiseId;
+  // console.log("Student Data:", franchiseId);
 
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
   const [feedbackList, setFeedbackList] = useState([]);
   const [editId, setEditId] = useState(null);
+
+  
 
   useEffect(() => {
     const fetchFeedback = async () => {
@@ -46,6 +50,7 @@ const Feedback = () => {
       rollNumber,
       rating,
       comment,
+      franchiseId,
     };
 
     try {

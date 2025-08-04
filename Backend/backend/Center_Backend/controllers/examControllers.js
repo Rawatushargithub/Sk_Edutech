@@ -1,79 +1,8 @@
 import Exam from "../models/Exam.models.js"
+import QuestionBank from "../models/Questionbank.model.js"
 import Student from "../models/Student/Student_Detais.model.js";
 import { asyncHandler } from "../utils/asynchanlder.js";
 import mongoose from "mongoose";
-
-// export const createExam = asyncHandler(async (req, res) => {
-//   try {
-//     const {
-//       courseCode,
-//       batch,
-//       examDate,
-//       examDurationMinutes,
-//       totalQuestions,
-//       passingMarks,
-//       examMode = "Offline", // Default to Offline mode
-//       status = "Active", // Default to Active status
-//     } = req.body;
-
-//     // Validate required fields
-//     if (!courseCode || !batch || !examDate || !examDurationMinutes || !totalQuestions || !passingMarks) {
-//       return res.status(400).json({ 
-//         message: "All fields are required: courseCode, batch, examDate, examDurationMinutes, totalQuestions, and passingMarks" 
-//       });
-//     }
-
-//     // Check if batch is an array
-//     if (!Array.isArray(batch)) {
-//       return res.status(400).json({
-//         message: "Batch must be provided as an array"
-//       });
-//     }
-  
-//     // Extract day from the examDate
-//     const examDay = new Date(examDate).getDate();
-    
-//     // Create an array to hold all created exams
-//     const createdExams = [];
-    
-//     // For each batch, create a separate exam document
-//     for (const batchItem of batch) {
-//       // Generate ExamID in the format: courseCode + batchName + day (e.g., BCA01B112)
-//       const examID = `${courseCode}${batchItem}${examDay}`;
-      
-//       const newExam = new Exam({
-//         ExamID: examID,
-//         courseCode,
-//         batch: batchItem, // Store single batch per document
-//         examDate,
-//         examDurationMinutes,
-//         totalQuestions,
-//         passingMarks,
-//         examMode,
-//         status,
-//         createdAt: new Date(),
-//         results: [] // Initialize with empty results array
-//       });
-
-//       // Save the exam to the database
-//       await newExam.save();
-//       createdExams.push(newExam);
-//     }
-
-//     console.log(`Added ${createdExams.length} exams successfully to database`);
-//     res.status(201).json({ 
-//       message: `${createdExams.length} exams added successfully`, 
-//       exams: createdExams 
-//     });
-
-//   } catch (error) {
-//     console.error("Error creating exam:", error);
-//     res.status(500).json({ 
-//       message: "Server error while creating exam", 
-//       error: error.message 
-//     });
-//   }
-// });
 
 
 export const createExam = asyncHandler(async (req, res) => {
@@ -83,6 +12,9 @@ export const createExam = asyncHandler(async (req, res) => {
       batch,
       examDate,
       franchiseId,
+      examType = "Weekly Test", // New field for exam type
+      examStartTime, // NEW REQUIRED FIELD
+      examEndTime, // NEW REQUIRED FIELD
       examDurationMinutes,
       totalQuestions,
       totalMarks,
@@ -91,11 +23,12 @@ export const createExam = asyncHandler(async (req, res) => {
       status = "Active", // Default to Active status
       selectedQuestions // This is expected from frontend for online exams
     } = req.body;
-    
-    // Validate required fields
-    if (!courseCode || !batch || !examDate || !examDurationMinutes || !totalQuestions || !passingMarks || !totalMarks) {
+    console.log(req.body);
+    console.log("Type of :: ", typeof examStartTime, examStartTime);
+    // Validate required fields (including new time fields)
+    if (!courseCode || !batch || !examDate || !examStartTime || !examEndTime || !examDurationMinutes || !totalQuestions || !passingMarks || !totalMarks || !examType) {
       return res.status(400).json({ 
-        message: "All fields are required: courseCode, batch, examDate, examDurationMinutes, totalQuestions, and passingMarks and totalMarks" 
+        message: "All fields are required: courseCode, batch, examDate, examType, examStartTime, examEndTime, examDurationMinutes, totalQuestions, passingMarks and totalMarks" 
       });
     }
 
@@ -105,7 +38,51 @@ export const createExam = asyncHandler(async (req, res) => {
         message: "Batch must be provided as an array"
       });
     }
-  console.log("Batch:", batch);
+
+    // Validate time format (HH:MM)
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRegex.test(examStartTime)) {
+      return res.status(400).json({
+        message: "examStartTime must be in HH:MM format (24-hour)"
+      });
+    }
+    
+    if (!timeRegex.test(examEndTime)) {
+      return res.status(400).json({
+        message: "examEndTime must be in HH:MM format (24-hour)"
+      });
+    }
+
+    // Validate that end time is after start time
+    const [startHour, startMin] = examStartTime.split(':').map(Number);
+    const [endHour, endMin] = examEndTime.split(':').map(Number);
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+    
+    if (endMinutes <= startMinutes) {
+      return res.status(400).json({
+        message: "examEndTime must be after examStartTime"
+      });
+    }
+
+    // Optional: Validate that duration matches the time difference
+    const actualDuration = endMinutes - startMinutes;
+    if (Math.abs(actualDuration - examDurationMinutes) > 1) { // Allow 1 minute tolerance
+      return res.status(400).json({
+        message: `examDurationMinutes (${examDurationMinutes}) should match the time difference between start and end times (${actualDuration} minutes)`
+      });
+    }
+
+    // Validate exam type
+    const validExamTypes = ["Weekly Test", "Monthly Test", "Final Test"];
+    if (!validExamTypes.includes(examType)) {
+      return res.status(400).json({
+        message: "Invalid exam type. Must be one of: Weekly Test, Monthly Test, Final Test"
+      });
+    }
+  
+    console.log("Batch:", batch);
+    
     // Extract day from the examDate
     const examDay = new Date(examDate).getDate();
     
@@ -135,20 +112,51 @@ export const createExam = asyncHandler(async (req, res) => {
       return batchNameUpperCase.slice(0, 2); // Last resort: take first two characters
     };
     
+    // Helper function to get exam type code
+    const getExamTypeCode = (examType) => {
+      switch (examType) {
+        case "Weekly Test":
+          return "WT";
+        case "Monthly Test":
+          return "MT";
+        case "Final Test":
+          return "FT";
+        default:
+          return "EX";
+      }
+    };
+    
     // For each batch, create a separate exam document
     for (const batchItem of batch) {
-      // Extract the batch code from the name (e.g., "BATCH 3" to "B3")
-      
-      const batchCode = getBatchCode(batchItem.name);
-      const examID = `${courseCode}_${batchCode}_${examDay}`;
+      // Validate batch structure according to new schema
+      if (!batchItem.timings || !batchItem.name || !batchItem.id) {
+        return res.status(400).json({
+          message: "Each batch must have timings, name, and id properties"
+        });
+      }
 
-      // Prepare exam object
+      // Extract the batch code from the name (e.g., "BATCH 3" to "B3")
+      const batchCode = getBatchCode(batchItem.name);
+      const examTypeCode = getExamTypeCode(examType);
+      
+      // Updated ExamID format: CourseCode_ExamType_BatchCode_Day
+      // Example: CS101_WT_B3_15 (Computer Science 101, Weekly Test, Batch 3, Day 15)
+      const examID = `${courseCode}_${examTypeCode}_${batchCode}_${examDay}`;
+
+      // Prepare exam object according to new schema
       const examObj = {
         ExamID: examID,
         courseCode, 
-        batch: batchItem,
+        batch: {
+          timings: batchItem.timings,
+          name: batchItem.name,
+          id: batchItem.id
+        },
         examDate,
         franchiseId, // Add franchiseId to the exam object
+        examType, // Add exam type to the exam object
+        examStartTime, // NEW: Add exam start time
+        examEndTime, // NEW: Add exam end time
         examDurationMinutes,
         totalQuestions,
         totalMarks,
@@ -162,6 +170,9 @@ export const createExam = asyncHandler(async (req, res) => {
       // If online, add questions array (from selectedQuestions, which should be array of qNo)
       if (examMode === "Online" && Array.isArray(selectedQuestions)) {
         examObj.questions = selectedQuestions.map(q => Number(q));
+      } else if (examMode === "Online") {
+        // For online exams, questions array is required even if empty
+        examObj.questions = [];
       }
 
       const newExam = new Exam(examObj);
@@ -171,8 +182,18 @@ export const createExam = asyncHandler(async (req, res) => {
       createdExams.push(newExam);
     }
 
+    // Determine response message based on exam type and count
+    let message = `${createdExams.length} ${examType.toLowerCase()}`;
+    if (createdExams.length > 1) {
+      message += `s added successfully across ${createdExams.length} batches`;
+    } else {
+      message += ` added successfully`;
+    }
+
     res.status(201).json({
-      message: `${createdExams.length} exams added successfully`,
+      message: message,
+      examType: examType,
+      examsCreated: createdExams.length,
       exams: createdExams
     });
 
@@ -184,182 +205,6 @@ export const createExam = asyncHandler(async (req, res) => {
     });
   }
 });
-
-export const getAllExams = asyncHandler(async (req, res) => {
-  try {
-    const { examMode, franchiseId } = req.query; // Get examMode and franchiseId from query parameters
-    console.log("Fetching exams with examMode:", examMode, "and franchiseId:", franchiseId);
-    // Build filter object
-    let filter = {};
-    
-    // Filter by examMode if provided
-    if (examMode && (examMode === 'Online' || examMode === 'Offline')) {
-      filter.examMode = examMode;
-    }
-    
-    // Filter by franchiseId if provided
-    if (franchiseId) {
-      filter.franchiseId = franchiseId;
-    }
-  
-    // Fetch exams based on filter
-    const exams = await Exam.find(filter).limit(10);
-    
-    // Get counts for both modes with franchise filtering
-    const countFilter = franchiseId ? { franchiseId } : {};
-    const onlineCount = await Exam.countDocuments({ ...countFilter, examMode: 'Online' });
-    const offlineCount = await Exam.countDocuments({ ...countFilter, examMode: 'Offline' });
-    const totalCount = await Exam.countDocuments(countFilter);
-    
-    res.status(200).json({
-      exams,
-      counts: {
-        online: onlineCount,
-        offline: offlineCount,
-        total: totalCount
-      },
-      currentFilter: examMode || 'all',
-      franchiseId: franchiseId || 'all'
-    });
-  } catch (error) {
-    console.error("Error fetching exams:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
-
-// Alternative: Separate endpoints for online and offline exams
-export const getOnlineExams = asyncHandler(async (req, res) => {
-  try {
-    const { franchiseId } = req.query;
-    
-    // Build filter object
-    let filter = { examMode: 'Online' };
-    if (franchiseId) {
-      filter.franchiseId = franchiseId;
-    }
-    
-    const exams = await Exam.find(filter).limit(10);
-    const count = await Exam.countDocuments(filter);
-    
-    res.status(200).json({
-      exams,
-      count,
-      mode: 'Online',
-      franchiseId: franchiseId || 'all'
-    });
-  } catch (error) {
-    console.error("Error fetching online exams:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
-
-export const getOfflineExams = asyncHandler(async (req, res) => {
-  try {
-    const { franchiseId } = req.query;
-    
-    // Build filter object
-    let filter = { examMode: 'Offline' };
-    if (franchiseId) {
-      filter.franchiseId = franchiseId;
-    }
-    
-    const exams = await Exam.find(filter).limit(10);
-    const count = await Exam.countDocuments(filter);
-    
-    res.status(200).json({
-      exams,
-      count,
-      mode: 'Offline',
-      franchiseId: franchiseId || 'all'
-    });
-  } catch (error) {
-    console.error("Error fetching offline exams:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
-
-// Get exam counts only
-export const getExamCounts = asyncHandler(async (req, res) => {
-  try {
-    const { franchiseId } = req.query;
-    
-    // Build filter object
-    let filter = {};
-    if (franchiseId) {
-      filter.franchiseId = franchiseId;
-    }
-    
-    const onlineCount = await Exam.countDocuments({ ...filter, examMode: 'Online' });
-    const offlineCount = await Exam.countDocuments({ ...filter, examMode: 'Offline' });
-    const totalCount = await Exam.countDocuments(filter);
-    
-    res.status(200).json({
-      counts: {
-        online: onlineCount,
-        offline: offlineCount,
-        total: totalCount
-      },
-      franchiseId: franchiseId || 'all'
-    });
-  } catch (error) {
-    console.error("Error fetching exam counts:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
-
-export const deleteExam = asyncHandler(async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedExam = await Exam.findByIdAndDelete(id);
-
-    if (!deletedExam) {
-      return res.status(404).json({ message: "Exam not found" });
-    }
-
-    res.status(200).json({ message: "Exam deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to delete exam", error });
-  }
-})
-
-// PATCH /api/v1/institute_exam/exams/:examId/status - Update exam status
-export const updateExamStatus = asyncHandler(async (req, res) => {
-  try {
-    const { examId } = req.params;
-    const { status } = req.body;
-    
-    // Validate status
-    if (!['Active', 'Inactive'].includes(status)) {
-      return res.status(400).json({ 
-        message: 'Invalid status. Must be either "Active" or "Inactive"' 
-      });
-    }
-    
-    const updatedExam = await Exam.findOneAndUpdate(
-      { ExamID: examId },
-      { status },
-      { new: true }
-    );
-    
-    if (!updatedExam) {
-      return res.status(404).json({ 
-        message: 'Exam not found' 
-      });
-    }
-    
-    res.status(200).json({
-      message: 'Exam status updated successfully',
-      exam: updatedExam
-    });
-  } catch (error) {
-    console.error('Error updating exam status:', error);
-    res.status(500).json({ 
-      message: 'Failed to update exam status', 
-      error: error.message 
-    });
-  }
-});
-
 
 export const getStudentsByCourseAndBatch = async (req, res) => {
   try {
@@ -421,13 +266,109 @@ export const getStudentsByCourseAndBatch = async (req, res) => {
   }
 };
 
-// Upload marks for a specific exam
+export const getAllExams = asyncHandler(async (req, res) => {
+  try {
+    const { examMode, franchiseId } = req.query; // Get examMode and franchiseId from query parameters
+    console.log("Fetching exams with examMode:", examMode, "and franchiseId:", franchiseId);
+    // Build filter object
+    let filter = {};
+    
+    // Filter by examMode if provided
+    if (examMode && (examMode === 'Online' || examMode === 'Offline')) {
+      filter.examMode = examMode;
+    }
+    
+    // Filter by franchiseId if provided
+    if (franchiseId) {
+      filter.franchiseId = franchiseId;
+    }
+  
+    // Fetch exams based on filter
+    const exams = await Exam.find(filter).limit(10);
+    
+    // Get counts for both modes with franchise filtering
+    const countFilter = franchiseId ? { franchiseId } : {};
+    const onlineCount = await Exam.countDocuments({ ...countFilter, examMode: 'Online' });
+    const offlineCount = await Exam.countDocuments({ ...countFilter, examMode: 'Offline' });
+    const totalCount = await Exam.countDocuments(countFilter);
+    
+    res.status(200).json({
+      exams,
+      counts: {
+        online: onlineCount,
+        offline: offlineCount,
+        total: totalCount
+      },
+      currentFilter: examMode || 'all',
+      franchiseId: franchiseId || 'all'
+    });
+  } catch (error) {
+    console.error("Error fetching exams:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// PATCH /api/v1/institute_exam/exams/:examId/status - Update exam status
+export const updateExamStatus = asyncHandler(async (req, res) => {
+  try {
+    const { examId } = req.params;
+    const { status } = req.body;
+    
+    // Validate status
+    if (!['Active', 'Inactive'].includes(status)) {
+      return res.status(400).json({ 
+        message: 'Invalid status. Must be either "Active" or "Inactive"' 
+      });
+    }
+    
+    const updatedExam = await Exam.findOneAndUpdate(
+      { ExamID: examId },
+      { status },
+      { new: true }
+    );
+    
+    if (!updatedExam) {
+      return res.status(404).json({ 
+        message: 'Exam not found' 
+      });
+    }
+    
+    res.status(200).json({
+      message: 'Exam status updated successfully',
+      exam: updatedExam
+    });
+  } catch (error) {
+    console.error('Error updating exam status:', error);
+    res.status(500).json({ 
+      message: 'Failed to update exam status', 
+      error: error.message 
+    });
+  }
+});
+
+export const deleteExam = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedExam = await Exam.findByIdAndDelete(id);
+
+    if (!deletedExam) {
+      return res.status(404).json({ message: "Exam not found" });
+    }
+
+    res.status(200).json({ message: "Exam deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete exam", error });
+  }
+})
+
+// Upload marks for a specific exam 
 export const uploadMarks = async (req, res) => {
   try {
     console.log("upload is working")
     const { selectedExam } = req.params;
     const { results } = req.body;
-
+console.log("Selected Exam ID:", selectedExam); 
+    console.log("Results to upload:", results);
     // Validate input
     if (!results || !Array.isArray(results) || results.length === 0) {
       return res.status(400).json({
@@ -454,7 +395,7 @@ export const uploadMarks = async (req, res) => {
     }
 
     // Find the exam
-    const exam = await Exam.findOne({ ExamID: selectedExam });
+    const exam = await Exam.findById( selectedExam );
     if (!exam) {
       return res.status(404).json({
         success: false,
@@ -518,3 +459,462 @@ export const uploadMarks = async (req, res) => {
     });
   }
 };
+export const updateExam = async (req, res) => {
+  try {
+    const { examId } = req.params;
+    const updateData = req.body;
+    console.log("Update Data from frontend:", updateData);
+
+    // Updated required fields to include examStartTime and examEndTime
+    const requiredFields = [
+      "ExamID",
+      "courseCode",
+      "batch", 
+      "examDate",
+      "examType",
+      "examStartTime",  // Added
+      "examEndTime",    // Added
+      "examDurationMinutes",
+      "totalQuestions",
+      "totalMarks",
+      "passingMarks", 
+      "examMode",
+    ];
+
+    // Check for missing required fields
+    for (const field of requiredFields) {
+      if (!updateData[field]) {
+        return res.status(400).json({ message: `Missing required field: ${field}` });
+      }
+    }
+
+    // Validate exam type
+    const validExamTypes = ["Weekly Test", "Monthly Test", "Final Test"];
+    if (!validExamTypes.includes(updateData.examType)) {
+      return res.status(400).json({ message: "Invalid exam type" });
+    }
+
+    // Validate exam mode
+    if (!["Online", "Offline"].includes(updateData.examMode)) {
+      return res.status(400).json({ message: "Invalid exam mode" });
+    }
+
+    // Validate batch data
+    if (
+      !updateData.batch ||
+      !updateData.batch.timings ||
+      !updateData.batch.name ||
+      !updateData.batch.id
+    ) {
+      return res.status(400).json({ message: "Invalid batch data" });
+    }
+
+    // Validate numeric fields
+    if (
+      isNaN(updateData.examDurationMinutes) ||
+      isNaN(updateData.totalQuestions) ||
+      isNaN(updateData.totalMarks) ||
+      isNaN(updateData.passingMarks)
+    ) {
+      return res.status(400).json({ message: "Numeric fields must be valid numbers" });
+    }
+
+    // Validate passing marks
+    if (updateData.passingMarks > updateData.totalMarks) {
+      return res.status(400).json({ message: "Passing marks cannot exceed total marks" });
+    }
+
+    // Validate time format (optional but recommended)
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRegex.test(updateData.examStartTime) || !timeRegex.test(updateData.examEndTime)) {
+      return res.status(400).json({ message: "Invalid time format. Use HH:MM format" });
+    }
+
+    // Build update object with all required fields
+    const updateObject = {
+      ExamID: updateData.ExamID,
+      courseCode: updateData.courseCode,
+      batch: {
+        timings: updateData.batch.timings,
+        name: updateData.batch.name,
+        id: updateData.batch.id,
+      },
+      examDate: updateData.examDate,
+      examType: updateData.examType,
+      examStartTime: updateData.examStartTime,  // Added
+      examEndTime: updateData.examEndTime,      // Added
+      examDurationMinutes: parseInt(updateData.examDurationMinutes),
+      totalQuestions: parseInt(updateData.totalQuestions),
+      totalMarks: parseInt(updateData.totalMarks),
+      passingMarks: parseInt(updateData.passingMarks),
+      examMode: updateData.examMode,
+    };
+
+    // Add status if provided
+    if (updateData.status) {
+      updateObject.status = updateData.status;
+    }
+
+    const updatedExam = await Exam.findByIdAndUpdate(
+      examId,
+      updateObject,
+      { new: true, runValidators: true }
+    );
+
+
+    if (!updatedExam) {
+      return res.status(404).json({ message: "Exam not found" });
+    }
+
+    res.status(200).json(updatedExam);
+  } catch (error) {
+    console.error("Error updating exam:", error);
+    
+    // Handle validation errors specifically
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.keys(error.errors).map(key => ({
+        field: key,
+        message: error.errors[key].message
+      }));
+      return res.status(400).json({ 
+        message: "Validation error", 
+        errors: validationErrors 
+      });
+    }
+    
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
+export const getExamQuestions = async (req, res) => {
+  try {
+    const { examId } = req.params;
+
+    // Find the exam by ID
+    const exam = await Exam.findById(examId);
+    if (!exam) {
+      return res.status(404).json({
+        success: false,
+        message: 'Exam not found'
+      });
+    }
+
+    // Check if it's an online exam
+    if (exam.examMode !== 'Online') {
+      return res.status(400).json({
+        success: false,
+        message: 'Questions are only available for online exams'
+      });
+    }
+
+    // If no questions are assigned to this exam
+    if (!exam.questions || exam.questions.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'No questions found for this exam',
+        questions: [],
+        examDetails: {
+          examId: exam._id,
+          courseCode: exam.courseCode,
+          totalQuestions: exam.totalQuestions,
+          totalMarks: exam.totalMarks
+        }
+      });
+    }
+
+    // Find the question bank for this course
+    const questionBank = await QuestionBank.findOne({ 
+      courseCode: exam.courseCode 
+    });
+
+    if (!questionBank) {
+      return res.status(404).json({
+        success: false,
+        message: `Question bank not found for course: ${exam.courseCode}`
+      });
+    }
+ 
+    // Filter questions based on question numbers stored in exam.questions array
+    const examQuestions = exam.questions.map(qNo => {
+      const question = questionBank.questions.find(q => q.qNo === qNo);
+      if (question) {
+        return {
+          _id: question._id,
+          qNo: question.qNo,
+          questionText: question.question,
+          options: [
+            question.options.a,
+            question.options.b,
+            question.options.c,
+            question.options.d
+          ],
+          correctAnswer: ['a', 'b', 'c', 'd'].indexOf(question.answer),
+          // marks: 1, // Default marks per question
+          // questionType: 'multiple-choice'
+        };
+      }
+      return null;
+    }).filter(q => q !== null); // Remove null entries for missing questions
+
+    // Check if all questions were found
+    const foundQuestionNumbers = examQuestions.map(q => q.qNo);
+    const missingQuestions = exam.questions.filter(qNo => !foundQuestionNumbers.includes(qNo));
+
+    return res.status(200).json({
+      success: true,
+      message: 'Questions fetched successfully',
+      questions: examQuestions,
+      examDetails: {
+        examId: exam._id,
+        courseCode: exam.courseCode,
+        totalQuestions: exam.totalQuestions,
+        totalMarks: exam.totalMarks,
+        assignedQuestions: exam.questions.length,
+        foundQuestions: examQuestions.length
+      },
+      ...(missingQuestions.length > 0 && {
+        warning: `Some questions not found in question bank: ${missingQuestions.join(', ')}`
+      })
+    });
+
+  } catch (error) {
+    console.error('Error fetching exam questions:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error while fetching questions',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * Add a question to an exam (assign question number to exam)
+ * @route POST /api/v1/institute_exam/exams/:examId/questions
+ */
+export const addQuestionToExam = async (req, res) => {
+  try { 
+    const { examId } = req.params;
+    const { qNo } = req.body;
+
+    if (!qNo) {
+      return res.status(400).json({
+        success: false,
+        message: 'Question number (qNo) is required'
+      });
+    }
+
+    // Find the exam
+    const exam = await Exam.findById(examId);
+    if (!exam) {
+      return res.status(404).json({
+        success: false,
+        message: 'Exam not found'
+      });
+    }
+
+    // Check if it's an online exam
+    if (exam.examMode !== 'Online') {
+      return res.status(400).json({
+        success: false,
+        message: 'Questions can only be added to online exams'
+      });
+    }
+
+    // Check if question already exists in exam
+    if (exam.questions.includes(qNo)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Question already exists in this exam'
+      });
+    }
+
+    // Verify the question exists in question bank
+    const questionBank = await QuestionBank.findOne({ 
+      courseCode: exam.courseCode 
+    });
+
+    if (!questionBank) {
+      return res.status(404).json({
+        success: false,
+        message: `Question bank not found for course: ${exam.courseCode}`
+      });
+    }
+
+    const questionExists = questionBank.questions.some(q => q.qNo === qNo);
+    if (!questionExists) {
+      return res.status(404).json({
+        success: false,
+        message: `Question with number ${qNo} not found in question bank`
+      });
+    }
+
+    // Add question number to exam
+    exam.questions.push(qNo);
+    await exam.save();
+
+    // Get the added question details
+    const addedQuestion = questionBank.questions.find(q => q.qNo === qNo);
+    const formattedQuestion = {
+      _id: addedQuestion._id,
+      qNo: addedQuestion.qNo,
+      questionText: addedQuestion.question,
+      options: [
+        addedQuestion.options.a,
+        addedQuestion.options.b,
+        addedQuestion.options.c,
+        addedQuestion.options.d
+      ],
+      correctAnswer: ['a', 'b', 'c', 'd'].indexOf(addedQuestion.answer),
+      marks: 1,
+      questionType: 'multiple-choice'
+    };
+
+    return res.status(201).json({
+      success: true,
+      message: 'Question added to exam successfully',
+      question: formattedQuestion
+    });
+
+  } catch (error) {
+    console.error('Error adding question to exam:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error while adding question',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * Remove a question from an exam
+ * @route DELETE /api/v1/institute_exam/exams/:examId/questions/:qNo
+ */
+export const removeQuestionFromExam = async (req, res) => {
+  try {
+    const { examId, qNo } = req.params;
+    const questionNumber = parseInt(qNo);
+
+    // Find the exam
+    const exam = await Exam.findById(examId);
+    if (!exam) {
+      return res.status(404).json({
+        success: false,
+        message: 'Exam not found'
+      });
+    }
+
+    // Check if question exists in exam
+    const questionIndex = exam.questions.indexOf(questionNumber);
+    if (questionIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Question not found in this exam'
+      });
+    }
+
+    // Remove question from exam
+    exam.questions.splice(questionIndex, 1);
+    await exam.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Question removed from exam successfully'
+    });
+
+  } catch (error) {
+    console.error('Error removing question from exam:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error while removing question',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// // Alternative: Separate endpoints for online and offline exams
+// export const getOnlineExams = asyncHandler(async (req, res) => {
+//   try {
+//     const { franchiseId } = req.query;
+    
+//     // Build filter object
+//     let filter = { examMode: 'Online' };
+//     if (franchiseId) {
+//       filter.franchiseId = franchiseId;
+//     }
+    
+//     const exams = await Exam.find(filter).limit(10);
+//     const count = await Exam.countDocuments(filter);
+    
+//     res.status(200).json({
+//       exams,
+//       count,
+//       mode: 'Online',
+//       franchiseId: franchiseId || 'all'
+//     });
+//   } catch (error) {
+//     console.error("Error fetching online exams:", error);
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// });
+
+// export const getOfflineExams = asyncHandler(async (req, res) => {
+//   try {
+//     const { franchiseId } = req.query;
+    
+//     // Build filter object
+//     let filter = { examMode: 'Offline' };
+//     if (franchiseId) {
+//       filter.franchiseId = franchiseId;
+//     }
+    
+//     const exams = await Exam.find(filter).limit(10);
+//     const count = await Exam.countDocuments(filter);
+    
+//     res.status(200).json({
+//       exams,
+//       count,
+//       mode: 'Offline',
+//       franchiseId: franchiseId || 'all'
+//     });
+//   } catch (error) {
+//     console.error("Error fetching offline exams:", error);
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// });
+
+// // Get exam counts only
+// export const getExamCounts = asyncHandler(async (req, res) => {
+//   try {
+//     const { franchiseId } = req.query;
+    
+//     // Build filter object
+//     let filter = {};
+//     if (franchiseId) {
+//       filter.franchiseId = franchiseId;
+//     }
+    
+//     const onlineCount = await Exam.countDocuments({ ...filter, examMode: 'Online' });
+//     const offlineCount = await Exam.countDocuments({ ...filter, examMode: 'Offline' });
+//     const totalCount = await Exam.countDocuments(filter);
+    
+//     res.status(200).json({
+//       counts: {
+//         online: onlineCount,
+//         offline: offlineCount,
+//         total: totalCount
+//       },
+//       franchiseId: franchiseId || 'all'
+//     });
+//   } catch (error) {
+//     console.error("Error fetching exam counts:", error);
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// });
+
+
+
+
+
+
+

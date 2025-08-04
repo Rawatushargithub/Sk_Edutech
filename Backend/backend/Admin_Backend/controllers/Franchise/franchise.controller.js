@@ -13,7 +13,7 @@ const generateFranchiseId = async () => {
     let uniqueId = false;
     let franchiseId;
     while (!uniqueId) {
-        franchiseId = `SK${Math.floor(100000 + Math.random() * 900000)}`;
+        franchiseId = `SK/SKE-${Math.floor(100000 + Math.random() * 900000)}`;
         const existing = await Franchise.findOne({ franchiseId });
         if (!existing) {
             uniqueId = true;
@@ -546,6 +546,7 @@ const resendFranchiseCredentials = asyncHandler(async (req, res) => {
 
     // Generate a new temporary password
     const newRawPassword = generatePassword();
+    console.log("gnearate: ", newRawPassword);
     const newHashedPassword = await bcrypt.hash(newRawPassword, 10);
 
     // Update the franchise's password in the database
@@ -698,7 +699,10 @@ export const verificationCheck = async (req, res) => {
 // controllers/franchise.controller.js
 export const getFranchiseByFranchiseId = async (req, res) => {
   try {
-    const id = req.params.getfranchisedetails;
+
+    // const id = req.params.getfranchisedetails;
+    const id = decodeURIComponent(req.params.franchiseId);
+
     const franchise = await Franchise.findOne({ franchiseId: id });
 
     if (!franchise) {

@@ -91,7 +91,7 @@ const mainSlider = () => {
   }
 
   return (
-    <div className="mb-5 relative max-w-full lg:h-[500px] overflow-hidden">
+    <div className="mb-5 relative max-w-full lg:h-[600px] overflow-hidden">
       {/* Images */}
       <div 
         className="flex transition-transform duration-500 ease-out h-full"
@@ -102,7 +102,7 @@ const mainSlider = () => {
             <img 
               src={image.url} 
               alt={image.name || `Slide ${index + 1}`} 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-fill"
             />
           </div>
         ))}

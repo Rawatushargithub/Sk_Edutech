@@ -5,7 +5,34 @@ import API_BASE_URL from "../../../config";
 const Batches = () => {
     const franchiseId = localStorage.getItem("franchiseId");
   const [batches, setBatches] = useState([]);
-  const [batch, setBatch] = useState({ batchName: "", batchTiming: "", batchLimit: "" , currentStudents:"6", franchiseId:franchiseId }); // create batches field
+  const [batch, setBatch] = useState({  
+    batchName: "", 
+    batchTiming: "", 
+    batchLimit: 0,
+    currentStudents: 0, 
+    franchiseId: franchiseId 
+  });
+  
+  // Separate state for time inputs
+  const [timeInputs, setTimeInputs] = useState({
+    fromTime: "",
+    toTime: ""
+  });
+
+  // Generate time options from 6 AM to 10 PM
+  const generateTimeOptions = () => {
+    const times = [];
+    for (let hour = 6; hour <= 22; hour++) {
+      if (hour <= 12) {
+        times.push(hour === 12 ? "12PM" : `${hour}AM`);
+      } else {
+        times.push(`${hour - 12}PM`);
+      }
+    }
+    return times;
+  };
+
+  const timeOptions = generateTimeOptions();
 
   useEffect(() => {
     fetchBatches();
@@ -22,6 +49,19 @@ const Batches = () => {
       setBatches(response.data.data);
     } catch (error) {
       console.error("Error fetching data", error);
+    }
+  };
+
+  const handleTimeChange = (field, value) => {
+    const updatedTimeInputs = { ...timeInputs, [field]: value };
+    setTimeInputs(updatedTimeInputs);
+    
+    // Concatenate the times and update batch.batchTiming
+    if (updatedTimeInputs.fromTime && updatedTimeInputs.toTime) {
+      const concatenatedTiming = `${updatedTimeInputs.fromTime} - ${updatedTimeInputs.toTime}`;
+      setBatch({ ...batch, batchTiming: concatenatedTiming });
+    } else {
+      setBatch({ ...batch, batchTiming: "" });
     }
   };
 
@@ -45,6 +85,7 @@ console.log(batch.batchName)
       
       fetchBatches();
       setBatch({ batchName: "", batchTiming: "", batchLimit: "" });
+      setTimeInputs({ fromTime: "", toTime: "" }); // Reset time inputs
       alert("Successfully created Batches")
     } catch (error) {
       console.error("Error adding batch", error);
@@ -88,18 +129,38 @@ console.log(batch.batchName)
             />
           </div>
 
-          {/* Timing */}
+          {/* From Time Dropdown */}
           <div className="flex-1">
-            <label className="block text-gray-700">
-              Timing (e.g., 9AM - 10AM)
-            </label>
-            <input
-              type="text"
+            <label className="block text-gray-700">From Time</label>
+            <select
               className="w-full p-2 border rounded"
-              placeholder="Timing"
-              value={batch.batchTiming}
-              onChange={(e) => setBatch({ ...batch, batchTiming: e.target.value })}
-            />
+              value={timeInputs.fromTime}
+              onChange={(e) => handleTimeChange('fromTime', e.target.value)}
+            >
+              <option value="">Select time</option>
+              {timeOptions.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* To Time Dropdown */}
+          <div className="flex-1">
+            <label className="block text-gray-700">To Time</label>
+            <select
+              className="w-full p-2 border rounded"
+              value={timeInputs.toTime}
+              onChange={(e) => handleTimeChange('toTime', e.target.value)}
+            >
+              <option value="">Select time</option>
+              {timeOptions.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Max Students Allowed */}
@@ -127,6 +188,14 @@ console.log(batch.batchName)
             </button>
           </div>
         </div>
+        
+        {/* Display concatenated timing */}
+        {batch.batchTiming && (
+          <div className="mt-4 p-2 bg-gray-100 rounded">
+            <span className="text-sm text-gray-600">Batch Timing: </span>
+            <span className="font-medium">{batch.batchTiming}</span>
+          </div>
+        )}
       </div>
 
       {/* Batches Table */}

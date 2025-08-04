@@ -3,14 +3,27 @@ import Feedback from "../models/Feedback.js";
 // CREATE feedback
 export const submitFeedback = async (req, res) => {
   try {
-    const { studentId, studentName, rollNumber, rating = 3, comment } = req.body;
+    const { studentId, studentName, rollNumber, rating = 3, comment, franchiseId } = req.body;
 
-    const feedback = await Feedback.create({ studentId, studentName, rollNumber, rating, comment });
+    if (!studentId || !studentName || !rollNumber || !comment || !franchiseId) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const feedback = await Feedback.create({
+      studentId,
+      studentName,
+      rollNumber,
+      rating,
+      comment,
+      franchiseId
+    });
+
     res.status(201).json({ message: "Feedback submitted", feedback });
   } catch (error) {
-    res.status(500).json({ message: "Error submitting feedback" });
+    res.status(500).json({ message: "Error submitting feedback", error: error.message });
   }
 };
+
 
 // GET feedback for a specific student
 export const getFeedbackByStudent = async (req, res) => {

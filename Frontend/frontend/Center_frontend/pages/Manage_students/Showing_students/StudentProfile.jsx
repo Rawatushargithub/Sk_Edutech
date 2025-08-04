@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 
+
 const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard }) => {
   const [copied, setCopied] = useState(false);
 
@@ -18,6 +19,7 @@ const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard }
     setTimeout(() => setCopied(false), 2000);
   };
 
+
   // Handle edit with student data
   const handleEditProfile = () => {
     // Store student data in localStorage as fallback
@@ -26,6 +28,24 @@ const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard }
     if (onEdit) {
       onEdit(student._id);
     }
+  };
+
+  const handleCopy = () => {
+        const studentDetails = `
+Student Name: ${student.studentName || 'N/A'}
+Roll Number: ${student.rollNumber || 'N/A'}
+Status: ${student.status ? 'Active' : 'Inactive'}
+Mobile: ${student.studentMobile || 'N/A'}
+Email: ${student.email || 'N/A'}
+Course: ${student.courseInterested?.courseName || 'N/A'}
+Batch: ${student.batch || 'N/A'}
+Admission Date: ${student.admissionDate || 'N/A'}
+Referral Code: ${student.referralCode || 'N/A'}
+    `.trim();
+    navigator.clipboard.writeText(studentDetails).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    });
   }; 
   
   return ( 
@@ -90,6 +110,8 @@ const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard }
             <h2 className="text-xl font-bold text-gray-800 mb-2">
               {student.studentName || "Student Name"}
             </h2>
+            <div className={`font-medium text-gray-400 mb-2`}>{student.rollNumber}</div>
+
             <span
               className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
                 student.status 
@@ -123,15 +145,7 @@ const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard }
               <span className="text-sm text-gray-800">{student.batch || "N/A"}</span>
             </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-sm font-medium text-gray-700">Username</span>
-              <span className="text-sm text-gray-800">{student.username || "N/A"}</span>
-            </div>
-
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-sm font-medium text-gray-700">Password</span>
-              <span className="text-sm text-gray-800">{student.username || "N/A"}</span>
-            </div>
+            
 
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <span className="text-sm font-medium text-gray-700">Admission Date</span>
@@ -183,6 +197,7 @@ const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard }
                 </svg>
               </button>
               <button
+
                 onClick={handleShare}
                 className={`flex items-center justify-center w-12 h-12 rounded-lg transition-colors ${
                   copied
@@ -199,6 +214,7 @@ const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard }
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                   </svg>
+
                 )}
               </button>
             </div>

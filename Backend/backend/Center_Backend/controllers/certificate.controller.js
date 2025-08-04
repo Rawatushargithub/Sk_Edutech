@@ -22,8 +22,8 @@ export const fetchCertificateData = async (req, res) => {
 
     console.log("institute name: ", institute.instituteName); 
     const instituteName = institute.franchiseName || "Institute Name Not Found";
-    const instituteEmail = institute?.franchiseEmail || "Email Not Available";
-const institutePhone = institute?.franchisePhone || "Phone Not Available";
+    const instituteEmail = institute?.email || "Email Not Available";
+const institutePhone = institute?.mobile || "Phone Not Available";
 
     const resultsData = [];
 
@@ -59,7 +59,7 @@ const session = `${formatMonthYear(admissionDate)} - ${formatMonthYear(endDate)}
         courseCode: course.courseCode,
         fatherName: `${student.relationType} ${student.surnameName}`,
         courseName: course.courseName,
-        courseSubject: course.courseSubject || "",
+        courseSubject: course.courseSubject || "Null",
         session,
         instituteName: instituteName || "",
         studentPhoto: student.studentPhoto || "",       

@@ -99,8 +99,11 @@ const OurAchievers = () => {
       {/* EventBox slider*/}
       <div 
        className="w-full max-w-[550px] aspect-[11/10] sm:aspect-[11/9] relative rounded-3xl overflow-hidden bg-gray-100"
-       
+    
       >
+        
+       
+      
 
         {/* Images */}
       <div 

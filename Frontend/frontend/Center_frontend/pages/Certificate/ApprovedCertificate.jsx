@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { Download } from 'lucide-react';
 import API_BASE_URL from "../../../config.js";
 
 const ApprovedCertificates = () => {
@@ -131,12 +132,19 @@ const ApprovedCertificates = () => {
                             <td className="border px-3 py-2 text-green-700 font-semibold">✓ Approved</td>
                             <td className="border px-3 py-2">
                               <button
+                                className="flex items-center justify-center gap-2 rounded-lg border-2 border-blue-900 bg-blue-900 px-4 py-2 text-white hover:bg-blue-800 transition-colors"
                                 onClick={() =>
-                                  window.open(`${API_BASE_URL}/api/v1/institute_certificates/download/${result.certificateId}`, "_blank")
+                                  window.open(
+                                    `${API_BASE_URL}/api/v1/institute_certificates/download/${result.certificateId}`,
+                                    "_blank"
+                                  )
                                 }
+                                aria-label="Download certificate"
                               >
-                                Download Certificate
+                                <Download className="w-4 h-4" />
+                                Download
                               </button>
+
 
                             </td>
 

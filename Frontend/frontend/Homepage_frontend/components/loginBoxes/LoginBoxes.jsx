@@ -14,7 +14,7 @@ import FranchiseVerificationModal from "./FranchiseVerificationModal";
 import API_BASE_URL  from "../../../config.js"; // Adjust the import based on your project structure
 
 
-const LoginBoxes = ({ onApplyClick }) => {
+const LoginBoxes = ({ onStudentClick, onTeacherClick }) => {
   const navigate = useNavigate();
   const ApplyFranchise = () => {
     navigate("/ApplyforFranchise");
@@ -91,16 +91,16 @@ const LoginBoxes = ({ onApplyClick }) => {
 
   return (
     // Parent div - Responsive grid layout
-    <div className="grid grid-cols-1 sm:grid-cols-5 lg:grid-cols-5 gap-6 p-4 mx-4 md:mx-12 mb-10">
+    <div className="grid grid-cols-1 sm:grid-cols-5 md:grid-cols-5 gap-6 p-4 mx-4 md:mx-12 mb-10">
       {/* Student Login */}
       <div
         onClick={studentLogin}
         className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 lg:h-auto"
       >
         <FaGraduationCap
-          className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]"
+          className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem] "
         />
-        <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left">
+        <div className="lg:text-xl sm:text-xl md:text-sm group-hover:text-white transition duration-300 text-left">
           Student <br className="hidden sm:block" /> Login
         </div>
       </div>
@@ -140,12 +140,12 @@ const LoginBoxes = ({ onApplyClick }) => {
       {/* Center Login */}
       <div
         onClick={CenterLogin}
-        className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-3 sm:gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 sm:h-auto"
+        className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 lg:h-auto"
       >
         <FaBuilding
           className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]"
         />
-        <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left"
+        <div className="lg:text-xl sm:text-xl md:text-sm group-hover:text-white transition duration-300 text-left"
         // onClick={CenterLogin}
         >
           Center <br className="hidden sm:block" /> Login
@@ -158,11 +158,11 @@ const LoginBoxes = ({ onApplyClick }) => {
       {/* Certificate Verification */}
       <div
         onClick={() => setIsOpen(true)}
-        className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-3 sm:gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 sm:h-auto"
+        className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 lg:h-auto"
 
       >
         <FaFileSignature className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]" />
-        <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left">
+        <div className="lg:text-xl sm:text-xl md:text-sm group-hover:text-white transition duration-300 text-left">
           Certificate <br className="hidden sm:block" /> Verification
         </div>
       </div>
@@ -234,10 +234,10 @@ const LoginBoxes = ({ onApplyClick }) => {
       {/* Center Verification */}
       <div
         onClick={verificationShow}
-        className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-3 sm:gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 sm:h-auto"
+        className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 lg:h-auto"
       >
         <FaCheckCircle className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]" />
-        <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left">
+        <div className="lg:text-xl sm:text-xl md:text-sm group-hover:text-white transition duration-300 text-left">
           Center <br className="hidden sm:block" /> Verification
         </div>
       </div>
@@ -245,11 +245,11 @@ const LoginBoxes = ({ onApplyClick }) => {
 
       {/* Apply for Franchise */}
       <div
-        onClick={onApplyClick}
-        className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-3 sm:gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 sm:h-auto"
+        onClick={() => navigate('/apply')}
+        className="group border-2 border-[#003366] rounded-3xl font-bold text-regal-blue px-4 py-4 flex items-center justify-center flex-row gap-4 transition duration-500 hover:bg-sky-950 cursor-pointer h-20 lg:h-auto"
       >
         <FaFolderPlus className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]" />
-        <div className="text-lg sm:text-xl group-hover:text-white transition duration-300 text-left">
+        <div className="lg:text-xl sm:text-xl md:text-sm group-hover:text-white transition duration-300 text-left">
           Apply for <br className="hidden sm:block" /> Franchise
         </div>
       </div>

@@ -31,6 +31,7 @@ const StudentAdmissionList = () => {
   const [showIdCardPopup, setShowIdCardPopup] = useState(false);
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [timeFilter, setTimeFilter] = useState("all"); // State for time filter
 
   // New state for export dropdown
   const [showExportDropdown, setShowExportDropdown] = useState(false);
@@ -102,20 +103,73 @@ const StudentAdmissionList = () => {
     fetchStudents();
   }, []);
 
-  // Filter students based on search term
+  // Combined filter for search term and time
   useEffect(() => {
-    if (searchTerm.trim() === "") {
-      setFilteredStudents(students);
-    } else {
-      const filtered = students.filter(student =>
-        student.franchiseId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.studentName?.toLowerCase().includes(searchTerm.toLowerCase())
+    let tempStudents = students;
+
+    // 1. Filter by search term
+    if (searchTerm.trim() !== "") {
+      tempStudents = tempStudents.filter(
+        (student) =>
+          student.franchiseId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.courseInterested?.courseName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.studentMobile?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.courseInterested?.courseCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.rollNumber?.toLowerCase().includes(searchTerm.toLowerCase()) 
+         
       );
-      
-      setFilteredStudents(filtered);
     }
-    setCurrentPage(1); // Reset to first page when searching
-  }, [searchTerm, students]);
+
+    // 2. Filter by time
+    if (timeFilter !== "all") {
+      const now = new Date();
+      tempStudents = tempStudents.filter((student) => {
+        const admissionDate = new Date(student.admissionDate);
+        if (isNaN(admissionDate.getTime())) return false; // Skip invalid dates
+
+        switch (timeFilter) {
+          case "week": {
+            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+            startOfWeek.setHours(0, 0, 0, 0);
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 6);
+            endOfWeek.setHours(23, 59, 59, 999);
+            return admissionDate >= startOfWeek && admissionDate <= endOfWeek;
+          }
+          case "month": {
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            endOfMonth.setHours(23, 59, 59, 999);
+            return admissionDate >= startOfMonth && admissionDate <= endOfMonth;
+          }
+          case "last_month": {
+            const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+            endOfLastMonth.setHours(23, 59, 59, 999);
+            return admissionDate >= startOfLastMonth && admissionDate <= endOfLastMonth;
+          }
+          case "last_three_months": {
+            const threeMonthsAgo = new Date();
+            threeMonthsAgo.setMonth(now.getMonth() - 3);
+            threeMonthsAgo.setHours(0, 0, 0, 0);
+            return admissionDate >= threeMonthsAgo && admissionDate <= now;
+          }
+          case "year": {
+            const startOfYear = new Date(now.getFullYear(), 0, 1);
+            const endOfYear = new Date(now.getFullYear(), 11, 31);
+            endOfYear.setHours(23, 59, 59, 999);
+            return admissionDate >= startOfYear && admissionDate <= endOfYear;
+          }
+          default:
+            return true;
+        }
+      });
+    }
+
+    setFilteredStudents(tempStudents);
+    setCurrentPage(1); // Reset to the first page whenever filters change
+  }, [searchTerm, timeFilter, students]);
  console.log("Filtered Students: ", filteredStudents);
   const [currentPage, setCurrentPage] = useState(1);
   const entriesPerPage = 10;
@@ -387,31 +441,7 @@ const StudentAdmissionList = () => {
       <div className="mx-auto bg-white p-6 rounded-2xl shadow">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">List Student Admission</h1>
-          <div className="flex items-center gap-4">
-            {/* Search Input */}
-            <div className="relative">
-              <div className="flex items-center">
-                <div className="relative">
-                  <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by Franchise ID or Student Name..."
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    className="pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={clearSearch}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      <FaTimes />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-            
+          <div className="flex gap-2">
             {/* Updated Export Button with Dropdown */}
             <div className="relative export-dropdown-container">
               <button 
@@ -446,6 +476,49 @@ const StudentAdmissionList = () => {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Filter and Search Controls */}
+        <div className="flex flex-col md:flex-row justify-between items-center my-4 gap-4">
+          {/* Left: Showing X of Y */}
+          <div className="text-lg font-semibold text-gray-700">
+            Showing {filteredStudents.length} of {students.length} students.
+          </div>
+
+          {/* Right: Search and Filter */}
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            {/* Search Box */}
+            <div className="relative w-full md:w-[400px]">
+              <input
+                type="text"
+                placeholder="Search by Name, ID, Course, Mobile..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="p-2 pl-8 border border-gray-300 rounded-md w-full"
+              />
+              <FaSearch className="w-5 h-5 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+               {searchTerm && (
+                <FaTimes
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
+                  onClick={clearSearch}
+                />
+              )}
+            </div>
+
+            {/* Filter Dropdown */}
+            <select
+              value={timeFilter}
+              onChange={(e) => setTimeFilter(e.target.value)}
+              className="p-2 border border-gray-300 rounded-md"
+            >
+              <option value="all">All Time</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="last_month">Last Month</option>
+              <option value="three_months">Last 3 Months</option>
+              <option value="year">This Year</option>
+            </select>
           </div>
         </div>
 

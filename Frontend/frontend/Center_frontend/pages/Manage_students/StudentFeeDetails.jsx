@@ -4,6 +4,10 @@ import React, { useState, useEffect } from "react";
 import { Search, Calendar, CreditCard, Users, Clock, CheckCircle, XCircle, IndianRupee } from "lucide-react";
 import axios from "axios";
 import API_BASE_URL from "../../../config";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Pie } from 'react-chartjs-2';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const FeesManagementSystem = () => {
   const [activeTab, setActiveTab] = useState("transactions");
@@ -242,37 +246,140 @@ const FeesManagementSystem = () => {
     </div>
   );
 
+  // Pie Chart Component for Fee Transactions
+  const FeeTransactionPieChart = ({ totalFee, totalPaid, totalDue }) => {
+    const data = {
+      labels: ['Received Fee', 'Balance Fee'],
+      datasets: [
+        {
+          data: [totalPaid, totalDue],
+          backgroundColor: ['#10b981', '#ef4444'],
+          borderColor: ['#10b981', '#ef4444'],
+          borderWidth: 1,
+        },
+      ],
+    };
+
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 12,
+            padding: 10,
+            font: {
+              size: 11
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.raw || 0;
+              const percentage = Math.round((value / totalFee) * 100);
+              return `${label}: ₹${value.toLocaleString()} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    };
+
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 flex flex-col justify-center">
+        <p className="text-sm text-gray-600 mb-2">Fee Distribution</p>
+        <div className="h-48">
+          <Pie data={data} options={options} />
+        </div>
+      </div>
+    );
+  };
+
+  // Pie Chart Component for Installments
+  const InstallmentPieChart = ({ totalAmount, paidAmount, dueAmount }) => {
+    const data = {
+      labels: ['Paid Installment', 'Due Installment'],
+      datasets: [
+        {
+          data: [paidAmount, dueAmount],
+          backgroundColor: ['#10b981', '#ef4444'],
+          borderColor: ['#10b981', '#ef4444'],
+          borderWidth: 1,
+        },
+      ],
+    };
+
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 12,
+            padding: 10,
+            font: {
+              size: 11
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.raw || 0;
+              const percentage = Math.round((value / totalAmount) * 100);
+              return `${label}: ₹${value.toLocaleString()} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    };
+
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 flex flex-col justify-center">
+        <p className="text-sm text-gray-600 mb-2">Installment Distribution</p>
+        <div className="h-48">
+          <Pie data={data} options={options} />
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Student Fee Details</h1>
-      
-      {/* Tab Navigation */}
-      <div className="mb-6">
-        <div className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm">
-          <button
-            onClick={() => setActiveTab("transactions")}
-            className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
-              activeTab === "transactions"
-                ? "bg-blue-500 text-white"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            <CreditCard className="w-4 h-4 inline mr-2" />
-            Fee Transactions
-          </button>
-          <button
-            onClick={() => setActiveTab("installments")}
-            className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
-              activeTab === "installments"
-                ? "bg-blue-500 text-white"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            <Clock className="w-4 h-4 inline mr-2" />
-            Installment Management
-          </button>
-        </div>
-      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left side content - 3 columns */}
+        <div className="lg:col-span-3">
+          {/* Top row - Tabs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <button
+              onClick={() => setActiveTab("transactions")}
+              className={`py-3 px-6 rounded-lg font-medium transition-colors ${
+                activeTab === "transactions"
+                  ? "bg-blue-500 text-white shadow-lg"
+                  : "bg-white text-gray-600 hover:bg-gray-100 shadow-sm border"
+              }`}
+            >
+              <CreditCard className="w-5 h-5 inline mr-2" />
+              Fee Transactions
+            </button>
+            <button
+              onClick={() => setActiveTab("installments")}
+              className={`py-3 px-6 rounded-lg font-medium transition-colors ${
+                activeTab === "installments"
+                  ? "bg-blue-500 text-white shadow-lg"
+                  : "bg-white text-gray-600 hover:bg-gray-100 shadow-sm border"
+              }`}
+            >
+              <Clock className="w-5 h-5 inline mr-2" />
+              Installment Management
+            </button>
+          </div>
 
       {/* Fee Transactions Tab */}
       {activeTab === "transactions" && (
@@ -339,7 +446,7 @@ const FeesManagementSystem = () => {
                       <td className="py-3 px-4 border-b">{student.rollNumber}</td>
                       <td className="py-3 px-4 border-b font-medium">{student.studentName}</td>
                       <td className="py-3 px-4 border-b">{student.course.courseName}</td>
-                      <td className="py-3 px-4 border-b">{student.courseFee.toLocaleString()}</td>
+                      <td className="py-3 px-4 border-b">₹{student.courseFee.toLocaleString()}</td>
                       <td className="py-3 px-4 border-b">₹{student.totalFee.toLocaleString()}</td>
                       <td className="py-3 px-4 border-b text-green-600">₹{student.paidFee.toLocaleString()}</td>
                       <td className="py-3 px-4 border-b text-red-600">₹{student.dueFee.toLocaleString()}</td>
@@ -647,6 +754,20 @@ const FeesManagementSystem = () => {
           </div>
         </div>
       )}
+        </div>
+
+        {/* Right side - Pie Chart spanning full height */}
+        <div className="lg:col-span-1 flex items-start justify-center lg:sticky top-6">
+          <div className="w-full max-w-xs bg-white rounded-lg shadow-sm border p-4">
+            {activeTab === 'transactions' && (
+              <FeeTransactionPieChart totalFee={totalFee} totalPaid={totalPaid} totalDue={totalDue} />
+            )}
+            {activeTab === 'installments' && (
+              <InstallmentPieChart totalAmount={totalInstallmentAmount} paidAmount={totalInstallmentPaid} dueAmount={totalInstallmentDue} />
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

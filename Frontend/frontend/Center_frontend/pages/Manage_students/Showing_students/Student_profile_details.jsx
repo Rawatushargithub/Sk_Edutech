@@ -414,8 +414,9 @@ const StudentProfileDetails = () => {
                   id="franchiseId"
                   name="franchiseId"
                   value={formData.franchiseId}
+                  disabled={true}
                   onChange={handleChange}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-md border bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 

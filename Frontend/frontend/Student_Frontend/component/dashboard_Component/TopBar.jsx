@@ -1,11 +1,30 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, LogOut, User } from "lucide-react";
+import axios from "axios";
+import API_BASE_URL from "../../../config.js";
 
 const TopBar = () => {
   const navigate = useNavigate();
   const [student, setStudent] = useState(null);
-  
+  const studentData = JSON.parse(localStorage.getItem("student"));
+  const rollNumber = studentData ? studentData.rollNumber : null;
+  const encodedRoll = encodeURIComponent(rollNumber);
+  const [imageUrl, setImageUrl] = useState("");
+
+  useEffect(() => {
+    // const storedStudent = JSON.parse(localStorage.getItem("student"));
+    // const rollNumber = storedStudent ? storedStudent.rollNumber : null;
+    axios.get(`${API_BASE_URL}/api/v1/student/profile/image/${encodedRoll}`)
+      .then(res => {
+        setImageUrl(res.data.imageUrl);
+        // Use imageUrl to show the student image
+      })
+      .catch(err => console.error("Error fetching student image:", err));
+
+  })
+  // console.log(imageUrl);
+
   useEffect(() => {
     // Fetch student data from localStorage (or backend if using JWT)
     const storedStudent = JSON.parse(localStorage.getItem("student"));
@@ -26,10 +45,10 @@ const TopBar = () => {
       <div className="flex justify-between items-center">
         {/* Left Side - Welcome Message with Avatar */}
         <div className="flex items-center gap-3">
-          <div className="bg-blue-100 p-2 rounded-full">
-            <User size={20} className="text-blue-600" />
+          <div className="w-10 h-10 rounded-full overflow-hidden border border-blue-300">
+            <img src={imageUrl} alt="Student" className="w-full h-full object-cover" />
           </div>
-          
+
           <div>
             <h1 className="text-xl font-bold text-gray-800">
               Welcome, {student?.name || "Student"} 👋
@@ -37,7 +56,7 @@ const TopBar = () => {
             <p className="text-sm text-gray-600">{student?.rollNumber || ""}</p>
           </div>
         </div>
-        
+
         {/* Right Side - Action Buttons */}
         <div className="flex items-center gap-3">
           {/* Notifications Button */}
@@ -47,9 +66,9 @@ const TopBar = () => {
               3
             </span>
           </button>
-          
+
           {/* Logout Button */}
-          <button 
+          <button
             className="flex items-center gap-2 bg-red-100 text-blue px-3 py-2 rounded-lg hover:bg-red-100 transition-colors"
             onClick={handleLogout}
           >

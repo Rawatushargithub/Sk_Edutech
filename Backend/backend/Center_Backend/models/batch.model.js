@@ -5,7 +5,7 @@ const batchSchema = new mongoose.Schema({
   batchLimit: { type: Number, required: true },
   franchiseId: { // System Generated ID
             type: String,
-            default: true,
+            default: true, 
             // required: true, // Not required initially for applications
             // Allows multiple documents to have null/missing value
             // lowercase: true, // Removed lowercase constraint

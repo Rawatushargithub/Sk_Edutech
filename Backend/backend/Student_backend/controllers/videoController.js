@@ -5,6 +5,7 @@ export const getVideosByCourse = async (req, res) => {
   try {
     const { course } = req.params;
 
+    console.log("course code ", course);
     if (!course || typeof course !== 'string') {
       return res.status(400).json({ message: "Missing or invalid courseCode in request params" });
     }
@@ -12,6 +13,7 @@ export const getVideosByCourse = async (req, res) => {
     const normalizedCode = course.trim().toUpperCase();
 
     const courses = await Course.findOne({ courseCode: normalizedCode });
+    console.log("course code found");
 
     if (!courses) {
       return res.status(404).json({ message: "Course not found" });

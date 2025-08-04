@@ -1,15 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import API_BASE_URL from "../../../config.js"
 import { Mail, Phone, Home, Building2, BadgeCheck, CalendarCheck, Landmark, ReceiptText, ShieldCheck } from "lucide-react"
-
 const ProfileSection = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showCertificates, setShowCertificates] = useState(false);
   const [certificates, setCertificates] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCertificate, setSelectedCertificate] = useState(null);
-
   const [franchiseData, setFranchiseData] = useState(null);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Clear stored center data
+    localStorage.removeItem("centerToken");
+    localStorage.removeItem("franchiseName");
+    localStorage.removeItem("franchiseID");
+    localStorage.removeItem("franchiseImage");
+
+    // Redirect to login/home page
+    navigate("/");
+  };
 
   useEffect(() => {
     const fetchFranchiseDetails = async () => {
@@ -17,7 +28,9 @@ const ProfileSection = () => {
       if (!storedId) return;
       console.log("Stored Franchise ID:", storedId);
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/franchises/getprofile/${storedId}`);
+        const encodedFranchiseId = encodeURIComponent(storedId);
+
+        const response = await fetch(`${API_BASE_URL}/api/v1/franchises/getprofile/${encodedFranchiseId}`);
         const data = await response.json();
         setFranchiseData(data);
       } catch (error) {
@@ -221,8 +234,9 @@ const ProfileSection = () => {
             <button
               className="px-4 py-2 bg-transparent border hover:bg-gray-200 border-gray-600 text-gray-600 rounded-md 
         transition-all duration-200 hover:-translate-y-0.5 hover:shadow"
+        onClick={handleLogout}
             >
-              Reset Password
+              Log Out
             </button>
           </div>
         </div>

@@ -6,6 +6,7 @@ const resultSchema = new mongoose.Schema({
   fatherName: String,
   courseName: String,
   session: String,
+  courseSubject: String,
   instituteName: String,
   instituteName: String,
   instituteEmail: String,           // ✅ Added

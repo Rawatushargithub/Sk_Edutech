@@ -9,10 +9,19 @@ const ExamSchema = new mongoose.Schema({
     id: { type: String, required: true },
   },
   examDate: { type: String, required: true },
-  franchiseId: { // System Generated ID
-            type: String, 
-            default: true
-        },
+  franchiseId: {
+    // System Generated ID
+    type: String,
+    default: true,
+  },
+  examType: {
+    type: String,
+    required: true,
+    enum: ["Weekly Test", "Monthly Test", "Final Test"],
+    default: "Weekly Test",
+  },
+  examStartTime: { type: String, required: true }, // NEW: Exam start time (HH:MM format)
+  examEndTime: { type: String, required: true }, // NEW: Exam end time (HH:MM format)
   examDurationMinutes: { type: Number, required: true },
   totalQuestions: { type: Number, required: true },
   totalMarks: { type: Number, required: true },
@@ -26,9 +35,9 @@ const ExamSchema = new mongoose.Schema({
       rollNumber: { type: String, required: true },
       marksObtained: { type: Number, required: true },
       status: { type: String, default: "Pending" }, // Pending, Passed, Failed
-      createdAt: { type: Date, default: Date.now }
-    }
-  ]
+      createdAt: { type: Date, default: Date.now },
+    },
+  ],
 });
 
 export default mongoose.model("Exam", ExamSchema);

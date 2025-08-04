@@ -393,7 +393,7 @@ const registerStudent = asyncHandler(async (req, res) => {
     const registrationFee = 300;
     let wallet;
     try {
-      wallet = await Wallet.findOne();
+      wallet = await Wallet.findOne({franchiseId: franchiseId});
       if (!wallet || wallet.balance < registrationFee) {
         return res.status(400).json({
           success: false,

@@ -14,7 +14,7 @@ const ReviewsSection = () => {
     const fetchReviews = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/v1/feedbacks`); 
-        console.log(response.data); 
+        console.log("reviews : ", response.data); 
         setReviews(response.data); // Set the fetched reviews data to state
       } catch (error) {
         console.error("Failed to fetch reviews:", error);
@@ -80,7 +80,7 @@ const ReviewsSection = () => {
 
               {/* Center Code */}
               <p className="text-sm text-gray-500 mt-auto text-right">
-                Center: {review.code}
+                Center Name: {review.franchiseName || "Unknown Franchise"}
               </p>
 
               {/* Date Posted */}

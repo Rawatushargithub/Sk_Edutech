@@ -39,7 +39,7 @@ const NAllReviewsPage = () => {
           rollNumber: review.rollNumber,
           rating: review.rating,
           comment: review.comment,
-          code: review.rollNumber.substring(0, 3), // Assuming first 3 digits of roll number represent center code
+          code: review.franchiseName, // Assuming first 3 digits of roll number represent center code
           date: new Date(review.createdAt).toLocaleDateString(),
           createdAt: review.createdAt
         }));
@@ -281,7 +281,7 @@ const NAllReviewsPage = () => {
                       <p className="text-gray-600 mt-2">{review.comment}</p>
                       
                       <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
-                        <span>Roll Number: {review.rollNumber}</span>
+                        <span>Center Code: {review.code}</span>
                         <span>Posted on: {review.date}</span>
                       </div>
                     </div>

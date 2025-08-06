@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Eye, X, ZoomIn, ZoomOut, Maximize, FileText, Filter, NotepadText, ExternalLink } from "lucide-react";
+import { Search, Eye, X, ZoomIn, ZoomOut, Maximize, FileText, Filter, NotepadText, ExternalLink, File, Link } from "lucide-react";
 import API_BASE_URL from "../../config";
 
 const Notes = ({ student }) => {
@@ -47,27 +47,53 @@ const Notes = ({ student }) => {
   
   const totalPages = Math.ceil(filteredMaterials.length / materialsPerPage);
 
-  // Get file type display name
+  // Get file type display name and icon
   const getFileTypeDisplay = (fileType, type) => {
-    if (fileType === 'external-link' || type === 'link') return 'External Link';
-    if (fileType === 'pdf') return 'PDF Document';
-    if (fileType === 'video') return 'Video';
-    if (fileType === 'document') return 'Document';
-    return 'Material';
+    if (fileType === 'external-link' || type === 'link') return { name: 'External Link', icon: Link };
+    if (fileType === 'pdf') return { name: 'PDF Document', icon: File };
+    if (fileType === 'video') return { name: 'Video', icon: FileText };
+    if (fileType === 'document') return { name: 'Document', icon: FileText };
+    return { name: 'Material', icon: FileText };
   };
 
-  // Check if URL is viewable in iframe (Google Drive, PDF, etc.)
-  const isViewableInIframe = (url) => {
-    return url.includes('drive.google.com') || 
-           url.includes('.pdf') || 
-           url.includes('docs.google.com') ||
-           url.includes('youtube.com') ||
-           url.includes('youtu.be');
+  // Check if material is a PDF from Cloudinary or other source
+  const isPDF = (url, fileType) => {
+    return fileType === 'pdf' || url?.includes('.pdf') || url?.includes('cloudinary.com');
   };
 
-  const getEmbedLink = (link) => {
-    const match = link?.match(/\/d\/([a-zA-Z0-9_-]+)\//);
-    return match ? `https://drive.google.com/file/d/${match[1]}/preview` : link;
+  // Check if material is an external link
+  const isExternalLink = (fileType, type) => {
+    return fileType === 'external-link' || type === 'link';
+  };
+
+  // Get the appropriate embed URL for PDFs
+  const getPDFEmbedLink = (url) => {
+    if (url?.includes('cloudinary.com')) {
+      // For Cloudinary PDFs, ensure it's in the correct format for embedding
+      if (url.includes('/image/upload/')) {
+        // Change from image/upload to raw/upload for PDFs
+        return url.replace('/image/upload/', '/raw/upload/');
+      } else if (url.includes('/video/upload/')) {
+        // Change from video/upload to raw/upload for PDFs
+        return url.replace('/video/upload/', '/raw/upload/');
+      } else if (!url.includes('/raw/upload/')) {
+        // If it doesn't have raw/upload, try to add it
+        const baseUrl = url.split('/upload/')[0];
+        const fileName = url.split('/upload/')[1];
+        return `${baseUrl}/raw/upload/${fileName}`;
+      }
+      return url;
+    }
+    if (url?.includes('drive.google.com')) {
+      const match = url?.match(/\/d\/([a-zA-Z0-9_-]+)\//);
+      return match ? `https://drive.google.com/file/d/${match[1]}/preview` : url;
+    }
+    return url;
+  };
+
+  // All materials can be previewed in modal
+  const canPreview = (material) => {
+    return material.url; // Show modal for any material with a URL
   };
 
   return (
@@ -161,14 +187,18 @@ const Notes = ({ student }) => {
                   className="bg-white rounded-xl shadow-md border border-sky-100 overflow-hidden transition-all hover:shadow-lg hover:translate-y-[-2px] flex flex-col"
                 >
                   <div className="p-5 flex-grow">
+                    {/* Title with appropriate icon */}
                     <h3 className="text-xl font-semibold text-blue-950 mb-3 line-clamp-2 flex items-center gap-2">
-                      <NotepadText size={20} />
+                      {(() => {
+                        const { icon: IconComponent } = getFileTypeDisplay(material.fileType, material.type);
+                        return <IconComponent size={20} />;
+                      })()}
                       {material.title}
                     </h3>
                     
                     <div className="mb-3">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-800">
-                        {getFileTypeDisplay(material.fileType, material.type)}
+                        {getFileTypeDisplay(material.fileType, material.type).name}
                       </span>
                     </div>
 
@@ -184,25 +214,14 @@ const Notes = ({ student }) => {
                   
                   {material.url && (
                     <div className="px-5 pb-4 space-y-2">
-                      {isViewableInIframe(material.url) ? (
-                        <button
-                          onClick={() => setSelectedMaterial(material)}
-                          className="w-full text-white bg-sky-800 hover:bg-sky-600 px-4 py-2 rounded-lg transition-colors flex items-center justify-center shadow-sm"
-                        >
-                          <Eye size={18} className="mr-2" />
-                          Preview Material
-                        </button>
-                      ) : (
-                        <a
-                          href={material.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full text-white bg-sky-800 hover:bg-sky-600 px-4 py-2 rounded-lg transition-colors flex items-center justify-center shadow-sm"
-                        >
-                          <ExternalLink size={18} className="mr-2" />
-                          Open Material
-                        </a>
-                      )}
+                      <button
+                        onClick={() => setSelectedMaterial(material)}
+                        className="w-full text-white bg-sky-800 hover:bg-sky-600 px-4 py-2 rounded-lg transition-colors flex items-center justify-center shadow-sm"
+                      >
+                        <Eye size={18} className="mr-2" />
+                        {isPDF(material.url, material.fileType) ? 'Preview PDF' : 
+                         isExternalLink(material.fileType, material.type) ? 'View Link' : 'Preview Material'}
+                      </button>
                     </div>
                   )}
                 </div>
@@ -279,17 +298,25 @@ const Notes = ({ student }) => {
                 </span>
               </div>
               <div className="flex gap-2">
-                
+                <a
+                  href={selectedMaterial.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg flex items-center shadow-sm transition-colors"
+                >
+                  <ExternalLink size={18} className="mr-2" />
+                  Open in New Tab
+                </a>
                 <button
                   onClick={() => {
                     const iframe = document.getElementById("materialPreview");
-                    if (iframe.requestFullscreen) {
+                    if (iframe && iframe.requestFullscreen) {
                       iframe.requestFullscreen();
-                    } else if (iframe.mozRequestFullScreen) {
+                    } else if (iframe && iframe.mozRequestFullScreen) {
                       iframe.mozRequestFullScreen();
-                    } else if (iframe.webkitRequestFullscreen) {
+                    } else if (iframe && iframe.webkitRequestFullscreen) {
                       iframe.webkitRequestFullscreen();
-                    } else if (iframe.msRequestFullscreen) {
+                    } else if (iframe && iframe.msRequestFullscreen) {
                       iframe.msRequestFullscreen();
                     }
                   }}
@@ -305,14 +332,18 @@ const Notes = ({ student }) => {
             <div className="flex-grow overflow-hidden bg-gray-100">
               <iframe
                 id="materialPreview"
-                src={getEmbedLink(selectedMaterial.url)}
+                src={getPDFEmbedLink(selectedMaterial.url)}
                 style={{
-                    transform: `scale(${zoom})`,
-                    transformOrigin: "top left",
-                    width: `${100 / zoom}%`,
-                    height: `${100 / zoom}%`,
-                  }}className="border-0"
+                  transform: `scale(${zoom})`,
+                  transformOrigin: "top left",
+                  width: `${100 / zoom}%`,
+                  height: `${100 / zoom}%`,
+                }}
+                className="border-0"
                 title={selectedMaterial.title}
+                onError={() => {
+                  console.log("Iframe failed to load, this might be an external link that doesn't allow embedding");
+                }}
               ></iframe>
             </div>
           </div>

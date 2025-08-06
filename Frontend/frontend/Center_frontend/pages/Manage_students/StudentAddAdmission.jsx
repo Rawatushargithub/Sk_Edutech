@@ -62,8 +62,10 @@ const AddNewStudent = () => {
     // Fetch courses from the backend
     
     const fetchCourses = async () => {
+        const franchiseId = localStorage.getItem('franchiseID');
+      
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
+        const response = await axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`);
         console.log("course fetching :: " , response)
         setCourses(response.data); // Assuming the response is an array of course objects
       } catch (error) {

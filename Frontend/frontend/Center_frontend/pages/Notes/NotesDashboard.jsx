@@ -4,7 +4,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { FileText, Link as LinkIcon, Search, PlusCircle, Edit3 } from 'lucide-react';
 import API_BASE_URL from "../../../config";
 
-const NotesDashboard = () => { 
+const NotesDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCourseId, setSelectedCourseId] = useState("");
@@ -14,15 +14,20 @@ const NotesDashboard = () => {
   const [loadingNotes, setLoadingNotes] = useState(false);
 
   // Fetch active and approved courses for the filter dropdown
-  useEffect(() => { 
+  useEffect(() => {
     const fetchCoursesForFilter = async () => {
       setLoadingCourses(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
+        const franchiseId = localStorage.getItem('franchiseID');
+        // console.log("Fetching courses for franchiseId:", franchiseId);
+        const url = `${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`;
+
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch courses for filter');
-        
+
         const data = await response.json();
         console.log("Fetched courses ", data);
+
         const activeApprovedCourses = data.filter(
           c => c.instituteStatus === 'active' && c.adminApprovalStatus === 'approved'
         );
@@ -34,29 +39,31 @@ const NotesDashboard = () => {
         setLoadingCourses(false);
       }
     };
+
     fetchCoursesForFilter();
   }, []);
+
 
   // Fetch notes for the selected course
   useEffect(() => {
     console.log("Selected Course ID changed:", selectedCourseId);
     if (selectedCourseId) {
       setLoadingNotes(true);
-      setNotesToDisplay([]); 
+      setNotesToDisplay([]);
       const course = allCourses.find(c => c._id === selectedCourseId);
       console.log("Found course for notes:", course);
       if (course && course.courseMaterials) {
         console.log("Course materials found:", course.courseMaterials);
         setNotesToDisplay(course.courseMaterials);
-      } else if (course) { 
+      } else if (course) {
         console.log("Course found, but no courseMaterials array or it's empty.");
         setNotesToDisplay([]);
       } else {
         console.warn("Selected course not found in pre-fetched list. ID:", selectedCourseId, "All Courses:", allCourses);
       }
-      setLoadingNotes(false); 
+      setLoadingNotes(false);
     } else {
-      setNotesToDisplay([]); 
+      setNotesToDisplay([]);
     }
   }, [selectedCourseId, allCourses]);
 
@@ -64,7 +71,7 @@ const NotesDashboard = () => {
     (note.title && note.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (note.fileName && note.fileName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-  
+
   console.log("Notes to display (pre-filter):", notesToDisplay);
   console.log("Filtered notes (post-search):", filteredNotes);
 
@@ -144,7 +151,7 @@ const NotesDashboard = () => {
           )}
           {!loadingNotes && selectedCourseId && filteredNotes.length === 0 && (
             <div className="text-center py-10 bg-white rounded-lg shadow p-6">
-               <FileText size={48} className="mx-auto text-gray-300 mb-4" />
+              <FileText size={48} className="mx-auto text-gray-300 mb-4" />
               <p className="text-gray-500">No notes found for this course or matching your search.</p>
               <p className="text-sm text-gray-400 mt-2">You can add notes via the "Add New Note" button or by editing the course.</p>
             </div>
@@ -162,18 +169,18 @@ const NotesDashboard = () => {
                     {note.type === 'file' && note.fileName && (
                       <p className="text-xs text-gray-500 mb-1 truncate" title={note.fileName}>Filename: {note.fileName}</p>
                     )}
-                     <p className="text-xs text-gray-500 mb-3">Type: <span className="font-medium">{note.type === 'file' ? (note.fileType || 'File') : 'External Link'}</span></p>
+                    <p className="text-xs text-gray-500 mb-3">Type: <span className="font-medium">{note.type === 'file' ? (note.fileType || 'File') : 'External Link'}</span></p>
                   </div>
                   <div className="mt-auto pt-3 border-t border-gray-200 flex justify-end">
-                     <a 
-                        href={note.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className={`${buttonBaseStyle} bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-500 text-xs py-2 px-4`}
-                      >
-                        {note.type === 'file' ? 'Download/View File' : 'Open Link'}
-                      </a>
-                      {/* Note: Direct deletion/editing from this dashboard is complex as it requires updating the parent Course document. 
+                    <a
+                      href={note.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${buttonBaseStyle} bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-500 text-xs py-2 px-4`}
+                    >
+                      {note.type === 'file' ? 'Download/View File' : 'Open Link'}
+                    </a>
+                    {/* Note: Direct deletion/editing from this dashboard is complex as it requires updating the parent Course document. 
                           Suggesting users to edit the course to manage its notes.
                       <button 
                         onClick={() => navigate(`/institute/edit-course/${selectedCourseId}`)} // Or a specific note edit page if built

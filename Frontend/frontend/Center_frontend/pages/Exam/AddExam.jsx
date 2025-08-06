@@ -21,10 +21,12 @@ const AddExam = () => {
 
   // Fetch courses and batches from API
   useEffect(() => {
+    const franchiseId = localStorage.getItem("franchiseID");
+
     const fetchCourses = async () => {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/v1/institute_courses/getCourses`
+          `${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch courses");
@@ -38,7 +40,6 @@ const AddExam = () => {
 
     const fetchBatches = async () => {
       try {
-        const franchiseId = localStorage.getItem("franchiseID");
         const response = await fetch(
           `${API_BASE_URL}/api/v1/institute_batche/allBatches?franchiseId=${franchiseId}`
         );
@@ -55,7 +56,7 @@ const AddExam = () => {
     fetchCourses();
     fetchBatches();
   }, []);
- 
+
   const [newExam, setNewExam] = useState({
     courseCode: "",
     batch: [],
@@ -102,7 +103,7 @@ const AddExam = () => {
     if (newExam.examStartTime && newExam.examEndTime) {
       const startTime = new Date(`1970-01-01T${newExam.examStartTime}:00`);
       const endTime = new Date(`1970-01-01T${newExam.examEndTime}:00`);
-      
+
       if (endTime > startTime) {
         const durationMs = endTime - startTime;
         const durationMinutes = Math.floor(durationMs / (1000 * 60));
@@ -133,7 +134,7 @@ const AddExam = () => {
           }
           const data = await response.json();
           console.log("Questions API Response:", data);
-          
+
           // Handle different possible response structures
           let questionData = [];
           if (data.data) {
@@ -143,7 +144,7 @@ const AddExam = () => {
           } else if (data.questions) {
             questionData = data.questions;
           }
-          
+
           console.log("Processed Questions:", questionData);
           setQuestions(questionData);
         } catch (error) {
@@ -168,7 +169,7 @@ const AddExam = () => {
 
   const handleAddExam = async () => {
     const franchiseId = localStorage.getItem("franchiseID");
-    
+
     try {
       // Prepare examData
       const examData = {
@@ -177,7 +178,7 @@ const AddExam = () => {
         franchiseId: franchiseId,
       };
       console.log(examData)
-       
+
       // Only send selectedQuestions for online exams
       if (isOnlineExam) {
         // selectedQuestions should be array of qNo (not _id)
@@ -189,7 +190,7 @@ const AddExam = () => {
       }
 
       const response = await fetch(
-          `${API_BASE_URL}/api/v1/institute_exam/create-exams`,
+        `${API_BASE_URL}/api/v1/institute_exam/create-exams`,
         {
           method: "POST",
           headers: {
@@ -221,8 +222,8 @@ const AddExam = () => {
 
       const updatedBatches = exists
         ? prev.batch.filter(
-            (b) => !(b.timings === timings && b.name === name && b.id === id)
-          )
+          (b) => !(b.timings === timings && b.name === name && b.id === id)
+        )
         : [...prev.batch, { timings, name, id }];
 
       return { ...prev, batch: updatedBatches };
@@ -259,23 +260,23 @@ const AddExam = () => {
   // Filter questions based on search query - Fixed to handle nested question structure
   const filteredQuestions = questions.filter((questionItem) => {
     const searchTerm = questionSearchQuery.toLowerCase();
-    
+
     // Handle nested question structure from your schema
     if (questionItem.question) {
       // Check if question text matches
       const questionText = questionItem.question.question || '';
       const qNo = questionItem.question.qNo ? questionItem.question.qNo.toString() : '';
-      
+
       return questionText.toLowerCase().includes(searchTerm) ||
-             qNo.includes(searchTerm);
+        qNo.includes(searchTerm);
     }
-    
+
     // Fallback for direct properties
     const questionText = questionItem.questionText || '';
     const topic = questionItem.topic || '';
-    
+
     return questionText.toLowerCase().includes(searchTerm) ||
-           topic.toLowerCase().includes(searchTerm);
+      topic.toLowerCase().includes(searchTerm);
   });
 
   // Get exam type indicator color
@@ -301,7 +302,7 @@ const AddExam = () => {
             {newExam.examType}
           </div>
         </div>
-        
+
         {/* Toggle Switch */}
         <div className="flex items-center space-x-4">
           <span className={`font-semibold ${!isOnlineExam ? 'text-blue-600' : 'text-gray-500'}`}>
@@ -393,12 +394,12 @@ const AddExam = () => {
                     filteredQuestions.length > 0 ? (
                       filteredQuestions.map((questionItem) => {
                         // Handle nested question structure
-                        console.log("Question itemas " , questionItem )
+                        console.log("Question itemas ", questionItem)
                         const questionData = questionItem.question || 'Question text not available';
                         const questionId = questionItem._id;
                         const qNo = questionItem.qNo || 'N/A';
-                       
-                        
+
+
                         return (
                           <div key={questionId} className="flex items-start mb-3 p-3 bg-white rounded border hover:bg-gray-50">
                             <input
@@ -433,8 +434,8 @@ const AddExam = () => {
                       })
                     ) : (
                       <div className="text-center text-gray-500 py-8">
-                        {questions.length === 0 
-                          ? "No questions found for the selected course" 
+                        {questions.length === 0
+                          ? "No questions found for the selected course"
                           : "No questions match your search criteria"
                         }
                       </div>
@@ -591,7 +592,7 @@ const AddExam = () => {
                 placeholder="Enter total questions"
               />
             </div>
-            
+
             <div>
               <label className="block text-gray-700">Total Marks</label>
               <input

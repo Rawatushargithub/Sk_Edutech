@@ -123,7 +123,7 @@ const Sidebar = () => {
         </div>
 
         {/* <i className="text-xl p-4 mx-4 ">SK EDUTECH</i> */}
-        <ul className="space-y-3.5 p-4">
+        <ul className="space-y-3.5 p-4 overflow-auto h-[calc(100vh-128px)]">
           {menuItems.map((item, index) => (
             <li key={index}>
               {item.link ? (

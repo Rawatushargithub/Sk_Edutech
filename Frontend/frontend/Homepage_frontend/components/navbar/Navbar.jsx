@@ -52,7 +52,7 @@ const Navbar = () => {
         { title: "Message", link: "/message"},
         { title: "Refund & Cancellation Policy", link: "/refund-policy" },
         { title: "Public Note", link: "/public-note" },
-        { title: "Term & Conditions" , link : "/term-condition"},
+        { title: "Terms & Conditions" , link : "/terms-conditions"},
 
       ],
     },

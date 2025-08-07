@@ -56,6 +56,11 @@ const ExamManagement = () => {
   // Function to check if exam has ended based on date and time
   const hasExamEnded = (examDate, examEndTime) => {
     try {
+       // Add this safety check
+    if (!examEndTime || !examDate) {
+      console.log("Missing examEndTime or examDate:", { examDate, examEndTime });
+      return false;
+    }
       const now = new Date();
       const examDateTime = new Date(examDate);
       

@@ -7,6 +7,7 @@ const feedbackSchema = new mongoose.Schema(
     rollNumber: { type: String, required: true },
     rating: { type: Number, min: 1, max: 5, required: true },
     comment: { type: String, required: true },
+    franchiseId: { type: String, required: true },
   },
   { timestamps: true }
 );

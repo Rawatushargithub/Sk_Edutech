@@ -36,16 +36,18 @@ const FormView = ({ student, onClose }) => {
   }, [student, onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      {/* Transparent Background Overlay */}
-      <div className="absolute inset-0 bg-black bg-opacity-40" onClick={onClose}></div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Blurred Background Overlay */}
+      <div 
+        className="absolute inset-0 backdrop-blur-sm bg-black/20" 
+        onClick={onClose}
+      ></div>
 
-      {/* Form Container Sliding from Right */}
-      <div className="w-full max-w-lg h-full bg-white shadow-lg transform translate-x-0 transition-transform duration-300 ease-in-out">
-        <div className="p-6 overflow-auto h-full">
-          <h2 className="text-2xl font-bold mb-4">Downloading Admission Form...</h2>
-          <p>Your download will begin shortly.</p>
-        </div>
+      {/* Popup Container */}
+      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-sm p-6 text-center border border-gray-200">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-900 mx-auto mb-4"></div>
+        <h2 className="text-xl font-semibold mb-2">Generating PDF</h2>
+        <p className="text-gray-600">Your download will begin shortly. Please wait...</p>
       </div>
     </div>
   );

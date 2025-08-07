@@ -441,7 +441,7 @@ const Wallet = () => {
               <p className="text-sm font-medium text-green-800">
                 📱 Send payment screenshot to:
               </p>
-              <p className="text-lg font-bold text-green-900">+91 8368689274</p>
+              <p className="text-lg font-bold text-green-900">+91 8076782988</p>
               <p className="text-xs text-green-700">
                 Include your franchise ID in the message
               </p>

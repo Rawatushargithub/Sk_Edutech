@@ -32,7 +32,7 @@ const TabMenu = () => {
     setLoading(true);
     setError(""); 
     setData([]); // Reset data before fetching
-
+ 
     try {
       console.log(API_ENDPOINTS[tabName]);
       const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS[tabName]}?franchiseId=${localStorage.getItem("franchiseID")}`);

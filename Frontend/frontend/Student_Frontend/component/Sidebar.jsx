@@ -37,7 +37,9 @@ const Sidebar = ({ onSelect }) => {
 
   const fetchLogo = async (franchiseId) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/v1/student/sidebar/logo/${franchiseId}`);
+      const encodedFranchiseId = encodeURIComponent(franchiseId);
+
+      const response = await axios.get(`${API_BASE_URL}/api/v1/student/sidebar/logo/${encodedFranchiseId}`);
       setLogoUrl(response.data.logoUrl);
       instituteName(response.data.Name);
     } catch (error) {

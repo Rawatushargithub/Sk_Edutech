@@ -1,12 +1,19 @@
 import React, { useState } from "react";
 
-const StudentProfile = ({ student, onClose, onEdit, onViewForm, onViewIDCard, onShare }) => {
+const StudentProfile = ({
+  student,
+  onClose,
+  onEdit,
+  onViewForm,
+  onViewIDCard,
+  onShare,
+}) => {
   const [isCopied, setIsCopied] = useState(false);
 
   // Handle edit with student data
   const handleEditProfile = () => {
     // Store student data in localStorage as fallback
-    localStorage.setItem('editStudentData', JSON.stringify(student));
+    localStorage.setItem("editStudentData", JSON.stringify(student));
     // Call the onEdit function from parent with student data
     if (onEdit) {
       onEdit(student._id);
@@ -14,24 +21,24 @@ const StudentProfile = ({ student, onClose, onEdit, onViewForm, onViewIDCard, on
   };
 
   const handleCopy = () => {
-        const studentDetails = `
-Student Name: ${student.studentName || 'N/A'}
-Roll Number: ${student.rollNumber || 'N/A'}
-Status: ${student.status ? 'Active' : 'Inactive'}
-Mobile: ${student.studentMobile || 'N/A'}
-Email: ${student.email || 'N/A'}
-Course: ${student.courseInterested?.courseName || 'N/A'}
-Batch: ${student.batch || 'N/A'}
-Admission Date: ${student.admissionDate || 'N/A'}
-Referral Code: ${student.referralCode || 'N/A'}
+    const studentDetails = `
+Student Name: ${student.studentName || "N/A"}
+Roll Number: ${student.rollNumber || "N/A"}
+Status: ${student.status ? "Active" : "Inactive"}
+Mobile: ${student.studentMobile || "N/A"}
+Email: ${student.email || "N/A"}
+Course: ${student.courseInterested?.courseName || "N/A"}
+Batch: ${student.batch || "N/A"}
+Admission Date: ${student.admissionDate || "N/A"}
+Referral Code: ${student.referralCode || "N/A"}
     `.trim();
     navigator.clipboard.writeText(studentDetails).then(() => {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     });
-  }; 
-  
-  return ( 
+  };
+
+  return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Overlay with blur effect */}
       <div
@@ -77,7 +84,11 @@ Referral Code: ${student.referralCode || 'N/A'}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-8 h-8"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
                 </div>
@@ -93,12 +104,14 @@ Referral Code: ${student.referralCode || 'N/A'}
             <h2 className="text-xl font-bold text-gray-800 mb-2">
               {student.studentName || "Student Name"}
             </h2>
-            <div className={`font-medium text-gray-400 mb-2`}>{student.rollNumber}</div>
+            <div className={`font-medium text-gray-400 mb-2`}>
+              {student.rollNumber}
+            </div>
 
             <span
               className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                student.status 
-                  ? "bg-green-100 text-green-800" 
+                student.status
+                  ? "bg-green-100 text-green-800"
                   : "bg-red-100 text-red-800"
               }`}
             >
@@ -110,49 +123,53 @@ Referral Code: ${student.referralCode || 'N/A'}
           <div className="mb-4">
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <span className="text-sm font-medium text-gray-700">Mobile</span>
-              <span className="text-sm text-gray-800">{student.studentMobile || "N/A"}</span>
+              <span className="text-sm text-gray-800">
+                {student.studentMobile || "N/A"}
+              </span>
             </div>
 
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <span className="text-sm font-medium text-gray-700">Email</span>
-              <span className="text-sm text-gray-800 truncate ml-2">{student.email || "N/A"}</span>
+              <span className="text-sm text-gray-800 truncate ml-2">
+                {student.email || "N/A"}
+              </span>
             </div>
 
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <span className="text-sm font-medium text-gray-700">Course</span>
-              <span className="text-sm text-gray-800">{student.courseInterested?.courseName || "N/A"}</span>
+              <span className="text-sm text-gray-800">
+                {student.courseInterested?.courseName || "N/A"}
+              </span>
             </div>
 
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <span className="text-sm font-medium text-gray-700">Batch</span>
-              <span className="text-sm text-gray-800">{student.batch || "N/A"}</span>
+              <span className="text-sm text-gray-800">
+                {student.batch || "N/A"}
+              </span>
             </div>
 
-            
-
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-sm font-medium text-gray-700">Admission Date</span>
-              <span className="text-sm text-gray-800">{student.admissionDate || "N/A"}</span>
+              <span className="text-sm font-medium text-gray-700">
+                Admission Date
+              </span>
+              <span className="text-sm text-gray-800">
+                {student.admissionDate || "N/A"}
+              </span>
             </div>
 
             <div className="flex items-center justify-between py-2">
-              <span className="text-sm font-medium text-gray-700">Referral Code</span>
-              <span className="text-sm text-gray-800">{student.referralCode || "N/A"}</span>
+              <span className="text-sm font-medium text-gray-700">
+                Referral Code
+              </span>
+              <span className="text-sm text-gray-800">
+                {student.referralCode || "N/A"}
+              </span>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col space-y-3">
-            {/* Edit Profile Button */}
-            <button 
-              onClick={handleEditProfile}
-              className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              <span>Edit Profile</span>
-            </button>
 
             {/* Certificate Button */}
             <button className="w-full py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
@@ -161,42 +178,105 @@ Referral Code: ${student.referralCode || 'N/A'}
 
             {/* Icon Buttons */}
             <div className="flex justify-center space-x-3">
+            <button
+                className="flex items-center justify-center w-10 h-10 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                onClick={handleEditProfile}
+                title="Edit Profile"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+              </button>
+              
               <button
                 className="flex items-center justify-center w-10 h-10 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
                 onClick={onViewForm}
                 title="View Form"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
               </button>
-              
+
               <button
                 className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
                 onClick={onViewIDCard}
                 title="View ID Card"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
+                  />
                 </svg>
               </button>
-              
+
               <button
                 className="flex items-center justify-center w-10 h-10 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                 onClick={handleCopy}
                 title="Copy Details"
               >
                 {isCopied ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
                 ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
                 )}
               </button>
             </div>
           </div>
         </div>
       </div>
-
     </div>
   );
 };

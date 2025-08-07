@@ -293,7 +293,7 @@ const TabMenu = () => {
               ) : data.length > 0 ? (
                 <ul className="divide-y divide-gray-200">
                   {data.map((student) => (
-                    <li key={student.id} className="py-3 flex items-center">
+                    <li key={student.id} className="py-3 mx-4 flex items-center">
                       {student.photoUrl && (
                         <div className="mr-4 w-12 h-12 rounded-full overflow-hidden">
                           <img

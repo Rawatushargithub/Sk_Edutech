@@ -1,4 +1,5 @@
-import { Route,Routes } from 'react-router-dom'
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { useRef, useEffect } from 'react';
 import { useState } from 'react';
 
 // importing all components one by one
@@ -17,8 +18,31 @@ import NAllReviewsPage from '../Homepage_frontend/components/ReviewsSection/NewA
 import ApplyFranchiseModal from '../Homepage_frontend/ApplyFranchiseModal';
 
 function HomePage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const loginBoxesRef = useRef(null);
+  const contactUsRef = useRef(null);
 
-  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false); // State for modal visibility
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.scrollTo) {
+      const sectionRefs = {
+        loginBoxes: loginBoxesRef,
+        contactUs: contactUsRef,
+      };
+
+      const targetRef = sectionRefs[location.state.scrollTo];
+
+      if (targetRef && targetRef.current) {
+        const yOffset = -80; // Adjust this value as needed
+        const y = targetRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+        // Clear the state to prevent scrolling on refresh
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location]); // State for modal visibility
 
     const handleOpenApplyModal = () => {
         setIsApplyModalOpen(true);
@@ -39,12 +63,12 @@ function HomePage() {
             <>
               <MainSlider/>
               <TopMarquee />
-              <LoginBoxes onApplyClick={handleOpenApplyModal}/>
+              <LoginBoxes ref={loginBoxesRef} onApplyClick={handleOpenApplyModal}/>
               <EducationSection/>
               <BottomMarquee />
               <OurAchievers/>
               <ReviewsSection />
-              <ContactUsSection />
+              <ContactUsSection ref={contactUsRef} />
             </>
           } />
 

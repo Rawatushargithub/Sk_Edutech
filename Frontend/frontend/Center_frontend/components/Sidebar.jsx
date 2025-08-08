@@ -162,18 +162,17 @@ const Sidebar = () => {
         </div>
 
         {/* <i className="text-xl p-4 mx-4 ">SK EDUTECH</i> */}
-        <div className="overflow-y-auto h-[calc(100vh-64px)] scrollbar-hide">
-          <ul className="space-y-3.5 p-4">
-            {menuItems.map((item, index) => (
-              <li key={index}>
-                {item.link ? (
-                  <NavLink
-                    to={item.link}
-                    // className={({ isActive }) =>
-                    //   `flex items-center gap-3 py-2 px-4 rounded text-lg transition-colors ${
-                    //     isActive ? "bg-gray-700" : "hover:bg-gray-700"
-                    //   }`
-                    // }
+        <ul className="space-y-3.5 p-4 overflow-auto h-[calc(100vh-128px)]">
+          {menuItems.map((item, index) => (
+            <li key={index}>
+              {item.link ? (
+                <NavLink
+                  to={item.link}
+                  // className={({ isActive }) =>
+                  //   `flex items-center gap-3 py-2 px-4 rounded text-lg transition-colors ${
+                  //     isActive ? "bg-gray-700" : "hover:bg-gray-700"
+                  //   }`
+                  // }
 
                     className={({ isActive }) =>
                       `flex items-center gap-3 py-2 px-4 rounded text-lg transition-colors ${

@@ -159,7 +159,11 @@ const TabMenu = () => {
             ) : data.length > 0 ? (
               <ul className="divide-y divide-gray-200">
                 {data.map((student) => (
+<<<<<<< HEAD
                   <li key={student.id} className="py-3 mx-4 flex items-center">
+=======
+                  <li key={student.id} className="py-3 flex items-center mx-2">
+>>>>>>> c6463c3b181e185e45fc49c3cb2a1b6937746aca
                     {student.photoUrl && (
                       <div className="mr-4 w-12 h-12 rounded-full overflow-hidden">
                         <img
@@ -179,7 +183,7 @@ const TabMenu = () => {
                           Added: {formatDate(student.addedOn)}
                         </p>
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm text-gray-500">
                         Roll No: {student.rollNumber}
                       </p>
                     </div>

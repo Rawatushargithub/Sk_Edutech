@@ -1,9 +1,9 @@
-import React from "react";
+import React, { forwardRef } from "react";
 import { PhoneCall, MapPin, Mail, Clock } from "lucide-react";
 
-const ContactUsSection = () => {
+const ContactUsSection = forwardRef((props, ref) => {
   return (
-    <section className="bg-gradient-to-b from-blue-50 to-white py-16 px-4">
+    <section ref={ref} className="bg-gradient-to-b from-blue-50 to-white py-16 px-4">
       {/* Section Header */}
       <div className="max-w-6xl mx-auto mb-12 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-3">Get In Touch</h2>
@@ -74,6 +74,6 @@ const ContactUsSection = () => {
       
     </section>
   );
-};
+});
 
 export default ContactUsSection;

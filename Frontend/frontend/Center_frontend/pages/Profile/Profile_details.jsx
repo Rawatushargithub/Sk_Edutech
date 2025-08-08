@@ -84,7 +84,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
     );
   }
   const handleCancel = () => {
-    navigate("/institute");
+    navigate("/institute/profile");
   };
 
   return (

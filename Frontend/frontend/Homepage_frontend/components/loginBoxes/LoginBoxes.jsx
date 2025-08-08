@@ -6,6 +6,7 @@ import {
   FaFolderPlus,
 } from "react-icons/fa";
 import { useSwipeable } from "react-swipeable";
+import React from 'react';
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Login from "../../../Student_Frontend/pages/Login";
@@ -13,8 +14,7 @@ import CenterLoginModal from "../../../Center_frontend/pages/centerLogin.jsx";
 import FranchiseVerificationModal from "./FranchiseVerificationModal";
 import API_BASE_URL  from "../../../config.js"; // Adjust the import based on your project structure
 
-
-const LoginBoxes = ({ onStudentClick, onTeacherClick }) => {
+const LoginBoxes = React.forwardRef(({ onApplyClick }, ref) => {
   const navigate = useNavigate();
   const ApplyFranchise = () => {
     navigate("/ApplyforFranchise");
@@ -91,7 +91,7 @@ const LoginBoxes = ({ onStudentClick, onTeacherClick }) => {
 
   return (
     // Parent div - Responsive grid layout
-    <div className="grid grid-cols-1 sm:grid-cols-5 md:grid-cols-5 gap-6 p-4 mx-4 md:mx-12 mb-10">
+    <div ref={ref} className="grid grid-cols-1 sm:grid-cols-5 md:grid-cols-5 gap-6 p-4 mx-4 md:mx-12 mb-10">
       {/* Student Login */}
       <div
         onClick={studentLogin}
@@ -238,7 +238,7 @@ const LoginBoxes = ({ onStudentClick, onTeacherClick }) => {
       >
         <FaCheckCircle className="text-[#003366] group-hover:text-white transition duration-300 text-3xl sm:text-[2.5rem]" />
         <div className="lg:text-xl sm:text-xl md:text-sm group-hover:text-white transition duration-300 text-left">
-          Center <br className="hidden sm:block" /> Verification
+          Centre <br className="hidden sm:block" /> Verification
         </div>
       </div>
 
@@ -256,7 +256,6 @@ const LoginBoxes = ({ onStudentClick, onTeacherClick }) => {
 
     </div>
   );
-};
+});
 
 export default LoginBoxes;
-

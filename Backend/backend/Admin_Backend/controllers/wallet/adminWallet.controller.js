@@ -82,3 +82,41 @@ export const getAllTransactions = asyncHandler(async(req , res) => {
       }
     
 });
+
+export const rejectTransaction = asyncHandler(async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    
+    try {
+      const transaction = await Transaction.findById(req.params.transactionId).session(session);
+      
+      if (!transaction) {
+        await session.abortTransaction();
+        return res.status(404).json({ error: 'Transaction not found' });
+      }
+      
+      // Check if transaction can be rejected
+      if (transaction.status !== 'pending_approval') {
+        await session.abortTransaction();
+        return res.status(400).json({ error: 'Transaction cannot be rejected' });
+      }
+       
+      // Update transaction status
+      transaction.status = 'rejected';
+      await transaction.save({ session });
+      
+      // Commit the transaction
+      await session.commitTransaction();
+      
+      res.json({ 
+        success: true, 
+        message: 'Transaction rejected successfully'
+      });
+    } catch (error) {
+      await session.abortTransaction();
+      console.error('Error rejecting transaction:', error);
+      res.status(500).json({ error: 'Server error' });
+    } finally {
+      session.endSession();
+    }
+});

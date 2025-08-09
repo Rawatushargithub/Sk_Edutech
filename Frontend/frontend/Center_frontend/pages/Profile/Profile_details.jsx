@@ -40,6 +40,16 @@ const [isSubmitting, setIsSubmitting] = useState(false);
   }, [franchiseId]);
 
 
+  const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-IN', {
+    year: 'numeric',
+    month: 'long', 
+    day: 'numeric'
+  });
+};
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -113,7 +123,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
             <input
 
               name={field}
-              value={formData[field] || ''}
+             value={field === 'dob' ? formatDate(formData[field]) : (formData[field] || '')}
               readOnly
               className="border border-gray-300 rounded p-2 mt-1 bg-gray-100"
             />

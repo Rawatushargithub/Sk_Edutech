@@ -18,7 +18,8 @@ const NotesDashboard = () => {
     const fetchCoursesForFilter = async () => {
       setLoadingCourses(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
+          const franchiseId = localStorage.getItem('franchiseID');
+        const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`);
         if (!response.ok) throw new Error('Failed to fetch courses for filter');
         
         const data = await response.json();

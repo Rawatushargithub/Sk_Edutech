@@ -46,6 +46,7 @@ const requestOtp = asyncHandler(async (req, res) => {
 });
 
 const submitWithOtp = asyncHandler(async (req, res) => {
+    console.log("Received body for submitWithOtp:", JSON.stringify(req.body, null, 2));
     const { email, otp, franchiseName, ownerName, designation, dob, mobile, address, state, city, postalCode, country, totalComputers, totalStudents, planValidityDays, gstNumber, atcCode } = req.body;
 
     if (!email || !otp) {
@@ -93,6 +94,19 @@ const submitWithOtp = asyncHandler(async (req, res) => {
 
     console.log(`[HomepageFranchiseController] Application for ${email} successfully saved with ID: ${newApplication._id}`);
     
+    try {
+        await sendEmail({
+            to: email,
+            subject: "Franchise Application Submitted Successfully",
+            text: `Dear ${ownerName},\n\nYour franchise application has been successfully submitted. The super admin will review your details and eligibility and update your status accordingly.\n\nThank you,\nSK Team`,
+            html: `<p>Dear ${ownerName},</p><p>Your franchise application has been successfully submitted. The super admin will review your details and eligibility and update your status accordingly.</p><p>Thank you,<br/>SK Team</p>`
+        });
+    } catch (error) {
+        console.error("Failed to send application confirmation email:", error);
+        // Don't throw an error here, as the application was already saved successfully.
+        // Just log the error and proceed.
+    }
+
     return res.status(201).json(
         new ApiResponse(
             201,

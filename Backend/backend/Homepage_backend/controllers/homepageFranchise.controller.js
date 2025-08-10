@@ -46,6 +46,7 @@ const requestOtp = asyncHandler(async (req, res) => {
 });
 
 const submitWithOtp = asyncHandler(async (req, res) => {
+    console.log("Received body for submitWithOtp:", JSON.stringify(req.body, null, 2));
     const { email, otp, franchiseName, ownerName, designation, dob, mobile, address, state, city, postalCode, country, totalComputers, totalStudents, planValidityDays, gstNumber, atcCode } = req.body;
 
     if (!email || !otp) {

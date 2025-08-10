@@ -27,7 +27,7 @@ import PrivacyPolicy from './frontend/Homepage_frontend/components/navbar/links/
 import Message from './frontend/Homepage_frontend/components/navbar/links/Message';
 import TermAndConditions from './frontend/Homepage_frontend/components/navbar/links/TermAndConditions';
 import VerifyCertificate from './frontend/Center_frontend/pages/Certificate/VerifybyQr';
-
+import CenterVerification from './frontend/Center_frontend/CenterCertificateVerify';
 
 
 
@@ -43,6 +43,9 @@ function App() {
         <Route path="/allreviews" element={<NAllReviewsPage/>} />
 
         <Route path="/verify/:certificateId" element={<VerifyCertificate/>} />
+        <Route path="/franchise/:franchiseId" element={<CenterVerification/>} />
+
+
 
 
 

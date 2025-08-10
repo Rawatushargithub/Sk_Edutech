@@ -454,6 +454,7 @@ export const addNoteToCourse = asyncHandler(async (req, res) => {
         const noteFile = req.files.noteFile[0];
         const uploadedFile = await uploadOnCloudinary(noteFile.path);
 
+
         if (!uploadedFile || !uploadedFile.url) {
             console.error("Cloudinary upload failed for note file:", noteFile.originalname, uploadedFile);
             return res.status(500).json({ error: "Failed to upload file to Cloudinary." });
@@ -481,7 +482,7 @@ export const addNoteToCourse = asyncHandler(async (req, res) => {
             validExistingMaterials.push({
                 title: currentTitle, type: currentType, url: currentUrl,
                 fileName: material.fileName, fileType: material.fileType, 
-                thumbnailUrl: material.thumbnailUrl, _id: material._id, franchiseId,
+                thumbnailUrl: material.thumbnailUrl, _id: material._id, franchiseId: material.franchiseId
             });
         });
     }

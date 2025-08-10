@@ -24,42 +24,22 @@ const Sidebar = () => {
   const [openSections, setOpenSections] = useState({});
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const toggleSection = (section) => {
+  const toggleSection = (section) => { 
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const franchiseImage = localStorage.getItem("franchiseImage");
+    const franchiseImage = localStorage.getItem("franchiseImage");
 
   const menuItems = [
-    {
-      title: "Dashboard",
-      icon: <LayoutPanelLeft className="w-5 h-5" />,
-      link: "/institute",
-    },
+    { title: "Dashboard", icon: <LayoutPanelLeft className="w-5 h-5" />, link: "/institute" },
     {
       title: "Manage Student",
       icon: <CircleUser className="w-5 h-5" />,
       submenu: [
-        {
-          title: "Registration",
-          icon: <PiStudentBold className="w-5 h-5" />,
-          link: "/institute/Registration",
-        },
-        {
-          title: "Enquiry",
-          icon: <TbUserQuestion className="w-5 h-5" />,
-          link: "/institute/enquiry",
-        },
-        {
-          title: "Fees",
-          icon: <FaMoneyBill1Wave className="w-5 h-5" />,
-          link: "/institute/fees",
-        },
-        {
-          title: "Students List",
-          icon: <PiUserListBold className="w-5 h-5" />,
-          link: "/institute/Student_list",
-        },
+        { title: "Registration", icon: <PiStudentBold className="w-5 h-5" />, link: "/institute/Registration" },
+        { title: "Enquiry", icon: <TbUserQuestion className="w-5 h-5" />, link: "/institute/enquiry" },
+        { title: "Fees", icon: <FaMoneyBill1Wave className="w-5 h-5" />, link: "/institute/fees" },
+        { title: "Students List", icon: <PiUserListBold className="w-5 h-5" />, link: "/institute/Student_list" },
       ],
       stateKey: "manageStudent",
     },
@@ -67,16 +47,8 @@ const Sidebar = () => {
       title: "Examination",
       icon: <BookOpenCheck className="w-5 h-5" />,
       submenu: [
-        {
-          title: "Exam",
-          icon: <PiExam className="w-5 h-5" />,
-          link: "/institute/exam",
-        },
-        {
-          title: "Question Bank",
-          icon: <MdOutlineCommentBank className="w-5 h-5" />,
-          link: "/institute/Question-bank",
-        },
+        { title: "Exam", icon: <PiExam className="w-5 h-5" />, link: "/institute/exam" },
+        { title: "Question Bank", icon: <MdOutlineCommentBank className="w-5 h-5" />, link: "/institute/Question-bank" },
       ],
       stateKey: "examination",
     },
@@ -84,16 +56,8 @@ const Sidebar = () => {
       title: "Certificate",
       icon: <TbCertificate className="w-5 h-5" />,
       submenu: [
-        {
-          title: "Apply",
-          icon: <VscGitStashApply className="w-5 h-5" />,
-          link: "/institute/apply-certificate",
-        },
-        {
-          title: "Approve",
-          icon: <LiaCertificateSolid className="w-5 h-5" />,
-          link: "/institute/approve-certificate",
-        },
+        { title: "Apply", icon: <VscGitStashApply className="w-5 h-5" />, link: "/institute/apply-certificate" },
+        { title: "Approve", icon: <LiaCertificateSolid className="w-5 h-5" />, link: "/institute/approve-certificate" },
       ],
       stateKey: "certificate",
     },
@@ -122,6 +86,7 @@ const Sidebar = () => {
       icon: <RiBookShelfLine className="w-5 h-5" />,
       action: () => navigate("/institute/Courses"),
     },
+
   ];
 
   return (
@@ -131,11 +96,7 @@ const Sidebar = () => {
         className="md:hidden fixed top-4 left-4 z-50 bg-gray-800 text-white p-2 rounded"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
       >
-        {isSidebarOpen ? (
-          <AiOutlineClose className="w-6 h-6" />
-        ) : (
-          <AiOutlineMenu className="w-6 h-6" />
-        )}
+        {isSidebarOpen ? <AiOutlineClose className="w-6 h-6" /> : <AiOutlineMenu className="w-6 h-6" />}
       </button>
 
       {/* Sidebar */}
@@ -148,10 +109,10 @@ const Sidebar = () => {
         <div className="p-4 border-b border-gray-700">
           <div className="w-full max-w-[200px] mx-auto   ">
             {franchiseImage ? (
-              <img
-                src={franchiseImage}
-                alt="Franchise Logo"
-                className="h-auto max-h-16 object-contain ml-16 rounded-2xl border-2 border-black shadow-sm cursor-pointer hover:shadow-md transition-shadow duration-200"
+              <img 
+                src={franchiseImage} 
+                alt="Franchise Logo" 
+                className="h-auto max-h-16 object-contain ml-16 rounded-2xl border-2 border-black shadow-sm cursor-pointer hover:shadow-md transition-shadow duration-200" 
               />
             ) : (
               <div className="w-full h-16 bg-gray-700 rounded-lg flex items-center justify-center text-gray-400 text-sm">
@@ -174,69 +135,57 @@ const Sidebar = () => {
                   //   }`
                   // }
 
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 py-2 px-4 rounded text-lg transition-colors ${
-                        isActive ? "bg-gray-700" : "hover:bg-gray-700"
-                      }`
-                    }
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 py-2 px-4 rounded text-lg transition-colors ${
+                      isActive ? "bg-gray-700" : "hover:bg-gray-700"
+                    }`
+                  }
+                >
+                  {item.icon} {item.title}
+                </NavLink>
+              ) : item.submenu ? (
+                <div>
+                  <button
+                    onClick={() => toggleSection(item.stateKey)}
+                    className="w-full flex justify-between items-center py-2 px-4 rounded hover:bg-gray-700 text-left"
                   >
-                    {item.icon} {item.title}
-                  </NavLink>
-                ) : item.submenu ? (
-                  <div>
-                    <button
-                      onClick={() => toggleSection(item.stateKey)}
-                      className="w-full flex justify-between items-center py-2 px-4 rounded hover:bg-gray-700 text-left"
-                    >
-                      <span className="flex items-center text-lg gap-2">
-                        {item.icon} {item.title}
-                      </span>
-                      {openSections[item.stateKey] ? (
-                        <ChevronUp className="w-4 h-4" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4" />
-                      )}
-                    </button>
-                    {openSections[item.stateKey] && (
-                      <ul className="ml-6 mt-2 space-y-1">
-                        {item.submenu.map((subItem, subIndex) => (
-                          <li key={subIndex}>
-                            <NavLink
-                              to={subItem.link}
-                              className={({ isActive }) =>
-                                `flex items-center font-medium gap-2 py-2 px-4 rounded transition-colors ${
-                                  isActive ? "bg-gray-700" : "hover:bg-gray-700"
-                                }`
-                              }
-                            >
-                              {subItem.icon} {subItem.title}
-                            </NavLink>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ) : (
-                  <div
-                    onClick={item.action}
-                    className="cursor-pointer flex items-center text-lg gap-3 py-2 px-4 rounded hover:bg-gray-700"
-                  >
-                    {item.icon} {item.title}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
+                    <span className="flex items-center text-lg gap-2">{item.icon} {item.title}</span>
+                    {openSections[item.stateKey] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+                  {openSections[item.stateKey] && (
+                    <ul className="ml-6 mt-2 space-y-1">
+                      {item.submenu.map((subItem, subIndex) => (
+                        <li key={subIndex}>
+                          <NavLink
+                            to={subItem.link}
+                            className={({ isActive }) =>
+                              `flex items-center font-medium gap-2 py-2 px-4 rounded transition-colors ${
+                                isActive ? "bg-gray-700" : "hover:bg-gray-700"
+                              }`
+                            }
+                          >
+                            {subItem.icon} {subItem.title}
+                          </NavLink>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ) : (
+                <div
+                  onClick={item.action}
+                  className="cursor-pointer flex items-center text-lg gap-3 py-2 px-4 rounded hover:bg-gray-700"
+                >
+                  {item.icon} {item.title}
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
       </div>
 
       {/* Overlay for Mobile */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black opacity-50 md:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        ></div>
-      )}
+      {isSidebarOpen && <div className="fixed inset-0 bg-black opacity-50 md:hidden" onClick={() => setIsSidebarOpen(false)}></div>}
     </>
   );
 };

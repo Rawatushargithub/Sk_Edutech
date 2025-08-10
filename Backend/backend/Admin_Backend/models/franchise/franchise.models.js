@@ -89,7 +89,7 @@ const franchiseSchema = new Schema(
         status: {
             type: String,
             required: true,
-            enum: ['Pending', 'Active', 'Inactive', 'Rejected'],
+            enum: ['Pending', 'Active', 'Inactive', 'Rejected', 'Not Initialized'],
             default: 'Pending',
         },
         verificationStatus: {

@@ -1,6 +1,4 @@
-
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";  
 import { Search, Calendar, CreditCard, Users, Clock, CheckCircle, XCircle, IndianRupee } from "lucide-react";
 import axios from "axios";
 import API_BASE_URL from "../../../config";
@@ -59,16 +57,18 @@ const FeesManagementSystem = () => {
   const totalPaid = students.reduce((acc, student) => acc + student.paidFee, 0);
   const totalDue = students.reduce((acc, student) => acc + student.dueFee, 0);
 
-  // Calculate totals for installments
-  const totalInstallmentAmount = installmentStudents.reduce(
-    (acc, student) => acc + student.totalInstallmentAmount, 0
-  );
-  const totalInstallmentPaid = installmentStudents.reduce(
-    (acc, student) => acc + student.paidInstallmentAmount, 0
-  );
-  const totalInstallmentDue = installmentStudents.reduce(
-    (acc, student) => acc + student.dueInstallmentAmount, 0
-  );
+  // Update these calculations based on your actual data structure
+const totalInstallmentAmount = installmentStudents.reduce((acc, student) => {
+  const studentTotal = student.installments?.reduce((sum, inst) => sum + inst.amount, 0) || 0;
+  return acc + studentTotal;
+}, 0);
+
+const totalInstallmentPaid = installmentStudents.reduce((acc, student) => {
+  const studentPaid = student.installments?.reduce((sum, inst) => sum + (inst.paid ? inst.amount : 0), 0) || 0;
+  return acc + studentPaid;
+}, 0);
+
+const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
 
   // Handle normal fee update
   const handleUpdateFee = (studentId) => {
@@ -131,58 +131,63 @@ const FeesManagementSystem = () => {
       });
   };
   
-
   // Handle installment payment
   const handleInstallmentPayment = (studentId, installmentId) => {
-    const amount = parseFloat(installmentPayment.amount);
-    if (isNaN(amount) || amount <= 0) {
-      alert("Please enter a valid amount greater than zero");
-      return;
-    }
+  const amount = parseFloat(installmentPayment.amount);
+  if (isNaN(amount) || amount <= 0) {
+    alert("Please enter a valid amount greater than zero");
+    return;
+  }
 
-    const paymentData = {
-      installmentId: installmentId,
-      amount: amount,
-      paymentMode: installmentPayment.paymentMode,
-      date: installmentPayment.date,
-    };
-
-    // Simulate API call
-    console.log("Updating installment for student:", studentId, paymentData);
-    
-    // Update local state (replace with actual API call)
-    const updatedStudents = installmentStudents.map(student => {
-      if (student.id === studentId) {
-        const updatedInstallments = student.installments.map(inst => {
-          if (inst.id === installmentId) {
-            return { ...inst, paid: true, paidAmount: amount };
-          }
-          return inst;
-        });
-        
-        const newPaidAmount = student.paidInstallmentAmount + amount;
-        const newDueAmount = student.totalInstallmentAmount - newPaidAmount;
-        
-        return {
-          ...student,
-          installments: updatedInstallments,
-          paidInstallmentAmount: newPaidAmount,
-          dueInstallmentAmount: newDueAmount,
-        };
-      }
-      return student;
-    });
-
-    setInstallmentStudents(updatedStudents);
-    setShowInstallmentModal(false);
-    setInstallmentPayment({
-      installmentId: "",
-      amount: "",
-      paymentMode: "Cash",
-      date: new Date().toISOString().slice(0, 10),
-    });
-    alert("Installment payment recorded successfully!");
+  const paymentData = {
+    installmentId: installmentId,
+    amount: amount,
+    paymentMode: installmentPayment.paymentMode,
+    date: installmentPayment.date,
   };
+
+  // Make API call to update installment
+  axios.put(`${API_BASE_URL}/api/v1/installments/${installmentId}/update-payment`, paymentData)
+    .then(response => {
+      if (response.data.success) {
+        // Update local state with the response data
+        const updatedStudents = installmentStudents.map(student => {
+          if (student._id === studentId) {
+            // Update the specific installment
+            const updatedInstallments = student.installments.map(inst => {
+              if (inst._id === installmentId) {
+                return { ...inst, paid: true };
+              }
+              return inst;
+            });
+            
+            return {
+              ...student,
+              installments: updatedInstallments
+            };
+          }
+          return student;
+        });
+
+        setInstallmentStudents(updatedStudents);
+        setShowInstallmentModal(false);
+        setInstallmentPayment({
+          installmentId: "",
+          amount: "",
+          paymentMode: "Cash",
+          date: new Date().toISOString().slice(0, 10),
+        });
+        alert("Installment payment recorded successfully!");
+      } else {
+        alert("Error: " + response.data.message);
+      }
+    })
+    .catch(error => {
+      console.error("Error updating installment:", error);
+      const errorMessage = error.response?.data?.message || "Failed to update installment payment";
+      alert("Error: " + errorMessage);
+    });
+};
 
   // Mock data initialization
   useEffect(() => {
@@ -201,37 +206,16 @@ const FeesManagementSystem = () => {
       })
       .catch((error) => console.error("Error fetching students:", error));
 
-    // Mock installment data
-    const mockInstallmentStudents = [
-      {
-        id: "3",
-        studentName: "Alice Johnson",
-        course: { courseName: "Mobile App Development" },
-        totalInstallmentAmount: 60000,
-        paidInstallmentAmount: 20000,
-        dueInstallmentAmount: 40000,
-        installments: [
-          { id: "i1", installmentName: "First Installment", amount: 20000, date: "2024-01-01", paid: true, paidAmount: 20000 },
-          { id: "i2", installmentName: "Second Installment", amount: 20000, date: "2024-03-01", paid: false, paidAmount: 0 },
-          { id: "i3", installmentName: "Third Installment", amount: 20000, date: "2024-05-01", paid: false, paidAmount: 0 }
-        ]
-      },
-      {
-        id: "4",
-        studentName: "Bob Wilson",
-        course: { courseName: "UI/UX Design" },
-        totalInstallmentAmount: 45000,
-        paidInstallmentAmount: 30000,
-        dueInstallmentAmount: 15000,
-        installments: [
-          { id: "i4", installmentName: "First Installment", amount: 15000, date: "2024-01-15", paid: true, paidAmount: 15000 },
-          { id: "i5", installmentName: "Second Installment", amount: 15000, date: "2024-03-15", paid: true, paidAmount: 15000 },
-          { id: "i6", installmentName: "Third Installment", amount: 15000, date: "2024-05-15", paid: false, paidAmount: 0 }
-        ]
-      }
-    ];
+    // Fetch installment students
+// axios
+//   .get(`${API_BASE_URL}/api/v1/institute_fees/installments/students?franchiseId=${franchiseId}`)
+//   .then((response) => {
+//     console.log("Installment data:", response);
+//     setInstallmentStudents(response.data.data);
+//   })
+//   .catch((error) => console.error("Error fetching installment students:", error));
 
-    setInstallmentStudents(mockInstallmentStudents);
+//     setInstallmentStudents(mockInstallmentStudents);
   }, []);
 
   const StatCard = ({ title, value, color, icon: Icon }) => (
@@ -541,16 +525,16 @@ const FeesManagementSystem = () => {
               </thead>
               <tbody>
                 {filteredInstallmentStudents.map((student, index) => (
-                  <React.Fragment key={student.id}>
+                  <React.Fragment key={student._id}>
                     <tr
                       onClick={() =>
                         setSelectedInstallmentStudent(
-                          selectedInstallmentStudent === student.id ? null : student.id
+                          selectedInstallmentStudent === student._id ? null : student._id
                         )
                       }
                       className="hover:bg-gray-50 cursor-pointer transition-colors"
                     >
-                      <td className="py-3 px-4 border-b">{index + 1}</td>
+                      <td className="py-3 px-4 border-b">{student._id}</td>
                       <td className="py-3 px-4 border-b font-medium">{student.studentName}</td>
                       <td className="py-3 px-4 border-b">{student.course.courseName}</td>
                       <td className="py-3 px-4 border-b">₹{student.totalInstallmentAmount.toLocaleString()}</td>
@@ -560,7 +544,7 @@ const FeesManagementSystem = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedInstallmentStudent(student.id);
+                            setSelectedInstallmentStudent(student._id);
                           }}
                           className="bg-purple-500 text-white px-3 py-1 rounded-md shadow hover:bg-purple-600 transition-colors"
                         >
@@ -568,7 +552,7 @@ const FeesManagementSystem = () => {
                         </button>
                       </td>
                     </tr>
-                    {selectedInstallmentStudent === student.id && (
+                    {selectedInstallmentStudent === student._id && (
                       <tr>
                         <td colSpan="7" className="bg-gray-50">
                           <div className="p-4">
@@ -610,7 +594,7 @@ const FeesManagementSystem = () => {
                                                 installmentId: installment.id,
                                                 amount: installment.amount.toString(),
                                               });
-                                              setShowInstallmentModal(student.id);
+                                              setShowInstallmentModal(student._id);
                                             }}
                                             className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600 transition-colors"
                                           >
@@ -636,7 +620,7 @@ const FeesManagementSystem = () => {
       )}
 
       {/* Update Fee Modal */}
-      {showUpdateFeeModal && (
+      {showUpdateFeeModal && ( 
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-96">
             <h2 className="text-xl font-bold mb-4">Update Fee</h2>
@@ -645,11 +629,11 @@ const FeesManagementSystem = () => {
               <input
                 type="number"
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={newPayment.amount}
+                value={newPayment.amount || ""}
                 onChange={(e) =>
                   setNewPayment({ ...newPayment, amount: e.target.value })
                 }
-                placeholder="Enter amount"
+                placeholder="₹0"
               />
             </div>
             <div className="mb-4">

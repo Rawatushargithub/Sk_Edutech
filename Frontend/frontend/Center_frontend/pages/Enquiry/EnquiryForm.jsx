@@ -1,37 +1,36 @@
-import React, { useState ,useEffect } from 'react';
-import { Calendar } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import axios from "axios"
-import { useStudentContext } from '../../context/StudentContext.jsx';
+import React, { useState, useEffect } from "react";
+import { Calendar } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useStudentContext } from "../../context/StudentContext.jsx";
 import API_BASE_URL from "../../../config";
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const EnquiryForm = () => {
-  
   const { addStudent } = useStudentContext();
   const [formData, setFormData] = useState({
-    abbreviation: 'Mr.',
-    studentName: '',
-    relation: 'S/o',
-    guardianName: '',
-    motherName: '',
+    abbreviation: "Mr.",
+    studentName: "",
+    relation: "S/o",
+    guardianName: "",
+    motherName: "",
     // Updated courseInterested structure to match schema
     courseInterested: {
-      courseName: '',
-      courseCode: ''
+      courseName: "",
+      courseCode: "",
     },
-    studentMobile: '',
-    alternateMobile: '',
-    email: '',
-    dateOfBirth: '',
-    gender: '',
-    state: '',
-    city: '',
-    postcode: '',
-    permanentAddress: '',
-    referralCode: '',
-    enquiryDate: new Date().toISOString().split('T')[0] // Set default to today
+    studentMobile: "",
+    alternateMobile: "",
+    email: "",
+    dateOfBirth: "",
+    gender: "",
+    state: "",
+    city: "",
+    postcode: "",
+    permanentAddress: "",
+    referralCode: "",
+    enquiryDate: new Date().toISOString().split("T")[0], // Set default to today
   });
 
   const navigate = useNavigate();
@@ -41,46 +40,50 @@ const EnquiryForm = () => {
 
   // Indian States Data
   const indianStates = [
-    { value: 'andhra-pradesh', label: 'Andhra Pradesh' },
-    { value: 'arunachal-pradesh', label: 'Arunachal Pradesh' },
-    { value: 'assam', label: 'Assam' },
-    { value: 'bihar', label: 'Bihar' },
-    { value: 'chhattisgarh', label: 'Chhattisgarh' },
-    { value: 'goa', label: 'Goa' },
-    { value: 'gujarat', label: 'Gujarat' },
-    { value: 'haryana', label: 'Haryana' },
-    { value: 'himachal-pradesh', label: 'Himachal Pradesh' },
-    { value: 'jharkhand', label: 'Jharkhand' },
-    { value: 'karnataka', label: 'Karnataka' },
-    { value: 'kerala', label: 'Kerala' },
-    { value: 'madhya-pradesh', label: 'Madhya Pradesh' },
-    { value: 'maharashtra', label: 'Maharashtra' },
-    { value: 'manipur', label: 'Manipur' },
-    { value: 'meghalaya', label: 'Meghalaya' },
-    { value: 'mizoram', label: 'Mizoram' },
-    { value: 'nagaland', label: 'Nagaland' },
-    { value: 'odisha', label: 'Odisha' },
-    { value: 'punjab', label: 'Punjab' },
-    { value: 'rajasthan', label: 'Rajasthan' },
-    { value: 'sikkim', label: 'Sikkim' },
-    { value: 'tamil-nadu', label: 'Tamil Nadu' },
-    { value: 'telangana', label: 'Telangana' },
-    { value: 'tripura', label: 'Tripura' },
-    { value: 'uttar-pradesh', label: 'Uttar Pradesh' },
-    { value: 'uttarakhand', label: 'Uttarakhand' },
-    { value: 'west-bengal', label: 'West Bengal' }
+    { value: "andhra-pradesh", label: "Andhra Pradesh" },
+    { value: "arunachal-pradesh", label: "Arunachal Pradesh" },
+    { value: "assam", label: "Assam" },
+    { value: "bihar", label: "Bihar" },
+    { value: "chhattisgarh", label: "Chhattisgarh" },
+    { value: "goa", label: "Goa" },
+    { value: "gujarat", label: "Gujarat" },
+    { value: "haryana", label: "Haryana" },
+    { value: "himachal-pradesh", label: "Himachal Pradesh" },
+    { value: "jharkhand", label: "Jharkhand" },
+    { value: "karnataka", label: "Karnataka" },
+    { value: "kerala", label: "Kerala" },
+    { value: "madhya-pradesh", label: "Madhya Pradesh" },
+    { value: "maharashtra", label: "Maharashtra" },
+    { value: "manipur", label: "Manipur" },
+    { value: "meghalaya", label: "Meghalaya" },
+    { value: "mizoram", label: "Mizoram" },
+    { value: "nagaland", label: "Nagaland" },
+    { value: "odisha", label: "Odisha" },
+    { value: "punjab", label: "Punjab" },
+    { value: "rajasthan", label: "Rajasthan" },
+    { value: "sikkim", label: "Sikkim" },
+    { value: "tamil-nadu", label: "Tamil Nadu" },
+    { value: "telangana", label: "Telangana" },
+    { value: "tripura", label: "Tripura" },
+    { value: "uttar-pradesh", label: "Uttar Pradesh" },
+    { value: "uttarakhand", label: "Uttarakhand" },
+    { value: "west-bengal", label: "West Bengal" },
   ];
 
   // Fetch courses on component mount
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
-        console.log("course fetching :: ", response);
-        setCourses(response.data); // Assuming the response is an array of course objects
+        const franchiseId = localStorage.getItem("franchiseID");
+        const response = await fetch(
+          `${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`
+        );
+        const data = await response.json();
+        console.log("course fetching :: ", data);
+        setCourses(data); // Assuming the response is an array of course objects
       } catch (error) {
-        console.error('Error fetching courses:', error);
-        toast.error('Failed to fetch courses');
+        console.error("Error fetching courses:", error);
+        toast.error("Failed to fetch courses");
       }
     };
 
@@ -89,26 +92,26 @@ const EnquiryForm = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Validation for mobile number
-    if (name === 'studentMobile' || name === 'alternateMobile') {
-      if (value === '' || (/^\d{0,10}$/.test(value))) {
+    if (name === "studentMobile" || name === "alternateMobile") {
+      if (value === "" || /^\d{0,10}$/.test(value)) {
         setFormData({ ...formData, [name]: value });
       }
       return;
     }
-    
+
     // Validation for postcode
-    if (name === 'postcode') {
-      if (value === '' || (/^\d{0,6}$/.test(value))) {
+    if (name === "postcode") {
+      if (value === "" || /^\d{0,6}$/.test(value)) {
         setFormData({ ...formData, [name]: value });
       }
       return;
     }
 
     // Validation for city (only letters, spaces, and basic punctuation)
-    if (name === 'city') {
-      if (value === '' || /^[a-zA-Z\s.-]*$/.test(value)) {
+    if (name === "city") {
+      if (value === "" || /^[a-zA-Z\s.-]*$/.test(value)) {
         setFormData({ ...formData, [name]: value });
       }
       return;
@@ -121,17 +124,19 @@ const EnquiryForm = () => {
   // Handler for course selection
   const handleCourseChange = (e) => {
     const selectedCourseId = e.target.value;
-    
+
     if (selectedCourseId) {
-      const selectedCourse = courses.find(course => course._id === selectedCourseId);
-      
+      const selectedCourse = courses.find(
+        (course) => course._id === selectedCourseId
+      );
+
       if (selectedCourse) {
         setFormData({
           ...formData,
           courseInterested: {
             courseName: selectedCourse.courseName,
-            courseCode: selectedCourse.courseCode
-          }
+            courseCode: selectedCourse.courseCode,
+          },
         });
       } else {
         toast.error("Invalid course selection");
@@ -141,49 +146,49 @@ const EnquiryForm = () => {
       setFormData({
         ...formData,
         courseInterested: {
-          courseName: '',
-          courseCode: ''
-        }
+          courseName: "",
+          courseCode: "",
+        },
       });
     }
   };
 
   const handlenquiry = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.studentName.trim()) {
-      toast.error('Student name is required');
+      toast.error("Student name is required");
       return;
     }
-    
+
     if (!formData.guardianName.trim()) {
-      toast.error('Guardian name is required');
+      toast.error("Guardian name is required");
       return;
     }
-    
+
     if (!formData.motherName.trim()) {
-      toast.error('Mother name is required');
+      toast.error("Mother name is required");
       return;
     }
-    
+
     if (!formData.studentMobile.trim()) {
-      toast.error('Student mobile is required');
+      toast.error("Student mobile is required");
       return;
     }
-    
+
     if (formData.studentMobile.length !== 10) {
-      toast.error('Mobile number must be 10 digits');
+      toast.error("Mobile number must be 10 digits");
       return;
     }
-    
+
     if (!formData.courseInterested.courseName) {
-      toast.error('Please select a course');
+      toast.error("Please select a course");
       return;
     }
 
     const franchiseId = localStorage.getItem("franchiseID");
-    
+
     // Create student object from form data
     const studentData = {
       studentName: `${formData.abbreviation} ${formData.studentName}`,
@@ -203,43 +208,50 @@ const EnquiryForm = () => {
       referralCode: formData.referralCode,
       enquiryDate: formData.enquiryDate,
       franchiseId: franchiseId,
-      status: 'pending'
+      status: "pending",
     };
 
     try {
       setLoading(true);
       // Send data to backend
-      const response = await axios.post(`${API_BASE_URL}/api/v1/institute_enquiry`, studentData);
+      const response = await axios.post(
+        `${API_BASE_URL}/api/v1/institute_enquiry`,
+        studentData
+      );
       console.log(response);
-      
+
       // Add to local context
       addStudent(response.data);
-       
+
       // Show success message
-      toast.success('Enquiry submitted successfully!');
-      
+      toast.success("Enquiry submitted successfully!");
+
       // Reset loading state
       setLoading(false);
-      
+
       // Navigate back to home page after a short delay
       setTimeout(() => {
-        navigate('/institute');
+        navigate("/institute");
       }, 1500);
-      
     } catch (err) {
       setLoading(false);
-      setError('Failed to submit enquiry');
-      console.error('Error submitting enquiry:', err);
-      
+      setError("Failed to submit enquiry");
+      console.error("Error submitting enquiry:", err);
+
       // Better error handling
-      const errorMessage = err.response?.data?.message || 'Failed to submit enquiry. Please try again.';
+      const errorMessage =
+        err.response?.data?.message ||
+        "Failed to submit enquiry. Please try again.";
       toast.error(errorMessage);
     }
   };
 
-  const GoBack = () => {navigate('/institute')}
+  const GoBack = () => {
+    navigate("/institute");
+  };
 
-  const inputStyle = "w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
+  const inputStyle =
+    "w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
   const labelStyle = "block text-sm font-medium text-gray-700 mb-2";
   const requiredStar = <span className="text-red-500 ml-1">*</span>;
 
@@ -250,24 +262,28 @@ const EnquiryForm = () => {
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           {/* Header */}
           <div className="bg-[#457B9D] from-blue-500 to-blue-600 px-8 py-4">
-            <h1 className="text-2xl font-bold text-white">Add New Student Enquiry</h1>
+            <h1 className="text-2xl font-bold text-white">
+              Add New Student Enquiry
+            </h1>
           </div>
 
           {/* Form Content */}
           <form onSubmit={handlenquiry} className="p-8 space-y-8">
-
-             {/* Loading spinner */}
-             {loading && (
+            {/* Loading spinner */}
+            {loading && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-white p-4 rounded-lg">
                   <p className="text-gray-800">Processing...</p>
                 </div>
               </div>
             )}
-            
+
             {/* Error message */}
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+              <div
+                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+                role="alert"
+              >
                 <strong className="font-bold">Error!</strong>
                 <span className="block sm:inline"> {error}</span>
               </div>
@@ -275,12 +291,16 @@ const EnquiryForm = () => {
 
             {/* Personal Information Section */}
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Personal Information</h2>
-              
+              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">
+                Personal Information
+              </h2>
+
               {/* Name Row */}
               <div className="grid grid-cols-12 gap-6">
                 <div className="col-span-2">
-                  <label htmlFor="abbreviation" className={labelStyle}>Title {requiredStar}</label>
+                  <label htmlFor="abbreviation" className={labelStyle}>
+                    Title {requiredStar}
+                  </label>
                   <select
                     id="abbreviation"
                     name="abbreviation"
@@ -312,7 +332,9 @@ const EnquiryForm = () => {
                 </div>
 
                 <div className="col-span-3">
-                  <label htmlFor="relation" className={labelStyle}>Relation {requiredStar} </label>
+                  <label htmlFor="relation" className={labelStyle}>
+                    Relation {requiredStar}{" "}
+                  </label>
                   <select
                     id="relation"
                     name="relation"
@@ -366,8 +388,10 @@ const EnquiryForm = () => {
 
             {/* Course & Contact Section */}
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Course & Contact Details</h2>
-              
+              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">
+                Course & Contact Details
+              </h2>
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="courseInterested" className={labelStyle}>
@@ -377,11 +401,17 @@ const EnquiryForm = () => {
                     id="courseInterested"
                     name="courseInterested"
                     onChange={handleCourseChange}
-                    value={formData.courseInterested.courseName ? 
-                      courses.find(course => 
-                        course.courseName === formData.courseInterested.courseName && 
-                        course.courseCode === formData.courseInterested.courseCode
-                      )?._id || "" : ""}
+                    value={
+                      formData.courseInterested.courseName
+                        ? courses.find(
+                            (course) =>
+                              course.courseName ===
+                                formData.courseInterested.courseName &&
+                              course.courseCode ===
+                                formData.courseInterested.courseCode
+                          )?._id || ""
+                        : ""
+                    }
                     required
                     className={inputStyle}
                   >
@@ -394,7 +424,8 @@ const EnquiryForm = () => {
                   </select>
                   {formData.courseInterested.courseName && (
                     <div className="mt-2 text-sm text-gray-600">
-                      Selected: {formData.courseInterested.courseName} - {formData.courseInterested.courseCode}
+                      Selected: {formData.courseInterested.courseName} -{" "}
+                      {formData.courseInterested.courseCode}
                     </div>
                   )}
                 </div>
@@ -453,8 +484,10 @@ const EnquiryForm = () => {
 
             {/* Personal Details Section */}
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Additional Details</h2>
-              
+              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">
+                Additional Details
+              </h2>
+
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="dateOfBirth" className={labelStyle}>
@@ -505,7 +538,7 @@ const EnquiryForm = () => {
                     className={inputStyle}
                   >
                     <option value="">Select State</option>
-                    {indianStates.map(state => (
+                    {indianStates.map((state) => (
                       <option key={state.value} value={state.value}>
                         {state.label}
                       </option>
@@ -563,8 +596,10 @@ const EnquiryForm = () => {
 
             {/* Additional Information Section */}
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Other Information</h2>
-              
+              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">
+                Other Information
+              </h2>
+
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="referralCode" className={labelStyle}>
@@ -608,7 +643,7 @@ const EnquiryForm = () => {
                 disabled={loading}
                 className="bg-[#457B9D] from-blue-500 to-blue-600 px-8 py-4 text-white rounded-md hover:bg-[#2e5369] focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Processing...' : 'Save Enquiry'}
+                {loading ? "Processing..." : "Save Enquiry"}
               </button>
               <button
                 type="button"

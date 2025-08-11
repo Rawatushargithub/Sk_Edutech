@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
-import { requestFranchiseOtp, submitFranchiseApplicationWithOtp } from '../AdminPanel_frontend/services/homepageFranchiseService';
+import { requestFranchiseOtp, submitFranchiseApplicationWithOtp, checkUniqueness } from '../AdminPanel_frontend/services/homepageFranchiseService';
 import INDFlag from '/assets/india-flag-icon.png';
 
 const designations = ['Teacher', 'Entrepreneur', 'Institute Owner'];
@@ -28,12 +28,30 @@ const ApplyFranchiseModal = () => {
     const [formDataForOtp, setFormDataForOtp] = useState(null);
     const [userEmailForOtp, setUserEmailForOtp] = useState('');
     const [applicationId, setApplicationId] = useState('');
+    const [validationStatus, setValidationStatus] = useState({
+        email: { loading: false, unique: true, message: '' },
+        mobile: { loading: false, unique: true, message: '' }
+    });
 
     const confirmTermsValue = watch('confirmTerms');
 
     useEffect(() => {
         reset();
     }, [reset]);
+
+    const checkFieldUniqueness = useCallback(async (field, value) => {
+        setValidationStatus(prev => ({ ...prev, [field]: { ...prev[field], loading: true } }));
+        try {
+            const response = await checkUniqueness({ [field]: value });
+            if (response.data.isUnique) {
+                setValidationStatus(prev => ({ ...prev, [field]: { loading: false, unique: true, message: '' } }));
+            } else {
+                setValidationStatus(prev => ({ ...prev, [field]: { loading: false, unique: false, message: `This ${field} is already registered.` } }));
+            }
+        } catch (error) {
+            setValidationStatus(prev => ({ ...prev, [field]: { loading: false, unique: false, message: `Error checking ${field}.` } }));
+        }
+    }, []);
 
     const ownerPhotoFile = watch('ownerPhoto');
     const franchiseSignatureFile = watch('franchiseSignature');
@@ -180,8 +198,10 @@ const ApplyFranchiseModal = () => {
                             </div>
                             <div>
                                 <label htmlFor="email" className={labelClass}>Email <span className="text-red-500">*</span></label>
-                                <input type="email" id="email" {...register("email", { required: "Email is required", pattern: { value: /^\S+@\S+$/i, message: "Invalid email address" } })} className={inputClass} placeholder="e.g., owner@example.com" />
+                                <input type="email" id="email" {...register("email", { required: "Email is required", pattern: { value: /^\S+@\S+$/i, message: "Invalid email address" } })} onBlur={(e) => checkFieldUniqueness('email', e.target.value)} className={inputClass} placeholder="e.g., owner@example.com" />
                                 {errors.email && <p className={errorClass}>{errors.email.message}</p>}
+                                {validationStatus.email.loading && <p className="text-blue-600 text-sm mt-2">Checking...</p>}
+                                {!validationStatus.email.unique && <p className={errorClass}>{validationStatus.email.message}</p>}
                             </div>
                             <div>
                                 <label htmlFor="mobile" className={labelClass}>Mobile <span className="text-red-500">*</span></label>
@@ -190,9 +210,11 @@ const ApplyFranchiseModal = () => {
                                         <img src={INDFlag} alt="IN" className="h-5 w-auto mr-2 flex-shrink-0"/>
                                         <span className="whitespace-nowrap">+91</span>
                                     </div>
-                                    <input type="tel" id="mobile" {...register("mobile", { required: "Mobile number is required", pattern: { value: /^[6-9]\d{9}$/, message: "Enter a valid 10-digit Indian mobile number" } })} className="block w-full flex-1 px-3 py-2 border-none focus:outline-none text-base placeholder-gray-400" placeholder="9876543210" />
+                                    <input type="tel" id="mobile" {...register("mobile", { required: "Mobile number is required", pattern: { value: /^[6-9]\d{9}$/, message: "Enter a valid 10-digit Indian mobile number" } })} onBlur={(e) => checkFieldUniqueness('mobile', e.target.value)} className="block w-full flex-1 px-3 py-2 border-none focus:outline-none text-base placeholder-gray-400" placeholder="9876543210" />
                                 </div>
                                 {errors.mobile && <p className={errorClass}>{errors.mobile.message}</p>}
+                                {validationStatus.mobile.loading && <p className="text-blue-600 text-sm mt-2">Checking...</p>}
+                                {!validationStatus.mobile.unique && <p className={errorClass}>{validationStatus.mobile.message}</p>}
                             </div>
                         </div>
                     </section>
@@ -375,11 +397,11 @@ const ApplyFranchiseModal = () => {
                             <button
                                 type="submit"
                                 className={`px-12 py-4 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white transition duration-200 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:transform-none ${
-                                    !confirmTermsValue || isLoading 
+                                    !confirmTermsValue || isLoading || !validationStatus.email.unique || !validationStatus.mobile.unique
                                         ? 'bg-gray-400 cursor-not-allowed' 
                                         : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-300'
                                 }`}
-                                disabled={isLoading || !confirmTermsValue}
+                                disabled={isLoading || !confirmTermsValue || !validationStatus.email.unique || !validationStatus.mobile.unique}
                             >
                                 {isLoading ? (
                                     <div className="flex items-center space-x-2">

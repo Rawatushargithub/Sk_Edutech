@@ -121,4 +121,25 @@ const submitWithOtp = asyncHandler(async (req, res) => {
     );
 });
 
-export { requestOtp, submitWithOtp };
+const checkUniqueness = asyncHandler(async (req, res) => {
+    const { email, mobile } = req.query;
+
+    if (!email && !mobile) {
+        throw new ApiError(400, "Email or mobile number is required to check for uniqueness.");
+    }
+
+    let query = {};
+    if (email) {
+        query.email = email;
+    } else {
+        query.mobile = mobile;
+    }
+
+    const existingFranchise = await Franchise.findOne(query);
+
+    return res.status(200).json(
+        new ApiResponse(200, { isUnique: !existingFranchise }, "Uniqueness check complete.")
+    );
+});
+
+export { requestOtp, submitWithOtp, checkUniqueness };

@@ -42,7 +42,7 @@ router.route("/check-uniqueness").get(checkUniqueness);
 // Expects FormData including all text fields, OTP, and files
 router.route("/submit-with-otp").post(
     upload.fields([
-        { name: 'ownerPhoto', maxCount: 1 },
+        { name: 'franchiseLogo', maxCount: 1 },
         { name: 'franchiseSignature', maxCount: 1 }
     ]),
     submitWithOtp

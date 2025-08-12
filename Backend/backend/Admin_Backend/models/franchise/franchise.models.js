@@ -108,7 +108,7 @@ const franchiseSchema = new Schema(
             trim: true,
         },
         // Cloudinary URLs for uploaded documents
-        ownerPhotoUrl: {
+        franchiseLogoUrl: {
             type: String, // URL from Cloudinary
         },
         franchiseSignatureUrl: {

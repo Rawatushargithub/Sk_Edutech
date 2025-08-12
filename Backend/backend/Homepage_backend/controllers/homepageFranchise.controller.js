@@ -48,6 +48,8 @@ const requestOtp = asyncHandler(async (req, res) => {
 const submitWithOtp = asyncHandler(async (req, res) => {
     console.log("Received body for submitWithOtp:", JSON.stringify(req.body, null, 2));
     const { email, otp, franchiseName, ownerName, designation, dob, mobile, address, state, city, postalCode, country, totalComputers, totalStudents, planValidityDays, gstNumber, atcCode } = req.body;
+    const franchiseLogoFile = req.files?.franchiseLogo?.[0];
+    const franchiseSignatureFile = req.files?.franchiseSignature?.[0];
 
     if (!email || !otp) {
         throw new ApiError(400, "Email and OTP are required for submission.");
@@ -68,6 +70,18 @@ const submitWithOtp = asyncHandler(async (req, res) => {
     }
 
     // OTP is valid, create the franchise application
+    let franchiseLogoUrl = null;
+    if (franchiseLogoFile) {
+        const uploadResult = await uploadBufferToCloudinary(franchiseLogoFile.buffer, franchiseLogoFile.originalname, "franchise_logos");
+        franchiseLogoUrl = uploadResult.secure_url;
+    }
+
+    let franchiseSignatureUrl = null;
+    if (franchiseSignatureFile) {
+        const uploadResult = await uploadBufferToCloudinary(franchiseSignatureFile.buffer, franchiseSignatureFile.originalname, "franchise_signatures");
+        franchiseSignatureUrl = uploadResult.secure_url;
+    }
+
     const newApplication = await Franchise.create({
         franchiseName,
         ownerName,
@@ -85,6 +99,8 @@ const submitWithOtp = asyncHandler(async (req, res) => {
         planValidityDays: parseInt(planValidityDays, 10),
         gstNumber,
         atcCode,
+        franchiseLogoUrl,
+        franchiseSignatureUrl,
         applicationType: 'FranchiseApplied',
         status: 'Pending',
         verificationStatus: 'Verified' // Since OTP is verified

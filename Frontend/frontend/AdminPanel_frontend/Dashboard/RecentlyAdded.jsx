@@ -165,17 +165,17 @@ const TabMenu = () => {
                       className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
                     >
                       <div className="flex items-start space-x-4 ">
-                        {/* Owner Photo */}
+                        {/* Franchise Logo */}
                         <div className="flex-shrink-0">
-                          {franchise.ownerPhotoUrl ? (
+                          {franchise.franchiseLogoUrl ? (
                             <img
-                              src={franchise.ownerPhotoUrl}
+                              src={franchise.franchiseLogoUrl}
                               alt={franchise.ownerName}
                               className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
                               onError={(e) => {
                                 e.target.onerror = null;
                                 e.target.src =
-                                  "https://via.placeholder.com/64?text=Owner";
+                                  "https://via.placeholder.com/64?text=Logo";
                               }}
                             />
                           ) : (

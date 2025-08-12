@@ -51,7 +51,7 @@ function App() {
         <Route path="/refund-policy" element={<RefundPolicy />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/message" element={<Message />} />
-        <Route path="/term-condition" element={<TermAndConditions />} />
+        <Route path="/terms-conditions" element={<TermAndConditions />} />
 
         {/* Admin Routes */}
         <Route path='/admin/login' element={<AdminLogin />} />

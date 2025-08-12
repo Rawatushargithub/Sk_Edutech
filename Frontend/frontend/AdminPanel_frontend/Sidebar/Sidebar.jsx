@@ -87,7 +87,7 @@ const Sidebar = () => {
           <img src="/assets/Logo.jpg" alt="Logo" className="cursor-pointer" />
         </div>
         <i className="text-lg text-neutral-400 px-4 ml-4">Admin Panel</i>
-        <ul className="space-y-3.5 p-4">
+        <ul className="space-y-3.5 p-4 overflow-y-auto h-[calc(100vh-12rem)]">
           {menuItems.map((item, index) => (
             <li key={index}>
               {item.link ? (

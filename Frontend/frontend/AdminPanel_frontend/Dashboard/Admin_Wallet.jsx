@@ -39,9 +39,9 @@ const AdminWalletApproval = () => {
       alert("Failed to approve transaction");
     }
   };
-
+ 
   const handleReject = async (transactionId) => {
-    try {
+    try { 
       await axios.post(`${API_BASE_URL}/api/v1/adminwallet/transactions/${transactionId}/reject`);
       setTransactions(
         transactions.map((transaction) =>

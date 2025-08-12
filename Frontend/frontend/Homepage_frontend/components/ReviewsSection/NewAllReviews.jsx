@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { FaStar, FaSearch } from "react-icons/fa";
-import Navbart2 from "../navbar/Navbar2";
 import API_BASE_URL from "../../../config"; // Adjust the import path as necessary
+import Navbar from "../navbar/Navbar";
+
 const NAllReviewsPage = () => {
   const [reviews, setReviews] = useState([]);
   const [filteredReviews, setFilteredReviews] = useState([]);
@@ -129,7 +130,7 @@ const NAllReviewsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navbar placeholder */}
-      <Navbart2 />
+      <Navbar/>
       
       {/* Main content */}
       <div className="mt-20 pt-20 pb-10 px-4 md:px-6 lg:px-8 max-w-screen-xl mx-auto">

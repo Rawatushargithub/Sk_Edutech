@@ -50,3 +50,14 @@ export const submitFranchiseApplicationWithOtp = async (formData) => {
         throw error.response?.data || new Error("Failed to submit application with OTP");
     }
 };
+
+export const checkUniqueness = async (params) => {
+    const url = '/check-uniqueness';
+    try {
+        const response = await skMergedHomepageFranchiseApi.get(url, { params });
+        return response.data;
+    } catch (error) {
+        console.error("[HomepageFranchiseService] Error checking uniqueness:", error.response?.data || error.message);
+        throw error.response?.data || new Error("Failed to check uniqueness");
+    }
+};

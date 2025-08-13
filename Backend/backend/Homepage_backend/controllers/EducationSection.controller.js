@@ -31,13 +31,13 @@ export const getRecentStudents = async (req, res) => {
 export const getRecentCenterImgs = async (req, res) => {
   try {
     const Centers = await Franchise.find()
-      .select('franchiseName ownerPhotoUrl')
+      .select('franchiseName franchiseLogoUrl')
       .sort({ createdAt: -1 })
       .limit(10);
 
     const formattedCenters = Centers.map(Centers => ({
       name: Centers.franchiseName,
-      image:Centers.ownerPhotoUrl
+      image:Centers.franchiseLogoUrl
     }));
 
 

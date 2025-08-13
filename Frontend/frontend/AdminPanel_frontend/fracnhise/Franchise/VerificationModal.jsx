@@ -62,7 +62,7 @@ const VerificationModal = ({ franchise, isOpen, onConfirm, onCancel, isVerifying
                         <DetailItem label="Current Status" value={franchise.status} />
                         <DetailItem label="Current Verification" value={franchise.verificationStatus} />
                         {/* Add image previews if needed */}
-                        {franchise.ownerPhotoUrl && (
+                        {franchise.franchiseLogoUrl && (
                              <div className="py-2 sm:grid sm:grid-cols-3 sm:gap-4">
                                 <dt className="text-sm font-medium text-gray-600">Franchise Logo</dt>
                                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">

@@ -89,7 +89,7 @@ const Fees_table = ({
     const newCourseFees = e.target.value;
     setFormData({
       ...formData,
-      courseFees: Number(newCourseFees),
+      courseFees: newCourseFees === "" ? 0 : Number(newCourseFees), // Handle empty string
     });
   };
 
@@ -97,9 +97,9 @@ const Fees_table = ({
     fetchBatches();
   }, []);
 
-  // Calculate Total Fees - use formData.courseFees instead of local courseFees
+  // Update the calculateTotalFees function to handle empty courseFees:
   const calculateTotalFees = () => {
-    let updatedTotal = Number(formData.courseFees) || 0;
+    let updatedTotal = Number(formData.courseFees) || 0; // This will handle both 0 and empty string
     console.log("without if ", discountAmount);
     if (discountRate === "amount-") {
       updatedTotal -= Number(discountAmount);
@@ -115,6 +115,10 @@ const Fees_table = ({
     }
     setTotalFees(updatedTotal);
 
+    // Auto-calculate balance
+  const balance = updatedTotal - (Number(feesReceived) || 0);
+  setfeeBalance(balance);
+
     // Update formData with calculated values
     setFormData((prev) => ({
       ...prev,
@@ -122,6 +126,7 @@ const Fees_table = ({
       discountAmount,
       totalFees: updatedTotal,
       feesReceived,
+      feesBalance: balance,
       installments,
     }));
   };
@@ -156,25 +161,25 @@ const Fees_table = ({
           <thead>
             <tr className="bg-gray-200">
               <th className="border border-gray-300 px-2 py-2 w-[100px]">
-                Course Fees
+                Course Fees(₹)
               </th>
               <th className="border border-gray-300 px-1 py-1 w-[80px]">
                 Discount Rate
               </th>
               <th className="border border-gray-300 px-1 py-1 w-[100px]">
-                Discount Amount
+                Discount Amount(₹)
               </th>
               <th className="border border-gray-300 px-1 py-1 w-[100px]">
-                Total Fees
+                Total Fees(₹)
               </th>
               <th className="border border-gray-300 px-1 py-1 w-[100px]">
-                Fees Received
+                Fees Received(₹)
               </th>
               <th className="border border-gray-300 px-1 py-1 w-[100px]">
                 Payment Mode
               </th>
               <th className="border border-gray-300 px-1 py-1 w-[100px]">
-                Balance
+                Balance(₹)
               </th>
               <th className="border border-gray-300 px-1 py-1 w-[120px]">
                 Remarks
@@ -187,8 +192,9 @@ const Fees_table = ({
                 <input
                   type="number"
                   className="border h-8 w-full rounded px-1 text-sm"
-                  value={formData.courseFees || 0}
+                  value={formData.courseFees || ""}
                   onChange={handleCourseFeesChange}
+                  placeholder="₹0"
                 />
               </td>
               <td className="border border-gray-300 py-2 px-2 text-center">
@@ -207,14 +213,20 @@ const Fees_table = ({
                 <input
                   type="number"
                   className="w-full h-8 border rounded px-1 text-sm"
-                  value={discountAmount}
-                  onChange={(e) => setDiscountAmount(Number(e.target.value))}
+                  value={discountAmount || ""}
+                  placeholder="₹0"
+                  onChange={(e) =>
+                    setDiscountAmount(
+                      e.target.value === "" ? 0 : Number(e.target.value)
+                    )
+                  }
                 />
               </td>
               <td className="border border-gray-300 py-2 px-2 text-center">
                 <input
-                  type="number" 
+                  type="number"
                   className="w-full h-8 text-black border rounded px-1 text-sm bg-gray-300"
+                  placeholder="₹0"
                   value={totalFees}
                   readOnly
                 />
@@ -223,8 +235,13 @@ const Fees_table = ({
                 <input
                   type="number"
                   className="w-full h-8 border rounded px-1 text-sm"
-                  value={feesReceived}
-                  onChange={(e) => setFeesReceived(e.target.value)}
+                 placeholder="₹0"
+                  value={feesReceived || ""}
+                  onChange={(e) =>
+                    setFeesReceived(
+                      e.target.value === "" ? 0 : Number(e.target.value)
+                    )
+                  }
                 />
               </td>
               <td className="border border-gray-300 py-2 px-2 text-center">
@@ -241,9 +258,10 @@ const Fees_table = ({
               </td>
               <td className="border border-gray-300 py-2 px-2 text-center">
                 <input
-                  className="w-full h-8 border rounded px-1 text-sm"
+                  className="w-full h-8 border rounded px-1 text-sm bg-gray-300"
+                  placeholder="₹0"
                   value={feesBalance}
-                  onChange={(e) => setfeeBalance(e.target.value)}
+                  readOnly
                 />
               </td>
               <td className="border border-gray-300 py-2 px-2 text-center">

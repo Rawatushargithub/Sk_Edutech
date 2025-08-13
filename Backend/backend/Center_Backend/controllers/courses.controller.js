@@ -215,7 +215,7 @@ export const validateFranchiseAccess = async (franchiseId, courseId = null) => {
 export const getCourses = async (req, res) => {
     try { 
         const { franchiseId } = req.query;
-        
+        console.log("franchiseId value :: ", franchiseId);
         // Build the query object
         let query = {};
         if (franchiseId) {

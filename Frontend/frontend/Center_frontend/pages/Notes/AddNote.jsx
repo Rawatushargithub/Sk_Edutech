@@ -20,7 +20,8 @@ const AddNote = () => {
     const fetchActiveCourses = async () => {
       setLoadingCourses(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses`);
+          const franchiseId = localStorage.getItem('franchiseID');
+        const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`);
         if (!response.ok) {
           const errData = await response.json().catch(() => ({ message: 'Failed to fetch courses' }));
           throw new Error(errData.message || `Error ${response.status}`);

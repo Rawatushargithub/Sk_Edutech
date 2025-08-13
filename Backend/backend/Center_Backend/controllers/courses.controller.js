@@ -215,7 +215,7 @@ export const validateFranchiseAccess = async (franchiseId, courseId = null) => {
 export const getCourses = async (req, res) => {
     try { 
         const { franchiseId } = req.query;
-        
+        console.log("franchiseId value :: ", franchiseId);
         // Build the query object
         let query = {};
         if (franchiseId) {
@@ -254,8 +254,9 @@ export const getCoursesCount = async (req , res) => {
 export const getRecentCourses = async (req, res) => {
     try {
       const limit = parseInt(req.query.limit) || 5;
-      
-      const courses = await Course.find()
+      const franchiseId = req.query.franchiseId; // Get franchiseId from query params
+      console.log(req.query, "Query params for recent courses");
+      const courses = await Course.find({franchiseId: franchiseId})
         .sort({ createdAt: -1 })
         .limit(limit)
         .select("courseName courseCode courseDuration courseSubject courseMRP instituteStatus adminApprovalStatus courseImage createdAt");

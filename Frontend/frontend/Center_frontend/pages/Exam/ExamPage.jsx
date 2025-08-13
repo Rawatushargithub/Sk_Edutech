@@ -56,13 +56,21 @@ const ExamManagement = () => {
   // Function to check if exam has ended based on date and time
   const hasExamEnded = (examDate, examEndTime) => {
     try {
+      // Add this safety check
+      if (!examEndTime || !examDate) {
+        console.log("Missing examEndTime or examDate:", {
+          examDate,
+          examEndTime,
+        });
+        return false;
+      }
       const now = new Date();
       const examDateTime = new Date(examDate);
-      
+
       // Parse the end time and set it to the exam date
-      const [hours, minutes] = examEndTime.split(':');
+      const [hours, minutes] = examEndTime.split(":");
       examDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-      
+
       // Return true if current time is past the exam end time
       return now > examDateTime;
     } catch (error) {
@@ -175,9 +183,11 @@ const ExamManagement = () => {
         data.exams.map(async (exam) => {
           const daysLeft = getDaysLeft(exam.examDate);
           const examEnded = hasExamEnded(exam.examDate, exam.examEndTime);
-          
-          console.log(`Exam ${exam.ExamID}: Days left: ${daysLeft}, Exam ended: ${examEnded}, Current status: ${exam.status}`);
-          
+
+          console.log(
+            `Exam ${exam.ExamID}: Days left: ${daysLeft}, Exam ended: ${examEnded}, Current status: ${exam.status}`
+          );
+
           // If exam has ended (based on date and end time) and status is still Active, update it to Inactive
           if (examEnded && exam.status === "Active") {
             try {
@@ -229,9 +239,9 @@ const ExamManagement = () => {
   // Helper function to convert 24-hour time to 12-hour format with AM/PM
   const formatTimeToAMPM = (time24) => {
     if (!time24) return "";
-    const [hours, minutes] = time24.split(':');
+    const [hours, minutes] = time24.split(":");
     const hour = parseInt(hours, 10);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const ampm = hour >= 12 ? "PM" : "AM";
     const hour12 = hour % 12 || 12;
     return `${hour12}:${minutes} ${ampm}`;
   };
@@ -502,8 +512,8 @@ const ExamManagement = () => {
                     Upload Student Marks
                   </h1>
                   <p className="text-sm sm:text-base text-gray-600">
-                    Exam ID: {selectedExam} | Course: {currentExam?.courseCode} | 
-                    Batch: {currentExam?.batch.timings}
+                    Exam ID: {selectedExam} | Course: {currentExam?.courseCode}{" "}
+                    | Batch: {currentExam?.batch.timings}
                   </p>
                 </div>
               </div>
@@ -527,10 +537,12 @@ const ExamManagement = () => {
                   <strong>Passing Marks:</strong> {currentExam?.passingMarks}
                 </div>
                 <div>
-                  <strong>Total Questions:</strong> {currentExam?.totalQuestions}
+                  <strong>Total Questions:</strong>{" "}
+                  {currentExam?.totalQuestions}
                 </div>
                 <div>
-                  <strong>Duration:</strong> {currentExam?.examDurationMinutes} mins
+                  <strong>Duration:</strong> {currentExam?.examDurationMinutes}{" "}
+                  mins
                 </div>
               </div>
             </div>
@@ -570,7 +582,10 @@ const ExamManagement = () => {
                           max={currentExam?.totalMarks}
                           value={student.marks}
                           onChange={(e) =>
-                            handleMarksChange(student.rollNumber, e.target.value)
+                            handleMarksChange(
+                              student.rollNumber,
+                              e.target.value
+                            )
                           }
                           className="w-16 sm:w-20 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder={
@@ -592,7 +607,8 @@ const ExamManagement = () => {
                             Pass
                           </span>
                         ) : student.marks &&
-                          parseInt(student.marks) < currentExam?.passingMarks ? (
+                          parseInt(student.marks) <
+                            currentExam?.passingMarks ? (
                           <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
                             Fail
                           </span>
@@ -636,7 +652,7 @@ const ExamManagement = () => {
             <h1 className="text-2xl sm:text-4xl font-bold text-red-500">
               Exam Management
             </h1>
-            
+
             {/* Desktop Actions */}
             <div className="hidden sm:flex gap-2">
               <div className="flex border rounded-lg overflow-hidden">
@@ -689,8 +705,9 @@ const ExamManagement = () => {
 
             {/* Mobile Menu Button */}
             <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="sm:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              onClick={() => setIsMobileMenuOpen((prev) => {!prev ;console.log("button is working menu button")})}
+              className="sm:hidden p-3 min-h-[44px] min-w-[44px] text-gray-600 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors duration-200 select-none touch-manipulation flex items-center justify-center"
+              aria-label="Toggle mobile menu"
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -698,7 +715,7 @@ const ExamManagement = () => {
 
           {/* Mobile Menu */}
           {isMobileMenuOpen && (
-            <div className="sm:hidden bg-gray-50 p-4 rounded-lg space-y-3">
+            <div className="sm:hidden bg-gray-50 p-4 rounded-lg space-y-3 transition-all duration-300 ease-in-out relative z-10 shadow-lg border">
               {/* Mode Selection */}
               <div className="flex gap-2">
                 <button
@@ -706,10 +723,10 @@ const ExamManagement = () => {
                     setMode("online");
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`flex-1 px-3 py-2 flex items-center justify-center gap-2 rounded-lg text-sm ${
+                  className={`flex-1 px-3 py-3 min-h-[44px] flex items-center justify-center gap-2 rounded-lg text-sm transition-colors duration-200 select-none touch-manipulation ${
                     mode === "online"
                       ? "bg-blue-100 text-blue-600"
-                      : "bg-white text-gray-600"
+                      : "bg-white text-gray-600 hover:bg-gray-50 active:bg-gray-100"
                   }`}
                 >
                   <Globe size={18} />
@@ -720,17 +737,17 @@ const ExamManagement = () => {
                     setMode("offline");
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`flex-1 px-3 py-2 flex items-center justify-center gap-2 rounded-lg text-sm ${
+                  className={`flex-1 px-3 py-3 min-h-[44px] flex items-center justify-center gap-2 rounded-lg text-sm transition-colors duration-200 select-none touch-manipulation ${
                     mode === "offline"
                       ? "bg-blue-100 text-blue-600"
-                      : "bg-white text-gray-600"
+                      : "bg-white text-gray-600 hover:bg-gray-50 active:bg-gray-100"
                   }`}
                 >
                   <Book size={18} />
                   Offline
                 </button>
               </div>
-              
+
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -738,7 +755,7 @@ const ExamManagement = () => {
                     setShowFilters(!showFilters);
                     setIsMobileMenuOpen(false);
                   }}
-                  className="px-3 py-2 flex items-center justify-center gap-2 bg-white text-gray-600 rounded-lg text-sm"
+                  className="px-3 py-3 min-h-[44px] flex items-center justify-center gap-2 bg-white text-gray-600 rounded-lg text-sm hover:bg-gray-50 active:bg-gray-100 transition-colors duration-200 select-none touch-manipulation"
                 >
                   <Filter size={18} />
                   Filters
@@ -748,19 +765,19 @@ const ExamManagement = () => {
                     navigate("/institute/AddExam");
                     setIsMobileMenuOpen(false);
                   }}
-                  className="px-3 py-2 flex items-center justify-center gap-2 bg-blue-500 text-white rounded-lg text-sm"
+                  className="px-3 py-3 min-h-[44px] flex items-center justify-center gap-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 active:bg-blue-700 transition-colors duration-200 select-none touch-manipulation"
                 >
                   <Plus size={18} />
                   Add Exam
                 </button>
               </div>
-              
+
               <button
                 onClick={() => {
                   handleRetry();
                   setIsMobileMenuOpen(false);
                 }}
-                className="w-full px-3 py-2 flex items-center justify-center gap-2 bg-white text-gray-600 rounded-lg text-sm"
+                className="w-full px-3 py-3 min-h-[44px] flex items-center justify-center gap-2 bg-white text-gray-600 rounded-lg text-sm hover:bg-gray-50 active:bg-gray-100 transition-colors duration-200 select-none touch-manipulation"
               >
                 <Sliders size={18} />
                 Refresh
@@ -777,18 +794,18 @@ const ExamManagement = () => {
 
           {/* Filters */}
           {showFilters && (
-            <div className="bg-gray-50 p-3 sm:p-4 rounded-lg space-y-4">
+            <div className="bg-gray-50 p-3 sm:p-4 rounded-lg space-y-4 transition-all duration-300 ease-in-out">
               {/* Search and Course Dropdown */}
               <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
-                <div className="relative flex-1">
+                <div className="relative flex-1 min-w-0">
                   <Search
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
                     size={20}
                   />
                   <input
                     type="text"
                     placeholder="Search by exam ID or course code..."
-                    className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all duration-200"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -827,34 +844,35 @@ const ExamManagement = () => {
           )}
 
           {/* Tabs */}
+          {/* Tabs */}
           <div className="border-b">
             <div className="flex space-x-4 sm:space-x-8 overflow-x-auto">
               <button
                 onClick={() => setActiveTab("all")}
-                className={`py-2 px-1 whitespace-nowrap text-sm sm:text-base ${
+                className={`py-3 px-2 min-h-[44px] whitespace-nowrap text-sm sm:text-base transition-colors duration-200 select-none touch-manipulation ${
                   activeTab === "all"
                     ? "border-b-2 border-blue-500 text-blue-600 font-medium"
-                    : "text-gray-500 hover:text-gray-700"
+                    : "text-gray-500 hover:text-gray-700 active:text-gray-900"
                 }`}
               >
                 All Exams ({tabCounts.all})
               </button>
               <button
                 onClick={() => setActiveTab("active")}
-                className={`py-2 px-1 whitespace-nowrap text-sm sm:text-base ${
+                className={`py-3 px-2 min-h-[44px] whitespace-nowrap text-sm sm:text-base transition-colors duration-200 select-none touch-manipulation ${
                   activeTab === "active"
                     ? "border-b-2 border-blue-500 text-blue-600 font-medium"
-                    : "text-gray-500 hover:text-gray-700"
+                    : "text-gray-500 hover:text-gray-700 active:text-gray-900"
                 }`}
               >
                 Active ({tabCounts.active})
               </button>
               <button
                 onClick={() => setActiveTab("inactive")}
-                className={`py-2 px-1 whitespace-nowrap text-sm sm:text-base ${
+                className={`py-3 px-2 min-h-[44px] whitespace-nowrap text-sm sm:text-base transition-colors duration-200 select-none touch-manipulation ${
                   activeTab === "inactive"
                     ? "border-b-2 border-blue-500 text-blue-600 font-medium"
-                    : "text-gray-500 hover:text-gray-700"
+                    : "text-gray-500 hover:text-gray-700 active:text-gray-900"
                 }`}
               >
                 Inactive ({tabCounts.inactive})
@@ -863,7 +881,7 @@ const ExamManagement = () => {
           </div>
 
           {/* Mobile Card View */}
-          <div className="block sm:hidden space-y-4">
+          <div className="block sm:hidden space-y-4 px-1 relative z-0">
             {filteredExams.length > 0 ? (
               filteredExams.map((exam) => (
                 <div key={exam.id} className="bg-gray-50 p-4 rounded-lg border">
@@ -871,16 +889,25 @@ const ExamManagement = () => {
                     {/* Header */}
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-semibold text-gray-900">{exam.examId}</h3>
-                        <p className="text-sm text-gray-600">{exam.courseCode}</p>
+                        <h3 className="font-semibold text-gray-900">
+                          {exam.examId}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {exam.courseCode}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          exam.examType === "Weekly Test" ? "bg-blue-100 text-blue-800" :
-                          exam.examType === "Monthly Test" ? "bg-yellow-100 text-yellow-800" :
-                          exam.examType === "Final Test" ? "bg-red-100 text-red-800" :
-                          "bg-gray-100 text-gray-800"
-                        }`}>
+                        <span
+                          className={`px-2 py-1 text-xs rounded-full ${
+                            exam.examType === "Weekly Test"
+                              ? "bg-blue-100 text-blue-800"
+                              : exam.examType === "Monthly Test"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : exam.examType === "Final Test"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
                           {exam.examType}
                         </span>
                         {exam.status === "Active" ? (
@@ -906,12 +933,15 @@ const ExamManagement = () => {
                       <div>
                         <span className="text-gray-500">Time:</span>
                         <p className="font-medium">
-                          {formatTimeToAMPM(exam.examStartTime)} - {formatTimeToAMPM(exam.examEndTime)}
+                          {formatTimeToAMPM(exam.examStartTime)} -{" "}
+                          {formatTimeToAMPM(exam.examEndTime)}
                         </p>
                       </div>
                       <div>
                         <span className="text-gray-500">Duration:</span>
-                        <p className="font-medium">{exam.examDurationMinutes} mins</p>
+                        <p className="font-medium">
+                          {exam.examDurationMinutes} mins
+                        </p>
                       </div>
                       <div>
                         <span className="text-gray-500">Questions:</span>
@@ -919,34 +949,38 @@ const ExamManagement = () => {
                       </div>
                       <div>
                         <span className="text-gray-500">Marks:</span>
-                        <p className="font-medium">{exam.totalMarks}/{exam.passingMarks}</p>
+                        <p className="font-medium">
+                          {exam.totalMarks}/{exam.passingMarks}
+                        </p>
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-wrap gap-2 pt-2 border-t">
-                      <button 
-                        onClick={() => navigate(`/institute/editExam`, { state: { exam } })}
-                        className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+                    <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
+                      <button
+                        onClick={() =>
+                          navigate(`/institute/editExam`, { state: { exam } })
+                        }
+                        className="px-4 py-2 min-h-[44px] text-sm bg-blue-100 text-blue-600 rounded hover:bg-blue-200 active:bg-blue-300 transition-colors duration-150 min-w-0 flex-shrink-0 select-none touch-manipulation flex items-center justify-center"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDeleteExam(exam.id)}
-                        className="px-3 py-1 text-sm bg-red-100 text-red-600 rounded hover:bg-red-200"
+                        className="px-4 py-2 min-h-[44px] text-sm bg-red-100 text-red-600 rounded hover:bg-red-200 active:bg-red-300 transition-colors duration-150 min-w-0 flex-shrink-0 select-none touch-manipulation flex items-center justify-center"
                       >
                         Delete
                       </button>
                       {mode === "offline" && exam.status === "Inactive" && (
                         <button
                           onClick={() => handleUploadMarks(exam.id)}
-                          className="px-3 py-1 text-sm bg-green-100 text-green-600 rounded hover:bg-green-200 flex items-center gap-1"
+                          className="px-4 py-2 min-h-[44px] text-sm bg-green-100 text-green-600 rounded hover:bg-green-200 active:bg-green-300 flex items-center gap-1 transition-colors duration-150 select-none touch-manipulation"
                         >
                           <Upload size={14} /> Upload Marks
                         </button>
                       )}
                       {exam.marksUploaded && (
-                        <span className="px-3 py-1 text-sm bg-green-50 text-green-600 rounded flex items-center gap-1">
+                        <span className="px-4 py-2 text-sm bg-green-50 text-green-600 rounded flex items-center gap-1">
                           ✓ Marks Uploaded ({exam.results?.length || 0})
                         </span>
                       )}
@@ -1051,8 +1085,12 @@ const ExamManagement = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
-                          <button 
-                            onClick={() => navigate(`/institute/editExam`, { state: { exam } })}
+                          <button
+                            onClick={() =>
+                              navigate(`/institute/editExam`, {
+                                state: { exam },
+                              })
+                            }
                             className="text-blue-600 hover:text-blue-900"
                           >
                             Edit
@@ -1107,7 +1145,6 @@ const ExamManagement = () => {
 };
 
 export default ExamManagement;
-
 
 // import React, { useState, useEffect } from "react";
 // import {
@@ -1165,11 +1202,11 @@ export default ExamManagement;
 //     try {
 //       const now = new Date();
 //       const examDateTime = new Date(examDate);
-      
+
 //       // Parse the end time and set it to the exam date
 //       const [hours, minutes] = examEndTime.split(':');
 //       examDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-      
+
 //       // Return true if current time is past the exam end time
 //       return now > examDateTime;
 //     } catch (error) {
@@ -1177,7 +1214,6 @@ export default ExamManagement;
 //       return false;
 //     }
 //   };
-
 
 //   // Function to update exam status to inactive
 //   const updateExamStatus = async (examId) => {
@@ -1336,7 +1372,6 @@ export default ExamManagement;
 //     const hour12 = hour % 12 || 12;
 //     return `${hour12}:${minutes} ${ampm}`;
 //   };
-
 
 //   // Fetch students for a specific exam
 //   const fetchStudentsForExam = async (examId) => {
@@ -2014,7 +2049,7 @@ export default ExamManagement;
 //                         {formatTimeToAMPM(exam.examStartTime)}
 //                       </td>
 //                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-//                         {formatTimeToAMPM(exam.examEndTime)} 
+//                         {formatTimeToAMPM(exam.examEndTime)}
 //                       </td>
 //                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
 //                         {exam.examDurationMinutes} mins
@@ -2044,7 +2079,7 @@ export default ExamManagement;
 //                           <div className="flex space-x-2">
 //                             <button className="text-blue-600 hover:text-blue-900"
 //                             onClick={() => navigate(`/institute/editExam` , { state: { exam } })}
-//                             > 
+//                             >
 //                               Edit
 //                             </button>
 //                             <button
@@ -2069,12 +2104,12 @@ export default ExamManagement;
 //                             {/* Remove View Results for online exams from Actions */}
 //                           </div>
 //                         </td>
-//                       )} 
+//                       )}
 //                       {/* Only show Actions column for online exams */}
 //                       {mode === "online" && (
 //                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
 //                           <div className="flex space-x-2">
-//                             <button 
+//                             <button
 //                             onClick={() => navigate(`/institute/editExam` , { state: { exam } })}
 //                             className="text-blue-600 hover:text-blue-900"
 //                             >

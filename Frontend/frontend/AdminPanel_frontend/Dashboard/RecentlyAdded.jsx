@@ -165,17 +165,17 @@ const TabMenu = () => {
                       className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
                     >
                       <div className="flex items-start space-x-4 ">
-                        {/* Owner Photo */}
+                        {/* Franchise Logo */}
                         <div className="flex-shrink-0">
-                          {franchise.ownerPhotoUrl ? (
+                          {franchise.franchiseLogoUrl ? (
                             <img
-                              src={franchise.ownerPhotoUrl}
+                              src={franchise.franchiseLogoUrl}
                               alt={franchise.ownerName}
                               className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
                               onError={(e) => {
                                 e.target.onerror = null;
                                 e.target.src =
-                                  "https://via.placeholder.com/64?text=Owner";
+                                  "https://via.placeholder.com/64?text=Logo";
                               }}
                             />
                           ) : (
@@ -293,7 +293,7 @@ const TabMenu = () => {
               ) : data.length > 0 ? (
                 <ul className="divide-y divide-gray-200">
                   {data.map((student) => (
-                    <li key={student.id} className="py-3 flex items-center">
+                    <li key={student.id} className="py-3 flex items-center mx-2">
                       {student.photoUrl && (
                         <div className="mr-4 w-12 h-12 rounded-full overflow-hidden">
                           <img
@@ -313,7 +313,7 @@ const TabMenu = () => {
                             Added: {formatDate(student.addedOn)}
                           </p>
                         </div>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm text-gray-500">
                           Roll No: {student.rollNumber}
                         </p>
                       </div>

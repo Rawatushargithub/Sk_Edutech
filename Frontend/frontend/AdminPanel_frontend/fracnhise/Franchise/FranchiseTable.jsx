@@ -90,16 +90,16 @@ function FranchiseTable({ franchises = [], onActionComplete }) { // Added onActi
     const columns = [
         { header: 'Sr.', accessor: (_, index) => index + 1, width: 'w-12' },
         { header: 'Action', accessor: 'actions', width: 'w-24' }, // Adjusted width
-        { header: 'Owner Photo', accessor: 'ownerPhotoUrl', width: 'w-20' },
+        { header: 'Franchise Logo', accessor: 'franchiseLogoUrl', width: 'w-20' },
+        { header: 'Franchise ID', accessor: 'franchiseId', width: 'w-28' },
         { header: 'Institute Name', accessor: 'franchiseName', width: 'w-auto' },
+        { header: 'Mobile', accessor: 'mobile', width: 'w-32' },
         { header: 'No Of Student', accessor: 'totalStudents', width: 'w-24' },
         { header: 'State', accessor: 'state', width: 'w-32' },
         { header: 'City', accessor: 'city', width: 'w-32' },
         { header: 'ATC Code', accessor: 'atcCode', width: 'w-24' },
-        { header: 'Franchise ID', accessor: 'franchiseId', width: 'w-28' },
-        { header: 'Mobile', accessor: 'mobile', width: 'w-32' },
         // { header: 'Status', accessor: 'status', width: 'w-24'}, // REMOVED Status column
-        { header: 'Expire Date', accessor: 'expireDate', width: 'w-32' },
+        { header: 'Expiry Date', accessor: 'expireDate', width: 'w-32' },
         { header: 'Status', accessor: 'status', width: 'w-32' },
     ];
 
@@ -130,11 +130,11 @@ function FranchiseTable({ franchises = [], onActionComplete }) { // Added onActi
                         </button> */}
                     </div>
                 );
-            case 'Owner Photo':
-                return value ? <img src={value} alt="Owner" className="h-10 w-10 object-contain rounded" /> : 'No Photo';
+            case 'Franchise Logo':
+                return value ? <img src={value} alt="Franchise Logo" className="h-10 w-10 object-contain rounded" /> : 'No Photo';
             // case 'Status': // REMOVED
             //      return <span className={`font-medium ${value === 'Active' ? 'text-green-600' : 'text-red-600'}`}>{value}</span>;
-            case 'Expire Date':
+            case 'Expiry Date':
             case 'Registered Date':
                 return formatDate(value);
             case 'No Of Student':

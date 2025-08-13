@@ -309,8 +309,8 @@ const onSubmit = async (data) => {
                     <h3 className={sectionTitleClass}>Documents Upload</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                            <label htmlFor="ownerPhoto" className={labelClass}>Owner Photo</label>
-                            <input type="file" id="ownerPhoto" {...register("ownerPhoto")} accept="image/*" className="mt-1 block w-full text-base text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-base file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer"/>
+                            <label htmlFor="franchiseLogo" className={labelClass}>Franchise Logo</label>
+                            <input type="file" id="franchiseLogo" {...register("franchiseLogo")} accept="image/*" className="mt-1 block w-full text-base text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-base file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer"/>
                             {ownerPhotoFile?.[0] && <span className="text-sm text-gray-500 mt-1 block truncate">{ownerPhotoFile[0].name}</span>}
                         </div>
                         <div>

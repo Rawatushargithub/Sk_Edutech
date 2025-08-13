@@ -30,6 +30,7 @@ const UploadCourseVideo1 = () => {
   // const courses = ["BCA", "MBA", "B.Tech", "M.Tech", "B.Sc"]; // Replaced by dynamic fetch
 
   useEffect(() => {
+
   const fetchCoursesForFilter = async () => {
     setLoadingCourses(true);
     try {
@@ -58,7 +59,6 @@ const UploadCourseVideo1 = () => {
 
   fetchCoursesForFilter();
 }, []);
-
 
   useEffect(() => {
     if (selectedCourseId) {

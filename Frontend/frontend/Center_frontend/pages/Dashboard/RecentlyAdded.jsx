@@ -32,7 +32,7 @@ const TabMenu = () => {
     setLoading(true);
     setError(""); 
     setData([]); // Reset data before fetching
-
+ 
     try {
       console.log(API_ENDPOINTS[tabName]);
       const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS[tabName]}?franchiseId=${localStorage.getItem("franchiseID")}`);
@@ -159,7 +159,7 @@ const TabMenu = () => {
             ) : data.length > 0 ? (
               <ul className="divide-y divide-gray-200">
                 {data.map((student) => (
-                  <li key={student.id} className="py-3 flex items-center">
+                  <li key={student.id} className="py-3 flex items-center mx-2">
                     {student.photoUrl && (
                       <div className="mr-4 w-12 h-12 rounded-full overflow-hidden">
                         <img
@@ -179,7 +179,7 @@ const TabMenu = () => {
                           Added: {formatDate(student.addedOn)}
                         </p>
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm text-gray-500">
                         Roll No: {student.rollNumber}
                       </p>
                     </div>

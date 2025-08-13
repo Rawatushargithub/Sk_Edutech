@@ -1,203 +1,52 @@
-// import React, { useState, useEffect } from "react";
-// import axios from "axios";
-// import API_BASE_URL from "../../../config";
-
-// const Batches = () => {
-//     const franchiseId = localStorage.getItem("franchiseId");
-//   const [batches, setBatches] = useState([]);
-//   const [batch, setBatch] = useState({ batchName: "", batchTiming: "", batchLimit: "" , currentStudents:"6", franchiseId:franchiseId }); // create batches field
-
-//   useEffect(() => {
-//     fetchBatches();
-//   }, []);  
-
-//   const fetchBatches = async () => { 
-//     try {
-//        const franchiseId = localStorage.getItem('franchiseID');
-//        batch.franchiseId = franchiseId;
-//        console.log(franchiseId)
-//       const response = await axios.get(`${API_BASE_URL}/api/v1/institute_batche/allBatches?franchiseId=${franchiseId}`);
-//       console.log(response.data.data)
-
-//       setBatches(response.data.data);
-//     } catch (error) {
-//       console.error("Error fetching data", error);
-//     }
-//   };
-
-//   const handleAddBatch = async () => {
-//     console.log(batch)
-//     if (!batch.batchName || !batch.batchTiming || !batch.batchLimit) {
-//       alert("All fields are mandatory!");
-//       return;
-//     }
-
-//     // Validate time format (e.g., 9AM - 10AM)
-//     const timeFormat = /^([1-9]|1[0-2])(AM|PM) - ([1-9]|1[0-2])(AM|PM)$/;
-//     if (!timeFormat.test(batch.batchTiming)) {
-//       alert("Invalid time format! Use format: 9AM - 10AM");
-//       return;
-//     }
-// console.log(batch.batchName)
-//     try {
-//       console.log(batch)
-//       await axios.post(`${API_BASE_URL}/api/v1/institute_batche/createBatch`, batch);
-      
-//       fetchBatches();
-//       setBatch({ batchName: "", batchTiming: "", batchLimit: "" });
-//       alert("Successfully created Batches")
-//     } catch (error) {
-//       console.error("Error adding batch", error);
-//       alert("Failed to create the batch")
-//     }
-//   };
-
-//   const deleteBatch = async (batchId) => {
-//     try { 
-//         const franchiseId = localStorage.getItem("franchiseID");
-//       await axios.delete(`${API_BASE_URL}/api/v1/institute_batche/${batchId}?franchiseId=${franchiseId}`);
-//       alert("Successfully deleted");
-//       // Refresh the batches list after deletion
-//       fetchBatches();
-//     } catch (error) {
-//       console.log(error.message);
-//       alert("Failed to delete");
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen p-6 bg-gray-100">
-//       <h1 className="text-2xl font-bold text-blue-600 mb-4">
-//         Batch Management
-//       </h1>
-
-//       {/* Add New Batch Form */}
-//       <div className="bg-white p-6 shadow-md rounded mb-6">
-//         <div className="flex flex-wrap gap-4">
-//           {/* Batch Name */}
-//           <div className="flex-1">
-//             <label className="block text-gray-700">Batch Name</label>
-//             <input
-//               type="text"
-//               className="w-full p-2 border rounded"
-//               placeholder="Batch name"
-//               value={batch.batchName}
-//               onChange={(e) =>
-//                 setBatch({ ...batch, batchName: e.target.value.toUpperCase() })
-//               }
-//             />
-//           </div>
-
-//           {/* Timing */}
-//           <div className="flex-1">
-//             <label className="block text-gray-700">
-//               Timing (e.g., 9AM - 10AM)
-//             </label>
-//             <input
-//               type="text"
-//               className="w-full p-2 border rounded"
-//               placeholder="Timing"
-//               value={batch.batchTiming}
-//               onChange={(e) => setBatch({ ...batch, batchTiming: e.target.value })}
-//             />
-//           </div>
-
-//           {/* Max Students Allowed */}
-//           <div className="flex-1">
-//             <label className="block text-gray-700">Max Students Allowed</label>
-//             <input
-//               type="number"
-//               className="w-full p-2 border rounded"
-//               placeholder="Max students"
-//               value={batch.batchLimit}
-//               onChange={(e) => {
-//                 const value = Math.max(0, parseInt(e.target.value) || 0);
-//                 setBatch({ ...batch, batchLimit: value });
-//               }}
-//             />
-//           </div>
-
-//           {/* Add Button */}
-//           <div className="flex items-end">
-//             <button
-//               onClick={handleAddBatch}
-//               className="bg-green-500 text-white px-4 py-2 rounded"
-//             >
-//               Add Batch
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* Batches Table */}
-//       <div className="bg-white p-6 shadow-md rounded">
-//         <h2 className="text-xl font-bold mb-4">Batches List</h2>
-//         <table className="w-full border-collapse border border-gray-300">
-//           <thead>
-//             <tr className="bg-gray-200">
-//               <th className="border p-2">Batch Name</th>
-//               <th className="border p-2">Timing</th>
-//               <th className="border p-2">Enrolled Students</th>
-//               <th className="border p-2">Allowed Students</th>
-//               <th className="border p-2">Action</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {batches.map((batch) => (
-//               <tr key={batch.id} className="text-center">
-//                 <td className="border p-2">{batch.name}</td>
-//                 <td className="border p-2">{batch.timings}</td>
-//                 <td className="border p-2">{batch.currentStudents}</td>
-//                 <td className="border p-2">{batch.limit}</td>
-//                 <td className="border p-2">
-//                   <button 
-//                   onClick={() => deleteBatch(batch.id)}
-//                   className="bg-red-500 text-white px-3 py-1 rounded">
-//                     Delete
-//                   </button>
-//                 </td>
-//               </tr>
-//             ))}
-//           </tbody>
-//         </table>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Batches;
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import API_BASE_URL from "../../../config";
 
 const Batches = () => {
-    const franchiseId = localStorage.getItem("franchiseId");
+  const franchiseId = localStorage.getItem("franchiseId");
   const [batches, setBatches] = useState([]);
-  const [batch, setBatch] = useState({  
-    batchName: "", 
-    batchTiming: "", 
+  const [batch, setBatch] = useState({
+    batchName: "",
+    batchTiming: "",
     batchLimit: 0,
-    currentStudents: 0, 
-    franchiseId: franchiseId 
+    currentStudents: 0,
+    franchiseId: franchiseId,
   });
-  
+
   // Separate state for time inputs
   const [timeInputs, setTimeInputs] = useState({
     fromTime: "",
-    toTime: ""
+    toTime: "",
   });
+
+  // Generate time options from 6 AM to 10 PM
+  const generateTimeOptions = () => {
+    const times = [];
+    for (let hour = 6; hour <= 22; hour++) {
+      if (hour <= 12) {
+        times.push(hour === 12 ? "12PM" : `${hour}AM`);
+      } else {
+        times.push(`${hour - 12}PM`);
+      }
+    }
+    return times;
+  };
+
+  const timeOptions = generateTimeOptions();
 
   useEffect(() => {
     fetchBatches();
-  }, []);  
+  }, []);
 
-  const fetchBatches = async () => { 
+  const fetchBatches = async () => {
     try {
-       const franchiseId = localStorage.getItem('franchiseID');
-       batch.franchiseId = franchiseId;
-       console.log(franchiseId)
-      const response = await axios.get(`${API_BASE_URL}/api/v1/institute_batche/allBatches?franchiseId=${franchiseId}`);
-      console.log(response.data.data)
+      const franchiseId = localStorage.getItem("franchiseID");
+      batch.franchiseId = franchiseId;
+      console.log(franchiseId);
+      const response = await axios.get(
+        `${API_BASE_URL}/api/v1/institute_batche/allBatches?franchiseId=${franchiseId}`
+      );
+      console.log(response.data.data);
 
       setBatches(response.data.data);
     } catch (error) {
@@ -205,13 +54,25 @@ const Batches = () => {
     }
   };
 
+  // Helper function to convert 24-hour time to 12-hour format with AM/PM
+  const formatTimeToAMPM = (time24) => {
+    if (!time24) return "";
+    const [hours, minutes] = time24.split(":");
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
   const handleTimeChange = (field, value) => {
     const updatedTimeInputs = { ...timeInputs, [field]: value };
     setTimeInputs(updatedTimeInputs);
-    
-    // Concatenate the times and update batch.batchTiming
+
+    // Convert 24-hour format to 12-hour format and concatenate
     if (updatedTimeInputs.fromTime && updatedTimeInputs.toTime) {
-      const concatenatedTiming = `${updatedTimeInputs.fromTime} - ${updatedTimeInputs.toTime}`;
+      const fromTime12 = formatTimeToAMPM(updatedTimeInputs.fromTime);
+      const toTime12 = formatTimeToAMPM(updatedTimeInputs.toTime);
+      const concatenatedTiming = `${fromTime12} - ${toTime12}`;
       setBatch({ ...batch, batchTiming: concatenatedTiming });
     } else {
       setBatch({ ...batch, batchTiming: "" });
@@ -219,37 +80,54 @@ const Batches = () => {
   };
 
   const handleAddBatch = async () => {
-    console.log(batch)
+    console.log(batch);
     if (!batch.batchName || !batch.batchTiming || !batch.batchLimit) {
       alert("All fields are mandatory!");
       return;
     }
 
-    // Validate time format (e.g., 9AM - 10AM)
-    const timeFormat = /^([1-9]|1[0-2])(AM|PM) - ([1-9]|1[0-2])(AM|PM)$/;
-    if (!timeFormat.test(batch.batchTiming)) {
-      alert("Invalid time format! Use format: 9AM - 10AM");
-      return;
-    }
-console.log(batch.batchName)
+    // SIMPLEST SOLUTION - Replace the entire validation section with:
+if (!batch.batchName || !batch.batchTiming || !batch.batchLimit) {
+  alert("All fields are mandatory!");
+  return;
+}
+
+// Add time validation
+if (!timeInputs.fromTime || !timeInputs.toTime) {
+  alert("Please select both start and end times!");
+  return;
+}
+
+// Check if end time is after start time
+if (timeInputs.fromTime >= timeInputs.toTime) {
+  alert("End time must be after start time!");
+  return;
+}
+    console.log(batch.batchName);
     try {
-      console.log(batch)
-      await axios.post(`${API_BASE_URL}/api/v1/institute_batche/createBatch`, batch);
-      
+      console.log(batch);
+      const franchiseId = localStorage.getItem("franchiseID");
+      await axios.post(
+        `${API_BASE_URL}/api/v1/institute_batche/createBatch?franchiseId=${franchiseId}`,
+        batch
+      );
+
       fetchBatches();
       setBatch({ batchName: "", batchTiming: "", batchLimit: "" });
       setTimeInputs({ fromTime: "", toTime: "" }); // Reset time inputs
-      alert("Successfully created Batches")
+      alert("Successfully created Batches");
     } catch (error) {
       console.error("Error adding batch", error);
-      alert("Failed to create the batch")
+      alert("Failed to create the batch");
     }
   };
 
   const deleteBatch = async (batchId) => {
-    try { 
-        const franchiseId = localStorage.getItem("franchiseID");
-      await axios.delete(`${API_BASE_URL}/api/v1/institute_batche/${batchId}?franchiseId=${franchiseId}`);
+    try {
+      const franchiseId = localStorage.getItem("franchiseID");
+      await axios.delete(
+        `${API_BASE_URL}/api/v1/institute_batche/${batchId}?franchiseId=${franchiseId}`
+      );
       alert("Successfully deleted");
       // Refresh the batches list after deletion
       fetchBatches();
@@ -267,76 +145,124 @@ console.log(batch.batchName)
 
       {/* Add New Batch Form */}
       <div className="bg-white p-6 shadow-md rounded mb-6">
-        <div className="flex flex-wrap gap-4">
-          {/* Batch Name */}
-          <div className="flex-1">
-            <label className="block text-gray-700">Batch Name</label>
-            <input
-              type="text"
-              className="w-full p-2 border rounded"
-              placeholder="Batch name"
-              value={batch.batchName}
-              onChange={(e) =>
-                setBatch({ ...batch, batchName: e.target.value.toUpperCase() })
-              }
-            />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+    {/* Batch Name */}
+    <div>
+      <label className="block text-gray-700 mb-2">Batch Name</label>
+      <input
+        type="text"
+        className="w-full p-2 border rounded h-10"
+        placeholder="Batch name"
+        value={batch.batchName}
+        onChange={(e) =>
+          setBatch({ ...batch, batchName: e.target.value.toUpperCase() })
+        }
+      />
+    </div>
 
-          {/* From Time */}
-          <div className="flex-1">
-            <label className="block text-gray-700">From Time (e.g., 9AM)</label>
-            <input
-              type="text"
-              className="w-full p-2 border rounded"
-              placeholder="e.g., 9AM"
-              value={timeInputs.fromTime}
-              onChange={(e) => handleTimeChange('fromTime', e.target.value.toUpperCase())}
+    {/* From Time */}
+    <div>
+      <label className="block text-gray-700 font-medium mb-2">
+        <span className="flex items-center">
+          <svg
+            className="w-4 h-4 mr-2 text-green-600"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+              clipRule="evenodd"
             />
-          </div>
-
-          {/* To Time */}
-          <div className="flex-1">
-            <label className="block text-gray-700">To Time (e.g., 10AM)</label>
-            <input
-              type="text"
-              className="w-full p-2 border rounded"
-              placeholder="e.g., 10AM"
-              value={timeInputs.toTime}
-              onChange={(e) => handleTimeChange('toTime', e.target.value.toUpperCase())}
-            />
-          </div>
-
-          {/* Max Students Allowed */}
-          <div className="flex-1">
-            <label className="block text-gray-700">Max Students Allowed</label>
-            <input
-              type="number"
-              className="w-full p-2 border rounded"
-              placeholder="Max students"
-              value={batch.batchLimit}
-              onChange={(e) => {
-                const value = Math.max(0, parseInt(e.target.value) || 0);
-                setBatch({ ...batch, batchLimit: value });
-              }}
-            />
-          </div>
-
-          {/* Add Button */}
-          <div className="flex items-end">
-            <button
-              onClick={handleAddBatch}
-              className="bg-green-500 text-white px-4 py-2 rounded"
-            >
-              Add Batch
-            </button>
-          </div>
+          </svg>
+          From Time
+        </span>
+      </label>
+      <input
+        type="time"
+        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 h-10"
+        value={timeInputs.fromTime}
+        onChange={(e) => handleTimeChange("fromTime", e.target.value)}
+      />
+      {timeInputs.fromTime && (
+        <div className="mt-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+          📅 {formatTimeToAMPM(timeInputs.fromTime)}
         </div>
-        
+      )}
+    </div>
+
+    {/* To Time */}
+    <div>
+      <label className="block text-gray-700 font-medium mb-2">
+        <span className="flex items-center">
+          <svg
+            className="w-4 h-4 mr-2 text-red-600"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+              clipRule="evenodd"
+            />
+          </svg>
+          To Time
+        </span>
+      </label>
+      <input
+        type="time"
+        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 h-10"
+        value={timeInputs.toTime}
+        onChange={(e) => handleTimeChange("toTime", e.target.value)}
+      />
+      {timeInputs.toTime && (
+        <div className="mt-1 text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+          📅 {formatTimeToAMPM(timeInputs.toTime)}
+        </div>
+      )}
+    </div>
+
+    {/* Max Students and Button Container */}
+    <div className="grid grid-cols-2 gap-2">
+      <div>
+        <label className="block text-gray-700 mb-2">Max Students</label>
+        <input
+          type="number"
+          className="w-full p-2 border rounded h-10"
+          placeholder="0"
+          value={batch.batchLimit || ""}
+          onChange={(e) => {
+            const value = e.target.value;
+            setBatch({
+              ...batch,
+              batchLimit:
+                value === "" ? 0 : Math.max(0, parseInt(value) || 0),
+            });
+          }}
+        />
+      </div>
+      <div className="flex items-end">
+        <button
+          onClick={handleAddBatch}
+          className="bg-green-500 text-white px-4 py-2 rounded h-10 w-full"
+        >
+          Add Batch
+        </button>
+      </div>
+    </div>
+  </div>
+
         {/* Display concatenated timing */}
         {batch.batchTiming && (
-          <div className="mt-4 p-2 bg-gray-100 rounded">
-            <span className="text-sm text-gray-600">Batch Timing: </span>
-            <span className="font-medium">{batch.batchTiming}</span>
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <span className="text-sm text-blue-600 font-medium">
+              Batch Timing:{" "}
+            </span>
+            <span className="font-bold text-blue-800">{batch.batchTiming}</span>
+            <div className="text-xs text-blue-500 mt-1">
+              ⏱️ {timeInputs.fromTime && formatTimeToAMPM(timeInputs.fromTime)}{" "}
+              - {timeInputs.toTime && formatTimeToAMPM(timeInputs.toTime)}
+            </div>
           </div>
         )}
       </div>
@@ -362,9 +288,10 @@ console.log(batch.batchName)
                 <td className="border p-2">{batch.currentStudents}</td>
                 <td className="border p-2">{batch.limit}</td>
                 <td className="border p-2">
-                  <button 
-                  onClick={() => deleteBatch(batch.id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded">
+                  <button
+                    onClick={() => deleteBatch(batch.id)}
+                    className="bg-red-500 text-white px-3 py-1 rounded"
+                  >
                     Delete
                   </button>
                 </td>

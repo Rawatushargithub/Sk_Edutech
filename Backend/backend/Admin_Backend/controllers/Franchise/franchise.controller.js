@@ -580,10 +580,10 @@ const resendFranchiseCredentials = asyncHandler(async (req, res) => {
 // Get recently added franchises (limit, sorted by createdAt desc)
 const getRecentFranchises = asyncHandler(async (req, res) => {
     const limit = parseInt(req.query.limit) || 5;
-    const franchises = await Franchise.find()
+    const franchises = await Franchise.find({ status: 'Active' })
         .sort({ createdAt: -1 })
         .limit(limit)
-        .select("franchiseName ownerName email status verificationStatus ownerPhotoUrl createdAt atcCode city state franchiseId mobile expireDate"); // Add more fields as needed
+        .select("franchiseName ownerName email status verificationStatus franchiseLogoUrl createdAt atcCode city state franchiseId mobile expireDate"); // Add more fields as needed
 
     if (!franchises || franchises.length === 0) {
         return res.status(200).json([]);
@@ -597,7 +597,7 @@ const getRecentFranchises = asyncHandler(async (req, res) => {
         email: f.email,
         status: f.status,
         verificationStatus: f.verificationStatus,
-        ownerPhotoUrl: f.ownerPhotoUrl,
+        franchiseLogoUrl: f.franchiseLogoUrl,
         atcCode: f.atcCode,
         city: f.city,
         state: f.state,
@@ -699,8 +699,10 @@ export const verificationCheck = async (req, res) => {
 // controllers/franchise.controller.js
 export const getFranchiseByFranchiseId = async (req, res) => {
   try {
+
     // const id = req.params.getfranchisedetails;
     const id = decodeURIComponent(req.params.franchiseId);
+
     const franchise = await Franchise.findOne({ franchiseId: id });
 
     if (!franchise) {

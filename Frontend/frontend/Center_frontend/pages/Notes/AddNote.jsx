@@ -20,6 +20,7 @@ const AddNote = () => {
     const fetchActiveCourses = async () => {
       setLoadingCourses(true);
       try {
+
         const franchiseId = localStorage.getItem('franchiseID');
         if (!franchiseId) throw new Error('Franchise ID not found in localStorage');
 

@@ -48,11 +48,12 @@ const AddNewStudent = () => {
     discountAmount: 0,
     totalFees: 0,
     feesReceived: 0, 
+    paymentMode: "Cash", 
     installments: [],
   });
  
   const [courses, setCourses] = useState([]);
-  // State for batches
+  // State for batches 
   const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState("");
   const [remainingSeats, setRemainingSeats] = useState("");
@@ -61,12 +62,15 @@ const AddNewStudent = () => {
   useEffect(() => {
     // Fetch courses from the backend
     
+
     const fetchCourses = async () => {
         const franchiseId = localStorage.getItem('franchiseID');
       
       try {
         const response = await axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`);
         console.log("course fetching :: " , response)
+
+
         setCourses(response.data); // Assuming the response is an array of course objects
       } catch (error) {
         console.error('Error fetching courses:', error);

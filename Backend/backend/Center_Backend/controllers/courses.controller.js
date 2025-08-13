@@ -226,7 +226,7 @@ export const getCourses = async (req, res) => {
             'courseName courseCode courseFees courseMRP courseDuration instituteStatus adminApprovalStatus courseImage courseSubject createdAt updatedAt courseMaterials courseVideoLinks franchiseId' // Added franchiseId to selection
         );
         
-        console.log("courses data for franchiseId:", franchiseId, courses); 
+        // console.log("courses data for franchiseId:", franchiseId, courses); 
         res.status(200).json(courses);
     } catch (error) {
         console.error("Error fetching courses:", error);

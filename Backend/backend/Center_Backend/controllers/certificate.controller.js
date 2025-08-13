@@ -257,6 +257,57 @@ export const approveStudentCertificate = async (req, res) => {
   }
 };
 
+// import Certificate from "../models/certificate.model.js";
+
+export const verifyByQrCertificate = async (req, res) => {
+  try {
+    const encodedId = req.params.certificateId;
+    const certificateId = decodeURIComponent(encodedId);
+
+    const cert = await Certificate.findOne({
+      "courses.results.certificateId": certificateId,
+    });
+
+    if (!cert) {
+      return res.status(404).json({ verified: false, message: "Certificate not found" });
+    }
+
+    let matchingResult = null;
+    let matchingCourse = null;
+
+    for (const course of cert.courses) {
+      for (const result of course.results) {
+        if (result.certificateId === certificateId) {
+          matchingResult = result;
+          matchingCourse = course;
+          break;
+        }
+      }
+      if (matchingResult) break;
+    }
+
+    if (!matchingResult) {
+      return res.status(404).json({ verified: false, message: "Certificate result not found" });
+    }
+
+    res.json({
+      verified: true,
+      studentName: matchingResult.studentName,
+      courseName: matchingCourse.courseName,
+      certificateId: matchingResult.certificateId,
+      percentage: matchingResult.percentage,
+      grade: matchingResult.grade,
+      session: matchingResult.session,
+      rollNumber: matchingResult.rollNumber,
+      issuedOn: matchingResult.examDate,
+    });
+  } catch (err) {
+    console.error("Verification Error:", err);
+    res.status(500).json({ verified: false, message: "Internal server error" });
+  }
+};
+
+
 // export const approveStudentCertificate = async (req, res) => {
 //   const { franchiseId, courseCode, examId, rollNumber } = req.body;
 

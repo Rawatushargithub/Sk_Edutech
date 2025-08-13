@@ -78,7 +78,8 @@ const QuestionBankSystem = () => {
   const loadCourses = async () => {
     try {
       setCoursesLoading(true);
-        const franchiseId = localStorage.getItem('franchiseID');
+
+      const franchiseId = localStorage.getItem('franchiseID');
       const response = await apiCall(`/institute_courses/getCourses?franchiseId=${franchiseId}`);
       console.log("Courses loaded:", response);
       setCourses(response || []);

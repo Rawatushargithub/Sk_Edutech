@@ -130,11 +130,13 @@ import institute_walletRoutes from "./backend/Center_Backend/routes/payment.rout
 import institute_EnquiryRoutes from "./backend/Center_Backend/routes/enquiryStudent.route.js";
 import institute_questionBankRoutes from "./backend/Center_Backend/routes/questionBankroutes.js";
 import Certificate_routes from './backend//Center_Backend/routes/certificate.routes.js';
+import getCenterCertificate  from './backend/Center_Backend/routes/CenterCertificate.routes.js';
 // import institute_detailsRoutes from "../Backend/backend/Center_Backend/routes/";
+// import getCenterCertificate from './backend/Center_Backend/controllers/centerCertificate.controller.js' 
 
 app.use("/api/v1/institute_student" , studentRouter);
 app.use("/api/v1/institute_courses" , courseRouter); 
-app.use("/api/v1/institute_fees" , feesRouter)
+app.use("/api/v1/institute_fees" , feesRouter);
 app.use("/api/v1/institute_batche" , batchRouter); 
 app.use("/api/v1/institute_note", institute_notesRoutes);
 app.use("/api/v1/institute_exam", institute_examRoutes);
@@ -142,5 +144,9 @@ app.use("/api/v1/institute_wallet", institute_walletRoutes);
 app.use("/api/v1/institute_enquiry", institute_EnquiryRoutes);
 app.use("/api/v1/institute_question_bank", institute_questionBankRoutes);
 app.use("/api/v1/institute_certificates", Certificate_routes);
+app.use("/api/v1/certificates", getCenterCertificate);
+
+
+
 // app.use("/api/v1/institute_details", institute_questionBankRoutes);
 console.log("Center Routes Loaded");

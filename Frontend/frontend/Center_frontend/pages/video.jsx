@@ -30,26 +30,35 @@ const UploadCourseVideo1 = () => {
   // const courses = ["BCA", "MBA", "B.Tech", "M.Tech", "B.Sc"]; // Replaced by dynamic fetch
 
   useEffect(() => {
-    const fetchCoursesForFilter = async () => {
-      setLoadingCourses(true);
-      try {
-          const franchiseId = localStorage.getItem('franchiseID');
-        const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`);
-        if (!response.ok) throw new Error('Failed to fetch courses');
-        const data = await response.json();
-        const activeApprovedCourses = data.filter(
-          c => c.instituteStatus === 'active' && c.adminApprovalStatus === 'approved'
-        );
-        console.log("Fetched courses ", data);
-        setAllCourses(activeApprovedCourses);
-      } catch (error) {
-        toastHot.error(`Error fetching courses: ${error.message}`);
-      } finally {
-        setLoadingCourses(false);
-      }
-    };
-    fetchCoursesForFilter();
-  }, []);
+
+  const fetchCoursesForFilter = async () => {
+    setLoadingCourses(true);
+    try {
+      const franchiseId = localStorage.getItem('franchiseID'); // Retrieve franchiseId
+      // console.log("Fetching courses for franchiseId:", franchiseId);
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`
+      );
+
+      if (!response.ok) throw new Error('Failed to fetch courses');
+
+      const data = await response.json();
+
+      const activeApprovedCourses = data.filter(
+        c => c.instituteStatus === 'active' && c.adminApprovalStatus === 'approved'
+      );
+      // console.log("Fetched courses ", data);
+      setAllCourses(activeApprovedCourses);
+    } catch (error) {
+      toastHot.error(`Error fetching courses: ${error.message}`);
+    } finally {
+      setLoadingCourses(false);
+    }
+  };
+
+  fetchCoursesForFilter();
+}, []);
 
   useEffect(() => {
     if (selectedCourseId) {

@@ -26,7 +26,8 @@ import RefundPolicy from './frontend/Homepage_frontend/components/navbar/links/R
 import PrivacyPolicy from './frontend/Homepage_frontend/components/navbar/links/PrivacyPolicy';
 import Message from './frontend/Homepage_frontend/components/navbar/links/Message';
 import TermAndConditions from './frontend/Homepage_frontend/components/navbar/links/TermAndConditions';
-
+import VerifyCertificate from './frontend/Center_frontend/pages/Certificate/VerifybyQr';
+import CenterVerification from './frontend/Center_frontend/CenterCertificateVerify';
 
 
 
@@ -40,6 +41,13 @@ function App() {
         <Route path="/" element={<HomePage/>} />
         <Route path="/gallery" element={<GalleryHomepage/>} />
         <Route path="/allreviews" element={<NAllReviewsPage/>} />
+
+        <Route path="/verify/:certificateId" element={<VerifyCertificate/>} />
+        <Route path="/franchise/:franchiseId" element={<CenterVerification/>} />
+
+
+
+
 
         <Route path="/affiliation-process" element={<AffiliationProcess />} />
         <Route path="/how-to-get-franchise" element={<HowToGetFran />} />

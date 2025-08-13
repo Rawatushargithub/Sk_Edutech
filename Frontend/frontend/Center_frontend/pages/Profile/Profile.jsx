@@ -96,7 +96,7 @@ const ProfileSection = () => {
 
               <div>
                 <img
-                  src={franchiseData?.ownerPhotoUrl || "/Profile.jpg"}
+                  src={franchiseData?.franchiseLogoUrl || "/Profile.jpg"}
                   alt="Profile"
                   className="w-full h-full object-cover"
                   onError={(e) => {

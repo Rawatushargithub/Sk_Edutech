@@ -89,7 +89,7 @@ const franchiseSchema = new Schema(
         status: {
             type: String,
             required: true,
-            enum: ['Pending', 'Active', 'Inactive', 'Rejected'],
+            enum: ['Pending', 'Active', 'Inactive', 'Rejected', 'Not Initialized'],
             default: 'Pending',
         },
         verificationStatus: {
@@ -108,7 +108,7 @@ const franchiseSchema = new Schema(
             trim: true,
         },
         // Cloudinary URLs for uploaded documents
-        ownerPhotoUrl: {
+        franchiseLogoUrl: {
             type: String, // URL from Cloudinary
         },
         franchiseSignatureUrl: {

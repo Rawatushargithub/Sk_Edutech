@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Select from 'react-select';
 import { Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -122,12 +123,10 @@ const EnquiryForm = () => {
   };
 
   // Handler for course selection
-  const handleCourseChange = (e) => {
-    const selectedCourseId = e.target.value;
-
-    if (selectedCourseId) {
+  const handleCourseChange = (selectedOption) => {
+    if (selectedOption) {
       const selectedCourse = courses.find(
-        (course) => course._id === selectedCourseId
+        (course) => course._id === selectedOption.value
       );
 
       if (selectedCourse) {
@@ -397,31 +396,30 @@ const EnquiryForm = () => {
                   <label htmlFor="courseInterested" className={labelStyle}>
                     Course Interested {requiredStar}
                   </label>
-                  <select
+                  <Select
                     id="courseInterested"
                     name="courseInterested"
+                    options={courses.map(course => ({
+                      value: course._id,
+                      label: `${course.courseName} (${course.courseCode})`
+                    }))}
                     onChange={handleCourseChange}
-                    value={
-                      formData.courseInterested.courseName
-                        ? courses.find(
-                            (course) =>
-                              course.courseName ===
-                                formData.courseInterested.courseName &&
-                              course.courseCode ===
-                                formData.courseInterested.courseCode
-                          )?._id || ""
-                        : ""
-                    }
+                    value={courses.map(course => ({
+                      value: course._id,
+                      label: `${course.courseName} (${course.courseCode})`
+                    })).find(option => 
+                      courses.find(c => c._id === option.value)?.courseName === formData.courseInterested.courseName &&
+                      courses.find(c => c._id === option.value)?.courseCode === formData.courseInterested.courseCode
+                    ) || null}
+                    isClearable
+                    isSearchable
                     required
-                    className={inputStyle}
-                  >
-                    <option value="">Select a course</option>
-                    {courses.map((course) => (
-                      <option key={course._id} value={course._id}>
-                        {course.courseName} ({course.courseCode})
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Select or search for a course..."
+                    className="w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    styles={{
+                      control: (base) => ({ ...base, ...inputStyle, padding: '0.1rem' }),
+                    }}
+                  />
                   {formData.courseInterested.courseName && (
                     <div className="mt-2 text-sm text-gray-600">
                       Selected: {formData.courseInterested.courseName} -{" "}

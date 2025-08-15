@@ -3,9 +3,12 @@ import axios from "axios";
 import Fees_table from "./Fees_table";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Select from 'react-select';
+import { useNavigate } from 'react-router-dom';
 import API_BASE_URL  from "../../../config"
 
-const AddNewStudent = () => { 
+const AddNewStudent = () => {
+  const navigate = useNavigate(); 
  
   const [formData, setFormData] = useState({
     // Personal Details
@@ -219,10 +222,9 @@ const handleChange = (e) => {
 
 
   // New handler for course selection
- const handleCourseChange = (e) => {
-  const selectedCourseId = e.target.value;
-   if (selectedCourseId) {
-    const selectedCourse = courses.find(course => course._id === selectedCourseId);
+ const handleCourseChange = (selectedOption) => {
+  if (selectedOption) {
+    const selectedCourse = courses.find(course => course._id === selectedOption.value);
     
     if (selectedCourse) {
       setFormData({
@@ -378,6 +380,10 @@ const handleSubmit = async (e) => {
         feesReceived: 0, 
         installments: [],
       });
+
+      setTimeout(() => {
+        navigate('/institute/Student_list');
+      }, 2000);
     }
     
   } catch (error) {
@@ -544,24 +550,31 @@ const handleSubmit = async (e) => {
           {/* Contact and Course Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div>
-              <label className="block mb-2 text-sm font-medium">Course Interested</label>
-              <select
+              <label className="block mb-0 text-sm font-medium ">Course Interested *</label>
+              <Select
                 name="courseInterested"
+                options={courses.map(course => ({
+                  value: course._id,
+                  label: `${course.courseName} (${course.courseCode})`
+                }))}
                 onChange={handleCourseChange}
-                value={formData.courseInterested.courseName ? 
-                  courses.find(course => 
-                    course.courseName === formData.courseInterested.courseName && 
-                    course.courseCode === formData.courseInterested.courseCode
-                  )?._id || "" : ""}
-                className="p-2 w-full border-gray-300 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              >
-                <option value="">Select a course</option>
-                {courses.map((course) => (
-                  <option key={course._id} value={course._id} >
-                    {course.courseName} ({course.courseCode})
-                  </option>
-                ))} 
-              </select>
+                value={courses.map(course => ({
+                  value: course._id,
+                  label: `${course.courseName} (${course.courseCode})`
+                })).find(option => 
+                  courses.find(c => c._id === option.value)?.courseName === formData.courseInterested.courseName &&
+                  courses.find(c => c._id === option.value)?.courseCode === formData.courseInterested.courseCode
+                ) || null}
+                isClearable
+                isSearchable
+                required
+                placeholder="Select or search for a course..."
+                className="p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                styles={{
+                  control: (base) => ({ ...base, border: '1px solid gray-300', boxShadow: 'none' }),
+                  valueContainer: (base) => ({ ...base, padding: '4px' }),
+                }}
+              />
               {formData.courseInterested.courseName && (
                 <div className="mt-2 text-sm text-gray-600">
                   Selected: {formData.courseInterested.courseName} - {formData.courseInterested.courseCode}

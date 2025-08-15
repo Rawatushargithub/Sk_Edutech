@@ -16,9 +16,12 @@ const EnquiryList = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalEnquiries, setTotalEnquiries] = useState(0);
   const [limit] = useState(10);
+  const [timeFilter, setTimeFilter] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   // Fetch enquiries from backend
-  const fetchEnquiries = async (page = 1, searchTerm = "") => {
+  const fetchEnquiries = async (page = 1, searchTerm = "", filter = timeFilter, start = startDate, end = endDate) => {
     try {
       setLoading(true);
       const franchiseId = localStorage.getItem('franchiseID');
@@ -28,9 +31,16 @@ const EnquiryList = () => {
         return;
       }
 
-      const response = await axios.get(
-        `${API_BASE_URL}/api/v1/institute_enquiry?franchiseId=${franchiseId}&page=${page}&limit=${limit}&search=${searchTerm}`
-      );
+      let url = `${API_BASE_URL}/api/v1/institute_enquiry?franchiseId=${franchiseId}&page=${page}&limit=${limit}&search=${searchTerm}`;
+
+      if (filter !== "all") {
+        url += `&timeFilter=${filter}`;
+        if (filter === "custom" && start && end) {
+          url += `&startDate=${start}&endDate=${end}`;
+        }
+      }
+
+      const response = await axios.get(url);
 console.log("Enquiry data fetched:", response.data);
       if (response.data.success) {
         setEnquiries(response.data.data);
@@ -50,14 +60,18 @@ console.log("Enquiry data fetched:", response.data);
   };
 
   useEffect(() => {
-    fetchEnquiries(currentPage, search);
+    fetchEnquiries(1, search, timeFilter, startDate, endDate);
+  }, [search, timeFilter, startDate, endDate]);
+
+  useEffect(() => {
+    fetchEnquiries(currentPage, search, timeFilter, startDate, endDate);
   }, [currentPage]);
 
   // Handle search
   const handleSearch = (e) => {
     e.preventDefault();
     setCurrentPage(1);
-    fetchEnquiries(1, search);
+    fetchEnquiries(1, search, timeFilter, startDate, endDate);
   };
 
   // Handle search input change
@@ -65,7 +79,7 @@ console.log("Enquiry data fetched:", response.data);
     setSearch(e.target.value);
     if (e.target.value === "") {
       setCurrentPage(1);
-      fetchEnquiries(1, "");
+      fetchEnquiries(1, "", timeFilter, startDate, endDate);
     }
   };
 
@@ -100,7 +114,7 @@ console.log("Enquiry data fetched:", response.data);
       if (response.data.success) {
         toast.success("Enquiry deleted successfully!");
         // Refresh the current page
-        fetchEnquiries(currentPage, search);
+        fetchEnquiries(currentPage, search, timeFilter, startDate, endDate);
         // Clear selected enquiry if it was deleted
         if (selectedEnquiry && selectedEnquiry._id === id) {
           setSelectedEnquiry(null);
@@ -171,6 +185,39 @@ console.log("Enquiry data fetched:", response.data);
                 Search
               </button>
             </form>
+
+            {/* Time Filter */}
+            <div className="flex items-center gap-4">
+              <select
+                value={timeFilter}
+                onChange={(e) => setTimeFilter(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#457B9D]"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="last7days">Last 7 Days</option>
+                <option value="last30days">Last 30 Days</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              {timeFilter === "custom" && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#457B9D]"
+                  />
+                  <span>to</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#457B9D]"
+                  />
+                </div>
+              )}
+            </div>
 
             {/* Stats */}
             <div className="text-sm text-gray-600">

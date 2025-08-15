@@ -15,6 +15,13 @@ const Navbar = () => {
   const [activeSlide, setActiveSlide] = useState(0); 
   const navigate = useNavigate();
 
+    const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
   const handleLinkClick = (link) => {
     if (link) {
       navigate(link);
@@ -166,7 +173,7 @@ const Navbar = () => {
 
         {/* Logo */}
         <div className="py-4 w-44 ml-15">
-          <img src="/assets/Logo.jpg" alt="Logo" onClick={() => navigate("/")} className="cursor-pointer" />
+                    <img src="/assets/Logo.jpg" alt="Logo" onClick={scrollToTop} className="cursor-pointer" />
         </div>
 
         {/* Navigation */}
@@ -182,7 +189,10 @@ const Navbar = () => {
                 <a
                   href={item.hasDropdown ? "#" : item.link}
                   onClick={(e) => {
-                    if (!item.hasDropdown) {
+                    if (item.title === 'HOME') {
+                      e.preventDefault();
+                      scrollToTop();
+                    } else if (!item.hasDropdown) {
                       e.preventDefault();
                       handleLinkClick(item.link);
                     } else {
@@ -365,7 +375,11 @@ const Navbar = () => {
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      handleLinkClick(item.link);
+                      if (item.title === 'HOME') {
+                        scrollToTop();
+                      } else {
+                        handleLinkClick(item.link);
+                      }
                       setIsMenuOpen(false);
                     }}
                     className="block px-6 py-2 text-gray-700"
@@ -444,10 +458,10 @@ const Navbar = () => {
       >
         {/* Logo */}
         <div className="py-4 w-44 ml-15">
-          <img 
+                    <img 
             src="/assets/Logo.jpg" 
             alt="Logo" 
-            onClick={() => navigate("/")} 
+            onClick={scrollToTop} 
             className="cursor-pointer" 
           />
         </div>
@@ -465,7 +479,10 @@ const Navbar = () => {
                 <a
                   href={item.hasDropdown ? "#" : item.link}
                   onClick={(e) => {
-                    if (!item.hasDropdown) {
+                    if (item.title === 'HOME') {
+                      e.preventDefault();
+                      scrollToTop();
+                    } else if (!item.hasDropdown) {
                       e.preventDefault();
                       handleLinkClick(item.link);
                     } else {

@@ -9,6 +9,8 @@ const ProfileSection = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCertificate, setSelectedCertificate] = useState(null);
   const [franchiseData, setFranchiseData] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState(null);
+
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -57,13 +59,35 @@ const ProfileSection = () => {
     }
   };
 
-  const handleCertificateClick = () => {
+  const handleCertificateClick = async () => {
     setShowCertificates(true);
-    fetchCertificates();
+    setIsLoading(true);
+
+    try {
+      const storedId = localStorage.getItem("franchiseID");
+      console.log("Stored Franchise ID for certificate:", storedId);
+      const encodedId = encodeURIComponent(storedId); 
+      const res = await fetch(`${API_BASE_URL}/api/v1/certificates/centercertificate/${encodedId}`);
+
+      if (!res.ok) throw new Error("Failed to fetch certificate");
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setPdfUrl(url);
+    } catch (error) {
+      console.error("Error loading certificate PDF:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  // const handleCertificateClick = () => {
+  //   setShowCertificates(true);
+  //   fetchCertificates();
+  // };
+
   const handleEditProfile = () => {
-    
+
     window.location.href = '/institute/profile_details';
   };
 
@@ -76,9 +100,14 @@ const ProfileSection = () => {
     setSelectedCertificate(certificate);
   };
 
-  const handleCloseCertificateModal = () => {
-    setSelectedCertificate(null);
-  };
+  const handleCloseCertificates = () => {
+  if (pdfUrl) {
+    URL.revokeObjectURL(pdfUrl);
+    setPdfUrl(null);
+  }
+  setShowCertificates(false);
+};
+
   return (
     <div className="w-full relative overflow-hidden">
       {/* Profile Section with sliding animation */}
@@ -124,12 +153,12 @@ const ProfileSection = () => {
             <h1 className="text-2xl font-bold">{franchiseData?.ownerName}</h1>
             <div
               className={`text-sm font-semibold border-2 px-3 py-1 rounded-full ${franchiseData?.status === "Active"
-                  ? "border-green-500 text-green-600"
-                  : franchiseData?.status === "Inactive"
-                    ? "border-gray-500 text-gray-600"
-                    : franchiseData?.status === "Pending"
-                      ? "border-yellow-500 text-yellow-600"
-                      : "border-red-500 text-red-600"
+                ? "border-green-500 text-green-600"
+                : franchiseData?.status === "Inactive"
+                  ? "border-gray-500 text-gray-600"
+                  : franchiseData?.status === "Pending"
+                    ? "border-yellow-500 text-yellow-600"
+                    : "border-red-500 text-red-600"
                 }`}
             >
               {franchiseData?.status}
@@ -234,7 +263,7 @@ const ProfileSection = () => {
             <button
               className="px-4 py-2 bg-transparent border hover:bg-gray-200 border-gray-600 text-gray-600 rounded-md 
         transition-all duration-200 hover:-translate-y-0.5 hover:shadow"
-        onClick={handleLogout}
+              onClick={handleLogout}
             >
               Log Out
             </button>
@@ -251,7 +280,7 @@ const ProfileSection = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Certificates</h2>
           <button
-            onClick={() => setShowCertificates(false)}
+            onClick={() => handleCloseCertificates()}
             className="text-gray-600 hover:text-gray-800 text-xl font-semibold mr-12"
           >
             ↑ Back to Profile
@@ -262,29 +291,20 @@ const ProfileSection = () => {
           <div className="flex justify-center items-center h-48">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Replace this with your actual certificate data */}
-
-            <div
-              className="border rounded-xs p-1 hover:shadow-lg transition-shadow "
-              onClick={() => handleCertificateImageClick({
-                image: "https://th.bing.com/th/id/OIP.e8CC-0Yu-UVQjuTKqkBqZQHaFQ?rs=1&pid=ImgDetMain",
-                title: "Contract Certificate",
-                issueDate: "Jan, 2024"
-              })}
-            >
-              <img
-                src={"https://th.bing.com/th/id/OIP.e8CC-0Yu-UVQjuTKqkBqZQHaFQ?rs=1&pid=ImgDetMain"}
-                alt={`Certificate `}
-                className="w-full h-40 object-cover rounded-lg mb-4"
-              />
-              <h3 className="font-semibold text-lg mb-2">Contract Certificate</h3>
-              <p className="text-gray-600">Issued on: Jan , 2024</p>
-            </div>
-
+        ) : pdfUrl ? (
+          <div style={{ height: '600px' }}>
+            <iframe
+              src={pdfUrl}
+              title="Certificate PDF"
+              width="100%"
+              height="100%"
+              style={{ border: 'none' }}
+            ></iframe>
           </div>
+        ) : (
+          <p className="text-gray-600">No certificate available</p>
         )}
+
       </div>
 
       {/* Photo Modal */}

@@ -186,7 +186,7 @@ const ApprovedCertificates = () => {
       className="flex items-center justify-center gap-1 rounded-md border border-blue-900 bg-blue-900 px-3 py-1 text-xs text-white hover:bg-blue-800 transition-colors"
       onClick={() =>
         window.open(
-          `${API_BASE_URL}/api/v1/institute_certificates/download/${r.certificateId}`,
+          `${API_BASE_URL}/api/v1/institute_certificates/download/${encodeURIComponent(r.certificateId)}`,
           "_blank"
         )
       }

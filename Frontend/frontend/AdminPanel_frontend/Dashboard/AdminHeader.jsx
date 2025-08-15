@@ -37,7 +37,7 @@ const AdminHeader = () => {
         <div className="px-6 flex justify-between
   items-center relative">
             <div>
-                {/* <h1 className="text-2xl font-bold text-gray-800">Admin Dashboard</h1> */}
+                
                 <h1 className="text-2xl font-bold text-gray-800 ">Welcome, {adminName}</h1>
             </div>
             <div className="relative" ref={dropdownRef}>

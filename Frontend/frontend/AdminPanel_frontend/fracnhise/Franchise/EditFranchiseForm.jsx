@@ -284,9 +284,9 @@ function EditFranchiseForm() {
                     <h3 className={sectionTitleClass}>Documents Upload (Update if needed)</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label htmlFor="ownerPhoto" className={labelClass}>Owner Photo</label>
-                            <input type="file" id="ownerPhoto" {...register("ownerPhoto")} accept="image/*" className="mt-1 block w-full text-base text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-base file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer" />
-                            {franchiseData?.ownerPhotoUrl && !watch('ownerPhoto')?.[0] && <a href={franchiseData.ownerPhotoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1 block">View current photo</a>}
+                            <label htmlFor="franchiseLogo" className={labelClass}>Franchise Logo</label>
+                            <input type="file" id="franchiseLogo" {...register("franchiseLogo")} accept="image/*" className="mt-1 block w-full text-base text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-base file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer" />
+                            {franchiseData?.franchiseLogoUrl && !watch('ownerPhoto')?.[0] && <a href={franchiseData.franchiseLogoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1 block">View current photo</a>}
                         </div>
                         <div>
                             <label htmlFor="franchiseSignature" className={labelClass}>Franchise Signature</label>

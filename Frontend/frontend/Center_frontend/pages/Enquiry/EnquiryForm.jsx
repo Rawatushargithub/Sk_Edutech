@@ -75,13 +75,11 @@ const EnquiryForm = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const franchiseId = localStorage.getItem("franchiseID");
-        const response = await fetch(
-          `${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`
-        );
-        const data = await response.json();
-        console.log("course fetching :: ", data);
-        setCourses(data); // Assuming the response is an array of course objects
+                const franchiseId = localStorage.getItem('franchiseID');
+
+        const response = await axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`);
+        console.log("course fetching :: ", response);
+        setCourses(response.data); // Assuming the response is an array of course object
       } catch (error) {
         console.error("Error fetching courses:", error);
         toast.error("Failed to fetch courses");

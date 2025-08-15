@@ -52,6 +52,7 @@ import {
   getRequestedCertificates,
   getApprovedCertificates,
   getActiveFranchises,
+  verifyByQrCertificate,
 } from "../controllers/certificate.controller.js";
 import Exam from "../models/Exam.models.js";
 import Course from "../models/Courses/Courses.models.js";
@@ -116,5 +117,8 @@ router.get('/certificates/approved', getApprovedCertificates);
 router.get('/franchises/active', getActiveFranchises);
 
 router.get("/download/:certificateId", downloadCertificate);
+router.get("/verify-by-qr/:certificateId", verifyByQrCertificate);
+
+
 
 export default router;

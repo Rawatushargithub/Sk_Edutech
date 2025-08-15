@@ -54,13 +54,13 @@ const addFranchiseByAdmin = asyncHandler(async (req, res) => {
     }
 
     // --- Handle File Uploads ---
-    let ownerPhotoUrl = null;
+    let franchiseLogoUrl = null;
     let franchiseSignatureUrl = null;
     if (req.files) {
         if (req.files.ownerPhoto && req.files.ownerPhoto[0]) {
             const photoUploadResult = await uploadOnCloudinary(req.files.ownerPhoto[0].path);
             if (!photoUploadResult) throw new ApiError(500, "Failed to upload owner photo");
-            ownerPhotoUrl = photoUploadResult.url;
+            franchiseLogoUrl = photoUploadResult.url;
         }
         if (req.files.franchiseSignature && req.files.franchiseSignature[0]) {
             const signatureUploadResult = await uploadOnCloudinary(req.files.franchiseSignature[0].path);
@@ -96,7 +96,7 @@ const addFranchiseByAdmin = asyncHandler(async (req, res) => {
         // activationDate: null, // Do not set activation date initially
         gstNumber,
         atcCode,
-        ownerPhotoUrl,
+        franchiseLogoUrl,
         franchiseSignatureUrl,
         requestDate: new Date() // Set request date now
         // expireDate will be calculated by pre-save hook when activationDate is set later
@@ -275,8 +275,8 @@ const updateFranchiseStatusVerification = asyncHandler(async (req, res) => {
                     <p>SK Edutech Admin has verified and activated your plan to be a prestigious franchise for the interval of <b>${interval}</b> from <b>${presentDate}</b> to <b>${expiryDate}</b>.</p>`;
 
         // Always include Franchise ID and the (potentially newly generated) password
-        textBody += `Your Franchise ID is ${loginId} and password is ${passwordToSend}. Please use these credentials to login in your dashboard.\n\n`;
-        htmlBody += `<p>Your Franchise ID is <b>${loginId}</b> and password is <b>${passwordToSend}</b>. Please use these credentials to login in your dashboard.</p>`;
+        textBody += `Your Franchise ID is ${loginId} and password is ${passwordToSend}. Please use your PHONE NUMBER and given PASSWORD as credentials to login in your dashboard.\n\n`;
+        htmlBody += `<p>Your Franchise ID is <b>${loginId}</b> and password is <b>${passwordToSend}</b>. Please use your PHONE NUMBER and given PASSWORD as credentials to login in your dashboard.</p>`;
 
         console.log(`--- Franchise Activated & Verified ---`);
         console.log(`   Franchise ID: ${loginId}`);
@@ -443,7 +443,7 @@ const updateFranchiseById = asyncHandler(async (req, res) => {
         if (req.files.ownerPhoto?.[0]) {
             const photoUploadResult = await uploadOnCloudinary(req.files.ownerPhoto[0].path);
             if (!photoUploadResult) throw new ApiError(500, "Failed to upload owner photo");
-            updateData.ownerPhotoUrl = photoUploadResult.url;
+            updateData.franchiseLogoUrl = photoUploadResult.url;
         }
 
         if (req.files.franchiseSignature?.[0]) {
@@ -580,10 +580,10 @@ const resendFranchiseCredentials = asyncHandler(async (req, res) => {
 // Get recently added franchises (limit, sorted by createdAt desc)
 const getRecentFranchises = asyncHandler(async (req, res) => {
     const limit = parseInt(req.query.limit) || 5;
-    const franchises = await Franchise.find()
+    const franchises = await Franchise.find({ status: 'Active' })
         .sort({ createdAt: -1 })
         .limit(limit)
-        .select("franchiseName ownerName email status verificationStatus ownerPhotoUrl createdAt atcCode city state franchiseId mobile expireDate"); // Add more fields as needed
+        .select("franchiseName ownerName email status verificationStatus franchiseLogoUrl createdAt atcCode city state franchiseId mobile expireDate"); // Add more fields as needed
 
     if (!franchises || franchises.length === 0) {
         return res.status(200).json([]);
@@ -597,7 +597,7 @@ const getRecentFranchises = asyncHandler(async (req, res) => {
         email: f.email,
         status: f.status,
         verificationStatus: f.verificationStatus,
-        ownerPhotoUrl: f.ownerPhotoUrl,
+        franchiseLogoUrl: f.franchiseLogoUrl,
         atcCode: f.atcCode,
         city: f.city,
         state: f.state,
@@ -661,7 +661,7 @@ export const loginFranchise = async (req, res) => {
         email: franchise.email,
         mobile: franchise.mobile,
         franchiseName: franchise.franchiseName,
-        franchiseImage: franchise.ownerPhotoUrl,
+        franchiseImage: franchise.franchiseLogoUrl,
         franchiseId: franchise.franchiseId,
         address: franchise.address,
         ownerName: franchise.ownerName,

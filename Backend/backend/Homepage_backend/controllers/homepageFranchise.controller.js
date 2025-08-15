@@ -48,6 +48,8 @@ const requestOtp = asyncHandler(async (req, res) => {
 const submitWithOtp = asyncHandler(async (req, res) => {
     console.log("Received body for submitWithOtp:", JSON.stringify(req.body, null, 2));
     const { email, otp, franchiseName, ownerName, designation, dob, mobile, address, state, city, postalCode, country, totalComputers, totalStudents, planValidityDays, gstNumber, atcCode } = req.body;
+    const franchiseLogoFile = req.files?.franchiseLogo?.[0];
+    const franchiseSignatureFile = req.files?.franchiseSignature?.[0];
 
     if (!email || !otp) {
         throw new ApiError(400, "Email and OTP are required for submission.");
@@ -68,6 +70,18 @@ const submitWithOtp = asyncHandler(async (req, res) => {
     }
 
     // OTP is valid, create the franchise application
+    let franchiseLogoUrl = null;
+    if (franchiseLogoFile) {
+        const uploadResult = await uploadBufferToCloudinary(franchiseLogoFile.buffer, franchiseLogoFile.originalname, "franchise_logos");
+        franchiseLogoUrl = uploadResult.secure_url;
+    }
+
+    let franchiseSignatureUrl = null;
+    if (franchiseSignatureFile) {
+        const uploadResult = await uploadBufferToCloudinary(franchiseSignatureFile.buffer, franchiseSignatureFile.originalname, "franchise_signatures");
+        franchiseSignatureUrl = uploadResult.secure_url;
+    }
+
     const newApplication = await Franchise.create({
         franchiseName,
         ownerName,
@@ -85,6 +99,8 @@ const submitWithOtp = asyncHandler(async (req, res) => {
         planValidityDays: parseInt(planValidityDays, 10),
         gstNumber,
         atcCode,
+        franchiseLogoUrl,
+        franchiseSignatureUrl,
         applicationType: 'FranchiseApplied',
         status: 'Pending',
         verificationStatus: 'Verified' // Since OTP is verified
@@ -94,6 +110,19 @@ const submitWithOtp = asyncHandler(async (req, res) => {
 
     console.log(`[HomepageFranchiseController] Application for ${email} successfully saved with ID: ${newApplication._id}`);
     
+    try {
+        await sendEmail({
+            to: email,
+            subject: "Franchise Application Submitted Successfully",
+            text: `Dear ${ownerName},\n\nYour franchise application has been successfully submitted. The super admin will review your details and eligibility and update your status accordingly.\n\nThank you,\nSK Team`,
+            html: `<p>Dear ${ownerName},</p><p>Your franchise application has been successfully submitted. The super admin will review your details and eligibility and update your status accordingly.</p><p>Thank you,<br/>SK Team</p>`
+        });
+    } catch (error) {
+        console.error("Failed to send application confirmation email:", error);
+        // Don't throw an error here, as the application was already saved successfully.
+        // Just log the error and proceed.
+    }
+
     return res.status(201).json(
         new ApiResponse(
             201,
@@ -108,4 +137,25 @@ const submitWithOtp = asyncHandler(async (req, res) => {
     );
 });
 
-export { requestOtp, submitWithOtp };
+const checkUniqueness = asyncHandler(async (req, res) => {
+    const { email, mobile } = req.query;
+
+    if (!email && !mobile) {
+        throw new ApiError(400, "Email or mobile number is required to check for uniqueness.");
+    }
+
+    let query = {};
+    if (email) {
+        query.email = email;
+    } else {
+        query.mobile = mobile;
+    }
+
+    const existingFranchise = await Franchise.findOne(query);
+
+    return res.status(200).json(
+        new ApiResponse(200, { isUnique: !existingFranchise }, "Uniqueness check complete.")
+    );
+});
+
+export { requestOtp, submitWithOtp, checkUniqueness };

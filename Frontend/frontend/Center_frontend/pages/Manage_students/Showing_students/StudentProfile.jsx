@@ -1,7 +1,7 @@
 import React, { useState } from "react";
+import API_BASE_URL from "../../../../config";
 
-
-const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard }) => {
+const StudentProfile = ({ student, onClose, onEdit, onViewForm, onViewIDCard }) => {
   const [copied, setCopied] = useState(false);
 
 
@@ -14,6 +14,8 @@ const StudentProfile = ({ student, onClose, onEdit , onViewForm , onViewIDCard }
       onEdit(student._id);
     }
   };
+
+
 
   const handleCopy = () => {
     const studentInfo = `
@@ -35,7 +37,7 @@ Referral Code: ${student.referralCode || "N/A"}
     }
   };
 
-  return ( 
+  return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Overlay with blur effect */}
       <div
@@ -100,11 +102,10 @@ Referral Code: ${student.referralCode || "N/A"}
             <div className={`font-medium text-gray-400 mb-2`}>{student.rollNumber}</div>
 
             <span
-              className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                student.status 
-                  ? "bg-green-100 text-green-800" 
+              className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${student.status
+                  ? "bg-green-100 text-green-800"
                   : "bg-red-100 text-red-800"
-              }`}
+                }`}
             >
               {student.status ? "Active" : "Inactive"}
             </span>
@@ -132,7 +133,7 @@ Referral Code: ${student.referralCode || "N/A"}
               <span className="text-sm text-gray-800">{student.batch || "N/A"}</span>
             </div>
 
-            
+
 
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <span className="text-sm font-medium text-gray-700">Admission Date</span>
@@ -147,10 +148,17 @@ Referral Code: ${student.referralCode || "N/A"}
 
           {/* Action Buttons */}
           <div className="flex flex-col space-y-3">
-            
 
+{/* console.log("student" :student.rollNumber); */}
             {/* Certificate Button */}
-            <button className="w-full py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+            <button
+              onClick={() =>
+                window.open(
+                  `${API_BASE_URL}/api/v1/institute_certificates/download/student/${encodeURIComponent(student.rollNumber)}`,
+                  "_blank"
+                )
+              }
+              className="w-full py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
               Certificate
             </button>
 
@@ -158,15 +166,15 @@ Referral Code: ${student.referralCode || "N/A"}
             <div className="flex items-center justify-center space-x-3">
 
               {/* Edit Profile Button */}
-            <button 
-              onClick={handleEditProfile}
-              className="flex items-center justify-center w-12 h-12 bg-sky-900 text-white rounded-lg hover:bg-sky-800 transition-colors"
-              title="Edit Profile"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
+              <button
+                onClick={handleEditProfile}
+                className="flex items-center justify-center w-12 h-12 bg-sky-900 text-white rounded-lg hover:bg-sky-800 transition-colors"
+                title="Edit Profile"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
               <button
                 onClick={onViewForm}
                 title="Admission Form"
@@ -187,11 +195,10 @@ Referral Code: ${student.referralCode || "N/A"}
               </button>
               <button
                 onClick={handleCopy}
-                className={`flex items-center justify-center w-12 h-12 rounded-lg transition-colors ${
-                  copied
+                className={`flex items-center justify-center w-12 h-12 rounded-lg transition-colors ${copied
                     ? "bg-gray-700 text-white"
                     : "bg-black text-white hover:bg-gray-700"
-                }`}
+                  }`}
                 title={copied ? "Copied!" : "Copy Details"}
               >
                 {copied ? (

@@ -9,7 +9,7 @@ export const createCourse = asyncHandler(async (req, res) => {
             courseCode, courseName, courseSubject, franchiseId, courseFees, courseMRP,
             courseDuration, // Expected as number (months)
             courseVideoLinks, // Expected as JSON string of [{title, link}]
-            courseSyllabus, courseEligibility,
+            courseSyllabus, courseEligibility, byAdmin,adminApprovalStatus,
             instituteStatus // Renamed from status
         } = req.body;
 
@@ -129,6 +129,8 @@ console.log(franchiseId, "franchiseId in createCourse");
             courseEligibility,
             courseImage: courseImageCloudinaryUrl,
             courseMaterials: processedCourseMaterials,
+            byAdmin: byAdmin || false, // Default to false if not provided
+            adminApprovalStatus: adminApprovalStatus, // Default to pending for admin approval
             instituteStatus: instituteStatus || 'active',
             franchiseId:  franchiseId, // Use franchiseId from request
             

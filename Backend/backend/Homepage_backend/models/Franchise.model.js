@@ -86,7 +86,7 @@ const franchiseSchema = new Schema(
         status: {
             type: String,
             required: true,
-            enum: ['Pending', 'Active', 'Inactive', 'Rejected'],
+            enum: ['Pending', 'Active', 'Inactive', 'Rejected', 'Not Initialized'],
             default: 'Pending',
         },
         verificationStatus: {
@@ -104,7 +104,7 @@ const franchiseSchema = new Schema(
             type: String,
             trim: true,
         },
-        ownerPhotoUrl: {
+        franchiseLogoUrl: {
             type: String,
         },
         franchiseSignatureUrl: {
@@ -124,6 +124,12 @@ const franchiseSchema = new Schema(
         atcCode: {
             type: String,
             trim: true,
+        },
+        otp: {
+            type: String,
+        },
+        otpExpiry: {
+            type: Date,
         }
     },
     { timestamps: true }

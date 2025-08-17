@@ -226,7 +226,7 @@ export const getCourses = async (req, res) => {
             'courseName courseCode courseFees courseMRP courseDuration instituteStatus adminApprovalStatus courseImage courseSubject createdAt updatedAt courseMaterials courseVideoLinks franchiseId' // Added franchiseId to selection
         );
         
-        console.log("courses data for franchiseId:", franchiseId, courses); 
+        // console.log("courses data for franchiseId:", franchiseId, courses); 
         res.status(200).json(courses);
     } catch (error) {
         console.error("Error fetching courses:", error);
@@ -454,6 +454,7 @@ export const addNoteToCourse = asyncHandler(async (req, res) => {
         const noteFile = req.files.noteFile[0];
         const uploadedFile = await uploadOnCloudinary(noteFile.path);
 
+
         if (!uploadedFile || !uploadedFile.url) {
             console.error("Cloudinary upload failed for note file:", noteFile.originalname, uploadedFile);
             return res.status(500).json({ error: "Failed to upload file to Cloudinary." });
@@ -481,7 +482,7 @@ export const addNoteToCourse = asyncHandler(async (req, res) => {
             validExistingMaterials.push({
                 title: currentTitle, type: currentType, url: currentUrl,
                 fileName: material.fileName, fileType: material.fileType, 
-                thumbnailUrl: material.thumbnailUrl, _id: material._id, franchiseId,
+                thumbnailUrl: material.thumbnailUrl, _id: material._id, franchiseId: material.franchiseId
             });
         });
     }

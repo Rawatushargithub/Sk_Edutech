@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
-import { requestFranchiseOtp, submitFranchiseApplicationWithOtp } from '../AdminPanel_frontend/services/homepageFranchiseService';
+import { requestFranchiseOtp, submitFranchiseApplicationWithOtp, checkUniqueness } from '../AdminPanel_frontend/services/homepageFranchiseService';
 import INDFlag from '/assets/india-flag-icon.png';
 
 const designations = ['Teacher', 'Entrepreneur', 'Institute Owner'];
@@ -25,9 +25,14 @@ const ApplyFranchiseModal = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [modalStep, setModalStep] = useState('form');
     const [otpValue, setOtpValue] = useState('');
+    const [otpError, setOtpError] = useState('');
     const [formDataForOtp, setFormDataForOtp] = useState(null);
     const [userEmailForOtp, setUserEmailForOtp] = useState('');
     const [applicationId, setApplicationId] = useState('');
+    const [validationStatus, setValidationStatus] = useState({
+        email: { loading: false, unique: true, message: '' },
+        mobile: { loading: false, unique: true, message: '' }
+    });
 
     const confirmTermsValue = watch('confirmTerms');
 
@@ -35,7 +40,21 @@ const ApplyFranchiseModal = () => {
         reset();
     }, [reset]);
 
-    const ownerPhotoFile = watch('ownerPhoto');
+    const checkFieldUniqueness = useCallback(async (field, value) => {
+        setValidationStatus(prev => ({ ...prev, [field]: { ...prev[field], loading: true } }));
+        try {
+            const response = await checkUniqueness({ [field]: value });
+            if (response.data.isUnique) {
+                setValidationStatus(prev => ({ ...prev, [field]: { loading: false, unique: true, message: '' } }));
+            } else {
+                setValidationStatus(prev => ({ ...prev, [field]: { loading: false, unique: false, message: `This ${field} is already registered.` } }));
+            }
+        } catch (error) {
+            setValidationStatus(prev => ({ ...prev, [field]: { loading: false, unique: false, message: `Error checking ${field}.` } }));
+        }
+    }, []);
+
+    const franchiseLogoFile = watch('franchiseLogo');
     const franchiseSignatureFile = watch('franchiseSignature');
 
     const handleProceedToOtp = async (data) => {
@@ -47,12 +66,12 @@ const ApplyFranchiseModal = () => {
             'franchiseName', 'ownerName', 'designation', 'dob', 'email', 'mobile',
             'address', 'state', 'city', 'postalCode', 'country',
             'totalComputers', 'totalStudents', 'planValidityDays',
-            'gstNumber', 'atcCode', 'ownerPhoto', 'franchiseSignature'
+            'gstNumber', 'atcCode', 'franchiseLogo', 'franchiseSignature'
         ];
 
         fieldsToInclude.forEach(key => {
             if (data[key] !== undefined && data[key] !== null) {
-                if (key === 'ownerPhoto' || key === 'franchiseSignature') {
+                if (key === 'franchiseLogo' || key === 'franchiseSignature') {
                     if (data[key] && data[key][0]) {
                         formData.append(key, data[key][0]);
                     }
@@ -94,17 +113,18 @@ const ApplyFranchiseModal = () => {
     };
 
     const handleFinalSubmit = async () => {
+        setOtpError(''); // Clear previous errors
         if (!formDataForOtp) {
             toast.error("Form data is missing. Please restart the application process.");
             return;
         }
         if (!otpValue || otpValue.length !== 6) {
-            toast.error("Please enter a valid 6-digit OTP.");
+            setOtpError("Please enter a valid 6-digit OTP.");
             return;
         }
 
         setIsLoading(true);
-        formDataForOtp.append('otp', otpValue);
+        formDataForOtp.set('otp', otpValue);
 
         try {
             const response = await submitFranchiseApplicationWithOtp(formDataForOtp);
@@ -118,20 +138,8 @@ const ApplyFranchiseModal = () => {
                 throw new Error(response?.message || "Failed to submit application. Unexpected response.");
             }
         } catch (error) {
-            let errorMessage = error.message || "An unexpected error occurred during final submission.";
-             if (error.response) {
-                 const backendErrorData = error.response.data;
-                 let backendMessage = '';
-                 if (backendErrorData && typeof backendErrorData === 'object') {
-                    backendMessage = backendErrorData.message || backendErrorData.error || '';
-                 }
-                 errorMessage = (typeof backendMessage === 'string' && backendMessage.length > 0)
-                    ? backendMessage
-                    : `Server Error: ${error.response.status}. Please check server logs.`;
-             } else if (error.request) {
-                 errorMessage = "Network Error: Could not connect to the server.";
-             }
-            toast.error(errorMessage);
+            const errorMessage = error.response?.data?.message || error.message || "Incorrect OTP. Please re-enter.";
+            setOtpError(errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -180,8 +188,10 @@ const ApplyFranchiseModal = () => {
                             </div>
                             <div>
                                 <label htmlFor="email" className={labelClass}>Email <span className="text-red-500">*</span></label>
-                                <input type="email" id="email" {...register("email", { required: "Email is required", pattern: { value: /^\S+@\S+$/i, message: "Invalid email address" } })} className={inputClass} placeholder="e.g., owner@example.com" />
+                                <input type="email" id="email" {...register("email", { required: "Email is required", pattern: { value: /^\S+@\S+$/i, message: "Invalid email address" } })} onBlur={(e) => checkFieldUniqueness('email', e.target.value)} className={inputClass} placeholder="e.g., owner@example.com" />
                                 {errors.email && <p className={errorClass}>{errors.email.message}</p>}
+                                {validationStatus.email.loading && <p className="text-blue-600 text-sm mt-2">Checking...</p>}
+                                {!validationStatus.email.unique && <p className={errorClass}>{validationStatus.email.message}</p>}
                             </div>
                             <div>
                                 <label htmlFor="mobile" className={labelClass}>Mobile <span className="text-red-500">*</span></label>
@@ -190,9 +200,11 @@ const ApplyFranchiseModal = () => {
                                         <img src={INDFlag} alt="IN" className="h-5 w-auto mr-2 flex-shrink-0"/>
                                         <span className="whitespace-nowrap">+91</span>
                                     </div>
-                                    <input type="tel" id="mobile" {...register("mobile", { required: "Mobile number is required", pattern: { value: /^[6-9]\d{9}$/, message: "Enter a valid 10-digit Indian mobile number" } })} className="block w-full flex-1 px-3 py-2 border-none focus:outline-none text-base placeholder-gray-400" placeholder="9876543210" />
+                                    <input type="tel" id="mobile" {...register("mobile", { required: "Mobile number is required", pattern: { value: /^[6-9]\d{9}$/, message: "Enter a valid 10-digit Indian mobile number" } })} onBlur={(e) => checkFieldUniqueness('mobile', e.target.value)} className="block w-full flex-1 px-3 py-2 border-none focus:outline-none text-base placeholder-gray-400" placeholder="9876543210" />
                                 </div>
                                 {errors.mobile && <p className={errorClass}>{errors.mobile.message}</p>}
+                                {validationStatus.mobile.loading && <p className="text-blue-600 text-sm mt-2">Checking...</p>}
+                                {!validationStatus.mobile.unique && <p className={errorClass}>{validationStatus.mobile.message}</p>}
                             </div>
                         </div>
                     </section>
@@ -273,10 +285,10 @@ const ApplyFranchiseModal = () => {
                         <h3 className={sectionTitleClass}>Documents Upload</h3>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
                             <div>
-                                <label htmlFor="ownerPhoto" className={labelClass}>Franchise Logo <span className="text-red-500">*</span></label>
-                                <input type="file" id="ownerPhoto" {...register("ownerPhoto", { required: "Owner photo is required" })} className="mt-2 block w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base transition duration-200 ease-in-out hover:border-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept="image/*" />
-                                {errors.ownerPhoto && <p className={errorClass}>{errors.ownerPhoto.message}</p>}
-                                {ownerPhotoFile?.[0] && <span className="text-sm text-gray-500 mt-1 block truncate">{ownerPhotoFile[0].name}</span>}
+                                <label htmlFor="franchiseLogo" className={labelClass}>Franchise Logo <span className="text-red-500">*</span></label>
+                                <input type="file" id="franchiseLogo" {...register("franchiseLogo", { required: "Franchise logo is required" })} className="mt-2 block w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base transition duration-200 ease-in-out hover:border-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept="image/*" />
+                                {errors.franchiseLogo && <p className={errorClass}>{errors.franchiseLogo.message}</p>}
+                                {franchiseLogoFile?.[0] && <span className="text-sm text-gray-500 mt-1 block truncate">{franchiseLogoFile[0].name}</span>}
                             </div>
                             <div>
                                 <label htmlFor="franchiseSignature" className={labelClass}>Franchise Signature <span className="text-red-500">*</span></label>
@@ -375,11 +387,11 @@ const ApplyFranchiseModal = () => {
                             <button
                                 type="submit"
                                 className={`px-12 py-4 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white transition duration-200 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:transform-none ${
-                                    !confirmTermsValue || isLoading 
+                                    !confirmTermsValue || isLoading || !validationStatus.email.unique || !validationStatus.mobile.unique
                                         ? 'bg-gray-400 cursor-not-allowed' 
                                         : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-300'
                                 }`}
-                                disabled={isLoading || !confirmTermsValue}
+                                disabled={isLoading || !confirmTermsValue || !validationStatus.email.unique || !validationStatus.mobile.unique}
                             >
                                 {isLoading ? (
                                     <div className="flex items-center space-x-2">
@@ -428,6 +440,7 @@ const ApplyFranchiseModal = () => {
                             placeholder="000000"
                             maxLength="6"
                         />
+                        {otpError && <p className={errorClass}>{otpError}</p>}
                     </div>
 
                     <div className="flex justify-center space-x-6 pt-10 border-t-2 border-gray-200 mt-12">

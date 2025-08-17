@@ -131,7 +131,7 @@ const CertificatePreview = () => {
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded shadow text-sm"
             onClick={() =>
               window.open(
-                `${API_BASE_URL}/api/v1/institute_certificates/download/${certificateData.certificateId}`,
+                `${API_BASE_URL}/api/v1/institute_certificates/download/${encodeURIComponent(certificateData.certificateId)}`,
                 "_blank"
               )
             }

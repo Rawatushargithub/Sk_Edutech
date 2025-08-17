@@ -28,7 +28,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
         const response = await axios.get(`${API_BASE_URL}/api/v1/franchises/getprofile/${encodedFranchiseId}`);
         const data = response.data;
         setFormData(data);
-        if (data?.ownerPhotoUrl) setProfilePic(data.ownerPhotoUrl);
+        if (data?.franchiseLogoUrl) setProfilePic(data.franchiseLogoUrl);
       } catch (error) {
         console.error("Error fetching profile:", error);
       } finally {
@@ -104,7 +104,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
         <div className="absolute bottom-0 left-10 transform translate-y-1/2">
           <div className="relative h-32 w-32 rounded-full overflow-hidden border-2 border-gray-300 bg-gray-100">
             <img
-              src={formData?.ownerPhotoUrl || "/Profile.jpg"}
+              src={formData?.franchiseLogoUrl || "/Profile.jpg"}
               className="object-cover w-full h-full"
               alt="Profile"
             />

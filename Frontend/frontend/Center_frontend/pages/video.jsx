@@ -5,6 +5,7 @@ import { toast, ToastContainer } from "react-toastify"; // Using react-hot-toast
 import "react-toastify/dist/ReactToastify.css"; // Keep for now if styles are used, but prefer react-hot-toast styling
 import toastHot from 'react-hot-toast'; // Renamed to avoid conflict if ToastContainer from react-toastify is used
 import { Toaster as HotToaster } from 'react-hot-toast';
+import Select from 'react-select';
 import API_BASE_URL from "../../config";
 
 
@@ -30,26 +31,35 @@ const UploadCourseVideo1 = () => {
   // const courses = ["BCA", "MBA", "B.Tech", "M.Tech", "B.Sc"]; // Replaced by dynamic fetch
 
   useEffect(() => {
-    const fetchCoursesForFilter = async () => {
-      setLoadingCourses(true);
-      try {
-          const franchiseId = localStorage.getItem('franchiseID');
-        const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`);
-        if (!response.ok) throw new Error('Failed to fetch courses');
-        const data = await response.json();
-        const activeApprovedCourses = data.filter(
-          c => c.instituteStatus === 'active' && c.adminApprovalStatus === 'approved'
-        );
-        console.log("Fetched courses ", data);
-        setAllCourses(activeApprovedCourses);
-      } catch (error) {
-        toastHot.error(`Error fetching courses: ${error.message}`);
-      } finally {
-        setLoadingCourses(false);
-      }
-    };
-    fetchCoursesForFilter();
-  }, []);
+
+  const fetchCoursesForFilter = async () => {
+    setLoadingCourses(true);
+    try {
+      const franchiseId = localStorage.getItem('franchiseID'); // Retrieve franchiseId
+      // console.log("Fetching courses for franchiseId:", franchiseId);
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`
+      );
+
+      if (!response.ok) throw new Error('Failed to fetch courses');
+
+      const data = await response.json();
+
+      const activeApprovedCourses = data.filter(
+        c => c.instituteStatus === 'active' && c.adminApprovalStatus === 'approved'
+      );
+      // console.log("Fetched courses ", data);
+      setAllCourses(activeApprovedCourses);
+    } catch (error) {
+      toastHot.error(`Error fetching courses: ${error.message}`);
+    } finally {
+      setLoadingCourses(false);
+    }
+  };
+
+  fetchCoursesForFilter();
+}, []);
 
   useEffect(() => {
     if (selectedCourseId) {
@@ -122,21 +132,24 @@ const UploadCourseVideo1 = () => {
         {/* Course Filter */}
         <div className="mb-6 p-4 bg-white shadow-md rounded-lg">
           <label htmlFor="courseFilter" className="block text-sm font-medium text-gray-700 mb-1">Select Course to View Videos</label>
-          <select
+          <Select
             id="courseFilter"
-            className={inputStyle}
-            value={selectedCourseId}
-            onChange={(e) => setSelectedCourseId(e.target.value)}
-            disabled={loadingCourses}
-          >
-            <option value="">-- Select a Course --</option>
-            {loadingCourses && <option disabled>Loading courses...</option>}
-            {allCourses.map((course) => (
-              <option key={course._id} value={course._id}>
-                {course.courseName} ({course.courseCode})
-              </option>
-            ))}
-          </select>
+            options={allCourses.map(course => ({
+              value: course._id,
+              label: `${course.courseName} (${course.courseCode})`
+            }))}
+            value={allCourses.map(course => ({
+              value: course._id,
+              label: `${course.courseName} (${course.courseCode})`
+            })).find(option => option.value === selectedCourseId)}
+            onChange={selectedOption => setSelectedCourseId(selectedOption ? selectedOption.value : "")}
+            isLoading={loadingCourses}
+            isClearable
+            isSearchable
+            placeholder="-- Select or search for a Course --"
+            className="w-full"
+            classNamePrefix="select"
+          />
         </div>
 
         {/* Video List */}

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requestOtp, submitWithOtp } from "../controllers/homepageFranchise.controller.js";
+import { requestOtp, submitWithOtp, checkUniqueness } from "../controllers/homepageFranchise.controller.js";
 import multer from "multer";
 
 const router = Router();
@@ -36,12 +36,13 @@ const upload = multer({
 // Route to request OTP
 // Expects JSON: { email, franchiseName, ownerName, mobile }
 router.route("/request-otp").post(requestOtp);
+router.route("/check-uniqueness").get(checkUniqueness);
 
 // Route to submit application with OTP
 // Expects FormData including all text fields, OTP, and files
 router.route("/submit-with-otp").post(
     upload.fields([
-        { name: 'ownerPhoto', maxCount: 1 },
+        { name: 'franchiseLogo', maxCount: 1 },
         { name: 'franchiseSignature', maxCount: 1 }
     ]),
     submitWithOtp

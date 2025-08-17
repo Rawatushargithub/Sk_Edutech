@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import fetch from "node-fetch";
-// import { rgb } from "pdf-lib";
+import QRCode from "qrcode";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import Certificate from "../models/certificate.model.js"; // adjust path if needed
 
@@ -11,7 +11,10 @@ const __dirname = path.dirname(__filename);
 
 export const downloadCertificate = async (req, res) => {
   const { certificateId } = req.params;
-  console.log("Certificate ID:", certificateId);
+  // console.log("Certificate ID:", certificateId);
+
+ 
+
   try {
     // ✅ MOCK CERTIFICATE DATA FOR TESTING
     // const cert = {
@@ -30,7 +33,7 @@ export const downloadCertificate = async (req, res) => {
     const cert = await Certificate.findOne({
       "courses.results.certificateId": certificateId,
     });
-    console.log("Certificate Data:", cert);
+    // console.log("Certificate Data:", cert);
 
     if (!cert) return res.status(404).json({ error: "Certificate not found" });
 
@@ -74,12 +77,36 @@ export const downloadCertificate = async (req, res) => {
     const signatureBuffer = await signatureRes.arrayBuffer();
 
     function formatDate(dateStr) {
-  const date = new Date(dateStr);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0"); // Month is 0-based
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-}
+      const date = new Date(dateStr);
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0"); // Month is 0-based
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    }
+
+    const encodedCertId = encodeURIComponent(certificateId);
+    const verifyUrl = `${process.env.FRONTEND_URL}/verify/${encodedCertId}`;
+    const qrCodeDataUrl = await QRCode.toDataURL(verifyUrl);
+    const qrImageBuffer = Buffer.from(
+      qrCodeDataUrl.replace(/^data:image\/png;base64,/, ""),
+      "base64"
+    );
+
+
+    // Embed QR image
+    const qrImage = await pdfDoc.embedPng(qrImageBuffer);
+
+    // Define QR size and position
+    const qrSize = 100;
+    const qrX = 485;
+    const qrY = 67;
+
+    page.drawImage(qrImage, {
+      x: qrX,
+      y: qrY,
+      width: qrSize,
+      height: qrSize,
+    });
 
     // Check the image type (you can use other formats if needed)
     let embeddedImage;
@@ -90,7 +117,7 @@ export const downloadCertificate = async (req, res) => {
     }
 
     let embeddedSignature;
-    if(signatureUrl.endsWith(".png")) {
+    if (signatureUrl.endsWith(".png")) {
       embeddedSignature = await pdfDoc.embedPng(signatureBuffer);
     } else {
       embeddedSignature = await pdfDoc.embedJpg(signatureBuffer);
@@ -98,7 +125,7 @@ export const downloadCertificate = async (req, res) => {
 
 
     const imageDims = embeddedImage.scale(0.15);
-    const signatureDims =  embeddedSignature.scale(0.05);
+    const signatureDims = embeddedSignature.scale(0.05);
 
     const studentName = matchingResult.studentName || "";
     const fontSize = 32;
@@ -109,36 +136,108 @@ export const downloadCertificate = async (req, res) => {
     // Calculate centered X position
     const centerX = (width - textWidth) / 2;
 
-    // Draw text at centered position
+    // Passport size photo box
+    const targetImageWidth = 85;
+    const targetImageHeight = 100;
+
+    // Get actual image dimensions
+    const actualImageWidth = embeddedImage.width;
+    const actualImageHeight = embeddedImage.height;
+
+    // Calculate scale factor to fit image in box (preserving aspect ratio)
+    const imageScale = Math.min(
+      targetImageWidth / actualImageWidth,
+      targetImageHeight / actualImageHeight
+    );
+
+    // Final scaled dimensions
+    const scaledImageWidth = actualImageWidth * imageScale;
+    const scaledImageHeight = actualImageHeight * imageScale;
+
+    // Optional: center the image inside the box (adjust X, Y)
+    const boxTopY = height - 180; // top Y position of the image box
+    const imageX = 482 + (targetImageWidth - scaledImageWidth) / 2;
+    const imageY = boxTopY - targetImageHeight + (targetImageHeight - scaledImageHeight) / 2;
+
     page.drawText(studentName, {
       x: centerX,
-      y: height - 320, // your Y position
+      y: height - 322, // your Y position
       size: fontSize,
       font,
       color: rgb(0.976, 0.596, 0.0078),
     });
+    // Draw a border box to visualize image bounds
+    // page.drawRectangle({
+    //   x: 480,
+    //   y: boxTopY - targetImageHeight,
+    //   width: targetImageWidth,
+    //   height: targetImageHeight,
+    //   borderWidth: 1,
+    //   borderColor: rgb(1, 0, 0), // red border
+    // });
+
+    // Draw image inside the box
     page.drawImage(embeddedImage, {
-      x: 480,
-      y: height - 280,
-      width: imageDims.width - 15,
-      height: imageDims.height,
+      x: imageX,
+      y: imageY,
+      width: scaledImageWidth,
+      height: scaledImageHeight,
     });
+
+    // Signature box with 9:16 aspect ratio
+    const targetSignatureWidth = 80;
+    const targetSignatureHeight = 38; // ~80
+
+    // Get actual signature image dimensions
+    const actualSigWidth = embeddedSignature.width;
+    const actualSigHeight = embeddedSignature.height;
+
+    // Calculate scale factor to fit signature in box
+    const sigScale = Math.min(
+      targetSignatureWidth / actualSigWidth,
+      targetSignatureHeight / actualSigHeight
+    );
+
+    // Final scaled dimensions
+    const scaledSigWidth = actualSigWidth * sigScale;
+    const scaledSigHeight = actualSigHeight * sigScale;
+
+    // Signature box top-left reference point
+    const sigBoxX = 485;
+    const sigBoxTopY = height - 280;
+
+    // Center signature inside the box
+    const sigX = sigBoxX + (targetSignatureWidth - scaledSigWidth) / 2;
+    const sigY = sigBoxTopY - targetSignatureHeight + (targetSignatureHeight - scaledSigHeight) / 2;
+
+    // Draw border around signature area (optional)
+    // page.drawRectangle({
+    //   x: sigBoxX,
+    //   y: sigBoxTopY - targetSignatureHeight,
+    //   width: targetSignatureWidth,
+    //   height: targetSignatureHeight,
+    //   borderWidth: 1,
+    //   borderColor: rgb(0, 0, 1), // Blue border
+    // });
+
+    // Draw the signature image
     page.drawImage(embeddedSignature, {
-      x: 480,
-      y: height - 325,
-      width: imageDims.width - 15,
-      height: imageDims.height -52,
+      x: sigX,
+      y: sigY,
+      width: scaledSigWidth,
+      height: scaledSigHeight,
     });
+
     page.drawText(matchingCourse.courseName || "", { x: 140, y: height - 395, size: 16, font, color: rgb(0.976, 0.596, 0.0078), });
     page.drawText(`${matchingResult.rollNumber || ""}`, { x: 485, y: height - 160, size: 16, font, color: rgb(0.976, 0.596, 0.0078), });
     page.drawText(`${matchingResult.certificateId || ""}`, { x: 180, y: height - 160, size: 16, font, color: rgb(0.976, 0.596, 0.0078), });
 
     page.drawText(`${matchingResult.session || ""}`, { x: 280, y: height - 248, size: 15, font, color: rgb(0.976, 0.596, 0.0078), });
-    page.drawText(`${matchingResult.percentage || ""}%`, { x: 155, y: height - 415, size: 15, font, color: rgb(0.976, 0.596, 0.0078), });
-    page.drawText(`${matchingResult.grade  || ""}+ `, { x: 276, y: height - 415, size: 15, font , color: rgb(0.976, 0.596, 0.0078), });
-    page.drawText(`${matchingResult.courseSubject || ""}`, { x: 190, y: height - 450, size: 16, font , color: rgb(0.976, 0.596, 0.0078), });
+    page.drawText(`${matchingResult.percentage || ""}%`, { x: 157, y: height - 417, size: 15, font, color: rgb(0.976, 0.596, 0.0078), });
+    page.drawText(`${matchingResult.grade || ""}+ `, { x: 276, y: height - 417, size: 15, font, color: rgb(0.976, 0.596, 0.0078), });
+    page.drawText(`${matchingResult.courseSubject || ""}`, { x: 190, y: height - 450, size: 16, font, color: rgb(0.976, 0.596, 0.0078), });
 
-    page.drawText(`${matchingResult.instituteName || ""}`, { x: 35, y: 328, size: 12, font, color: rgb(0.976, 0.596, 0.0078), });
+    page.drawText(`${matchingResult.instituteName || ""}`, { x: 32, y: 328, size: 12, font, color: rgb(0.976, 0.596, 0.0078), });
     page.drawText(`${matchingResult.certificateId || ""}`, { x: 245, y: 330, size: 7, font, color: rgb(0.976, 0.596, 0.0078), });
 
     page.drawText(`${matchingResult.instituteEmail || ""}`, { x: 335, y: 50, size: 12, font });

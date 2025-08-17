@@ -9,7 +9,7 @@ function FranchiseListPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate(); // Hook for navigation
-    const [statusFilter, setStatusFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState("Active");
 
     // Define fetchFranchises using useCallback
     const fetchFranchises = useCallback(async () => {
@@ -111,19 +111,23 @@ function FranchiseListPage() {
                         />
                     </div>
 
-                    {/* Filter Dropdown */}
-                    <div className="w-full md:w-1/4">
-                        <label htmlFor="status-filter" className="sr-only">Status</label>
-                        <select
-                            id="status-filter"
-                            className="border rounded px-3 py-1.5 text-base w-full"
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="">All Status</option>
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
+                    {/* Status Filter Buttons */}
+                    <div className="flex items-center space-x-2">
+                        <button
+                            onClick={() => setStatusFilter('')}
+                            className={`px-4 py-1.5 rounded text-base font-medium transition-colors ${statusFilter === '' ? 'bg-black text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}>
+                            All
+                        </button>
+                        <button
+                            onClick={() => setStatusFilter('Active')}
+                            className={`px-4 py-1.5 rounded text-base font-medium transition-colors ${statusFilter === 'Active' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}>
+                            Active
+                        </button>
+                        <button
+                            onClick={() => setStatusFilter('Inactive')}
+                            className={`px-4 py-1.5 rounded text-base font-medium transition-colors ${statusFilter === 'Inactive' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}>
+                            Inactive
+                        </button>
                     </div>
                 </div>
 

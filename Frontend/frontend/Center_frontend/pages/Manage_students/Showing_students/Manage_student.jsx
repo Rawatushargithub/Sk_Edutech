@@ -105,9 +105,11 @@ const StudentAdmissionList = () => {
 
     // 1. Filter by active tab status
     if (activeTab === 'active') {
-      tempStudents = tempStudents.filter(student => student.status);
+      tempStudents = tempStudents.filter(student => student.status === 'active' || student.status === 'true');
     } else if (activeTab === 'inactive') {
-      tempStudents = tempStudents.filter(student => !student.status);
+      tempStudents = tempStudents.filter(student => student.status === 'inactive' || student.status === 'false');
+    } else if (activeTab === 'certified') {
+      tempStudents = tempStudents.filter(student => student.status === 'Certified');
     }
 
     // Apply search term filter
@@ -183,7 +185,11 @@ const StudentAdmissionList = () => {
   const prepareExportData = (studentsData) => {
     return studentsData.map((student, index) => ({
       'S/N': index + 1,
-      'Status': student.status ? 'Active' : 'Inactive',
+      'Status': student.status === 'active' || student.status === 'true' 
+        ? 'Active' 
+        : student.status === 'Certified'
+        ? 'Certified'
+        : 'Inactive',
       'Batch': student.selectedBatch || '',
       'Student Name': student.studentName || '',
       'Student ID': student.rollNumber || '',
@@ -382,7 +388,15 @@ const StudentAdmissionList = () => {
     if (!statusToggleStudent) return;
 
     try {
-      const newStatus = !statusToggleStudent.status;
+      // Determine next status based on current status
+      let newStatus;
+      if (statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true') {
+        newStatus = 'inactive';
+      } else if (statusToggleStudent.status === 'inactive' || statusToggleStudent.status === 'false') {
+        newStatus = 'active';
+      } else if (statusToggleStudent.status === 'Certified') {
+        newStatus = 'active'; // Certified students can be set back to active
+      }
       
       const response = await axios.patch(
         `${API_BASE_URL}/api/v1/institute_student/toggle_status/${statusToggleStudent._id}`,
@@ -529,6 +543,13 @@ const StudentAdmissionList = () => {
                 Inactive Students
               </button>
             </li>
+            <li className="mr-2">
+              <button
+                onClick={() => setActiveTab('certified')}
+                className={`inline-block p-4 rounded-t-lg border-b-2 ${activeTab === 'certified' ? 'text-blue-600 border-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}`}>
+                Certified Students
+              </button>
+            </li>
           </ul>
         </div>
 
@@ -640,10 +661,18 @@ const StudentAdmissionList = () => {
                     <button 
                       onClick={() => handleStatusToggleClick(student)}
                       className={`px-2 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
-                        student.status ? "bg-green-200 text-green-800 hover:bg-green-300" : "bg-red-200 text-red-800 hover:bg-red-300"
+                        student.status === 'active' || student.status === 'true' 
+                          ? "bg-green-200 text-green-800 hover:bg-green-300" 
+                          : student.status === 'Certified'
+                          ? "bg-blue-200 text-blue-800 hover:bg-blue-300"
+                          : "bg-red-200 text-red-800 hover:bg-red-300"
                       }`}
                     >
-                      {student.status ? "Active" : "Inactive"}
+                      {student.status === 'active' || student.status === 'true' 
+                        ? "Active" 
+                        : student.status === 'Certified'
+                        ? "Certified"
+                        : "Inactive"}
                     </button>
                   </td>
                   <td className="border border-gray-300 px-4 py-2">{student.studentName}</td>
@@ -700,8 +729,18 @@ const StudentAdmissionList = () => {
             <p className="text-gray-600 mb-6">
               Are you sure you want to change the status of{" "}
               <strong>{statusToggleStudent.studentName}</strong> to{" "}
-              <strong className={statusToggleStudent.status ? "text-red-600" : "text-green-600"}>
-                {statusToggleStudent.status ? "Inactive" : "Active"}
+              <strong className={
+                statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' 
+                  ? "text-red-600" 
+                  : statusToggleStudent.status === 'Certified'
+                  ? "text-green-600"
+                  : "text-green-600"
+              }>
+                {statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' 
+                  ? "Inactive" 
+                  : statusToggleStudent.status === 'Certified'
+                  ? "Active"
+                  : "Active"}
               </strong>?
             </p>
             <div className="flex justify-end space-x-3">
@@ -714,12 +753,16 @@ const StudentAdmissionList = () => {
               <button
                 onClick={confirmStatusToggle}
                 className={`px-4 py-2 rounded text-white transition-colors ${
-                  statusToggleStudent.status
+                  statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true'
                     ? "bg-red-500 hover:bg-red-600"
                     : "bg-green-500 hover:bg-green-600"
                 }`}
               >
-                {statusToggleStudent.status ? "Deactivate" : "Activate"}
+                {statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' 
+                  ? "Deactivate" 
+                  : statusToggleStudent.status === 'Certified'
+                  ? "Activate"
+                  : "Activate"}
               </button>
             </div>
           </div>

@@ -3,9 +3,12 @@ import axios from "axios";
 import Fees_table from "./Fees_table";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
 import Select from 'react-select';
 import { useNavigate } from 'react-router-dom';
-import API_BASE_URL  from "../../../config"
+import API_BASE_URL  from "../../../config";
+import FormView from './Showing_students/FormView';
+
 
 const AddNewStudent = () => {
   const navigate = useNavigate(); 
@@ -56,15 +59,17 @@ const AddNewStudent = () => {
   });
  
   const [courses, setCourses] = useState([]);
-  // State for batches 
+  // State for batches
   const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState("");
   const [remainingSeats, setRemainingSeats] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showFormView, setShowFormView] = useState(false);
+  const [registeredStudent, setRegisteredStudent] = useState(null);
 
   useEffect(() => {
     // Fetch courses from the backend
-    
+
 
     const fetchCourses = async () => {
         const franchiseId = localStorage.getItem('franchiseID');
@@ -344,6 +349,8 @@ const handleSubmit = async (e) => {
     
     if (response.data.success) {
       toast.success("Student registered successfully!");
+      setRegisteredStudent(response.data.data);
+      setShowFormView(true);
       
       // Reset form
       setFormData({
@@ -765,9 +772,14 @@ const handleSubmit = async (e) => {
           </div>
         </form>
       </div>
+      {showFormView && registeredStudent && (
+        <FormView
+          student={registeredStudent}
+          onClose={() => setShowFormView(false)}
+        />
+      )}
     </div>
   );
 };
 
 export default AddNewStudent;
-

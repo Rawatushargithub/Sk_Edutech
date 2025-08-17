@@ -9,7 +9,7 @@ function FranchiseListPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate(); // Hook for navigation
-    const [statusFilter, setStatusFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState("Active");
 
     // Define fetchFranchises using useCallback
     const fetchFranchises = useCallback(async () => {

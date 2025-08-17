@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { PencilIcon, TrashIcon, Mail } from 'lucide-react';
-import { deleteFranchise, updateFranchiseStatusVerification, resendCredentials } from '../../services/franchiseService'; // Added resendCredentials
+import { deleteFranchise, updateFranchiseStatusVerification, resendCredentials, updateFranchiseStatus } from '../../services/franchiseService'; // Added resendCredentials
 // VerificationModal is not needed for resend credentials, but keeping if view details is still desired elsewhere.
 // For this specific request, the eye icon becomes "resend credentials".
 
@@ -24,6 +24,22 @@ const formatDate = (dateString) => {
 function FranchiseTable({ franchises = [], onActionComplete }) { // Added onActionComplete prop
     const navigate = useNavigate();
     const [processingId, setProcessingId] = useState(null); // For delete/toggle status/resend loading
+
+    const handleToggleStatus = async (franchise) => {
+        const newStatus = franchise.status === 'Active' ? 'Inactive' : 'Active';
+        if (window.confirm(`Are you sure you want to change the status to ${newStatus} for ${franchise.franchiseName}?`)) {
+            setProcessingId(franchise._id);
+            try {
+                await updateFranchiseStatus(franchise._id, newStatus);
+                toast.success(`Franchise status updated to ${newStatus}`);
+                if (onActionComplete) onActionComplete();
+            } catch (error) {
+                toast.error(error.message || 'Failed to update status.');
+            } finally {
+                setProcessingId(null);
+            }
+        }
+    };
 
     if (!franchises || franchises.length === 0) {
         return <p className="text-center text-gray-500 mt-6 text-base">No franchises found.</p>;
@@ -48,11 +64,6 @@ function FranchiseTable({ franchises = [], onActionComplete }) { // Added onActi
         }
     };
 
-    // const handleView = (franchise) => { // Replaced by handleResendCredentials
-    //     setFranchiseToView(franchise);
-    //     setIsViewModalOpen(true);
-    // };
-
     const handleResendCredentialsAction = async (franchise) => {
         if (window.confirm(`Are you sure you want to resend credentials (a new password will be generated) for "${franchise.franchiseName}" to ${franchise.email}?`)) {
             setProcessingId(franchise._id);
@@ -68,28 +79,11 @@ function FranchiseTable({ franchises = [], onActionComplete }) { // Added onActi
         }
     };
 
-    // const handleToggleStatus = async (franchise) => { // REMOVED
-    //     const newStatus = franchise.status === 'Active' ? 'Inactive' : 'Active';
-    //     const action = newStatus === 'Active' ? 'activate' : 'deactivate';
-    //     if (window.confirm(`Are you sure you want to ${action} franchise "${franchise.franchiseName}"?`)) {
-    //         setProcessingId(franchise._id);
-    //         try {
-    //             await updateFranchiseStatusVerification(franchise._id, { status: newStatus });
-    //             toast.success(`Franchise "${franchise.franchiseName}" ${action}d successfully.`);
-    //             if (onActionComplete) onActionComplete();
-    //         } catch (error) {
-    //             toast.error(error.message || `Failed to ${action} franchise.`);
-    //         } finally {
-    //             setProcessingId(null);
-    //         }
-    //     }
-    // };
-
-
     // Define columns based on the image and requirements - UPDATED
     const columns = [
         { header: 'Sr.', accessor: (_, index) => index + 1, width: 'w-12' },
         { header: 'Action', accessor: 'actions', width: 'w-24' }, // Adjusted width
+        { header: 'Status', accessor: 'status', width: 'w-32' },
         { header: 'Franchise Logo', accessor: 'franchiseLogoUrl', width: 'w-20' },
         { header: 'Franchise ID', accessor: 'franchiseId', width: 'w-28' },
         { header: 'Institute Name', accessor: 'franchiseName', width: 'w-auto' },
@@ -98,9 +92,8 @@ function FranchiseTable({ franchises = [], onActionComplete }) { // Added onActi
         { header: 'State', accessor: 'state', width: 'w-32' },
         { header: 'City', accessor: 'city', width: 'w-32' },
         { header: 'ATC Code', accessor: 'atcCode', width: 'w-24' },
-        // { header: 'Status', accessor: 'status', width: 'w-24'}, // REMOVED Status column
         { header: 'Expiry Date', accessor: 'expireDate', width: 'w-32' },
-        { header: 'Status', accessor: 'status', width: 'w-32' },
+        
     ];
 
     // Helper function to render cell content based on column accessor
@@ -122,29 +115,26 @@ function FranchiseTable({ franchises = [], onActionComplete }) { // Added onActi
                         <button onClick={() => handleResendCredentialsAction(franchise)} className="text-purple-600 hover:text-purple-800 p-1" title="Resend Credentials" disabled={processingId === franchise._id}>
                             {processingId === franchise._id && column.header === 'Action' && processingId === franchise._id ? '...' : <Mail className="h-5 w-5" />}
                         </button>
-                        {/* <button onClick={() => handleToggleStatus(franchise)} // REMOVED
-                                className={`p-1 ${franchise.status === 'Active' ? 'text-green-500 hover:text-green-700' : 'text-gray-400 hover:text-gray-600'}`}
-                                title={franchise.status === 'Active' ? 'Deactivate (Hide)' : 'Activate (Show)'}
-                                disabled={processingId === franchise._id}>
-                             {processingId === franchise._id && column.header === 'Action' && processingId === franchise._id ? '...' : (franchise.status === 'Active' ? '🟢' : '⚪')}
-                        </button> */}
                     </div>
                 );
             case 'Franchise Logo':
                 return value ? <img src={value} alt="Franchise Logo" className="h-10 w-10 object-contain rounded" /> : 'No Photo';
-            // case 'Status': // REMOVED
-            //      return <span className={`font-medium ${value === 'Active' ? 'text-green-600' : 'text-red-600'}`}>{value}</span>;
-            case 'Expiry Date':
-            case 'Registered Date':
-                return formatDate(value);
             case 'No Of Student':
                 return value !== undefined ? value : 'N/A';
             case 'Status':
                 return (
-                    <span className={`font-semibold ${value === 'Active' ? 'text-green-600' : value === 'Inactive' ? 'text-red-600' : 'text-gray-500'}`}>
-                        {value}
-                    </span>
+                    <button 
+                        onClick={() => handleToggleStatus(franchise)}
+                        disabled={processingId === franchise._id}
+                        className={`font-semibold py-1 px-3 rounded-full text-white ${
+                            value === 'Active' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+                        }`}>
+                        {processingId === franchise._id ? '...' : value}
+                    </button>
                 );
+            case 'Expiry Date':
+            case 'Registered Date':
+                return formatDate(value);
             default:
                 return value !== null && value !== undefined ? String(value) : 'N/A';
         }
@@ -177,14 +167,6 @@ function FranchiseTable({ franchises = [], onActionComplete }) { // Added onActi
                     </tbody>
                 </table>
             </div>
-            {/* VerificationModal is no longer used by the eye icon in this table */}
-            {/* <VerificationModal
-                isOpen={isViewModalOpen}
-                franchise={franchiseToView}
-                onConfirm={() => setIsViewModalOpen(false)}
-                onCancel={() => setIsViewModalOpen(false)}
-                isVerifying={false}
-            /> */}
         </>
     );
 }

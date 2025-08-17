@@ -3,12 +3,10 @@ import axios from "axios";
 import Fees_table from "./Fees_table";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
 import Select from 'react-select';
 import { useNavigate } from 'react-router-dom';
 import API_BASE_URL  from "../../../config";
 import FormView from './Showing_students/FormView';
-
 
 const AddNewStudent = () => {
   const navigate = useNavigate(); 

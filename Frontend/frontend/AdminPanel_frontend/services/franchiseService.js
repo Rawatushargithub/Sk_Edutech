@@ -119,7 +119,7 @@ export const updateFranchise = async (franchiseId, formData) => {
     }
 };
 
-export const updateFranchiseStatusOnly = async (franchiseId, status) => {
+export const updateFranchiseStatus = async (franchiseId, status) => {
     const url = `/${franchiseId}/status`; // Backend should handle this route specifically for status
     console.log(`[FranchiseService] Updating ONLY status for ${franchiseId} to ${status}`);
 

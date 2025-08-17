@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { FaCheckCircle, FaTimesCircle, FaWallet, FaSearch } from "react-icons/fa";
 import axios from "axios";
 import API_BASE_URL from "../../config"; // Adjust the import path as necessary
@@ -7,6 +7,7 @@ const AdminWalletApproval = () => {
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('pending_approval');
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState('institute'); // 'all', 'institute', 'student'
   const [searchQuery, setSearchQuery] = useState("");
   const [timeFilter, setTimeFilter] = useState("all");
   const [startDate, setStartDate] = useState('');
@@ -107,16 +108,49 @@ const AdminWalletApproval = () => {
   };
 
   // Combined filtering
-  const filteredTransactions = transactions
-    .filter(transaction => isDateInRange(transaction.timestamp, timeFilter, startDate, endDate))
-    .filter(
-      (transaction) =>
-                (transaction.franchise?.franchiseName?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+  const filteredTransactions = useMemo(() => {
+    console.log('Filtering transactions. Current filter states:', { 
+      status: filter, 
+      type: transactionTypeFilter, 
+      time: timeFilter, 
+      search: searchQuery 
+    });
+    console.log('Raw transactions:', transactions);
+
+    const result = transactions.filter(transaction => {
+      // Status filter
+      const statusMatch = filter === 'all' || transaction.status === filter;
+      
+      // Transaction type filter based on paymentId
+      const typeMatch = (() => {
+        if (transactionTypeFilter === 'all') return true;
+        if (transactionTypeFilter === 'institute') {
+          return transaction.paymentId && transaction.paymentId !== 'N/A';
+        }
+        if (transactionTypeFilter === 'student') {
+          return !transaction.paymentId || transaction.paymentId === 'N/A';
+        }
+        return true;
+      })();
+      
+      // Date filter
+      const dateMatch = isDateInRange(transaction.timestamp, timeFilter, startDate, endDate);
+      
+      // Search filter
+      const searchMatch = 
+        !searchQuery ||
+        (transaction.franchise?.franchiseName?.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (transaction.institute?.email?.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (transaction.paymentId?.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (transaction._id?.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (transaction.amount?.toString().toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+        (transaction.amount?.toString().toLowerCase().includes(searchQuery.toLowerCase()));
+
+      return statusMatch && typeMatch && dateMatch && searchMatch;
+    });
+
+    console.log('Filtered transactions:', result);
+    return result;
+  }, [transactions, filter, transactionTypeFilter, timeFilter, startDate, endDate, searchQuery]);
 
   return (
     <div className="container mx-auto p-6">
@@ -172,19 +206,19 @@ const AdminWalletApproval = () => {
           )}
         </div>
       </div>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-start items-center mb-4 space-x-2">
         {/* Filter cards */}
-        <div className="flex border rounded-lg overflow-hidden mb-4 w-full">
+        <div className="flex border rounded-lg overflow-hidden">
           {[
-            { value: 'all', label: 'All Transactions' },
-            { value: 'pending_approval', label: 'Pending Approval' },
+            { value: 'all', label: 'All Statuses' },
+            { value: 'pending_approval', label: 'Pending' },
             { value: 'approved', label: 'Approved' },
             { value: 'rejected', label: 'Rejected' },
           ].map((item, index) => (
             <button
               key={item.value}
               onClick={() => setFilter(item.value)}
-              className={`flex-1 px-4 py-2 text-sm font-medium focus:outline-none ${ 
+              className={`px-4 py-2 text-sm font-medium focus:outline-none ${ 
                 filter === item.value
                   ? 'bg-gray-400 text-gray-900'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -193,6 +227,38 @@ const AdminWalletApproval = () => {
               {item.label}
             </button>
           ))}
+        </div>
+        <div className="flex border rounded-lg overflow-hidden">
+            <button
+                onClick={() => setTransactionTypeFilter('all')}
+                className={`px-4 py-2 text-sm font-medium focus:outline-none ${ 
+                transactionTypeFilter === 'all'
+                    ? 'bg-gray-400 text-gray-900'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                } border-r border-gray-200`}
+            >
+                All Types
+            </button>
+            <button
+                onClick={() => setTransactionTypeFilter('institute')}
+                className={`px-4 py-2 text-sm font-medium focus:outline-none ${ 
+                transactionTypeFilter === 'institute'
+                    ? 'bg-gray-400 text-gray-900'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                } border-r border-gray-200`}
+            >
+                Institute
+            </button>
+            <button
+                onClick={() => setTransactionTypeFilter('student')}
+                className={`px-4 py-2 text-sm font-medium focus:outline-none ${ 
+                transactionTypeFilter === 'student'
+                    ? 'bg-gray-400 text-gray-900'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+            >
+                Student
+            </button>
         </div>
       </div>
 

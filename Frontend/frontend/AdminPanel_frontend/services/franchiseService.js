@@ -1,5 +1,5 @@
 import axios from 'axios';
-import API_BASE_URL from "../../config";
+import API_BASE_URL from "../../config"; 
 
 const franchiseApi = axios.create({
     baseURL: `${API_BASE_URL}/api/v1/franchises`,
@@ -9,13 +9,72 @@ const franchiseApi = axios.create({
 // Function to get all ACTIVE franchises (for general listing)
 export const getAllActiveFranchises = async () => {
     const url = '/'; // GET /api/v1/franchises/
-    console.log(`[FranchiseService] Attempting to fetch active franchises from: ${franchiseApi.defaults.baseURL}${url}`);
+    console.log(`[FranchiseService] Attempting to fetch active franchises with student counts from: ${franchiseApi.defaults.baseURL}${url}`);
+    
     try {
-        const response = await franchiseApi.get(url);
-        console.log("[FranchiseService] Raw response from getAllActiveFranchises:", response);
-        // Assuming backend returns { success: boolean, data: [], message: string }
-        // Or directly { statusCode: number, data: [], message: string } based on ApiResponse structure
-        return response.data;
+        // Fetch franchises and student counts in parallel for better performance
+        const [franchisesResponse, studentCountsResponse] = await Promise.allSettled([
+            franchiseApi.get(url),
+            getAllFranchiseStudentCounts()
+        ]);
+
+        console.log("[FranchiseService] Franchises response:", franchisesResponse);
+        console.log("[FranchiseService] Student counts response:", studentCountsResponse);
+
+        // Handle franchises response
+        if (franchisesResponse.status === 'rejected') {
+            throw franchisesResponse.reason;
+        }
+
+        const franchises = franchisesResponse.value.data;
+        if (franchises && franchises.statusCode === 200 && franchises.data) {
+            let franchisesData = franchises.data;
+console.log("studentCountsResponse.value.data" , studentCountsResponse.value.data)
+            // Handle student counts response
+            console.log("[FranchiseService] Checking conditions:");
+            console.log("- status === 'fulfilled':", studentCountsResponse.status === 'fulfilled');
+            console.log("- value exists:", !!studentCountsResponse.value);
+            console.log("- value.data exists:", !!studentCountsResponse.value?.data);
+            console.log("- actual statusCode:", studentCountsResponse.value?.data?.statusCode);
+            console.log("- statusCode === 200:", studentCountsResponse.value?.data?.statusCode === 200);
+            
+            if (studentCountsResponse.status === 'fulfilled' && 
+                studentCountsResponse.value && 
+                studentCountsResponse.value.data) {
+                console.log("if else working")
+                const studentCountsData = studentCountsResponse.value.data || [];
+                console.log("[FranchiseService] Student counts raw data:", studentCountsData);
+                
+                // Create a map of franchise student counts for quick lookup
+                const studentCountsMap = {};
+                studentCountsData.forEach(item => {
+                    studentCountsMap[item.franchiseId] = item.studentCount;
+                });
+
+                // Merge real-time student counts with franchise data
+                franchisesData = franchises.data.map(franchise => ({
+                    ...franchise,
+                    totalStudents: studentCountsMap[franchise.franchiseId] || 0 // Real-time count from DB
+                }));
+                
+                console.log("[FranchiseService] Student counts map:", studentCountsMap);
+                console.log("[FranchiseService] Sample franchise after merge:", franchisesData[0]);
+                console.log("[FranchiseService] Successfully merged student counts with franchise data");
+            } else {
+                console.warn("[FranchiseService] Student counts fetch failed, using original totalStudents values");
+                console.warn("[FranchiseService] Student counts response:", studentCountsResponse.value?.data);
+                console.warn("[FranchiseService] Response status:", studentCountsResponse.status);
+                // Keep original totalStudents values if student count fetch fails
+            }
+
+            return {
+                ...franchises,
+                data: franchisesData
+            };
+        }
+
+        return franchises;
+
     } catch (error) {
         // Log detailed error information
         if (error.response) {
@@ -31,6 +90,36 @@ export const getAllActiveFranchises = async () => {
 
         // Rethrow or handle error as needed
         throw error.response?.data || new Error("Failed to fetch active franchises");
+    }
+};
+
+// Function to get student count for a specific franchise
+export const getStudentCountByFranchise = async (franchiseId) => {
+    const url = `/${franchiseId}/count`;
+    console.log(`[FranchiseService] Fetching student count for franchise ${franchiseId} from: ${franchiseApi.defaults.baseURL}${url}`);
+    
+    try {
+        const response = await franchiseApi.get(url);
+        console.log(`[FranchiseService] Student count response for ${franchiseId}:`, response);
+        return response.data;
+    } catch (error) {
+        console.error(`[FranchiseService] Error fetching student count for ${franchiseId}:`, error.response?.data || error.message);
+        throw error.response?.data || new Error(`Failed to fetch student count for franchise ${franchiseId}`);
+    }
+};
+
+// Function to get student counts for all franchises
+export const getAllFranchiseStudentCounts = async () => {
+    const url = '/students/counts';
+    console.log(`[FranchiseService] Fetching student counts for all franchises from: ${franchiseApi.defaults.baseURL}${url}`);
+    
+    try {
+        const response = await franchiseApi.get(url);
+        console.log(`[FranchiseService] All franchise student counts response:`, response);
+        return response.data;
+    } catch (error) {
+        console.error(`[FranchiseService] Error fetching all franchise student counts:`, error.response?.data || error.message);
+        throw error.response?.data || new Error(`Failed to fetch student counts for all franchises`);
     }
 };
 

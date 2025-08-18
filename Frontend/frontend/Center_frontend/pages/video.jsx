@@ -10,7 +10,7 @@ import API_BASE_URL from "../../config";
 
 
 import { MdDelete, MdVideoLibrary, MdEdit } from "react-icons/md";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Search } from "lucide-react";
 
 
 const UploadCourseVideo1 = () => {
@@ -18,6 +18,7 @@ const UploadCourseVideo1 = () => {
   const [allCourses, setAllCourses] = useState([]); // For dropdown
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [videosToDisplay, setVideosToDisplay] = useState([]); // Videos from selected course's courseVideoLinks
+  const [searchTerm, setSearchTerm] = useState("");
   
   // const [newVideo, setNewVideo] = useState({ course: "", title: "", link: "" }); // Removed, adding videos via CourseForm or dedicated page
   // const [thumbnailPreview, setThumbnailPreview] = useState(null); // Removed
@@ -100,14 +101,19 @@ const UploadCourseVideo1 = () => {
 
   // handleDeleteVideo is removed as video management is now part of CourseForm
 
+  // Filter videos by search term
+  const filteredVideos = videosToDisplay.filter(video =>
+    video.title && video.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   // Pagination Logic
   const indexOfLastVideo = currentPage * videosPerPage;
   const indexOfFirstVideo = indexOfLastVideo - videosPerPage;
-  const currentVideosToDisplay = videosToDisplay.slice(indexOfFirstVideo, indexOfLastVideo);
+  const currentVideosToDisplay = filteredVideos.slice(indexOfFirstVideo, indexOfLastVideo);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  const totalPages = Math.ceil(videosToDisplay.length / videosPerPage);
+  const totalPages = Math.ceil(filteredVideos.length / videosPerPage);
 
   const inputStyle = "w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500";
   const buttonBaseStyle = "px-6 py-2.5 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors";
@@ -129,27 +135,46 @@ const UploadCourseVideo1 = () => {
             </button>
         </div>
 
-        {/* Course Filter */}
-        <div className="mb-6 p-4 bg-white shadow-md rounded-lg">
-          <label htmlFor="courseFilter" className="block text-sm font-medium text-gray-700 mb-1">Select Course to View Videos</label>
-          <Select
-            id="courseFilter"
-            options={allCourses.map(course => ({
-              value: course._id,
-              label: `${course.courseName} (${course.courseCode})`
-            }))}
-            value={allCourses.map(course => ({
-              value: course._id,
-              label: `${course.courseName} (${course.courseCode})`
-            })).find(option => option.value === selectedCourseId)}
-            onChange={selectedOption => setSelectedCourseId(selectedOption ? selectedOption.value : "")}
-            isLoading={loadingCourses}
-            isClearable
-            isSearchable
-            placeholder="-- Select or search for a Course --"
-            className="w-full"
-            classNamePrefix="select"
-          />
+        {/* Filters */}
+        <div className="mb-6 p-4 bg-white shadow-md rounded-lg flex flex-col sm:flex-row gap-4 items-center">
+          <div className="flex-grow w-full sm:w-auto">
+            <label htmlFor="courseFilter" className="block text-sm font-medium text-gray-700 mb-1">Filter by Course</label>
+            <Select
+              id="courseFilter"
+              options={allCourses.map(course => ({
+                value: course._id,
+                label: `${course.courseName} (${course.courseCode})`
+              }))}
+              value={allCourses.map(course => ({
+                value: course._id,
+                label: `${course.courseName} (${course.courseCode})`
+              })).find(option => option.value === selectedCourseId)}
+              onChange={selectedOption => setSelectedCourseId(selectedOption ? selectedOption.value : "")}
+              isLoading={loadingCourses}
+              isClearable
+              isSearchable
+              placeholder="-- Select or search for a Course --"
+              className="w-full"
+              classNamePrefix="select"
+            />
+          </div>
+          <div className="flex-grow w-full sm:w-auto">
+            <label htmlFor="videoSearch" className="block text-sm font-medium text-gray-700 mb-1">Search Videos</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                id="videoSearch"
+                type="text"
+                placeholder="Search by video title..."
+                className={`${inputStyle} pl-10`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                disabled={!selectedCourseId}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Video List */}
@@ -167,8 +192,15 @@ const UploadCourseVideo1 = () => {
               <p className="text-sm text-gray-400 mt-2">You can add videos by editing the course.</p>
             </div>
         )}
+        {!loadingVideos && selectedCourseId && videosToDisplay.length > 0 && filteredVideos.length === 0 && (
+            <div className="text-center py-10 bg-white rounded-lg shadow p-6">
+              <MdVideoLibrary size={48} className="mx-auto text-gray-300 mb-4" />
+              <p className="text-gray-500">No videos found matching your search.</p>
+              <p className="text-sm text-gray-400 mt-2">Try adjusting your search term or clear the search to see all videos.</p>
+            </div>
+        )}
 
-        {!loadingVideos && selectedCourseId && videosToDisplay.length > 0 && (
+        {!loadingVideos && selectedCourseId && filteredVideos.length > 0 && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {currentVideosToDisplay.map((video, index) => {

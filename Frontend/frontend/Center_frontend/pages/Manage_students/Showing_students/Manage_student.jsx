@@ -387,6 +387,14 @@ const StudentAdmissionList = () => {
   const confirmStatusToggle = async () => {
     if (!statusToggleStudent) return;
 
+    // ✅ ADD THIS CHECK
+  if (statusToggleStudent.status === 'Certified') {
+    alert('Certified students cannot have their status changed.');
+    setShowStatusPopup(false);
+    setStatusToggleStudent(null);
+    return;
+  }
+
     try {
       // Determine next status based on current status
       let newStatus;
@@ -394,10 +402,7 @@ const StudentAdmissionList = () => {
         newStatus = 'inactive';
       } else if (statusToggleStudent.status === 'inactive' || statusToggleStudent.status === 'false') {
         newStatus = 'active';
-      } else if (statusToggleStudent.status === 'Certified') {
-        newStatus = 'active'; // Certified students can be set back to active
-      }
-      
+      } 
       const response = await axios.patch(
         `${API_BASE_URL}/api/v1/institute_student/toggle_status/${statusToggleStudent._id}`,
         { status: newStatus }
@@ -658,16 +663,17 @@ const StudentAdmissionList = () => {
                     </button>
                   </td>
                   <td className="p-2 border">
-                    <button 
-                      onClick={() => handleStatusToggleClick(student)}
-                      className={`px-2 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
-                        student.status === 'active' || student.status === 'true' 
-                          ? "bg-green-200 text-green-800 hover:bg-green-300" 
-                          : student.status === 'Certified'
-                          ? "bg-blue-200 text-blue-800 hover:bg-blue-300"
-                          : "bg-red-200 text-red-800 hover:bg-red-300"
-                      }`}
-                    >
+                  <button 
+  {...(student.status !== 'Certified' && { onClick: () => handleStatusToggleClick(student) })}
+  className={`px-2 py-1 rounded-full text-sm font-medium ${
+    student.status === 'Certified'
+      ? "bg-blue-200 text-blue-800 cursor-not-allowed opacity-75" 
+      : student.status === 'active' || student.status === 'true' 
+        ? "bg-green-200 text-green-800 hover:bg-green-300" 
+        : "bg-red-200 text-red-800 hover:bg-red-300"
+  }`}
+  disabled={student.status === 'Certified'}
+>
                       {student.status === 'active' || student.status === 'true' 
                         ? "Active" 
                         : student.status === 'Certified'

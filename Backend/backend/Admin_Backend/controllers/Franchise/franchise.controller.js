@@ -812,7 +812,11 @@ const getAllFranchiseStudentCounts = async (req, res) => {
         const studentCounts = await Student.aggregate([
             {
                 $match: {
-                    status: true, // Only count active students
+                    // $or: [
+                    //     { status: true },           // Boolean true (old format)
+                    //     { status: "active" },       // String "active" (new format)
+                    //     { status: "Certified" }     // Also include certified students if needed
+                    // ],
                     franchiseId: { $exists: true, $ne: null, $ne: "" } // Ensure franchiseId exists
                 }
             },

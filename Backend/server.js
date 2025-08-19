@@ -83,6 +83,7 @@ import paymentRouter from "./backend/Admin_Backend/routes/admin.routes.js"; // I
 import adminRoutes from "./backend/Admin_Backend/routes/AdminPanel/admin.panel.js"; // Import admin routes
 import adminstudentRouter from "./backend/Admin_Backend/routes/student.routes.js"; // Import student router
 import notificationRoutes from "./backend/Admin_Backend/routes/Notification/notification.routes.js"; // Import notification router
+import AdminCourseListRouter from "./backend/Admin_Backend/routes/admin.course.routes.js"
 // admin routes
 app.use("/api/v1/mainSliderImages",mainSliderRouter)
 app.use("/api/v1/marquee",marqueeRoutes)
@@ -93,6 +94,7 @@ app.use("/api/v1/adminwallet", paymentRouter)
 app.use("/api/v1/franchises", franchiseRouter); 
 app.use("/api/v1/gallery", galleryRouter);
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/admin/courses", AdminCourseListRouter);
 app.use("/api/v1/admin_courses", adminCourseRouter); // Add admin course routes
 app.use("/api/v1/notification", notificationRoutes);
 
@@ -105,6 +107,7 @@ import feedbackRoutes from "./backend/Student_backend/routes/feedbackRoutes.js";
 import ExamRoutes from "./backend/Student_backend/routes/exam.routes.js";
 import videoRoutes from "./backend/Student_backend/routes/videoRoutes.js";
 import AdmitCardRoutes from "./backend/Student_backend/routes/admitcard.routes.js"
+import CourseRouter from "./backend/Student_backend/routes/student.course.routes.js"
 
 // Student Routes 
 app.use("/api/v1/student", StudentRoutes);
@@ -115,6 +118,8 @@ app.use("/api/v1/fees", feesRoutes);
 app.use("/api/exams", ExamRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);
 app.use("/api/v1/admit-card", AdmitCardRoutes);
+app.use("/api/v1/coursedetails", CourseRouter);
+
 
 
 

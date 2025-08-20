@@ -4,7 +4,7 @@ const QuickActions = ({ setTab }) => {
   const actions = [
     { 
       name: "My Courses", 
-      tab: "Dashboard", 
+      tab: "CourseDetails", 
       icon: <BookOpen size={22} className="text-gray-700" />
     },
     { 

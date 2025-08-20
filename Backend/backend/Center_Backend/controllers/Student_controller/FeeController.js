@@ -1,6 +1,7 @@
 import Student from "../../../Admin_Backend/models/Student/Student_Details.model.js";
 import Fee from "../../models/Student/Fees_student.model.js";
 import FeeTransaction from "../../models/Student/FeeTransaction.model.js";
+import Installment from "../../models/Student/installment.model.js";
 import mongoose from "mongoose";
 
 export const getAllStudentsFeeDetails = async (req, res) => {
@@ -249,3 +250,208 @@ console.log(req.body);
       });
     }
   };
+
+
+// Get all students with their installments for a franchise
+export const getInstallmentStudents = async (req, res) => {
+  try {
+    const { franchiseId, limit = 10, page = 1 } = req.query;
+
+    if (!franchiseId) {
+      return res.status(400).json({
+        success: false,
+        message: "Franchise ID is required"
+      });
+    }
+
+    const skip = (page - 1) * limit;
+
+    // Find all students who have installments
+    const studentsWithInstallments = await Student.find({
+      franchiseId,
+      installmentDetails: { $exists: true, $not: { $size: 0 } }
+    })
+    .populate({
+      path: 'installmentDetails',
+      model: 'Installment'
+    })
+    .populate('courseInterested', 'courseName courseCode')
+    .limit(parseInt(limit))
+    .skip(skip);
+
+    // Transform the data to match your frontend structure
+    const transformedData = studentsWithInstallments.map(student => {
+      const installments = student.installmentDetails || [];
+      
+      const totalInstallmentAmount = installments.reduce((sum, inst) => sum + inst.amount, 0);
+      const paidInstallmentAmount = installments.reduce((sum, inst) => 
+        sum + (inst.paid ? inst.amount : 0), 0
+      );
+      const dueInstallmentAmount = totalInstallmentAmount - paidInstallmentAmount;
+
+      return {
+        _id: student._id,
+        studentName: student.studentName,
+        rollNumber: student.rollNumber,
+        course: {
+          courseName: student.courseInterested.courseName,
+          courseCode: student.courseInterested.courseCode
+        },
+        totalInstallmentAmount,
+        paidInstallmentAmount,
+        dueInstallmentAmount,
+        installments: installments.map(inst => ({
+          _id: inst._id,
+          installmentName: inst.installmentName,
+          amount: inst.amount,
+          date: inst.date,
+          paid: inst.paid || false,
+          paidAmount: inst.paid ? inst.amount : 0
+        }))
+      };
+    });
+
+    // Get total count for pagination
+    const totalStudents = await Student.countDocuments({
+      franchiseId,
+      installmentDetails: { $exists: true, $not: { $size: 0 } }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Installment students fetched successfully",
+      data: transformedData,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalStudents / limit),
+        totalStudents,
+        hasNextPage: page * limit < totalStudents,
+        hasPrevPage: page > 1
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching installment students:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
+
+// Update installment payment
+export const updateInstallmentPayment = async (req, res) => {
+  try {
+    const { installmentId } = req.params;
+    const { amount, paymentMode, date } = req.body;
+
+    if (!installmentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Installment ID is required"
+      });
+    }
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid amount is required"
+      });
+    }
+
+    // Find and update the installment
+    const updatedInstallment = await Installment.findByIdAndUpdate(
+      installmentId,
+      {
+        paid: true,
+        paymentMode,
+        paymentDate: date,
+        paidAmount: amount
+      },
+      { new: true }
+    );
+
+    if (!updatedInstallment) {
+      return res.status(404).json({
+        success: false,
+        message: "Installment not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Installment payment updated successfully",
+      data: updatedInstallment
+    });
+
+  } catch (error) {
+    console.error("Error updating installment payment:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
+
+// Get installment details by student ID
+export const getStudentInstallments = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    if (!studentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Student ID is required"
+      });
+    }
+
+    const student = await Student.findById(studentId)
+      .populate('installmentDetails')
+      .populate('courseInterested', 'courseName courseCode');
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found"
+      });
+    }
+
+    const installments = student.installmentDetails || [];
+    const totalAmount = installments.reduce((sum, inst) => sum + inst.amount, 0);
+    const paidAmount = installments.reduce((sum, inst) => 
+      sum + (inst.paid ? inst.amount : 0), 0
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Student installments fetched successfully",
+      data: {
+        student: {
+          _id: student._id,
+          studentName: student.studentName,
+          rollNumber: student.rollNumber,
+          course: student.courseInterested
+        },
+        installments,
+        summary: {
+          totalAmount,
+          paidAmount,
+          dueAmount: totalAmount - paidAmount,
+          totalInstallments: installments.length,
+          paidInstallments: installments.filter(inst => inst.paid).length,
+          pendingInstallments: installments.filter(inst => !inst.paid).length
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching student installments:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};

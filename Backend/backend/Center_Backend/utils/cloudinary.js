@@ -22,9 +22,34 @@ import fs from "fs" // fs is file system library provided by node js
     
         try {
             console.log("Uploading file to Cloudinary:", localfilepath);
-            const response = await cloudinary.uploader.upload(localfilepath, {
-                resource_type: "raw", // Automatically detect file type (e.g., image, video)
-            });
+            
+            // Determine resource type based on file extension
+            const fileExtension = localfilepath.split('.').pop().toLowerCase();
+            let resourceType = "auto";
+            let uploadOptions = {};
+            
+            if (fileExtension === 'pdf') {
+                resourceType = "raw";
+                uploadOptions = {
+                    resource_type: resourceType,
+                    access_mode: "public", // Make PDFs publicly accessible
+                    type: "upload"
+                };
+            } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension)) {
+                resourceType = "image";
+                uploadOptions = {
+                    resource_type: resourceType
+                };
+            } else {
+                // For other file types (doc, docx, txt, etc.)
+                resourceType = "raw";
+                uploadOptions = {
+                    resource_type: resourceType,
+                    access_mode: "public"
+                };
+            }
+            
+            const response = await cloudinary.uploader.upload(localfilepath, uploadOptions);
     
             console.log("File successfully uploaded to Cloudinary:", response);
             fs.unlinkSync(localfilepath); // Remove the file from the local server after uploading

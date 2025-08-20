@@ -104,7 +104,7 @@ const franchiseSchema = new Schema(
             type: String,
             trim: true,
         },
-        ownerPhotoUrl: {
+        franchiseLogoUrl: {
             type: String,
         },
         franchiseSignatureUrl: {

@@ -242,6 +242,13 @@ export const approveStudentCertificate = async (req, res) => {
 
     await certificate.save();
 
+    // Update student status to 'Certified' when certificate is approved
+    await Student.findOneAndUpdate(
+      { rollNumber: rollNumber },
+      { status: "Certified" },
+      { new: true }
+    );
+
     res.status(200).json({
       message: "Student certificate approved successfully",
       certificateId,

@@ -11,6 +11,9 @@ const FeesManagementSystem = () => {
   const [activeTab, setActiveTab] = useState("transactions");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState("studentName");
+  const [timeFilter, setTimeFilter] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   
   // Normal Fees Data
   const [students, setStudents] = useState([]);
@@ -35,12 +38,51 @@ const FeesManagementSystem = () => {
 
 
   // Filter and sort functions
-  const getFilteredAndSortedData = (data, searchTerm, sortKey) => {
-    const filtered = data.filter((item) =>
+  const getFilteredAndSortedData = (data, searchTerm, sortKey, timeFilter, startDate, endDate) => {
+    // Time Filter
+    if (timeFilter !== 'all') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      const filterDate = (date) => {
+        const admissionDate = new Date(date);
+        if (isNaN(admissionDate.getTime())) return false;
+
+        switch (timeFilter) {
+          case 'today':
+            return admissionDate >= today;
+          case 'yesterday':
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            return admissionDate >= yesterday && admissionDate < today;
+          case 'last7days':
+            const last7days = new Date(today);
+            last7days.setDate(today.getDate() - 7);
+            return admissionDate >= last7days;
+          case 'last30days':
+            const last30days = new Date(today);
+            last30days.setDate(today.getDate() - 30);
+            return admissionDate >= last30days;
+          case 'custom':
+            if (startDate && endDate) {
+              const start = new Date(startDate);
+              const end = new Date(endDate);
+              end.setHours(23, 59, 59, 999); // Include the entire end day
+              return admissionDate >= start && admissionDate <= end;
+            }
+            return true;
+          default:
+            return true;
+        }
+      };
+      data = data.filter(item => filterDate(item.admissionDate));
+    }
+
+    let filteredData = data.filter(item =>
       item.studentName.toLowerCase().includes(searchTerm.toLowerCase())
     );
     
-    return [...filtered].sort((a, b) => {
+    return [...filteredData].sort((a, b) => {
       if (typeof a[sortKey] === "string") {
         return a[sortKey].localeCompare(b[sortKey]);
       } else {
@@ -49,11 +91,11 @@ const FeesManagementSystem = () => {
     });
   };
 
-  const filteredStudents = getFilteredAndSortedData(students, search, sortKey);
-  const filteredInstallmentStudents = getFilteredAndSortedData(installmentStudents, search, sortKey);
+  const filteredStudents = getFilteredAndSortedData(students, search, sortKey, timeFilter, startDate, endDate);
+  const filteredInstallmentStudents = getFilteredAndSortedData(installmentStudents, search, sortKey, timeFilter, startDate, endDate);
 
   // Calculate totals for normal fees
-  const totalFee = students.reduce((acc, student) => acc + student.courseFee, 0);
+  const totalFee = students.reduce((acc, student) => acc + student.totalFee, 0);
   const totalPaid = students.reduce((acc, student) => acc + student.paidFee, 0);
   const totalDue = students.reduce((acc, student) => acc + student.dueFee, 0);
 
@@ -383,10 +425,41 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
                 <input
                   type="text"
                   placeholder="Search Student Name"
-                  className="pl-10 pr-4 py-2 border rounded-lg w-72"
+                  className="pl-10 pr-4 py-2 border rounded-lg w-56"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
+              </div>
+              <div className="flex items-center gap-4">
+                <select
+                  value={timeFilter}
+                  onChange={(e) => setTimeFilter(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="yesterday">Yesterday</option>
+                  <option value="last7days">Last 7 Days</option>
+                  <option value="last30days">Last 30 Days</option>
+                  <option value="custom">Custom Range</option>
+                </select>
+                {timeFilter === "custom" && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span>to</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                )}
               </div>
               <select
                 className="border rounded-lg py-2 px-3"

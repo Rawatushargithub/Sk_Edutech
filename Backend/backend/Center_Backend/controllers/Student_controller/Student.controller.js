@@ -1263,6 +1263,7 @@ const toggleStudentStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     console.log("toggleStudentStatus called with id:", id, "status:", status);
+    
     // Validate student ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -1270,13 +1271,13 @@ const toggleStudentStatus = async (req, res) => {
         message: "Invalid student ID format",
       });
     }
-    console.log("Type of status:", typeof status, "Value:", status);
 
-    // Validate status
-    if (typeof status !== "boolean") {
+    // Validate status - now accepts enum values
+    const validStatuses = ["active", "inactive", "Certified"];
+    if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Status must be a boolean value",
+        message: "Status must be one of: active, inactive, Certified",
       });
     }
 
@@ -1294,20 +1295,12 @@ const toggleStudentStatus = async (req, res) => {
         message: "Student not found",
       });
     }
-    console.log(student.toObject()); // Safely prints the raw document
-    console.log(
-      "Updated student:",
-      student.status,
-      "roll number: ",
-      student.rollNumber
-    );
-    const studentcheck = await Student.findById(id);
-    console.log("Updated student status:", studentcheck);
+    
+    console.log("Updated student:", student.status, "roll number:", student.rollNumber);
+    
     res.status(200).json({
       success: true,
-      message: `Student status updated to ${
-        status ? "Active" : "Inactive"
-      } successfully`,
+      message: `Student status updated to ${status} successfully`,
       data: {
         id: student._id,
         studentName: student.studentName,

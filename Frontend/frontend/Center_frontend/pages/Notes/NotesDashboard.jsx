@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from 'react-hot-toast';
 import { FileText, Link as LinkIcon, Search, PlusCircle, Edit3 } from 'lucide-react';
+import Select from 'react-select';
 import API_BASE_URL from "../../../config";
 
 const NotesDashboard = () => {
@@ -108,21 +109,24 @@ const NotesDashboard = () => {
           <div className="mb-6 p-4 bg-white shadow-md rounded-lg flex flex-col sm:flex-row gap-4 items-center">
             <div className="flex-grow w-full sm:w-auto">
               <label htmlFor="courseFilter" className="block text-sm font-medium text-gray-700 mb-1">Filter by Course</label>
-              <select
+              <Select
                 id="courseFilter"
-                className={inputStyle}
-                value={selectedCourseId}
-                onChange={(e) => setSelectedCourseId(e.target.value)}
-                disabled={loadingCourses}
-              >
-                <option value="">-- Select a Course to View Notes --</option>
-                {loadingCourses && <option disabled>Loading courses...</option>}
-                {allCourses.map((course) => (
-                  <option key={course._id} value={course._id}>
-                    {course.courseName} ({course.courseCode})
-                  </option>
-                ))}
-              </select>
+                options={allCourses.map(course => ({
+                  value: course._id,
+                  label: `${course.courseName} (${course.courseCode})`
+                }))}
+                value={allCourses.map(course => ({
+                  value: course._id,
+                  label: `${course.courseName} (${course.courseCode})`
+                })).find(option => option.value === selectedCourseId)}
+                onChange={selectedOption => setSelectedCourseId(selectedOption ? selectedOption.value : "")}
+                isLoading={loadingCourses}
+                isClearable
+                isSearchable
+                placeholder="-- Select or search for a Course --"
+                className="w-full"
+                classNamePrefix="select"
+              />
             </div>
             <div className="flex-grow w-full sm:w-auto">
               <label htmlFor="noteSearch" className="block text-sm font-medium text-gray-700 mb-1">Search Notes</label>

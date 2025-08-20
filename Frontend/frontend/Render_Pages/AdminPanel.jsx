@@ -23,6 +23,8 @@ import ApprovedCertificates from "../AdminPanel_frontend/Certificate/ApproveCert
 import AdminWallet from "../AdminPanel_frontend/Dashboard/Admin_Wallet"; // Import Admin Wallet
 import StudentAdmissionList from "../AdminPanel_frontend/Showing_students/Manage_student";
 import NotificationAdminPanel from "../AdminPanel_frontend/Notification/NotificationMarquee";
+import AddCoursebyAdmin from "../AdminPanel_frontend/Courses/AddCoursebyAdmin"; // Import Add Course Component  
+import AdminCoursesList from "../AdminPanel_frontend/Courses/AdminCourseList";
 
 const AdminPanel = () => {
 
@@ -73,6 +75,12 @@ const AdminPanel = () => {
 
               {/* Admin Course Management Route */}
               <Route path="courses" element={<CourseListAdmin />} />
+              <Route path="add-course" element={<AddCoursebyAdmin mode="add"/>} />
+              <Route path="add-course/update/:courseId" element={<AddCoursebyAdmin mode="edit"/>} />
+              <Route path="courselist" element={<AdminCoursesList />} />
+
+              
+
 
               <Route path="Certificates" element={<RequestedCertificates />} />
               <Route path="approved-certificates" element={<ApprovedCertificates />} />

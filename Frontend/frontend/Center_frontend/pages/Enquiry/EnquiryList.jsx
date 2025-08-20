@@ -15,8 +15,13 @@ const EnquiryList = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalEnquiries, setTotalEnquiries] = useState(0);
   const [limit] = useState(10);
+  const [timeFilter, setTimeFilter] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
 
   const fetchEnquiries = async (page = 1, searchTerm = "") => {
+
     try {
       setLoading(true);
       const franchiseId = localStorage.getItem('franchiseID');
@@ -24,7 +29,9 @@ const EnquiryList = () => {
         toast.error("Franchise ID not found. Please login again.");
         return;
       }
+
       const response = await axios.get(`${API_BASE_URL}/api/v1/institute_enquiry?franchiseId=${franchiseId}&page=${page}&limit=${limit}&search=${searchTerm}`);
+
       if (response.data.success) {
         setEnquiries(response.data.data);
         setTotalPages(response.data.pagination.totalPages);
@@ -43,20 +50,24 @@ const EnquiryList = () => {
   };
 
   useEffect(() => {
-    fetchEnquiries(currentPage, search);
+    fetchEnquiries(1, search, timeFilter, startDate, endDate);
+  }, [search, timeFilter, startDate, endDate]);
+
+  useEffect(() => {
+    fetchEnquiries(currentPage, search, timeFilter, startDate, endDate);
   }, [currentPage]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     setCurrentPage(1);
-    fetchEnquiries(1, search);
+    fetchEnquiries(1, search, timeFilter, startDate, endDate);
   };
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
     if (e.target.value === "") {
       setCurrentPage(1);
-      fetchEnquiries(1, "");
+      fetchEnquiries(1, "", timeFilter, startDate, endDate);
     }
   };
 
@@ -81,7 +92,10 @@ const EnquiryList = () => {
       const response = await axios.delete(`${API_BASE_URL}/api/v1/institute_enquiry/${id}?franchiseId=${franchiseId}`);
       if (response.data.success) {
         toast.success("Enquiry deleted successfully!");
+
         fetchEnquiries(currentPage, search);
+
+        
         if (selectedEnquiry && selectedEnquiry._id === id) {
           setSelectedEnquiry(null);
         }
@@ -133,7 +147,9 @@ const EnquiryList = () => {
               <div className="relative"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" /><input type="text" placeholder="Search by name, email, or phone..." value={search} onChange={handleSearchChange} className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#457B9D] focus:border-transparent w-64" /></div>
               <button type="submit" className="px-4 py-2 bg-[#457B9D] text-white rounded-lg hover:bg-[#3a6b8a] transition-colors">Search</button>
             </form>
+
             <div className="text-sm text-gray-600">Total Enquiries: <span className="font-semibold">{totalEnquiries}</span></div>
+
           </div>
         </div>
         <div className="p-8 overflow-x-auto">

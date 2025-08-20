@@ -10,6 +10,10 @@ const RequestedCertificates = () => {
   const [selectedFranchise, setSelectedFranchise] = useState("");
   const [loading, setLoading] = useState(false);
   const [approveLoading, setApproveLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [timeFilter, setTimeFilter] = useState("all");
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,12 +76,72 @@ const RequestedCertificates = () => {
     }
   };
 
+  const isDateInRange = (date, timeFilter, startDate, endDate) => {
+    if (!date) return true;
+
+    const itemDate = new Date(date);
+    if (isNaN(itemDate.getTime())) return false;
+
+    if (timeFilter === 'all') {
+      return true;
+    }
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    switch (timeFilter) {
+      case 'today':
+        return itemDate >= today;
+      case 'yesterday':
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        return itemDate >= yesterday && itemDate < today;
+      case 'last7days':
+        const last7days = new Date(today);
+        last7days.setDate(today.getDate() - 7);
+        return itemDate >= last7days;
+      case 'last30days':
+        const last30days = new Date(today);
+        last30days.setDate(today.getDate() - 30);
+        return itemDate >= last30days;
+      case 'custom':
+        if (startDate && endDate) {
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          return itemDate >= start && itemDate <= end;
+        }
+        return true;
+      default:
+        return true;
+    }
+  };
+
+  const filteredCertificates = certificates.map(cert => ({
+    ...cert,
+    courses: cert.courses.map(course => ({
+        ...course,
+        results: course.results.filter(r => {
+            const searchLower = searchQuery.toLowerCase();
+            const matchesTime = isDateInRange(r.requestedAt, timeFilter, startDate, endDate);
+            const matchesSearch = !searchQuery || (
+                r.rollNumber?.toLowerCase().includes(searchLower) ||
+                r.studentName?.toLowerCase().includes(searchLower) ||
+                r.fatherName?.toLowerCase().includes(searchLower) ||
+                r.instituteName?.toLowerCase().includes(searchLower) ||
+                r.grade?.toLowerCase().includes(searchLower)
+            );
+            return matchesSearch && matchesTime;
+        })
+    })).filter(course => course.results.length > 0)
+})).filter(cert => cert.courses.length > 0);
+
   const navigateToApproved = () => {
     navigate('/admin/approved-certificates');
   };
 
   const getTotalRequestedCount = () => {
-    return certificates.reduce((total, cert) => {
+    return filteredCertificates.reduce((total, cert) => {
       return total + cert.courses.reduce((courseTotal, course) => {
         return courseTotal + course.results.length;
       }, 0);
@@ -103,12 +167,12 @@ const RequestedCertificates = () => {
 
       {/* Filter Section */}
       <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center gap-4">
+        <div className="flex items-end gap-4 flex-wrap">
           <label className="font-medium">Filter by Franchise:</label>
           <select
             value={selectedFranchise}
             onChange={(e) => handleFranchiseFilter(e.target.value)}
-            className="border px-3 py-2 rounded-md"
+            className="border px-3 py-2 rounded-md w-56"
           >
             <option value="">All Franchises</option>
             {franchises.map((franchise) => (
@@ -117,6 +181,52 @@ const RequestedCertificates = () => {
               </option>
             ))}
           </select>
+
+          <div className="flex flex-col">
+            <label className="font-medium mb-1">Filter by Time:</label>
+            <div className="flex items-center gap-4">
+              <select
+                value={timeFilter}
+                onChange={(e) => setTimeFilter(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="last7days">Last 7 Days</option>
+                <option value="last30days">Last 30 Days</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              {timeFilter === 'custom' && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span>to</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col">
+            <label className="font-medium mb-1">Search:</label>
+            <input
+              type="text"
+              className="px-3 py-2 border rounded-md w-56"
+              placeholder="Name, roll no, grade..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
           <div className="ml-auto">
             <span className="text-sm text-gray-600">
               Total Requested: <span className="font-semibold">{getTotalRequestedCount()}</span>
@@ -127,7 +237,7 @@ const RequestedCertificates = () => {
 
       {loading && <p className="text-center py-4">Loading certificates...</p>}
 
-      {!loading && certificates.length === 0 ? (
+      {!loading && filteredCertificates.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-gray-500">No requested certificates found.</p>
           {selectedFranchise && (
@@ -138,7 +248,7 @@ const RequestedCertificates = () => {
         </div>
       ) : (
         <div className="space-y-8">
-          {certificates.map((cert, idx) => (
+          {filteredCertificates.map((cert, idx) => (
             <div key={idx} className="border rounded-lg p-4 shadow-sm">
               <h3 className="text-lg font-semibold mb-2 text-blue-600">
                 Franchise: {getFranchiseName(cert.franchiseId)}

@@ -32,6 +32,9 @@ const StudentAdmissionList = () => {
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [timeFilter, setTimeFilter] = useState("all"); // State for time filter
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [activeTab, setActiveTab] = useState("active"); // State for active tab
 
   // New state for export dropdown
   const [showExportDropdown, setShowExportDropdown] = useState(false);
@@ -107,6 +110,14 @@ const StudentAdmissionList = () => {
   useEffect(() => {
     let tempStudents = students;
 
+    // 1. Filter by active tab status
+    if (activeTab === 'active') {
+      tempStudents = tempStudents.filter(student => student.status);
+    } else if (activeTab === 'inactive') {
+      tempStudents = tempStudents.filter(student => !student.status);
+    }
+
+
     // 1. Filter by search term
     if (searchTerm.trim() !== "") {
       tempStudents = tempStudents.filter(
@@ -122,54 +133,55 @@ const StudentAdmissionList = () => {
     }
 
     // 2. Filter by time
-    if (timeFilter !== "all") {
-      const now = new Date();
-      tempStudents = tempStudents.filter((student) => {
-        const admissionDate = new Date(student.admissionDate);
-        if (isNaN(admissionDate.getTime())) return false; // Skip invalid dates
+    // 2. Filter by time
+    const isDateInRange = (date, filter, start, end) => {
+      if (!date) return true;
+      const itemDate = new Date(date);
+      if (isNaN(itemDate.getTime())) return false;
 
-        switch (timeFilter) {
-          case "week": {
-            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-            startOfWeek.setHours(0, 0, 0, 0);
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(endOfWeek.getDate() + 6);
-            endOfWeek.setHours(23, 59, 59, 999);
-            return admissionDate >= startOfWeek && admissionDate <= endOfWeek;
-          }
-          case "month": {
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            endOfMonth.setHours(23, 59, 59, 999);
-            return admissionDate >= startOfMonth && admissionDate <= endOfMonth;
-          }
-          case "last_month": {
-            const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-            endOfLastMonth.setHours(23, 59, 59, 999);
-            return admissionDate >= startOfLastMonth && admissionDate <= endOfLastMonth;
-          }
-          case "last_three_months": {
-            const threeMonthsAgo = new Date();
-            threeMonthsAgo.setMonth(now.getMonth() - 3);
-            threeMonthsAgo.setHours(0, 0, 0, 0);
-            return admissionDate >= threeMonthsAgo && admissionDate <= now;
-          }
-          case "year": {
-            const startOfYear = new Date(now.getFullYear(), 0, 1);
-            const endOfYear = new Date(now.getFullYear(), 11, 31);
-            endOfYear.setHours(23, 59, 59, 999);
-            return admissionDate >= startOfYear && admissionDate <= endOfYear;
-          }
-          default:
-            return true;
+      if (filter === 'all') return true;
+
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      switch (filter) {
+        case 'today':
+          return itemDate >= today;
+        case 'yesterday': {
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+          return itemDate >= yesterday && itemDate < today;
         }
-      });
-    }
+        case 'last7days': {
+          const last7days = new Date(today);
+          last7days.setDate(today.getDate() - 7);
+          return itemDate >= last7days;
+        }
+        case 'last30days': {
+          const last30days = new Date(today);
+          last30days.setDate(today.getDate() - 30);
+          return itemDate >= last30days;
+        }
+        case 'custom':
+          if (start && end) {
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            endDate.setHours(23, 59, 59, 999); // Include the entire end day
+            return itemDate >= startDate && itemDate <= endDate;
+          }
+          return true;
+        default:
+          return true;
+      }
+    };
+
+    tempStudents = tempStudents.filter(student => 
+      isDateInRange(student.admissionDate, timeFilter, startDate, endDate)
+    );
 
     setFilteredStudents(tempStudents);
     setCurrentPage(1); // Reset to the first page whenever filters change
-  }, [searchTerm, timeFilter, students]);
+  }, [searchTerm, timeFilter, students, activeTab, startDate, endDate]);
  console.log("Filtered Students: ", filteredStudents);
   const [currentPage, setCurrentPage] = useState(1);
   const entriesPerPage = 10;
@@ -479,6 +491,33 @@ const StudentAdmissionList = () => {
           </div>
         </div>
 
+        {/* Tabs for student status */}
+        <div className="mb-4 border-b border-gray-200">
+          <ul className="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500">
+            <li className="mr-2">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`inline-block p-4 rounded-t-lg border-b-2 ${activeTab === 'all' ? 'text-blue-600 border-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}`}>
+                All Students
+              </button>
+            </li>
+            <li className="mr-2">
+              <button
+                onClick={() => setActiveTab('active')}
+                className={`inline-block p-4 rounded-t-lg border-b-2 ${activeTab === 'active' ? 'text-blue-600 border-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}`}>
+                Active Students
+              </button>
+            </li>
+            <li className="mr-2">
+              <button
+                onClick={() => setActiveTab('inactive')}
+                className={`inline-block p-4 rounded-t-lg border-b-2 ${activeTab === 'inactive' ? 'text-blue-600 border-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}`}>
+                Inactive Students
+              </button>
+            </li>
+          </ul>
+        </div>
+
         {/* Filter and Search Controls */}
         <div className="flex flex-col md:flex-row justify-between items-center my-4 gap-4">
           {/* Left: Showing X of Y */}
@@ -507,18 +546,37 @@ const StudentAdmissionList = () => {
             </div>
 
             {/* Filter Dropdown */}
-            <select
-              value={timeFilter}
-              onChange={(e) => setTimeFilter(e.target.value)}
-              className="p-2 border border-gray-300 rounded-md"
-            >
-              <option value="all">All Time</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="last_month">Last Month</option>
-              <option value="three_months">Last 3 Months</option>
-              <option value="year">This Year</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <select
+                value={timeFilter}
+                onChange={(e) => setTimeFilter(e.target.value)}
+                className="p-2 border border-gray-300 rounded-md"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="last7days">Last 7 Days</option>
+                <option value="last30days">Last 30 Days</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              {timeFilter === 'custom' && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="p-2 border border-gray-300 rounded-md"
+                  />
+                  <span>to</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="p-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
 import Franchise  from '../../models/franchise/franchise.models.js';
+import Student from "../../models/Student/Student_Details.model.js"
 import { asyncHandler } from '../../utils/asynchanlder.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
@@ -748,6 +749,113 @@ export const updateFranchiseContact = async (req, res) => {
   }
 };
 
+ const getStudentCountByFranchise = async (req, res) => {
+    try {
+        const { franchiseId } = req.params;
+        
+        if (!franchiseId) {
+            return res.status(400).json({
+                statusCode: 400,
+                success: false,
+                message: "Franchise ID is required",
+                data: null
+            });
+        }
+
+        // Count active students for the franchise
+        const studentCount = await Student.countDocuments({
+            franchiseId: franchiseId,
+            status: true // Only count active students
+        });
+
+        return res.status(200).json({
+            statusCode: 200,
+            success: true,
+            message: "Student count retrieved successfully",
+            data: {
+                franchiseId: franchiseId,
+                studentCount: studentCount
+            }
+        });
+
+    } catch (error) {
+        console.error("Error getting student count:", error);
+        return res.status(500).json({
+            statusCode: 500,
+            success: false,
+            message: "Internal server error while fetching student count",
+            data: null
+        });
+    }
+};
+
+// Get student counts for all franchises
+const getAllFranchiseStudentCounts = async (req, res) => {
+    try {
+        console.log("Getting all franchise student counts...");
+        
+        // First, let's check if there are any students at all
+        const totalStudents = await Student.countDocuments();
+        console.log("Total students in database:", totalStudents);
+        
+        // Check students with franchiseId
+        const studentsWithFranchiseId = await Student.countDocuments({
+            franchiseId: { $exists: true, $ne: null, $ne: "" }
+        });
+        console.log("Students with franchiseId:", studentsWithFranchiseId);
+        
+        // Get a sample student to check the data structure
+        const sampleStudent = await Student.findOne({}).select('franchiseId status studentName');
+        console.log("Sample student:", sampleStudent);
+        
+        // Aggregate student counts by franchiseId
+        const studentCounts = await Student.aggregate([
+            {
+                $match: {
+                    // $or: [
+                    //     { status: true },           // Boolean true (old format)
+                    //     { status: "active" },       // String "active" (new format)
+                    //     { status: "Certified" }     // Also include certified students if needed
+                    // ],
+                    franchiseId: { $exists: true, $ne: null, $ne: "" } // Ensure franchiseId exists
+                }
+            },
+            {
+                $group: {
+                    _id: "$franchiseId",
+                    studentCount: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    franchiseId: "$_id",
+                    studentCount: 1
+                }
+            }
+        ]);
+
+        console.log("Aggregated student counts:", studentCounts);
+
+        return res.status(200).json({
+            statusCode: 200,
+            success: true,
+            message: "Student counts for all franchises retrieved successfully",
+            data: studentCounts
+        });
+
+    } catch (error) {
+        console.error("Error getting all franchise student counts:", error);
+        return res.status(500).json({
+            statusCode: 500,
+            success: false,
+            message: "Internal server error while fetching student counts",
+            data: null
+        });
+    }
+};
+
+
 // Export controllers
 export {
     addFranchiseByAdmin, // Renamed from createFranchise
@@ -761,4 +869,6 @@ export {
     resendFranchiseCredentials, // New
     getRecentFranchises,
     getFranchiseCount,
+    getStudentCountByFranchise,
+    getAllFranchiseStudentCounts,
 };

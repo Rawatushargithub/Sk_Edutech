@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { Trophy, BookOpen, Rocket, Award } from "lucide-react"; // lucide icons
 import API_BASE_URL from "../../config";
 
 const CertificatePreview = () => {
@@ -45,31 +46,53 @@ const CertificatePreview = () => {
     window.print();
   };
 
-  // Error Display
+  // 🔴 Error / Missing Student Data
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-100">
-        <div className="text-red-600 text-lg font-medium text-center px-4">
+      <div className="flex flex-col justify-center items-center min-h-screen bg-gray-100 text-center px-6">
+        <Rocket className="text-red-500 w-16 h-16 mb-4 animate-bounce" />
+        <h2 className="text-red-600 text-xl font-bold mb-2">
           {error}
-        </div>
+        </h2>
+        <p className="text-gray-600 max-w-md">
+          🚀 Keep working hard, your dedication will pay off soon.  
+          Every setback is just a setup for a stronger comeback!
+        </p>
       </div>
     );
   }
 
-  // No Certificate Display
+  // 🔵 No Certificate Yet
   if (!certificateData) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-100">
-        <div className="text-gray-600 text-lg font-medium text-center px-4">
-          No certificate has been issued yet.
-        </div>
+      <div className="flex flex-col justify-center items-center min-h-screen bg-gray-100 text-center px-6">
+        <BookOpen className="text-blue-600 w-16 h-16 mb-4 animate-pulse" />
+        <h2 className="text-gray-700 text-2xl font-bold mb-2">
+          Your Journey is in Progress 📚
+        </h2>
+        <p className="text-gray-600 max-w-md">
+          Keep learning, keep growing 🌟. Hard work always pays off —  
+          your certificate is on its way! 🏆
+        </p>
+        {/* Optional: motivational gif */}
+        <img
+          src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif"
+          alt="Motivation"
+          className="mt-6 w-40 rounded-lg shadow"
+        />
       </div>
     );
   }
 
-  // Certificate Preview Display
+  // 🟢 Certificate Found
   return (
-    <div className="flex justify-center items-center py-10 bg-gray-100 min-h-screen">
+    <div className="flex flex-col justify-center items-center py-10 bg-gray-100 min-h-screen">
+      {/* 🎉 Motivational Banner */}
+      <div className="flex items-center gap-3 bg-green-100 border border-green-400 text-green-700 font-semibold px-6 py-3 rounded-lg shadow mb-6">
+        <Trophy className="w-6 h-6 text-green-600" />
+        🎉 Congratulations! You Did It! 🎉
+      </div>
+
       <div className="bg-white border-4 border-blue-600 rounded-lg shadow-lg w-full max-w-3xl px-10 py-8 text-center relative print:border-black print:shadow-none print:px-16 print:py-10">
         <div className="absolute top-4 left-6 text-sm font-medium text-gray-700 print:static print:mb-4 print:text-center">
           Certificate ID:{" "}
@@ -78,7 +101,8 @@ const CertificatePreview = () => {
           </span>
         </div>
 
-        <h1 className="text-3xl font-bold text-blue-700 mb-6 mt-4 uppercase">
+        <h1 className="text-3xl font-bold text-blue-700 mb-6 mt-4 uppercase flex justify-center items-center gap-2">
+          <Award className="w-8 h-8 text-blue-600" />
           Certificate of Completion
         </h1>
 
@@ -100,24 +124,12 @@ const CertificatePreview = () => {
         </p>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-left text-sm text-gray-700 mb-8 max-w-xl mx-auto">
-          <p>
-            <strong>Roll Number:</strong> {certificateData.rollNumber}
-          </p>
-          <p>
-            <strong>Exam ID:</strong> {certificateData.examId}
-          </p>
-          <p>
-            <strong>Session:</strong> {certificateData.session}
-          </p>
-          <p>
-            <strong>Institute:</strong> {certificateData.instituteName}
-          </p>
-          <p>
-            <strong>Percentage:</strong> {certificateData.percentage}%
-          </p>
-          <p>
-            <strong>Grade:</strong> {certificateData.grade}
-          </p>
+          <p><strong>Roll Number:</strong> {certificateData.rollNumber}</p>
+          <p><strong>Exam ID:</strong> {certificateData.examId}</p>
+          <p><strong>Session:</strong> {certificateData.session}</p>
+          <p><strong>Institute:</strong> {certificateData.instituteName}</p>
+          <p><strong>Percentage:</strong> {certificateData.percentage}%</p>
+          <p><strong>Grade:</strong> {certificateData.grade}</p>
         </div>
 
         <p className="text-sm text-gray-500 mb-8 italic">
@@ -131,7 +143,9 @@ const CertificatePreview = () => {
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded shadow text-sm"
             onClick={() =>
               window.open(
-                `${API_BASE_URL}/api/v1/institute_certificates/download/${encodeURIComponent(certificateData.certificateId)}`,
+                `${API_BASE_URL}/api/v1/institute_certificates/download/${encodeURIComponent(
+                  certificateData.certificateId
+                )}`,
                 "_blank"
               )
             }
@@ -153,7 +167,6 @@ const CertificatePreview = () => {
             </svg>
             Download Certificate
           </button>
-
 
           <div className="text-xs text-gray-400">Powered by YourSystemName</div>
         </div>

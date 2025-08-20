@@ -8,6 +8,7 @@ import GiveTest from "../Student_Frontend/pages/GIveTest";
 import UploadForm from "../Student_Frontend/pages/UploadForm";
 import CertificatePreview from "../Student_Frontend/pages/Certificate";
 import ForgotPassword from "../Student_Frontend/pages/ForgotPassword";
+import CourseDetails from "../Student_Frontend/pages/CourseDetails";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 // import CertificateManagement from "../Student_Frontend/pages/certificate/Certificate";
@@ -25,6 +26,7 @@ function App() {
         <Route path="students" element={<StudentList />} />
         <Route path="/exam/give/:id" element={<GiveTest />} /> 
         <Route path="/certificate" element={<CertificatePreview/>} />
+        <Route path="/coursedetails" element={<CourseDetails />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>
     </>

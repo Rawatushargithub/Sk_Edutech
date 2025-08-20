@@ -9,6 +9,7 @@ import {
   Eye,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
+import Select from "react-select";
 import API_BASE_URL from "../../../config"; // Adjust the import path as necessary
 
 const QuestionBankSystem = () => {
@@ -25,6 +26,8 @@ const QuestionBankSystem = () => {
   const [loading, setLoading] = useState(false);
   const [coursesLoading, setCoursesLoading] = useState(true);
   const [nextQNo, setNextQNo] = useState(1);
+
+
 
   const [formData, setFormData] = useState({
     qNo: "",
@@ -235,6 +238,11 @@ const QuestionBankSystem = () => {
     setShowAddForm(true);
   };
 
+  const courseOptions = courses.map(course => ({
+    value: course.courseCode,
+    label: `${course.courseCode} - ${course.courseName}`
+  }));
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-6xl mx-auto">
@@ -249,24 +257,20 @@ const QuestionBankSystem = () => {
 
           {/* Course Selection */}
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-            <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
-              Select Course:
-            </label>
-            <select
-              value={selectedCourseCode}
-              onChange={(e) => setSelectedCourseCode(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              disabled={coursesLoading}
-            >
-              <option value="">
-                {coursesLoading ? "Loading courses..." : "Choose a course..."}
-              </option>
-              {courses.map((course) => (
-                <option key={course.courseCode} value={course.courseCode}>
-                  {course.courseCode} - {course.courseName}
-                </option>
-              ))}
-            </select>
+          <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+            Select Course:
+          </label>
+          <Select
+            className="flex-1"
+            classNamePrefix="select"
+            options={courseOptions}
+            value={courseOptions.find(option => option.value === selectedCourseCode)}
+            onChange={(selectedOption) => setSelectedCourseCode(selectedOption ? selectedOption.value : "")}
+            isLoading={coursesLoading}
+            isClearable
+            isSearchable
+            placeholder="Search or select a course..."
+          />
 
             {selectedCourseCode && (
               <button

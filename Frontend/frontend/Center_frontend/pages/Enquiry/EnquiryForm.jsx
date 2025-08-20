@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, Trash2 } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useStudentContext } from "../../context/StudentContext.jsx";
@@ -109,11 +110,13 @@ const EnquiryForm = () => {
     setFormData({ ...formData, [name]: value });
   };
 
+
   const handleCourseChange = (e) => {
     const selectedCourseId = e.target.value;
     if (selectedCourseId) {
+
       const selectedCourse = courses.find(
-        (course) => course._id === selectedCourseId
+        (course) => course._id === selectedOption.value
       );
       if (selectedCourse) {
         setFormData({
@@ -276,6 +279,7 @@ const EnquiryForm = () => {
               <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Course & Contact Details</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
+
                   <label htmlFor="courseInterested" className={labelStyle}>Course Interested {requiredStar}</label>
                   <select id="courseInterested" name="courseInterested" onChange={handleCourseChange} value={formData.courseInterested.courseName ? courses.find(c => c.courseName === formData.courseInterested.courseName)?._id : ""} required className={inputStyle}>
                     <option value="">Select a course</option>
@@ -285,6 +289,7 @@ const EnquiryForm = () => {
                       </option>
                     ))}
                   </select>
+
                 </div>
                 <div>
                   <label htmlFor="studentMobile" className={labelStyle}>Student Mobile {requiredStar}</label>

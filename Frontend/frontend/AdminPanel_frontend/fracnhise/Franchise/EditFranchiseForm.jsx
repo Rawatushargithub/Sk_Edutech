@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getFranchiseById, updateFranchise, updateFranchiseStatusOnly } from '../../services/franchiseService';
+import { getFranchiseById, updateFranchise, updateFranchiseStatus } from '../../services/franchiseService';
 import INDFlag from '/assets/india-flag-icon.png';
 
 // Predefined data (can be shared or re-imported)
@@ -82,7 +82,7 @@ function EditFranchiseForm() {
     'franchiseName', 'ownerName', 'designation', 'dob', 'email', 'mobile',
     'address', 'state', 'city', 'postalCode', 'country',
     'planValidityDays', 'gstNumber', 'atcCode',
-    'totalComputers', 'totalStudents', 'status' // ✅ include status here
+    'totalComputers', 'totalStudents', 'status' // 
 ];
 
 

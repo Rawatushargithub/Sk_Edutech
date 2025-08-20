@@ -11,6 +11,7 @@ const HelpSupport = () => {
     const studentData = localStorage.getItem("student");
     const student = studentData ? JSON.parse(studentData) : null;
 
+
     if (student?.franchiseId) {
       fetchLogo(student.franchiseId);
     }
@@ -18,14 +19,23 @@ const HelpSupport = () => {
 
   const fetchLogo = async (franchiseId) => {
     try {
+      console.log("franchise id: ", franchiseId);
+
+      // Encode franchiseId safely for URL
+      const encodedId = encodeURIComponent(franchiseId);
+
       const response = await axios.get(
-        `${API_BASE_URL}/api/v1/student/sidebar/logo/${franchiseId}`
+        `${API_BASE_URL}/api/v1/student/sidebar/logo/${encodedId}`
       );
       setData(response.data);
+      console.log("Fetched Data:", response.data);
     } catch (error) {
       console.error("Failed to fetch institute logo", error);
     }
   };
+
+
+  // console.log("Data", franchs);
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-10">
@@ -55,15 +65,17 @@ const HelpSupport = () => {
           {/* Skedutech Support */}
           <div className="bg-white shadow-md p-6 rounded-lg border border-blue-900 h-fit">
             <h3 className="text-xl font-semibold text-blue-950 mb-4">
-              SKEDUTECH Support
+              SK EDUTECH Support
             </h3>
             <div className="space-y-6 text-base">
-              <SupportInfo label="Phone Support" icon={<Phone />} value="+91 9876543210" />
-              <SupportInfo label="Email Support" icon={<Mail />} value="support@skeduteh.com" />
+              <SupportInfo label="Phone Support" icon={<Phone />} value="+91 8700810876,
+
++91 8860836811" />
+              <SupportInfo label="Email Support" icon={<Mail />} value="skcoachingclasses722@gmail.com" />
               <SupportInfo
                 label="Location"
                 icon={<MapPin />}
-                value="Skeduteh Tuition Centre, Sector 15, Noida, Uttar Pradesh, India"
+                value="First floor, Link Road NH-48, Narsinghpur, Gurgaon HR, India"
               />
             </div>
           </div>

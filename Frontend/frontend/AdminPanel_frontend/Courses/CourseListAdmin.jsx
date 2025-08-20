@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, CheckCircle, XCircle, RefreshCw, Info, X as ModalCloseIcon } from 'lucide-react';
+import { Plus, CheckCircle, XCircle, RefreshCw, Info, X as ModalCloseIcon } from 'lucide-react';
 import API_BASE_URL from "../../config";
+import { useNavigate } from "react-router-dom";
 
 // Modal Component for Course Details
 const CourseDetailsModal = ({ course, onClose }) => {
+  // const navigate = useNavigate();
   if (!course) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 transition-opacity duration-300 ease-in-out">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative transform transition-all duration-300 ease-in-out scale-95 opacity-0 animate-modalShow">
-        <button 
-          onClick={onClose} 
+        <button
+          onClick={onClose}
           className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600 transition-colors"
           aria-label="Close modal"
         >
@@ -18,7 +20,7 @@ const CourseDetailsModal = ({ course, onClose }) => {
         </button>
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2 pr-8">{course.courseName}</h2>
         <p className="text-sm text-gray-500 mb-6">Code: {course.courseCode}</p>
-        
+
         <div className="space-y-5">
           <div>
             <h3 className="text-lg font-semibold text-slate-700 mb-1 border-b pb-1">Course Syllabus:</h3>
@@ -28,7 +30,7 @@ const CourseDetailsModal = ({ course, onClose }) => {
             <h3 className="text-lg font-semibold text-slate-700 mb-1 border-b pb-1">Course Eligibility:</h3>
             <pre className="bg-gray-50 p-3 rounded-md text-sm text-gray-700 whitespace-pre-wrap break-words max-h-40 overflow-y-auto">{course.courseEligibility || 'Not provided'}</pre>
           </div>
-          
+
           {course.courseVideoLinks && course.courseVideoLinks.length > 0 && (
             <div>
               <h3 className="text-lg font-semibold text-slate-700 mb-1 border-b pb-1">Video Links:</h3>
@@ -48,7 +50,7 @@ const CourseDetailsModal = ({ course, onClose }) => {
               <ul className="list-disc list-inside bg-gray-50 p-3 rounded-md text-sm space-y-1 max-h-40 overflow-y-auto">
                 {course.courseMaterials.map((material, index) => (
                   <li key={index}>
-                    <strong className="font-medium">{material.title || 'Untitled Material'}</strong> ({material.type}): 
+                    <strong className="font-medium">{material.title || 'Untitled Material'}</strong> ({material.type}):
                     {material.type === 'file' && material.fileName && ` ${material.fileName} - `}
                     <a href={material.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">
                       {material.type === 'file' ? 'View/Download' : 'Open Link'}
@@ -106,7 +108,7 @@ const CourseListAdmin = () => {
         throw new Error(errData.message || `Error: ${response.status}`);
       }
       const data = await response.json();
-      setCourses(data.data || []); 
+      setCourses(data.data || []);
     } catch (err) {
       setError(err.message);
       console.error("Failed to fetch courses for admin:", err);
@@ -118,7 +120,7 @@ const CourseListAdmin = () => {
   useEffect(() => {
     fetchCoursesAdmin();
   }, [filterStatus]);
-  
+
 
   const handleUpdateStatus = async (courseId, newStatus) => {
     if (!window.confirm(`Are you sure you want to set this course to "${newStatus}"?`)) {
@@ -144,7 +146,9 @@ const CourseListAdmin = () => {
       alert(`Failed to update course status: ${err.message}`);
     }
   };
-  
+
+  const navigate = useNavigate();
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'approved': return 'bg-green-100 text-green-800';
@@ -156,7 +160,7 @@ const CourseListAdmin = () => {
 
   const inputStyle = "rounded-md border-gray-300 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm";
   // Updated button base style for consistent padding and text size
-  const buttonActionStyle = "w-24 h-10 px-3 py-2 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-offset-1 flex items-center justify-center leading-4"; 
+  const buttonActionStyle = "w-24 h-10 px-3 py-2 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-offset-1 flex items-center justify-center leading-4";
 
   // Filter courses by status and search term
   const filteredCourses = courses.filter(course =>
@@ -171,10 +175,26 @@ const CourseListAdmin = () => {
     <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-full mx-auto">
         <div className="bg-white rounded-xl shadow-2xl p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-            <h1 className="text-3xl font-bold text-slate-800 w-full">Admin Course Management</h1>
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-2">
+            <h1 className="text-3xl font-bold text-slate-800 w-full">
+              Admin Course Management
+            </h1>
+            <button
+              onClick={() => navigate("/admin/courselist")}
+              className="mt-4 sm:mt-0 bg-slate-700 text-white px-6 py-3 rounded-lg hover:bg-slate-800 transition-colors duration-200 flex items-center font-medium"
+            >
+              {/* <Plus className="w-5 h-5 mr-2" /> */}
+              Admin Course List
+            </button>
+            <button
+              onClick={() => navigate("/admin/add-course")}
+              className="mt-4 sm:mt-0 bg-slate-700 text-white px-6 py-3 rounded-lg hover:bg-slate-800 transition-colors duration-200 flex items-center font-medium"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Add New Course
+            </button>
           </div>
-          
+
           {/* Search and count controls above tabs */}
           <div className="w-full flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
             <div className="flex items-center gap-2">
@@ -292,10 +312,10 @@ const CourseListAdmin = () => {
                       <td className="px-4 py-3 whitespace-nowrap text-sm font-medium sticky right-0 bg-white group-hover:bg-gray-50 z-10 border-l">
                         <div className="flex items-center space-x-2 justify-center">
                           <button
-                              onClick={() => openDetailsModal(course)}
-                              className={`${buttonActionStyle} bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-500`}
-                              title="View Details"
-                            >
+                            onClick={() => openDetailsModal(course)}
+                            className={`${buttonActionStyle} bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-500`}
+                            title="View Details"
+                          >
                             <Info size={14} className="mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Details</span>
                           </button>
                           {course.adminApprovalStatus !== 'approved' && (
@@ -316,7 +336,7 @@ const CourseListAdmin = () => {
                               <XCircle size={14} className="mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Reject</span>
                             </button>
                           )}
-                          {course.adminApprovalStatus !== 'pending' && ( 
+                          {course.adminApprovalStatus !== 'pending' && (
                             <button
                               onClick={() => handleUpdateStatus(course._id, 'pending')}
                               className={`${buttonActionStyle} bg-amber-600 text-white hover:bg-amber-700 focus:ring-amber-500`}

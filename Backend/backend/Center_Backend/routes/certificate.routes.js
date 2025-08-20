@@ -58,6 +58,8 @@ import Exam from "../models/Exam.models.js";
 import Course from "../models/Courses/Courses.models.js";
 
 import { downloadCertificate } from "../certificatePdf/generateCertificate.js";
+import { downloadCertificatebyList } from "../certificatePdf/generateCertificatebyList.js";
+
 
 const router = express.Router();
 
@@ -117,6 +119,8 @@ router.get('/certificates/approved', getApprovedCertificates);
 router.get('/franchises/active', getActiveFranchises);
 
 router.get("/download/:certificateId", downloadCertificate);
+router.get("/download/student/:rollNumber", downloadCertificatebyList);
+
 router.get("/verify-by-qr/:certificateId", verifyByQrCertificate);
 
 

@@ -103,7 +103,8 @@ const submitWithOtp = asyncHandler(async (req, res) => {
         franchiseSignatureUrl,
         applicationType: 'FranchiseApplied',
         status: 'Pending',
-        verificationStatus: 'Verified' // Since OTP is verified
+        otpVerified: true,
+        verificationStatus: 'Pending'
     });
 
     await Otp.deleteOne({ email }); // Delete the used OTP

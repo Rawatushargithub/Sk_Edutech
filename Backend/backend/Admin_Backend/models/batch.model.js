@@ -14,6 +14,4 @@ const batchSchema = new mongoose.Schema({
   batchTiming: { type: String, required: true },
 }, { timestamps: true });
 
-const Batch = mongoose.models.Batch || mongoose.model("Batch", installmentSchema);
-
-export default Batch;
+export default mongoose.model("Batch", batchSchema);

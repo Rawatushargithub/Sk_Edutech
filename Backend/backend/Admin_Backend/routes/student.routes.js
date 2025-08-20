@@ -1,10 +1,10 @@
 import { Router } from "express"
-import {  getStudentCount , getRecentsStudents , getStudents } from "../controllers/student.controller.js"
+import {  getStudentCount , getRecentsStudents , getStudents, toggleStudentStatus } from "../controllers/Student_controller/Student.controller.js"
 
 const router = Router()
-
 try {
     router.route("/get_students").get(getStudents)
+    router.route("/toggle_status/:id").patch(toggleStudentStatus)
     router.route("/student/count").get(getStudentCount)
     router.route("/recent").get(getRecentsStudents);
 

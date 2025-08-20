@@ -11,4 +11,7 @@ const feeSchema = new mongoose.Schema({
   remarks: { type: String },
 }, { timestamps: true });
  
-export default mongoose.model("Fee", feeSchema);
+
+const Fee = mongoose.models.Fee || mongoose.model("Fee", feeSchema);
+
+export default Fee;

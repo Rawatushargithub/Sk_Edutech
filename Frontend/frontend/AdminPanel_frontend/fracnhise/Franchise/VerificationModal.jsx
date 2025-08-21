@@ -22,12 +22,13 @@ const DetailItem = ({ label, value, isDate = false }) => (
 );
 
 const VerificationModal = ({ franchise, isOpen, onConfirm, onCancel, isVerifying }) => {
-    if (!isOpen || !franchise) return null;
+  if (!isOpen || !franchise) return null;
 
-    return (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-600 bg-opacity-75 flex items-center justify-center p-4">
-            <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full mx-auto">
-                {/* Modal Header */}
+  return (
+    <>
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-600 bg-opacity-75 flex items-center justify-center p-4">
+        <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full mx-auto">
+          {/* Modal Header */}
                 <div className="flex justify-between items-center p-4 border-b">
                     <h3 className="text-lg font-semibold text-gray-900">Verify Franchise Details</h3>
                     <button
@@ -81,28 +82,31 @@ const VerificationModal = ({ franchise, isOpen, onConfirm, onCancel, isVerifying
                     </dl>
                 </div>
 
-                {/* Modal Footer */}
-                <div className="flex items-center justify-end p-4 border-t space-x-2">
-                    <button
-                        onClick={onCancel}
-                        type="button"
-                        className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 disabled:opacity-50"
-                        disabled={isVerifying}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        type="button"
-                        className="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:opacity-50"
-                        disabled={isVerifying}
-                    >
-                        {isVerifying ? 'Verifying...' : 'Confirm Verification'}
-                    </button>
-                </div>
-            </div>
+          {/* Modal Footer */}
+          <div className="flex items-center justify-end p-4 border-t space-x-2">
+            <button
+              onClick={onCancel}
+              type="button"
+              className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 disabled:opacity-50"
+              disabled={isVerifying}
+            >
+              Cancel
+            </button>
+            {franchise.otpVerified && franchise.verificationStatus === 'Pending' && (
+              <button
+                onClick={onConfirm}
+                type="button"
+                className="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:opacity-50"
+                disabled={isVerifying}
+              >
+                {isVerifying ? "Verifying..." : "Confirm Verification"}
+              </button>
+            )}
+          </div>
         </div>
-    );
+      </div>
+    </>
+  );
 };
 
 export default VerificationModal;

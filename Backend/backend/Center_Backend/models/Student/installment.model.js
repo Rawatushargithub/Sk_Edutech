@@ -16,5 +16,7 @@ const installmentSchema = new mongoose.Schema({
   status: { type: String, enum: ["Pending", "Paid", "Overdue"], default: "Pending" }
 }, { timestamps: true }); 
 
-export default mongoose.model("Installment", installmentSchema);
+const Installment = mongoose.models.Installment || mongoose.model("Installment", installmentSchema);
+
+export default Installment;
  

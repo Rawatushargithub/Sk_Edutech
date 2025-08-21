@@ -28,6 +28,7 @@ const StudentAdmissionList = () => {
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showFormPopup, setShowFormPopup] = useState(false);
   const [showIdCardPopup, setShowIdCardPopup] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [timeFilter, setTimeFilter] = useState("all"); // State for time filter
   const [startDate, setStartDate] = useState('');
@@ -36,38 +37,7 @@ const StudentAdmissionList = () => {
 
   // New state for export dropdown
   const [showExportDropdown, setShowExportDropdown] = useState(false);
-  // State for detailed students data
-  const [detailedStudents, setDetailedStudents] = useState([]);
 
-  // Function to fetch detailed student data (if needed)
-  const fetchDetailedStudentData = async (studentId) => {
-    try {
-      const response = await axios.get(
-        `${API_BASE_URL}/api/v1/admin_student/get_student/${studentId}`
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching detailed data for student ${studentId}:`, error);
-      return null;
-    }
-  };
-
-  // Function to fetch all detailed student data
-  const fetchAllDetailedData = async () => {
-    try {
-      const detailedData = await Promise.all(
-        filteredStudents.map(async (student) => {
-          const detailedStudent = await fetchDetailedStudentData(student._id);
-          return detailedStudent || student; // Fallback to basic data if detailed fetch fails
-        })
-      );
-      setDetailedStudents(detailedData);
-      return detailedData;
-    } catch (error) {
-      console.error('Error fetching detailed student data:', error);
-      return filteredStudents; // Fallback to basic data
-    }
-  };
 
   // Then modify your useEffect fetch to ensure you're setting an array
   useEffect(() => {
@@ -75,7 +45,7 @@ const StudentAdmissionList = () => {
       try {
         const response = await axios.get(
           `${API_BASE_URL}/api/v1/admin_student/get_students`
-        );
+        ); 
         console.log("students data 1 :: ", response.data);
 
         // Check if response.data is an array, if not, handle appropriately
@@ -110,9 +80,11 @@ const StudentAdmissionList = () => {
 
     // 1. Filter by active tab status
     if (activeTab === 'active') {
-      tempStudents = tempStudents.filter(student => student.status);
+      tempStudents = tempStudents.filter(student => student.status === 'active' || student.status === 'true' || student.status === true);
     } else if (activeTab === 'inactive') {
-      tempStudents = tempStudents.filter(student => !student.status);
+      tempStudents = tempStudents.filter(student => student.status === 'inactive' || student.status === 'false' || student.status === false);
+    } else if (activeTab === 'certified') {
+      tempStudents = tempStudents.filter(student => student.status === 'Certified');
     }
 
 
@@ -221,7 +193,7 @@ const StudentAdmissionList = () => {
     return studentsData.map((student, index) => ({
       'S/N': index + 1,
       'Franchise ID': student.franchiseId || '',
-      'Status': student.status ? 'Active' : 'Inactive',
+      'Status': student.status === 'Certified' ? 'Certified' : (student.status === 'active' || student.status === 'true' || student.status === true) ? 'Active' : 'Inactive',
       'Student Name': student.studentName || '',
       'Student ID': student.rollNumber || '',
       'Course Name': student.courseInterested?.courseName || '',
@@ -387,7 +359,7 @@ const StudentAdmissionList = () => {
   const toggleExportDropdown = () => {
     setShowExportDropdown(!showExportDropdown);
   };
-
+ 
   // Close dropdown when clicking outside
   const closeDropdownOnOutsideClick = (e) => {
     if (showExportDropdown && !e.target.closest('.export-dropdown-container')) {
@@ -427,6 +399,63 @@ const StudentAdmissionList = () => {
     `;
     navigator.clipboard.writeText(studentDetails.trim());
     alert('Student details copied to clipboard');
+  };
+
+  // Status toggle functions
+  const handleStatusToggleClick = (student) => {
+    setStatusToggleStudent(student);
+    setShowStatusPopup(true);
+  };
+
+  const confirmStatusToggle = async () => {
+    if (!statusToggleStudent) return;
+
+    // Check if student is certified - prevent status changes
+    if (statusToggleStudent.status === 'Certified') {
+      alert('Certified students cannot have their status changed.');
+      setShowStatusPopup(false);
+      setStatusToggleStudent(null);
+      return;
+    }
+
+    try {
+      // Determine next status based on current status
+      let newStatus;
+      if (statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' || statusToggleStudent.status === true) {
+        newStatus = 'inactive';
+      } else {
+        newStatus = 'active';
+      }
+
+      const response = await axios.patch(
+        `${API_BASE_URL}/api/v1/admin_student/toggle_status/${statusToggleStudent._id}`,
+        { status: newStatus }
+      );
+
+      if (response.data.success) {
+        const updatedStudents = students.map((student) => {
+          if (student._id === statusToggleStudent._id) {
+            return { ...student, status: newStatus };
+          }
+          return student;
+        });
+
+        setStudents(updatedStudents);
+      } else {
+        alert('Failed to update student status. Please try again.');
+      }
+    } catch (error) {
+      console.error("Error updating status: ", error);
+      alert('Error updating student status. Please try again.');
+    }
+
+    setShowStatusPopup(false);
+    setStatusToggleStudent(null);
+  };
+
+  const cancelStatusToggle = () => {
+    setShowStatusPopup(false);
+    setStatusToggleStudent(null);
   };
 
   const closePopup = () => {
@@ -516,6 +545,13 @@ const StudentAdmissionList = () => {
                 onClick={() => setActiveTab('inactive')}
                 className={`inline-block p-4 rounded-t-lg border-b-2 ${activeTab === 'inactive' ? 'text-blue-600 border-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}`}>
                 Inactive Students
+              </button>
+            </li>
+            <li className="mr-2">
+              <button
+                onClick={() => setActiveTab('certified')}
+                className={`inline-block p-4 rounded-t-lg border-b-2 ${activeTab === 'certified' ? 'text-blue-600 border-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}`}>
+                Certified Students
               </button>
             </li>
           </ul>
@@ -642,11 +678,17 @@ const StudentAdmissionList = () => {
                     
                     <td className="p-2 border">
                       <button 
-                        className={`px-2 py-1 rounded-full text-sm font-medium  ${
-                          student.status ? "bg-green-200 text-green-800 " : "bg-red-200 text-red-800"
+                        {...(student.status !== 'Certified' && { onClick: () => handleStatusToggleClick(student) })}
+                        className={`px-2 py-1 rounded-full text-sm font-medium ${
+                          student.status === 'Certified'
+                            ? "bg-blue-200 text-blue-800 cursor-not-allowed opacity-75" 
+                            : (student.status === 'active' || student.status === 'true' || student.status === true)
+                              ? "bg-green-200 text-green-800 hover:bg-green-300" 
+                              : "bg-red-200 text-red-800 hover:bg-red-300"
                         }`}
+                        disabled={student.status === 'Certified'}
                       >
-                        {student.status ? "Active" : "Inactive"}
+                        {student.status === 'Certified' ? "Certified" : (student.status === 'active' || student.status === 'true' || student.status === true) ? "Active" : "Inactive"}
                       </button>
                     </td>                
                     <td className="border border-gray-300 px-4 py-2">
@@ -707,11 +749,54 @@ const StudentAdmissionList = () => {
                 ? "bg-gray-300 cursor-not-allowed"
                 : "bg-blue-500 text-white"
             }`}
-          >
+          > 
             Next
           </button>
         </div> 
       </div>
+
+      {/* Status Toggle Confirmation Popup */}
+      {showStatusPopup && statusToggleStudent && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Confirm Status Change</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to change the status of{" "}
+              <strong>{statusToggleStudent.studentName}</strong> to{" "}
+              <strong className={
+                (statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' || statusToggleStudent.status === true)
+                  ? "text-red-600" 
+                  : "text-green-600"
+              }>
+                {(statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' || statusToggleStudent.status === true)
+                  ? "Inactive" 
+                  : "Active"}?
+              </strong>
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelStatusToggle}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmStatusToggle}
+                className={`px-4 py-2 rounded text-white transition-colors ${
+                  (statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' || statusToggleStudent.status === true)
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "bg-green-500 hover:bg-green-600"
+                }`}
+              >
+                {(statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' || statusToggleStudent.status === true)
+                  ? "Deactivate" 
+                  : "Activate"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Student Profile Popup */}
       {showProfilePopup && selectedStudent && (
         <StudentProfile

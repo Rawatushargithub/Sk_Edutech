@@ -79,7 +79,7 @@ const StudentAdmissionList = () => {
       try {
         const franchiseId = localStorage.getItem('franchiseID');
         const response = await axios.get(
-          `${API_BASE_URL}/api/v1/institute_student/get_students?franchiseId=${franchiseId}`
+          `${API_BASE_URL}/api/v1/institute_student/get_students?franchiseId=${franchiseId}` 
         );
         console.log("data coming from franchise:-" , response.data); // Log the response data for debugging
         if (Array.isArray(response.data)) {

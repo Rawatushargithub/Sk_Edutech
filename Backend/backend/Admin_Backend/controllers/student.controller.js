@@ -27,7 +27,7 @@ const getStudentCount = asyncHandler( async (req, res) => {
 const getRecentsStudents = asyncHandler( async (req , res) => {
 
   try {
-    const limit = parseInt(req.query.limit) || 5;
+    const limit = parseInt(req.query.limit) ;
     
     const students = await Student.find()
       .sort({ createdAt: -1 }) // Sort by creation date, newest first
@@ -56,9 +56,10 @@ const getRecentsStudents = asyncHandler( async (req , res) => {
 
 })
 const getStudents = asyncHandler(async (req, res) => {
+  console.log('getstudents is working')
   // Get pagination parameters from query string with defaults
-  const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 10;
+  const page = parseInt(req.query.page, 10) ;
+  const limit = parseInt(req.query.limit, 10) ;
   const skip = (page - 1) * limit;
 
   // Get filter parameters if any
@@ -126,7 +127,7 @@ const getStudents = asyncHandler(async (req, res) => {
         );
     }
 
-
+  console.log("formattedStudents :: ", formattedStudents)
   // Return the student data
   return res.status(200).json(
     new ApiResponse(

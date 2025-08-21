@@ -1,3 +1,4 @@
+
 import { Router } from "express";
 import {
   getStudentCount,
@@ -17,6 +18,7 @@ try {
     .route("/:studentId/admission-form")
     .get(generateAdmissionForm);
   router.route("/:studentId/id-card").get(generateIdCard);
+
 } catch (error) {
   console.log("error occured in students routes ", error);
 }

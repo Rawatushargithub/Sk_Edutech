@@ -10,7 +10,6 @@ import axios from "axios";
 import StudentProfile from "./StudentProfile"; // Import the new component
 import FormView from "./FormView";
 import IdCardView from "./IdCardView";
-import SharePopup from "./SharePopup";
 import API_BASE_URL from "../../config";
 import { FaCircleCheck, FaPerson, FaPersonCirclePlus, FaPersonDotsFromLine, FaPersonRifle } from "react-icons/fa6";
 import { FaArrowUp, FaUser, FaSearch, FaTimes } from "react-icons/fa";
@@ -29,7 +28,6 @@ const StudentAdmissionList = () => {
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showFormPopup, setShowFormPopup] = useState(false);
   const [showIdCardPopup, setShowIdCardPopup] = useState(false);
-  const [showSharePopup, setShowSharePopup] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [timeFilter, setTimeFilter] = useState("all"); // State for time filter
   const [startDate, setStartDate] = useState('');
@@ -412,23 +410,28 @@ const StudentAdmissionList = () => {
 
   const handleViewForm = () => {
     setShowFormPopup(true);
-    console.log("view form is working");
   };
 
   const handleViewIDCard = () => {
     setShowIdCardPopup(true);
-    console.log("view idis working");
   };
 
   const handleShare = () => {
-    console.log("handleshare is working");
-    setShowSharePopup(true);
+    if (!selectedStudent) return;
+    const studentDetails = `
+      Name: ${selectedStudent.studentName}
+      Batch: ${selectedStudent.batch}
+      Course: ${selectedStudent.courseInterested.courseName}
+      Mobile: ${selectedStudent.studentMobile}
+      Email: ${selectedStudent.email}
+    `;
+    navigator.clipboard.writeText(studentDetails.trim());
+    alert('Student details copied to clipboard');
   };
 
   const closePopup = () => {
     setShowFormPopup(false);
     setShowIdCardPopup(false);
-    setShowSharePopup(false);
     setShowProfilePopup(false);
     setSelectedStudent(null);
   };
@@ -729,12 +732,6 @@ const StudentAdmissionList = () => {
       )}
       {showIdCardPopup && (
         <IdCardView 
-        student={selectedStudent} 
-        onClose={closePopup} 
-        />
-      )}
-      {showSharePopup && (
-        <SharePopup 
         student={selectedStudent} 
         onClose={closePopup} 
         />

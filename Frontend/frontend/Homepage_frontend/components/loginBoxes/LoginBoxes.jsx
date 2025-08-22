@@ -29,34 +29,40 @@ const LoginBoxes = React.forwardRef(({ onApplyClick }, ref) => {
 
   // Mock function to simulate API call
   const verifyCertificate = async () => {
-    setLoading(true);
-    setVerificationResult(null);
+  setLoading(true);
+  setVerificationResult(null);
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/certificates/verify-certificate/${certificateId}`);
-      const data = await response.json();
+  try {
+    // Encode the certificateId to handle slashes and special chars
+    const encodedCertificateId = encodeURIComponent(certificateId);
 
-      if (response.ok && data.verified) {
-        setVerificationResult({
-          success: true,
-          data,
-        });
-      } else {
-        setVerificationResult({
-          success: false,
-          message: data.message || "Certificate not found!",
-        });
-      }
-    } catch (error) {
-      console.error("Verification error:", error);
+    const response = await fetch(
+      `${API_BASE_URL}/api/v1/certificates/verify-certificate/${encodedCertificateId}`
+    );
+    const data = await response.json();
+
+    if (response.ok && data.verified) {
+      setVerificationResult({
+        success: true,
+        data,
+      });
+    } else {
       setVerificationResult({
         success: false,
-        message: "Error verifying certificate!",
+        message: data.message || "Certificate not found!",
       });
     }
+  } catch (error) {
+    console.error("Verification error:", error);
+    setVerificationResult({
+      success: false,
+      message: "Error verifying certificate!",
+    });
+  }
 
-    setLoading(false);
-  };
+  setLoading(false);
+};
+
 
 
   const [showModal, setShowModal] = useState(false);

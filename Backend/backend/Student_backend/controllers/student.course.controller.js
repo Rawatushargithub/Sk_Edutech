@@ -24,3 +24,45 @@ export const getCourseByCode = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
+
+export const getCoursesByFranchise = async (req, res) => {
+  try {
+    const { franchiseId } = req.params; // ✅ comes from URL param
+
+    if (!franchiseId) {
+      return res.status(400).json({
+        success: false,
+        message: "Franchise ID is required",
+      });
+    }
+
+    // ✅ Fetch courses either for that franchise OR for the admin
+    const courses = await Course.find({
+      $or: [
+        { franchiseId: franchiseId },   // courses for that franchise
+        { franchiseId: "Admin" }        // global admin courses
+      ]
+    }).sort({ createdAt: -1 });
+
+    console.log("course :", courses);
+    if (!courses.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No courses found for this franchise",
+      });
+    }
+
+
+    return res.status(200).json({
+      success: true,
+      count: courses.length,
+      data: courses,
+    });
+  } catch (error) {
+    console.error("Error fetching courses:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching courses",
+    });
+  }
+};

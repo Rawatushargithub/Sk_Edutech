@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from 'react-hot-toast';
-import { FileText, Link as LinkIcon, Search, PlusCircle, Edit3 } from 'lucide-react';
+import { FileText, Link as LinkIcon, Search, PlusCircle, Edit3, Trash2 } from 'lucide-react';
 import Select from 'react-select';
 import API_BASE_URL from "../../../config";
 
@@ -13,6 +13,7 @@ const NotesDashboard = () => {
   const [notesToDisplay, setNotesToDisplay] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [loadingNotes, setLoadingNotes] = useState(false);
+  const [deletingNoteId, setDeletingNoteId] = useState(null);
 
   // Fetch active and approved courses for the filter dropdown
   useEffect(() => {
@@ -84,6 +85,54 @@ const NotesDashboard = () => {
     if (fileType === 'application/pdf') return <FileText className="w-8 h-8 text-red-500" />;
     if (fileType.includes('word')) return <FileText className="w-8 h-8 text-blue-700" />;
     return <FileText className="w-8 h-8 text-gray-500" />;
+  };
+
+  // Delete note function
+  const handleDeleteNote = async (noteId, noteTitle) => {
+    if (!window.confirm(`Are you sure you want to delete "${noteTitle}"?`)) {
+      return; 
+    }
+
+    setDeletingNoteId(noteId);
+    try {
+      const franchiseId = localStorage.getItem('franchiseID');
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/institute_courses/${selectedCourseId}/notes/${noteId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ franchiseId })
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete note');
+      }
+
+      const data = await response.json();
+      toast.success('Note deleted successfully!');
+      
+      // Update the notes display by removing the deleted note
+      setNotesToDisplay(prevNotes => 
+        prevNotes.filter(note => note._id !== noteId)
+      );
+      
+      // Also update the course in allCourses to keep data in sync
+      if (data.course) {
+        const updatedCourses = allCourses.map(c => 
+          c._id === selectedCourseId ? { ...c, courseMaterials: data.course.courseMaterials } : c
+        );
+        setAllCourses(updatedCourses);
+      }
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      toast.error(`Error deleting note: ${error.message}`);
+    } finally {
+      setDeletingNoteId(null);
+    }
   };
 
   const inputStyle = "w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500";
@@ -177,7 +226,7 @@ const NotesDashboard = () => {
                     )}
                     <p className="text-xs text-gray-500 mb-3">Type: <span className="font-medium">{note.type === 'file' ? (note.fileType || 'File') : 'External Link'}</span></p>
                   </div>
-                  <div className="mt-auto pt-3 border-t border-gray-200 flex justify-end">
+                  <div className="mt-auto pt-3 border-t border-gray-200 flex justify-between items-center">
                     <a
                       href={note.url}
                       target="_blank"
@@ -186,16 +235,21 @@ const NotesDashboard = () => {
                     >
                       {note.type === 'file' ? 'Download/View File' : 'Open Link'}
                     </a>
-                    {/* Note: Direct deletion/editing from this dashboard is complex as it requires updating the parent Course document. 
-                          Suggesting users to edit the course to manage its notes.
-                      <button 
-                        onClick={() => navigate(`/institute/edit-course/${selectedCourseId}`)} // Or a specific note edit page if built
-                        className={`${buttonBaseStyle} bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-400 text-xs py-2 px-4 ml-2`}
-                        title="Edit notes within the course"
-                      >
-                        <Edit3 size={14} className="mr-1"/> Manage
-                      </button> 
-                      */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteNote(note._id, note.title);
+                      }}
+                      disabled={deletingNoteId === note._id}
+                      className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Delete Note"
+                    >
+                      {deletingNoteId === note._id ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                      ) : (
+                        <Trash2 size={16} />
+                      )}
+                    </button>
                   </div>
                 </div>
               ))}

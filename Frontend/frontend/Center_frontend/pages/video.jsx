@@ -11,8 +11,8 @@ import API_BASE_URL from "../../config";
 
 import { MdDelete, MdVideoLibrary, MdEdit } from "react-icons/md";
 import { PlusCircle, Search } from "lucide-react";
-
-
+console.log("video.jsx is working")
+ 
 const UploadCourseVideo1 = () => {
   const navigate = useNavigate();
   const [allCourses, setAllCourses] = useState([]); // For dropdown
@@ -27,6 +27,7 @@ const UploadCourseVideo1 = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [loadingVideos, setLoadingVideos] = useState(false);
+  const [deletingVideoId, setDeletingVideoId] = useState(null);
   const videosPerPage = 12;
 
   // const courses = ["BCA", "MBA", "B.Tech", "M.Tech", "B.Sc"]; // Replaced by dynamic fetch
@@ -99,7 +100,51 @@ const UploadCourseVideo1 = () => {
     return videoId;
   };
 
-  // handleDeleteVideo is removed as video management is now part of CourseForm
+  // Delete video function
+  const handleDeleteVideo = async (videoId, videoTitle) => {
+    if (!window.confirm(`Are you sure you want to delete "${videoTitle}"?`)) {
+      return;
+    }
+
+    setDeletingVideoId(videoId);
+    try {
+      const franchiseId = localStorage.getItem('franchiseID');
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/institute_courses/${selectedCourseId}/videos/${videoId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ franchiseId })
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete video');
+      }
+
+      const data = await response.json();
+      toastHot.success('Video deleted successfully!');
+      
+      // Update the videos display by refreshing the course data
+      const course = allCourses.find(c => c._id === selectedCourseId);
+      if (course && data.course) {
+        // Update the course in allCourses with the new video links
+        const updatedCourses = allCourses.map(c => 
+          c._id === selectedCourseId ? { ...c, courseVideoLinks: data.course.courseVideoLinks } : c
+        );
+        setAllCourses(updatedCourses);
+        setVideosToDisplay(data.course.courseVideoLinks);
+      }
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      toastHot.error(`Error deleting video: ${error.message}`);
+    } finally {
+      setDeletingVideoId(null);
+    }
+  };
 
   // Filter videos by search term
   const filteredVideos = videosToDisplay.filter(video =>
@@ -222,7 +267,23 @@ const UploadCourseVideo1 = () => {
                         <h3 className="text-md font-semibold text-slate-800 mb-1 truncate" title={video.title}>{video.title || 'Untitled Video'}</h3>
                         {/* <p className="text-xs text-gray-500">Course: {allCourses.find(c=>c._id === selectedCourseId)?.courseName}</p> */}
                       </div>
-                       {/* Edit/Delete buttons removed - manage via CourseForm */}
+                      <div className="flex justify-end mt-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteVideo(video._id, video.title);
+                          }}
+                          disabled={deletingVideoId === video._id}
+                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Delete Video"
+                        >
+                          {deletingVideoId === video._id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                          ) : (
+                            <MdDelete size={18} />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

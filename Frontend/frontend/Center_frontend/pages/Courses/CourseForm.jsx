@@ -75,8 +75,8 @@ const CourseForm = ({ mode }) => {
               .then((errData) => {
                 throw new Error(
                   errData.message ||
-                    errData.error ||
-                    "Failed to fetch course details"
+                  errData.error ||
+                  "Failed to fetch course details"
                 );
               })
               .catch(() => {
@@ -111,31 +111,31 @@ const CourseForm = ({ mode }) => {
             courseData.courseVideoLinks &&
               courseData.courseVideoLinks.length > 0
               ? courseData.courseVideoLinks.map((v) => ({
-                  ...v,
-                  id: v._id || Date.now(),
-                }))
+                ...v,
+                id: v._id || Date.now(),
+              }))
               : [{ id: Date.now(), title: "", link: "" }]
           );
           setExistingCourseImage(courseData.courseImage || "");
           const fetchedNotes =
             courseData.courseMaterials && courseData.courseMaterials.length > 0
               ? courseData.courseMaterials.map((m) => ({
-                  ...m,
-                  id: m._id || Date.now(),
-                  file: null,
-                  isNew: false,
-                })) // Mark existing notes as not new
+                ...m,
+                id: m._id || Date.now(),
+                file: null,
+                isNew: false,
+              })) // Mark existing notes as not new
               : [
-                  {
-                    id: Date.now(),
-                    title: "",
-                    type: "file",
-                    url: "",
-                    file: null,
-                    fileName: "",
-                    isNew: true,
-                  },
-                ]; // Default if no notes
+                {
+                  id: Date.now(),
+                  title: "",
+                  type: "file",
+                  url: "",
+                  file: null,
+                  fileName: "",
+                  isNew: true,
+                },
+              ]; // Default if no notes
           setNotes(fetchedNotes);
           setLoading(false);
         })
@@ -174,8 +174,20 @@ const CourseForm = ({ mode }) => {
     }
   }, [isEditMode, courseId, navigate, mode]); // Added mode to dependencies
 
-  const handleInputChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  // const handleInputChange = (e) =>
+  //   setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "courseCode") {
+      // Remove all spaces from input value
+      const noSpaceValue = value.replace(/\s/g, "");
+      setFormData({ ...formData, [name]: noSpaceValue });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
 
   const handleVideoLinkChange = (index, e) => {
     const updatedVideos = [...courseVideoLinks];
@@ -255,16 +267,16 @@ const CourseForm = ({ mode }) => {
       updated.length
         ? updated
         : [
-            {
-              id: Date.now(),
-              title: "",
-              type: "file",
-              url: "",
-              file: null,
-              fileName: "",
-              isNew: true,
-            },
-          ]
+          {
+            id: Date.now(),
+            title: "",
+            type: "file",
+            url: "",
+            file: null,
+            fileName: "",
+            isNew: true,
+          },
+        ]
     );
   };
 
@@ -368,9 +380,9 @@ const CourseForm = ({ mode }) => {
         throw new Error(result.message || `Error: ${response.status}`);
       toast.success(
         result.message ||
-          (isEditMode
-            ? "Course updated successfully!"
-            : "Course created successfully!"),
+        (isEditMode
+          ? "Course updated successfully!"
+          : "Course created successfully!"),
         { id: toastId }
       );
       navigate("/institute/Courses");
@@ -420,10 +432,10 @@ const CourseForm = ({ mode }) => {
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Course Details Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
-                <div>
+                <div className="flex items-center">
                   <label
                     htmlFor="courseCode"
-                    className="block text-sm font-medium text-gray-700 required"
+                    className="text-sm font-medium text-gray-700 required m-0"
                   >
                     Course Code
                   </label>
@@ -434,12 +446,14 @@ const CourseForm = ({ mode }) => {
                     value={formData.courseCode}
                     onChange={handleInputChange}
                     required
-                    className={
-                      isEditMode ? disabledInputStyle : noRingInputStyle
-                    }
+                    className={`${isEditMode ? disabledInputStyle : noRingInputStyle} p-0`}
                     disabled={isEditMode}
+                    pattern="^\S+$"
+                    title="No spaces allowed in course code"
                   />
+
                 </div>
+
                 <div>
                   <label
                     htmlFor="courseName"

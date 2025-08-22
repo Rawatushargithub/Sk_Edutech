@@ -291,6 +291,9 @@ const AdminCoursesList = () => {
                                             <p className="text-sm text-gray-600">
                                                 Subject: {course.courseSubject}
                                             </p>
+                                            {/* <p className="text-sm text-gray-600">
+                                                franchiseId: {course.franchiseId}
+                                            </p> */}
                                         </div>
 
                                         {/* Course Stats */}

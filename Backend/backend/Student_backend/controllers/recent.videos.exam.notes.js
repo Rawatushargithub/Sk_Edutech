@@ -53,7 +53,7 @@ export const getLatestExam = async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    console.log("batch :", student);
+    // console.log("batch :", student);
     // 2. Get the student's batch
     const batch = await Batch.findById(student.selectedBatch);
     console.log("batch timing :", batch);

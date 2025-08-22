@@ -20,7 +20,9 @@ const Sidebar = ({ onSelect }) => {
   const [isOpen, setIsOpen] = useState(true);
 
   const [logoUrl, setLogoUrl] = useState("");
-  const [Name, instituteName] = useState("");
+  // const [Name, instituteName] = useState("");
+  const [instituteName, setInstituteName] = useState("");
+
 
   useEffect(() => {
     // const studentData = JSON.parse(localStorage.getItem("student"));
@@ -41,7 +43,9 @@ const Sidebar = ({ onSelect }) => {
 
       const response = await axios.get(`${API_BASE_URL}/api/v1/student/sidebar/logo/${encodedFranchiseId}`);
       setLogoUrl(response.data.logoUrl);
-      instituteName(response.data.Name);
+      // instituteName(response.data.Name);
+      setInstituteName(response.data.Name);
+
     } catch (error) {
       console.error("Failed to fetch institute logo", error);
     }
@@ -79,7 +83,7 @@ const Sidebar = ({ onSelect }) => {
             <h2 className="text-2xl font-bold text-blue-400">SKEDUTEH</h2> // fallback text
           )}
         </div>
-            <h2 className="text-lg font-bold flex justify-center text-blue-400">{Name}</h2>
+            {/* <h2 className="text-lg font-bold flex justify-center text-blue-400">{Name}</h2> */}
 
         <ul>
           {menuItems.map((item) => (

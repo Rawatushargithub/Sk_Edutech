@@ -15,7 +15,7 @@ import API_BASE_URL from "../../../../config";
 import { FaUser } from "react-icons/fa";
 // Import for Excel export
 import * as XLSX from 'xlsx';
-// Import for PDF export
+// Import for PDF export 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable'; // Import autoTable separately
 
@@ -226,9 +226,9 @@ const StudentAdmissionList = () => {
       setShowExportDropdown(false);
       alert('Preparing Excel file... This may take a moment.');
 
-      // Fetch detailed data for all students
-      const detailedData = await fetchAllDetailedData();
-      const exportData = prepareExportData(detailedData);
+      // Use current filtered students instead of all students
+      const dataToExport = filteredStudents.length > 0 ? filteredStudents : students;
+      const exportData = prepareExportData(dataToExport);
       
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
@@ -273,7 +273,7 @@ const StudentAdmissionList = () => {
       XLSX.writeFile(wb, fileName);
       
       // Show success message
-      alert(`Excel file "${fileName}" has been downloaded successfully with all student details!`);
+      alert(`Excel file "${fileName}" has been downloaded successfully with ${exportData.length} student records!`);
     } catch (error) {
       console.error('Error exporting to Excel:', error);
       alert('Error exporting to Excel. Please try again.');
@@ -286,8 +286,8 @@ const StudentAdmissionList = () => {
       setShowExportDropdown(false);
       alert('Preparing PDF file... This may take a moment.');
 
-      // Fetch detailed data for all students
-      const detailedData = await fetchAllDetailedData();
+      // Use current filtered students instead of all students
+      const dataToExport = filteredStudents.length > 0 ? filteredStudents : students;
       
       const doc = new jsPDF('l', 'mm', 'a4'); // landscape orientation
       
@@ -301,7 +301,7 @@ const StudentAdmissionList = () => {
       doc.text(`Generated on: ${currentDate}`, 14, 28);
       
       // Prepare data for PDF table
-      const exportData = prepareExportData(detailedData);
+      const exportData = prepareExportData(dataToExport);
       
       // Define columns for PDF (selecting key columns to fit better)
       const columns = [
@@ -352,7 +352,7 @@ const StudentAdmissionList = () => {
       doc.save(fileName);
       
       // Show success message
-      alert(`PDF file "${fileName}" has been downloaded successfully with student details!`);
+      alert(`PDF file "${fileName}" has been downloaded successfully with ${dataToExport.length} student records!`);
     } catch (error) {
       console.error('Error exporting to PDF:', error);
       alert('Error exporting to PDF. Please try again.');

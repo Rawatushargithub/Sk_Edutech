@@ -220,12 +220,7 @@ const StatsSection = () => {
             </div>
 
             <div className="mt-4">
-              <button
-                className="w-full bg-white border border-sky-600 text-sky-600 hover:bg-sky-50 py-2 px-4 rounded transition-colors flex items-center justify-center"
-              >
-                <BookOpen className="h-4 w-4 mr-2" />
-                Course Details
-              </button>
+              
             </div>
           </div>
 

@@ -286,8 +286,8 @@ const updateFranchiseStatusVerification = asyncHandler(async (req, res) => {
         console.log(`----------------------------------------------------------------`);
 
 
-        textBody += `If you have any other doubts. Please contact us at help@skedutech.in\n\nWe will try to resolve the issue if any at the earliest possible.\n\nRegards,\nThe SK Edutech Team`;
-        htmlBody += `<p>If you have any other doubts. Please contact us at help@skedutech.in</p>
+        textBody += `If you have any other doubts. Please contact us at contact@skedutech.com\n\nWe will try to resolve the issue if any at the earliest possible.\n\nRegards,\nThe SK Edutech Team`;
+        htmlBody += `<p>If you have any other doubts. Please contact us at contact@skedutech.com</p>
                      <p>We will try to resolve the issue if any at the earliest possible.</p>
                      <p>Regards,<br>The SK Edutech Team</p>`;
 

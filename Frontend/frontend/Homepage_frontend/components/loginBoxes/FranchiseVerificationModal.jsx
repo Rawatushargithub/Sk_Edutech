@@ -10,22 +10,29 @@ const FranchiseVerificationModal = ({ onClose }) => {
     const [error, setError] = useState("");
 
     const handleVerify = async () => {
-        setLoading(true);
-        setFranchise(null);
-        setError("");
-        try {
-            const res = await axios.get(`${API_BASE_URL}/api/v1/franchises/verify/${franchiseId}`);
-            if (res.data.verificationStatus === "Verified") {
-                setFranchise(res.data);
-            } else {
-                setError("Franchise is found but not verified yet.");
-            }
-        } catch (err) {
-            setError(err.response?.data?.message || "Franchise not found.");
-        } finally {
-            setLoading(false);
-        }
-    };
+  setLoading(true);
+  setFranchise(null);
+  setError("");
+  try {
+    // Encode franchiseId so slashes or special chars don’t break the URL
+    const encodedFranchiseId = encodeURIComponent(franchiseId);
+
+    const res = await axios.get(
+      `${API_BASE_URL}/api/v1/franchises/verify/${encodedFranchiseId}`
+    );
+
+    if (res.data.verificationStatus === "Verified") {
+      setFranchise(res.data);
+    } else {
+      setError("Franchise is found but not verified yet.");
+    }
+  } catch (err) {
+    setError(err.response?.data?.message || "Franchise not found.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">

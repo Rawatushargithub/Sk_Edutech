@@ -1,5 +1,5 @@
 import { asyncHandler } from "../../utils/asynchanlder.js";
-import Student from "../../models/Student/Student_Detais.model.js"
+import Student from "../../models/Student/Student_Details.model.js"
 import Fees_studentModel from "../../models/Student/Fees_student.model.js";
 import installmentModel from "../../models/Student/installment.model.js";
 import BatchModel from "../../models/batch.model.js"; // Import your Batch model
@@ -253,39 +253,18 @@ const registerStudent = asyncHandler(async (req, res) => {
 });
 
 const getStudents = asyncHandler(async (req, res) => {
+  console.log("getStudents is working but the folder one is working")
   // Get pagination parameters from query string with defaults
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 10;
+  const limit = parseInt(req.query.limit, 10) || 20;
   const skip = (page - 1) * limit;
 
-  // Get filter parameters if any
-  const { course, batch, searchTerm } = req.query;
 
-  // Build filter object
-  let filter = {};
-
-  if (course) {
-    filter.courseInterested = course;
-  }
-
-  if (batch) {
-    filter.batches = batch;
-  }
-
-  if (searchTerm) {
-    // Search in student name, mobile, roll number, or email
-    filter.$or = [
-      { studentName: { $regex: searchTerm, $options: "i" } },
-      { studentMobile: { $regex: searchTerm, $options: "i" } },
-      { rollNumber: { $regex: searchTerm, $options: "i" } },
-      { email: { $regex: searchTerm, $options: "i" } },
-    ];
-  }
 
   // Query database with projections for only the fields we need
-  const students = await Student.find(filter)
+  const students = await Student.find()
     .select(
-      "studentPhoto studentName courseInterested studentMobile referralCode email rollNumber admissionDate selectedBatch"
+      "studentPhoto studentName courseInterested studentMobile referralCode email rollNumber admissionDate selectedBatch status franchiseId"
     )
     .populate({
       path: 'selectedBatch',
@@ -313,8 +292,6 @@ const getStudents = asyncHandler(async (req, res) => {
     return studentObj;
   });
 
-  // Get total count for pagination
-  const totalStudents = await Student.countDocuments(filter);
 
   // Check if students were found
   if (!formattedStudents || formattedStudents.length === 0) {
@@ -337,7 +314,7 @@ const getStudents = asyncHandler(async (req, res) => {
       //     limit,
       //     pages: Math.ceil(totalStudents / limit)
       // }
-      "Students fetched successfully"
+      "Students fetched successfully from admin controller"
     )
   );
 });
@@ -384,6 +361,46 @@ const getRecentsStudents = asyncHandler( async (req , res) => {
 
 })
 
+const toggleStudentStatus = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    // Validate status
+    if (!["active", "inactive", "Certified"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status. Must be 'active', 'inactive', or 'Certified'"
+      });
+    }
+    
+    const student = await Student.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+    
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found"
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: "Student status updated successfully",
+      data: student
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error updating student status",
+      error: error.message
+    });
+  }
+});
+
 const updateStudent = asyncHandler( async( req , res) => {
   console.log("update is working")
   try {
@@ -423,8 +440,9 @@ console.log("id value:: " , req.params.id);
 
 export { 
   registerStudent, 
-  getStudents , 
+  getStudents,
   getStudentCount,
   getRecentsStudents,
-  updateStudent
+  updateStudent,
+  toggleStudentStatus
  };

@@ -1,6 +1,6 @@
 import Course from '../models/Courses/Courses.models.js';
 import  Franchise from '../models/Franchise.model.js'; // Import Franchise model for validation
-import { uploadOnCloudinary } from "../utils/cloudinary.js"; 
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js"; 
 import { asyncHandler } from "../utils/asynchanlder.js";
 // Create a new course
 export const createCourse = asyncHandler(async (req, res) => {
@@ -518,4 +518,73 @@ export const addVideoLinkToCourse = asyncHandler(async (req, res) => {
     
     await course.save();
     res.status(201).json({ message: "Video link added successfully to course.", course });
+});
+
+// Delete a specific video from a course
+export const deleteVideoFromCourse = asyncHandler(async (req, res) => {
+    const { courseId, videoId } = req.params;
+    const { franchiseId } = req.body;
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+    }
+
+    // Validate franchise access if franchiseId is provided
+    if (franchiseId && course.franchiseId !== franchiseId) {
+        return res.status(403).json({ error: "You don't have permission to modify this course" });
+    }
+
+    // Find and remove the video
+    const videoIndex = course.courseVideoLinks.findIndex(video => video._id.toString() === videoId);
+    if (videoIndex === -1) {
+        return res.status(404).json({ error: "Video not found in this course" });
+    }
+
+    course.courseVideoLinks.splice(videoIndex, 1);
+    await course.save();
+
+    res.status(200).json({ message: "Video deleted successfully from course.", course });
+});
+
+
+// Delete a specific note/material from a course 
+export const deleteNoteFromCourse = asyncHandler(async (req, res) => {
+    const { courseId, noteId } = req.params;
+    const { franchiseId } = req.body;
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+    }
+
+    // Validate franchise access if franchiseId is provided
+    if (franchiseId && course.franchiseId !== franchiseId) {
+        return res.status(403).json({ error: "You don't have permission to modify this course" });
+    }
+
+    // Find the note to delete
+    const noteIndex = course.courseMaterials.findIndex(material => material._id.toString() === noteId);
+    if (noteIndex === -1) {
+        return res.status(404).json({ error: "Note not found in this course" });
+    }
+
+    const noteToDelete = course.courseMaterials[noteIndex];
+
+    // If it's a file (especially PDF) stored on Cloudinary, delete it from Cloudinary
+    if (noteToDelete.type === 'file' && noteToDelete.url) {
+        const deleteResult = await deleteFromCloudinary(noteToDelete.url);
+        if (deleteResult.success) {
+            console.log("File deleted from Cloudinary successfully");
+        } else {
+            console.warn("Could not delete file from Cloudinary:", deleteResult.message || deleteResult.error);
+            // Continue with database deletion even if Cloudinary deletion fails
+        }
+    }
+
+    // Remove the note from the course
+    course.courseMaterials.splice(noteIndex, 1);
+    await course.save();
+
+    res.status(200).json({ message: "Note deleted successfully from course.", course });
 });

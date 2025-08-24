@@ -25,7 +25,7 @@ const QuickActions = ({ setTab }) => {
   ];
 
   return (
-    <div className="my-6">
+    <div className="m-6">
       <h2 className="text-lg font-semibold mb-4 text-gray-800">Quick Actions</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {actions.map((action) => (

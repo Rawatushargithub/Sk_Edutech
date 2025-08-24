@@ -125,6 +125,10 @@ const franchiseSchema = new Schema(
         expireDate: { // Calculated based on activationDate + planValidityDays
             type: Date,
         },
+        otpVerified: {
+            type: Boolean,
+            default: false,
+        },
         atcCode: { // Seems like an internal code? Keep as is.
              type: String,
              trim: true,

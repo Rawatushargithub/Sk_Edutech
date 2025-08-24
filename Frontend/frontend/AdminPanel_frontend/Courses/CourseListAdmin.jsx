@@ -280,6 +280,8 @@ const CourseListAdmin = () => {
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FranchiseID</th>
+
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Institute Status</th>
@@ -297,6 +299,8 @@ const CourseListAdmin = () => {
                     <tr key={course._id} className="hover:bg-gray-50 group">
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">{course.courseCode}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{course.courseName}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{course.franchiseId}</td>
+
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{course.courseSubject}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{course.courseDuration} months</td>
                       <td className="px-4 py-3 whitespace-nowrap">

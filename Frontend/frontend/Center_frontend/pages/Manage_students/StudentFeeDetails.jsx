@@ -4,6 +4,11 @@ import axios from "axios";
 import API_BASE_URL from "../../../config";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
+// Import for Excel export
+import * as XLSX from 'xlsx';
+// Import for PDF export
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -38,6 +43,9 @@ const FeesManagementSystem = () => {
     paymentMode: "Cash",
     date: new Date().toISOString().slice(0, 10),
   });
+
+  // Export states
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
 
 
@@ -276,14 +284,208 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
 //   .get(`${API_BASE_URL}/api/v1/institute_fees/installments/students?franchiseId=${franchiseId}`)
 //   .then((response) => {
 //     console.log("Installment data:", response);
-//     setInstallmentStudents(response.data.data);
-//   })
-//   .catch((error) => console.error("Error fetching installment students:", error));
 
-
-//     setInstallmentStudents(mockInstallmentStudents);
+    // setInstallmentStudents(mockInstallmentStudents);
   }, []);
 
+  // Export Functions
+  const prepareTransactionExportData = (studentsData) => {
+    return studentsData.map((student, index) => ({
+      'S/N': index + 1,
+      'Student ID': student.rollNumber || '',
+      'Student Name': student.studentName || '',
+      'Course': student.course?.courseName || '',
+      'Course Fee': `Rs.${(student.courseFee || 0).toLocaleString()}`,
+      'Student Fee': `Rs.${(student.totalFee || 0).toLocaleString()}`,
+      'Paid Fee': `Rs.${(student.paidFee || 0).toLocaleString()}`,
+      'Due Fee': `Rs.${(student.dueFee || 0).toLocaleString()}`,
+      'Admission Date': student.admissionDate || '',
+      'Mobile': student.studentMobile || '',
+      'Email': student.email || '',
+    }));
+  };
+
+  const prepareInstallmentExportData = (studentsData) => {
+    const exportData = [];
+    studentsData.forEach((student, index) => {
+      if (student.installments && student.installments.length > 0) {
+        student.installments.forEach((installment, instIndex) => {
+          exportData.push({
+            'S/N': `${index + 1}.${instIndex + 1}`,
+            'Student ID': student._id || '',
+            'Student Name': student.studentName || '',
+            'Course': student.course?.courseName || '',
+            'Installment Name': installment.installmentName || '',
+            'Amount': `Rs.${(installment.amount || 0).toLocaleString()}`,
+            'Due Date': installment.date || '',
+            'Status': installment.paid ? 'Paid' : 'Pending',
+            'Total Installment': `Rs.${(student.totalInstallmentAmount || 0).toLocaleString()}`,
+            'Paid Amount': `Rs.${(student.paidInstallmentAmount || 0).toLocaleString()}`,
+            'Due Amount': `Rs.${(student.dueInstallmentAmount || 0).toLocaleString()}`,
+          });
+        });
+      } else {
+        exportData.push({
+          'S/N': index + 1,
+          'Student ID': student._id || '',
+          'Student Name': student.studentName || '',
+          'Course': student.course?.courseName || '',
+          'Installment Name': 'No Installments',
+          'Amount': 'Rs.0',
+          'Due Date': '',
+          'Status': 'N/A',
+          'Total Installment': `Rs.${(student.totalInstallmentAmount || 0).toLocaleString()}`,
+          'Paid Amount': `Rs.${(student.paidInstallmentAmount || 0).toLocaleString()}`,
+          'Due Amount': `Rs.${(student.dueInstallmentAmount || 0).toLocaleString()}`,
+        });
+      }
+    });
+    return exportData;
+  };
+
+  const exportToExcel = async () => {
+    try {
+      setShowExportDropdown(false);
+      alert('Preparing Excel file... This may take a moment.');
+
+      let exportData;
+      let fileName;
+      
+      if (activeTab === 'transactions') {
+        exportData = prepareTransactionExportData(filteredStudents);
+        fileName = `Fee_Transactions_${new Date().toISOString().split('T')[0]}.xlsx`;
+      } else {
+        exportData = prepareInstallmentExportData(filteredInstallmentStudents);
+        fileName = `Installment_Details_${new Date().toISOString().split('T')[0]}.xlsx`;
+      }
+      
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      
+      // Set column widths
+      const colWidths = activeTab === 'transactions' ? [
+        { wch: 5 },   // S/N
+        { wch: 15 },  // Student ID
+        { wch: 25 },  // Student Name
+        { wch: 30 },  // Course
+        { wch: 15 },  // Course Fee
+        { wch: 15 },  // Student Fee
+        { wch: 15 },  // Paid Fee
+        { wch: 15 },  // Due Fee
+        { wch: 15 },  // Admission Date
+        { wch: 15 },  // Mobile
+        { wch: 25 },  // Email
+      ] : [
+        { wch: 8 },   // S/N
+        { wch: 15 },  // Student ID
+        { wch: 25 },  // Student Name
+        { wch: 30 },  // Course
+        { wch: 20 },  // Installment Name
+        { wch: 12 },  // Amount
+        { wch: 12 },  // Due Date
+        { wch: 10 },  // Status
+        { wch: 15 },  // Total Installment
+        { wch: 15 },  // Paid Amount
+        { wch: 15 },  // Due Amount
+      ];
+      
+      ws['!cols'] = colWidths;
+      
+      XLSX.utils.book_append_sheet(wb, ws, activeTab === 'transactions' ? 'Fee Transactions' : 'Installments');
+      XLSX.writeFile(wb, fileName);
+      
+      alert(`Excel file "${fileName}" has been downloaded successfully!`);
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      alert('Error exporting to Excel. Please try again.');
+    }
+  };
+
+  const exportToPDF = async () => {
+    try {
+      setShowExportDropdown(false);
+      alert('Preparing PDF file... This may take a moment.');
+
+      const doc = new jsPDF('l', 'mm', 'a4'); // landscape orientation
+      
+      // Add title
+      doc.setFontSize(16);
+      const title = activeTab === 'transactions' ? 'Student Fee Transactions' : 'Student Installment Details';
+      doc.text(title, 14, 20);
+      
+      // Add date
+      const currentDate = new Date().toLocaleDateString();
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${currentDate}`, 14, 28);
+      
+      let exportData, columns, rows, fileName;
+      
+      if (activeTab === 'transactions') {
+        exportData = prepareTransactionExportData(filteredStudents);
+        columns = ['S/N', 'Student ID', 'Student Name', 'Course', 'Course Fee', 'Student Fee', 'Paid Fee', 'Due Fee'];
+        rows = exportData.map(student => [
+          student['S/N'],
+          student['Student ID'],
+          student['Student Name'],
+          student['Course'],
+          `Rs.${student['Course Fee'].toLocaleString()}`,
+          `Rs.${student['Student Fee'].toLocaleString()}`,
+          `Rs.${student['Paid Fee'].toLocaleString()}`,
+          `Rs.${student['Due Fee'].toLocaleString()}`
+        ]);
+        fileName = `Fee_Transactions_${new Date().toISOString().split('T')[0]}.pdf`;
+      } else {
+        exportData = prepareInstallmentExportData(filteredInstallmentStudents);
+        columns = ['S/N', 'Student Name', 'Course', 'Installment', 'Amount', 'Due Date', 'Status'];
+        rows = exportData.map(item => [
+          item['S/N'],
+          item['Student Name'],
+          item['Course'],
+          item['Installment Name'],
+          `Rs.${item['Amount'].toLocaleString()}`,
+          item['Due Date'],
+          item['Status']
+        ]);
+        fileName = `Installment_Details_${new Date().toISOString().split('T')[0]}.pdf`;
+      }
+
+      // Add table using autoTable
+      autoTable(doc, {
+        head: [columns],
+        body: rows,
+        startY: 35,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [41, 128, 185] },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        margin: { top: 35, right: 14, bottom: 20, left: 14 },
+      });
+
+      doc.save(fileName);
+      alert(`PDF file "${fileName}" has been downloaded successfully!`);
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      alert('Error exporting to PDF. Please try again.');
+    }
+  };
+
+  // Toggle export dropdown
+  const toggleExportDropdown = () => {
+    setShowExportDropdown(!showExportDropdown);
+  };
+
+  // Close dropdown when clicking outside
+  const closeDropdownOnOutsideClick = (e) => {
+    if (showExportDropdown && !e.target.closest('.export-dropdown-container')) {
+      setShowExportDropdown(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('click', closeDropdownOnOutsideClick);
+    return () => {
+      document.removeEventListener('click', closeDropdownOnOutsideClick);
+    };
+  }, [showExportDropdown]);
 
   const StatCard = ({ title, value, color, icon: Icon }) => (
     <div className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center justify-center text-center h-full">
@@ -408,7 +610,44 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Student Fee Details</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Student Fee Details</h1>
+        
+        {/* Export Button with Dropdown */}
+        <div className="relative export-dropdown-container">
+          <button 
+            className="bg-sky-900 text-white font-medium px-4 py-2 rounded-md cursor-pointer flex items-center"
+            onClick={toggleExportDropdown}
+          >
+            Export 
+            <span className={`text-md ml-1 transition-transform duration-200 ${
+              showExportDropdown ? 'rotate-180' : ''
+            }`}>
+              ▼
+            </span>
+          </button>
+          
+          {/* Export Dropdown Menu */}
+          {showExportDropdown && (
+            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10">
+              <div className="py-1">
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  onClick={exportToExcel}
+                >
+                  📊 Export to Excel
+                </button>
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  onClick={exportToPDF}
+                >
+                  📄 Export to PDF
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
 
       {/* Tabs */}

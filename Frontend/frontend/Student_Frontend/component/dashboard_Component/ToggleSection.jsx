@@ -46,9 +46,10 @@ const ToggleSection = ({ student }) => {
       fetch(`${API_BASE_URL}/api/v1/recentlyadded/course/exam/${encodedRoll}/${encodedFranchise}`)
         .then((res) => res.json())
         .then((examData) => {
-          if (examData?.latestExam?._id) setExam(examData.latestExam);
-          else setExam(null);
+          if (examData?.length > 0) setExam(examData); // store full array
+          else setExam([]);
         })
+        // .catch((err) => setExam([]));
         .catch((err) => setExam(null));
     }
 
@@ -63,6 +64,22 @@ const ToggleSection = ({ student }) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   };
+
+  // Utility: check if exam is upcoming
+  const isUpcomingExam = (exam) => {
+    if (!exam.examDate || !exam.examStartTime) return false;
+
+    // Current time
+    const now = new Date();
+
+    // Build exam start datetime
+    const [startHour, startMinute] = exam.examStartTime.split(":").map(Number);
+    const examDateTime = new Date(exam.examDate);
+    examDateTime.setHours(startHour, startMinute, 0, 0);
+
+    return examDateTime >= now; // upcoming if in future
+  };
+
 
   // Tabs configuration
   const tabs = [
@@ -101,29 +118,39 @@ const ToggleSection = ({ student }) => {
         {/* Notes Tab */}
         {tab === "Notes" && (
           <div className="transition-all duration-300 opacity-100">
-            <div className="p-4 bg-gradient-to-br from-sky-50 to-white rounded-lg">
-              <div className="flex items-center mb-4">
-                <FileText className="text-sky-600 mr-2" size={20} />
-                <h3 className="text-lg font-bold text-sky-800">Recently Added Notes</h3>
+            <div className="p-4 bg-gradient-to-br from-sky-50 to-white rounded-xl shadow">
+
+              {/* Header */}
+              <div className="flex items-center mb-6">
+                <FileText className="text-sky-600 mr-2" size={22} />
+                <h3 className="text-xl font-bold text-sky-800 tracking-wide">
+                  Recently Added Notes
+                </h3>
               </div>
+
+              {/* Empty State */}
               {notes.length === 0 ? (
-                <div className="text-center py-6 text-sky-700">
-                  <FileText size={36} className="mx-auto mb-2 text-sky-300" />
-                  <p>No notes available for your course.</p>
+                <div className="text-center py-12 text-sky-700">
+                  <FileText size={48} className="mx-auto mb-3 text-sky-300" />
+                  <p className="text-lg font-medium">No notes available for your course.</p>
                 </div>
               ) : (
-                <ul className="divide-y divide-sky-100">
+                <ul className="list-disc list-inside space-y-2 text-sky-800">
                   {notes.map((note, idx) => (
-                    <li key={note._id || idx} className="py-3 flex justify-between items-center">
-                      <span className="text-sky-800 font-medium">{note.title}</span>
-                      {/* <button
-                        onClick={() => navigate("/student/notes")}
-                        className="flex items-center px-3 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition"
-                      >
-                        <Eye size={16} className="mr-2" />
-                        View
-                      </button> */}
-
+                    <li
+                      key={note._id || idx}
+                      className="font-medium text-base leading-relaxed"
+                    >
+                      {note.title}
+                      {note.addedOn && (
+                        <span className="ml-2 text-xs text-gray-500">
+                          (📅 {new Date(note.addedOn).toLocaleDateString("en-US", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })})
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -131,39 +158,58 @@ const ToggleSection = ({ student }) => {
             </div>
           </div>
         )}
+
 
 
         {/* Videos Tab */}
         {tab === "Videos" && (
           <div className="transition-all duration-300 opacity-100">
-            <div className="p-4 bg-gradient-to-br from-sky-50 to-white rounded-lg">
-              <div className="flex items-center mb-4">
-                <Video className="text-sky-600 mr-2" size={20} />
-                <h3 className="text-lg font-bold text-sky-800">Recently Added Videos</h3>
+            <div className="p-4 bg-gradient-to-br from-sky-50 to-white rounded-xl shadow">
+              {/* Header */}
+              <div className="flex items-center mb-6">
+                <Video className="text-sky-600 mr-2" size={22} />
+                <h3 className="text-xl font-bold text-sky-800 tracking-wide">
+                  Recently Added Videos
+                </h3>
               </div>
+
+              {/* Empty State */}
               {videos.length === 0 ? (
-                <div className="text-center py-6 text-sky-700">
-                  <Video size={36} className="mx-auto mb-2 text-sky-300" />
-                  <p>No videos available for your course.</p>
+                <div className="text-center py-12 text-sky-700">
+                  <Video size={48} className="mx-auto mb-3 text-sky-300" />
+                  <p className="text-lg font-medium">No videos available for your course.</p>
                 </div>
               ) : (
-                <ul className="divide-y divide-sky-100">
+                <ul className="space-y-4">
                   {videos.map((video, idx) => (
-                    <li key={video._id || idx} className="py-3 flex items-center space-x-4">
+                    <li
+                      key={video._id || idx}
+                      className="flex flex-col sm:flex-row bg-white rounded-lg shadow-sm border border-sky-100 hover:shadow-md transition-all duration-200"
+                    >
                       {/* Thumbnail */}
-                      {video.thumbnailUrl ? (
-                        <img
-                          src={video.thumbnailUrl}
-                          alt={video.title}
-                          className="w-16 h-10 object-cover rounded-md border border-sky-100"
-                        />
-                      ) : (
-                        <div className="w-16 h-10 bg-sky-100 flex items-center justify-center rounded-md text-sky-500">
-                          <Video size={18} />
-                        </div>
-                      )}
-                      {/* Title */}
-                      <span className="text-sky-800 font-medium">{video.title}</span>
+                      <div className="w-full sm:w-40 h-28 sm:h-auto flex-shrink-0 relative">
+                        {video.thumbnailUrl ? (
+                          <img
+                            src={video.thumbnailUrl}
+                            alt={video.title}
+                            className="w-full h-full object-cover rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-sky-100 flex items-center justify-center text-sky-600">
+                            <Video size={28} />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Details */}
+                      <div className="flex flex-col justify-center p-4 flex-1">
+                        <h4 className="text-sky-800 font-semibold text-base line-clamp-2">
+                          {video.title}
+                        </h4>
+                        {video.duration && (
+                          <p className="text-sm text-gray-500 mt-1">⏱ {video.duration}</p>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -173,31 +219,85 @@ const ToggleSection = ({ student }) => {
         )}
 
 
+
         {/* Exam Tab */}
-        {tab === "Exam" && (
-          <div className="transition-all duration-300 opacity-100">
-            <div className="p-4 bg-gradient-to-br from-sky-50 to-white rounded-lg">
-              <div className="flex items-center mb-6">
-                <BookOpen className="text-sky-600 mr-2" size={20} />
-                <h3 className="text-lg font-bold text-sky-800">Upcoming Exam</h3>
-              </div>
-              {!exam ? (
-                <div className="text-center py-12 text-sky-700">
-                  <BookOpen size={48} className="mx-auto mb-3 text-sky-300" />
-                  <p className="text-lg font-medium">No upcoming exams found</p>
+        {/* Exam Tab */}
+{tab === "Exam" && (
+  <div className="transition-all duration-300 opacity-100">
+    <div className="p-4 bg-gradient-to-br from-sky-50 to-white rounded-xl shadow">
+      {/* Section Header */}
+      <div className="flex items-center mb-6">
+        <BookOpen className="text-sky-600 mr-2" size={22} />
+        <h3 className="text-xl font-bold text-sky-800 tracking-wide">
+          Upcoming Exams
+        </h3>
+      </div>
+
+      {/* Filter exams */}
+      {(!exam || exam.filter(isUpcomingExam).length === 0) ? (
+        <div className="text-center py-12 text-sky-700">
+          <BookOpen size={48} className="mx-auto mb-3 text-sky-300" />
+          <p className="text-lg font-medium">No upcoming exams found</p>
+        </div>
+      ) : (
+        <ul className="space-y-4">
+          {exam
+            .filter(isUpcomingExam)
+            .map((ex) => (
+              <li
+                key={ex._id}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-lg bg-white shadow-sm border border-sky-100 hover:shadow-md hover:scale-[1.01] transition-all duration-200"
+              >
+                {/* Column 1: Title + Batch */}
+                <div>
+                  <p className="text-sky-800 font-semibold">
+                    {ex.examType} - {ex.batch?.name || ""}
+                  </p>
+                  <p className="text-gray-600 text-xs mt-1">
+                    {ex.courseCode} • {ex.batch?.timings || "N/A"}
+                  </p>
                 </div>
-              ) : (
-                <div className="bg-white shadow-md rounded-lg p-4 border border-sky-100 text-left">
-                  <h4 className="font-semibold text-sky-800 mb-2">{exam.examType} - {exam.batch?.name || ""}</h4>
-                  <p className="text-gray-600">Date: {exam.examDate}</p>
-                  <p className="text-gray-600">Time: {exam.examStartTime} - {exam.examEndTime}</p>
-                  <p className="text-gray-600">Total Marks: {exam.totalMarks}</p>
-                  <p className="text-gray-600">Passing Marks: {exam.passingMarks}</p>
+
+                {/* Column 2: Date & Time */}
+                <div className="text-gray-700 space-y-1">
+                  <p>
+                    📅 <strong>Date:</strong>{" "}
+                    {new Date(ex.examDate).toLocaleDateString("en-US", {
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </p>
+                  <p>
+                    ⏰ <strong>Time:</strong> {ex.examStartTime} -{" "}
+                    {ex.examEndTime}
+                  </p>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+
+                {/* Column 3: Duration & Marks */}
+                <div className="text-gray-700 space-y-1">
+                  <p>
+                    ⏳ <strong>Duration:</strong> {ex.examDurationMinutes}m
+                  </p>
+                  <p>
+                    📝 <strong>Marks:</strong> {ex.totalMarks} | ✅ Pass:{" "}
+                    {ex.passingMarks}
+                  </p>
+                </div>
+
+                {/* Column 4: Mode */}
+                <div className="text-gray-700 flex items-center">
+                  🎓 <span className="ml-1">{ex.examMode}</span>
+                </div>
+              </li>
+            ))}
+        </ul>
+      )}
+    </div>
+  </div>
+)}
+
+
+
       </div>
     </div>
   );

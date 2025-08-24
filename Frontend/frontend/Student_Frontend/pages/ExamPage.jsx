@@ -410,14 +410,7 @@ const ExamDetails = () => {
                     </p>
                 </div>
 
-                {error && (
-                    <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-6">
-                        <p className="text-red-400 flex items-center gap-2">
-                            <Hash className="w-4 h-4" />
-                            {error}
-                        </p>
-                    </div>
-                )}
+                
 
                 {exams.length === 0 ? (
                     <div className="text-center py-12">

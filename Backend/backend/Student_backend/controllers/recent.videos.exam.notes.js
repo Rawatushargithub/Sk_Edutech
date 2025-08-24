@@ -53,22 +53,28 @@ export const getLatestExam = async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    // console.log("batch :", student);
-    // 2. Get the student's batch
-    const batch = await Batch.findById(student.selectedBatch);
-    console.log("batch timing :", batch);
+    // 2. Get the student's batch details
+    const batch = student.selectedBatch; // since populated
     if (!batch) {
       return res.status(404).json({ message: "Batch not found for this student" });
     }
 
-    const batchTiming = batch.batchTiming;
+    // Extract batch info
+    const batchTiming = batch.batchTiming;  // adjust if field is different
+    const batchName = batch.name;
+    const batchId = batch._id.toString();
 
-    // 3. Find exams with same franchise & batch timing
+    console.log(" bactch info: ", batchId, batchName, batchTiming);
+    // 3. Find exams with same franchise & batch info
     const exams = await Exam.find({ 
         franchiseId: franchiseId, 
-        batchTiming: batchTiming 
+        "batch.id": batchId,        // matching embedded batch.id
+        "batch.timings": batchTiming
+        // "batch.name": batchName
       })
-      .sort({ createdAt: -1 }); // LIFO: latest exams first
+      .sort({ createdAt: -1 }); // latest exams first
+
+    console.log("exams: " ,exams)
 
     if (!exams || exams.length === 0) {
       return res.status(404).json({ message: "No exams found for this batch" });

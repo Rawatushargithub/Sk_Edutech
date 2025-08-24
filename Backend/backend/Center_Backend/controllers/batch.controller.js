@@ -191,6 +191,44 @@ export const updateBatch = asyncHandler(async (req, res) => {
     }
   })
 
+// Edit batch - only timing and allowed students
+export const editBatch = asyncHandler(async (req, res) => {
+    try {
+      const { batchTiming, batchLimit } = req.body;
+      const { franchiseId } = req.query;
+      
+      if (!franchiseId) {
+        throw new ApiError(400, "Franchise ID is required");
+      }
+      
+      // Validate required fields
+      if (!batchTiming || !batchLimit) {
+        throw new ApiError(400, "Batch timing and batch limit are required");
+      }
+      
+      // Find and update only the allowed fields
+      const updatedBatch = await Batch.findOneAndUpdate(
+        { 
+          _id: req.params.batchId,
+          franchiseId: franchiseId
+        },
+        {
+          batchTiming,
+          batchLimit: parseInt(batchLimit)
+        },
+        { new: true }
+      );
+      
+      if (!updatedBatch) {
+        throw new ApiError(404, "Batch not found for this franchise");
+      }
+      
+      res.status(200).json(new ApiResponse(200, updatedBatch, "Batch updated successfully"));
+    } catch (error) {
+      throw new ApiError(500, "Error updating batch", error.message);
+    }
+  });
+
 // Delete batch for a specific franchise
 export const deleteBatch = asyncHandler(async (req, res) => {
     try { 

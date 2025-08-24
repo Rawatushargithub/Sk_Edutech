@@ -73,6 +73,7 @@ const StudentAdmissionList = () => {
     }
   };
 
+
   // Existing useEffect
   useEffect(() => {
     const fetchStudents = async () => {
@@ -83,10 +84,12 @@ const StudentAdmissionList = () => {
         );
         console.log("data coming from franchise:-" , response.data); // Log the response data for debugging
         if (Array.isArray(response.data)) {
-          setStudents(response.data);
+          const merged = await mergeFeesIntoStudents(response.data);
+          setStudents(merged);
         } else if (response.data && typeof response.data === "object") {
           const studentsArray = response.data.data || response.data.students || [];
-          setStudents(studentsArray);
+          const merged = await mergeFeesIntoStudents(studentsArray);
+          setStudents(merged);
         } else {
           console.error("Unexpected response format:", response.data);
           setStudents([]);
@@ -443,6 +446,37 @@ const StudentAdmissionList = () => {
     setShowFormPopup(true);
   };
 
+  // Merge fees data (from fees endpoint) into base students by rollNumber
+  const mergeFeesIntoStudents = async (baseStudents) => {
+    try {
+      const franchiseId = localStorage.getItem('franchiseID');
+      const resp = await axios.get(
+        `${API_BASE_URL}/api/v1/institute_fees/students?limit=1000&page=1&franchiseId=${franchiseId}`
+      );
+      const feeList = resp.data?.data || [];
+      const feeMap = new Map(feeList.map((s) => [s.rollNumber, s]));
+
+      return baseStudents.map((s) => {
+        const fee = feeMap.get(s.rollNumber);
+        if (fee) {
+          const dueFee = typeof fee.dueFee === 'number'
+            ? fee.dueFee
+            : (Number(fee.totalFee || 0) - Number(fee.paidFee || 0));
+          return {
+            ...s,
+            totalFee: fee.totalFee,
+            paidFee: fee.paidFee,
+            dueFee,
+          };
+        }
+        return s;
+      });
+    } catch (error) {
+      console.error('Error fetching fees data:', error);
+      return baseStudents;
+    }
+  };
+
   const handleViewIDCard = () => {
     setShowIdCardPopup(true);
   };
@@ -643,6 +677,7 @@ const StudentAdmissionList = () => {
                 <th className="border border-gray-300 px-4 py-2">Course ID</th>
                 <th className="border border-gray-300 px-4 py-2">Batch</th>
                 <th className="border border-gray-300 px-4 py-2">Admission Date</th>
+                <th className="border border-gray-300 px-4 py-2">Due Fee</th>
                 <th className="border border-gray-300 px-4 py-2">Referral Code</th>
                 <th className="border border-gray-300 px-4 py-2">Referral Name</th>
                 
@@ -688,6 +723,7 @@ const StudentAdmissionList = () => {
                   <td className="border border-gray-300 px-4 py-2">{student.courseInterested?.courseCode}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.selectedBatch || student.batch}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.admissionDate}</td>
+                  <td className="border border-gray-300 px-4 py-2 text-red-600">₹{Number((student.dueFee ?? (Number(student.totalFee || 0) - Number(student.paidFee || 0))) || 0).toLocaleString()}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.referralCode}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.referralName}</td>
                   

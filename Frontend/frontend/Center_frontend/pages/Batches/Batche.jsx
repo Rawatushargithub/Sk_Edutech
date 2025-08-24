@@ -128,13 +128,32 @@ if (timeInputs.fromTime >= timeInputs.toTime) {
       await axios.delete(
         `${API_BASE_URL}/api/v1/institute_batche/${batchId}?franchiseId=${franchiseId}`
       );
-      alert("Successfully deleted");
+      alert("Batch deleted successfully.");
       // Refresh the batches list after deletion
       fetchBatches();
     } catch (error) {
       console.log(error.message);
-      alert("Failed to delete");
+      alert("Failed to delete the batch. Please try again.");
     }
+  };
+
+  // Guarded delete handler with validations and messages
+  const handleDeleteClick = (batch) => {
+    const enrolled = Number(batch.currentStudents) || 0;
+
+    if (enrolled > 0) {
+      alert(
+        "This batch cannot be deleted because students are currently enrolled. Deleting the batch would permanently remove the associated student registrations and data."
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this batch? This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    deleteBatch(batch.id);
   };
 
   return (
@@ -289,8 +308,9 @@ if (timeInputs.fromTime >= timeInputs.toTime) {
                 <td className="border p-2">{batch.limit}</td>
                 <td className="border p-2">
                   <button
-                    onClick={() => deleteBatch(batch.id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded"
+                    onClick={() => handleDeleteClick(batch)}
+                    className={`${(Number(batch.currentStudents) || 0) > 0 ? "bg-gray-300 text-gray-600 cursor-not-allowed" : "bg-red-500 text-white hover:bg-red-600"} px-3 py-1 rounded transition-colors`}
+                    title={(Number(batch.currentStudents) || 0) > 0 ? "Cannot delete: students are enrolled in this batch" : "Delete this batch"}
                   >
                     Delete
                   </button>

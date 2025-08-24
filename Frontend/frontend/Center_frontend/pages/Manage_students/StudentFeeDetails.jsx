@@ -5,7 +5,9 @@ import API_BASE_URL from "../../../config";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
 
+
 ChartJS.register(ArcElement, Tooltip, Legend);
+
 
 const FeesManagementSystem = () => {
   const [activeTab, setActiveTab] = useState("transactions");
@@ -25,6 +27,7 @@ const FeesManagementSystem = () => {
     date: new Date().toISOString().slice(0, 10),
   });
 
+
   // Installment Data
   const [installmentStudents, setInstallmentStudents] = useState([]);
   const [selectedInstallmentStudent, setSelectedInstallmentStudent] = useState(null);
@@ -37,6 +40,7 @@ const FeesManagementSystem = () => {
   });
 
 
+
   // Filter and sort functions
   const getFilteredAndSortedData = (data, searchTerm, sortKey, timeFilter, startDate, endDate) => {
     // Time Filter
@@ -44,9 +48,11 @@ const FeesManagementSystem = () => {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+
       const filterDate = (date) => {
         const admissionDate = new Date(date);
         if (isNaN(admissionDate.getTime())) return false;
+
 
         switch (timeFilter) {
           case 'today':
@@ -78,9 +84,15 @@ const FeesManagementSystem = () => {
       data = data.filter(item => filterDate(item.admissionDate));
     }
 
-    let filteredData = data.filter(item =>
-      item.studentName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+
+    let filteredData = data.filter(item => {
+      const term = searchTerm.toLowerCase();
+      return (
+        item.studentName.toLowerCase().includes(term) ||
+        (item.rollNumber && item.rollNumber.toLowerCase().includes(term)) ||
+        (item.course.courseName && item.course.courseName.toLowerCase().includes(term))
+      );
+    });
     
     return [...filteredData].sort((a, b) => {
       if (typeof a[sortKey] === "string") {
@@ -91,13 +103,16 @@ const FeesManagementSystem = () => {
     });
   };
 
+
   const filteredStudents = getFilteredAndSortedData(students, search, sortKey, timeFilter, startDate, endDate);
   const filteredInstallmentStudents = getFilteredAndSortedData(installmentStudents, search, sortKey, timeFilter, startDate, endDate);
 
-  // Calculate totals for normal fees
-  const totalFee = students.reduce((acc, student) => acc + student.totalFee, 0);
-  const totalPaid = students.reduce((acc, student) => acc + student.paidFee, 0);
-  const totalDue = students.reduce((acc, student) => acc + student.dueFee, 0);
+
+  // Calculate totals for normal fees based on filtered students for real-time updates
+  const totalFee = filteredStudents.reduce((acc, student) => acc + student.totalFee, 0);
+  const totalPaid = filteredStudents.reduce((acc, student) => acc + student.paidFee, 0);
+  const totalDue = filteredStudents.reduce((acc, student) => acc + student.dueFee, 0);
+
 
   // Update these calculations based on your actual data structure
 const totalInstallmentAmount = installmentStudents.reduce((acc, student) => {
@@ -105,12 +120,15 @@ const totalInstallmentAmount = installmentStudents.reduce((acc, student) => {
   return acc + studentTotal;
 }, 0);
 
+
 const totalInstallmentPaid = installmentStudents.reduce((acc, student) => {
   const studentPaid = student.installments?.reduce((sum, inst) => sum + (inst.paid ? inst.amount : 0), 0) || 0;
   return acc + studentPaid;
 }, 0);
 
+
 const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
+
 
   // Handle normal fee update
   const handleUpdateFee = (studentId) => {
@@ -181,12 +199,14 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
     return;
   }
 
+
   const paymentData = {
     installmentId: installmentId,
     amount: amount,
     paymentMode: installmentPayment.paymentMode,
     date: installmentPayment.date,
   };
+
 
   // Make API call to update installment
   axios.put(`${API_BASE_URL}/api/v1/installments/${installmentId}/update-payment`, paymentData)
@@ -211,6 +231,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
           return student;
         });
 
+
         setInstallmentStudents(updatedStudents);
         setShowInstallmentModal(false);
         setInstallmentPayment({
@@ -231,6 +252,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
     });
 };
 
+
   // Mock data initialization
   useEffect(() => {
     const limit = 15;
@@ -248,6 +270,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
       })
       .catch((error) => console.error("Error fetching students:", error));
 
+
     // Fetch installment students
 // axios
 //   .get(`${API_BASE_URL}/api/v1/institute_fees/installments/students?franchiseId=${franchiseId}`)
@@ -257,12 +280,14 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
 //   })
 //   .catch((error) => console.error("Error fetching installment students:", error));
 
+
 //     setInstallmentStudents(mockInstallmentStudents);
   }, []);
 
+
   const StatCard = ({ title, value, color, icon: Icon }) => (
-    <div className="bg-white rounded-lg shadow-md p-6 flex items-center">
-      <div className={`p-3 rounded-full ${color} mr-4`}>
+    <div className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center justify-center text-center h-full">
+      <div className={`p-3 rounded-full ${color} mb-3`}>
         <Icon className="w-6 h-6 text-white" />
       </div>
       <div>
@@ -272,6 +297,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
     </div>
   );
 
+
   // Pie Chart Component for Fee Transactions
   const FeeTransactionPieChart = ({ totalFee, totalPaid, totalDue }) => {
     const data = {
@@ -280,23 +306,24 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
         {
           data: [totalPaid, totalDue],
           backgroundColor: ['#10b981', '#ef4444'],
-          borderColor: ['#10b981', '#ef4444'],
-          borderWidth: 1,
+          borderColor: ['#ffffff'],
+          borderWidth: 2,
         },
       ],
     };
+
 
     const options = {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          position: 'bottom',
+          position: 'right',
           labels: {
             boxWidth: 12,
-            padding: 10,
+            padding: 15,
             font: {
-              size: 11
+              size: 12
             }
           }
         },
@@ -305,7 +332,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
             label: function(context) {
               const label = context.label || '';
               const value = context.raw || 0;
-              const percentage = Math.round((value / totalFee) * 100);
+              const percentage = totalFee > 0 ? Math.round((value / totalFee) * 100) : 0;
               return `${label}: ₹${value.toLocaleString()} (${percentage}%)`;
             }
           }
@@ -313,15 +340,17 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
       }
     };
 
+
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 flex flex-col justify-center">
-        <p className="text-sm text-gray-600 mb-2">Fee Distribution</p>
-        <div className="h-48">
+      <div className="bg-white rounded-lg shadow-md p-4 h-full flex flex-col justify-center">
+        <p className="text-sm font-semibold text-gray-700 mb-2 text-center">Fee Distribution</p>
+        <div className="relative h-40 w-full">
           <Pie data={data} options={options} />
         </div>
       </div>
     );
   };
+
 
   // Pie Chart Component for Installments
   const InstallmentPieChart = ({ totalAmount, paidAmount, dueAmount }) => {
@@ -331,23 +360,24 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
         {
           data: [paidAmount, dueAmount],
           backgroundColor: ['#10b981', '#ef4444'],
-          borderColor: ['#10b981', '#ef4444'],
-          borderWidth: 1,
+          borderColor: ['#ffffff'],
+          borderWidth: 2,
         },
       ],
     };
+
 
     const options = {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          position: 'bottom',
+          position: 'right',
           labels: {
             boxWidth: 12,
-            padding: 10,
+            padding: 15,
             font: {
-              size: 11
+              size: 12
             }
           }
         },
@@ -356,7 +386,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
             label: function(context) {
               const label = context.label || '';
               const value = context.raw || 0;
-              const percentage = Math.round((value / totalAmount) * 100);
+              const percentage = totalAmount > 0 ? Math.round((value / totalAmount) * 100) : 0;
               return `${label}: ₹${value.toLocaleString()} (${percentage}%)`;
             }
           }
@@ -364,73 +394,92 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
       }
     };
 
+
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 flex flex-col justify-center">
-        <p className="text-sm text-gray-600 mb-2">Installment Distribution</p>
-        <div className="h-48">
+      <div className="bg-white rounded-lg shadow-md p-4 h-full flex flex-col justify-center">
+        <p className="text-sm font-semibold text-gray-700 mb-2 text-center">Installment Distribution</p>
+        <div className="relative h-40 w-full">
           <Pie data={data} options={options} />
         </div>
       </div>
     );
   };
 
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Student Fee Details</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left side content - 3 columns */}
-        <div className="lg:col-span-3">
-          {/* Top row - Tabs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <button
-              onClick={() => setActiveTab("transactions")}
-              className={`py-3 px-6 rounded-lg font-medium transition-colors ${
-                activeTab === "transactions"
-                  ? "bg-blue-500 text-white shadow-lg"
-                  : "bg-white text-gray-600 hover:bg-gray-100 shadow-sm border"
-              }`}
-            >
-              <CreditCard className="w-5 h-5 inline mr-2" />
-              Fee Transactions
-            </button>
-            <button
-              onClick={() => setActiveTab("installments")}
-              className={`py-3 px-6 rounded-lg font-medium transition-colors ${
-                activeTab === "installments"
-                  ? "bg-blue-500 text-white shadow-lg"
-                  : "bg-white text-gray-600 hover:bg-gray-100 shadow-sm border"
-              }`}
-            >
-              <Clock className="w-5 h-5 inline mr-2" />
-              Installment Management
-            </button>
-          </div>
+
+      {/* Tabs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <button
+          onClick={() => setActiveTab("transactions")}
+          className={`py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center ${
+            activeTab === "transactions"
+              ? "bg-blue-500 text-white shadow-lg"
+              : "bg-white text-gray-600 hover:bg-gray-100 shadow-sm border"
+          }`}
+        >
+          <CreditCard className="w-5 h-5 mr-2" />
+          Fee Transactions
+        </button>
+        <button
+          onClick={() => setActiveTab("installments")}
+          className={`py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center ${
+            activeTab === "installments"
+              ? "bg-blue-500 text-white shadow-lg"
+              : "bg-white text-gray-600 hover:bg-gray-100 shadow-sm border"
+          }`}
+        >
+          <Clock className="w-5 h-5 mr-2" />
+          Installment Management
+        </button>
+      </div>
+
 
       {/* Fee Transactions Tab */}
       {activeTab === "transactions" && (
         <div>
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <StatCard title="Total Fee" value={totalFee} color="bg-blue-500" icon={IndianRupee} />
-            <StatCard title="Received Fee" value={totalPaid} color="bg-green-500" icon={CheckCircle} />
-            <StatCard title="Balance Fee" value={totalDue} color="bg-red-500" icon={XCircle} />
+          {/* Top Section: Stats and Pie Chart */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+              <StatCard title="Total Fee" value={totalFee} color="bg-blue-500" icon={IndianRupee} />
+              <StatCard title="Received Fee" value={totalPaid} color="bg-green-500" icon={CheckCircle} />
+              <StatCard title="Balance Fee" value={totalDue} color="bg-red-500" icon={XCircle} />
+            </div>
+            <div className="lg:col-span-1">
+              <FeeTransactionPieChart totalFee={totalFee} totalPaid={totalPaid} totalDue={totalDue} />
+            </div>
           </div>
 
+
           {/* Search and Filter */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex space-x-4">
+          <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+            <div className="flex flex-wrap justify-between items-center gap-4">
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search Student Name"
-                  className="pl-10 pr-4 py-2 border rounded-lg w-56"
+                  placeholder="Search by Name, ID, or Course"
+                  className="pl-10 pr-4 py-2 border rounded-lg w-full sm:w-108"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-              <div className="flex items-center gap-4">
+
+              <select
+                className="border rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value)}
+              >
+                <option value="studentName">Sort by Name</option>
+                <option value="courseFee">Sort by Course Fee</option>
+                <option value="paidFee">Sort by Paid Fee</option>
+                <option value="dueFee">Sort by Due Fee</option>
+              </select>
+
+              <div className="flex flex-wrap items-center gap-4">
                 <select
                   value={timeFilter}
                   onChange={(e) => setTimeFilter(e.target.value)}
@@ -449,33 +498,25 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="border border-gray-300 rounded-lg px-3 py-2 w-36 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <span>to</span>
                     <input
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="border border-gray-300 rounded-lg px-3 py-2 w-36 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 )}
               </div>
-              <select
-                className="border rounded-lg py-2 px-3"
-                value={sortKey}
-                onChange={(e) => setSortKey(e.target.value)}
-              >
-                <option value="studentName">Name</option>
-                <option value="courseFee">Course Fee</option>
-                <option value="paidFee">Paid Fee</option>
-                <option value="dueFee">Due Fee</option>
-              </select>
+              
             </div>
           </div>
 
+
           {/* Students Table */}
-          <div className="bg-white shadow-md rounded-lg overflow-hidden overflow-y-auto max-h-96">
+          <div className="bg-white shadow-md rounded-lg overflow-x-auto">
             <table className="min-w-full text-left border-collapse">
               <thead className="bg-gray-50">
                 <tr>
@@ -490,30 +531,27 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
                 </tr>
               </thead>
               <tbody>
-                {filteredStudents.map((student, index) => (
+                {filteredStudents.map((student) => (
                   <React.Fragment key={student.id}>
                     <tr
-                      onClick={() =>
-                        setSelectedStudent(
-                          selectedStudent === student.id ? null : student.id
-                        )
-                      }
+                      onClick={() => setSelectedStudent(selectedStudent === student.id ? null : student.id)}
                       className="hover:bg-gray-50 cursor-pointer transition-colors"
                     >
-                      <td className="py-3 px-4 border-b">{student.rollNumber}</td>
-                      <td className="py-3 px-4 border-b font-medium">{student.studentName}</td>
+                      <td className="py-3 px-4 border-b whitespace-nowrap">{student.rollNumber}</td>
+                      <td className="py-3 px-4 border-b font-medium whitespace-nowrap">{student.studentName}</td>
                       <td className="py-3 px-4 border-b">{student.course.courseName}</td>
-                      <td className="py-3 px-4 border-b">₹{student.courseFee.toLocaleString()}</td>
-                      <td className="py-3 px-4 border-b">₹{student.totalFee.toLocaleString()}</td>
-                      <td className="py-3 px-4 border-b text-green-600">₹{student.paidFee.toLocaleString()}</td>
-                      <td className="py-3 px-4 border-b text-red-600">₹{student.dueFee.toLocaleString()}</td>
+                      <td className="py-3 px-4 border-b whitespace-nowrap">₹{student.courseFee.toLocaleString()}</td>
+                      <td className="py-3 px-4 border-b whitespace-nowrap">₹{student.totalFee.toLocaleString()}</td>
+                      <td className="py-3 px-4 border-b text-green-600 font-semibold whitespace-nowrap">₹{student.paidFee.toLocaleString()}</td>
+                      <td className="py-3 px-4 border-b text-red-600 font-semibold whitespace-nowrap">₹{student.dueFee.toLocaleString()}</td>
                       <td className="py-3 px-4 border-b">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setShowUpdateFeeModal(student.id);
                           }}
-                          className="bg-blue-500 text-white px-3 py-1 rounded-md shadow hover:bg-blue-600 transition-colors"
+                          disabled={student.dueFee === 0}
+                          className="bg-blue-500 text-white px-3 py-1 rounded-md shadow hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Update Fee
                         </button>
@@ -521,26 +559,34 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
                     </tr>
                     {selectedStudent === student.id && (
                       <tr>
-                        <td colSpan="7" className="bg-gray-50">
-                          <div className="p-4">
-                            <h3 className="text-lg font-semibold mb-3">Fee History</h3>
-                            <div className="bg-white rounded-lg overflow-hidden">
-                              <table className="min-w-full text-left border-collapse">
-                                <thead className="bg-gray-100">
+                        <td colSpan="8" className="bg-gray-100 p-0">
+                          <div className="p-4 bg-gray-100">
+                            <h3 className="text-md font-semibold mb-2 text-gray-800">Fee History</h3>
+                            <div className="bg-white rounded-lg overflow-hidden border">
+                              <table className="min-w-full text-left">
+                                <thead className="bg-gray-50">
                                   <tr>
-                                    <th className="py-2 px-4 border-b font-medium">Amount</th>
-                                    <th className="py-2 px-4 border-b font-medium">Date</th>
-                                    <th className="py-2 px-4 border-b font-medium">Payment Mode</th>
+                                    <th className="py-2 px-4 border-b font-medium text-sm">Amount</th>
+                                    <th className="py-2 px-4 border-b font-medium text-sm">Date</th>
+                                    <th className="py-2 px-4 border-b font-medium text-sm">Payment Mode</th>
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {student.transactions.map((transaction, idx) => (
-                                    <tr key={idx} className="hover:bg-gray-50">
-                                      <td className="py-2 px-4 border-b">₹{transaction.amount.toLocaleString()}</td>
-                                      <td className="py-2 px-4 border-b">{transaction.date}</td>
-                                      <td className="py-2 px-4 border-b">{transaction.paymentMode}</td>
+                                  {student.transactions.length > 0 ? (
+                                    student.transactions.map((transaction, idx) => (
+                                      <tr key={idx} className="hover:bg-gray-50 text-sm">
+                                        <td className="py-2 px-4 border-b">₹{transaction.amount.toLocaleString()}</td>
+                                        <td className="py-2 px-4 border-b">{new Date(transaction.date).toLocaleDateString()}</td>
+                                        <td className="py-2 px-4 border-b">{transaction.paymentMode}</td>
+                                      </tr>
+                                    ))
+                                  ) : (
+                                    <tr>
+                                      <td colSpan="3" className="text-center py-4 text-gray-500">
+                                        No transaction history.
+                                      </td>
                                     </tr>
-                                  ))}
+                                  )}
                                 </tbody>
                               </table>
                             </div>
@@ -556,34 +602,83 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
         </div>
       )}
 
+
       {/* Installment Management Tab */}
       {activeTab === "installments" && (
         <div>
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <StatCard title="Total Installment" value={totalInstallmentAmount} color="bg-purple-500" icon={IndianRupee} />
-            <StatCard title="Paid Installment" value={totalInstallmentPaid} color="bg-green-500" icon={CheckCircle} />
-            <StatCard title="Due Installment" value={totalInstallmentDue} color="bg-red-500" icon={XCircle} />
+          {/* Top Section: Stats and Pie Chart */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+              <StatCard title="Total Installment" value={totalInstallmentAmount} color="bg-purple-500" icon={IndianRupee} />
+              <StatCard title="Paid Installment" value={totalInstallmentPaid} color="bg-green-500" icon={CheckCircle} />
+              <StatCard title="Due Installment" value={totalInstallmentDue} color="bg-red-500" icon={XCircle} />
+            </div>
+            <div className="lg:col-span-1">
+              <InstallmentPieChart totalAmount={totalInstallmentAmount} paidAmount={totalInstallmentPaid} dueAmount={totalInstallmentDue} />
+            </div>
           </div>
 
+
           {/* Search and Filter */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex space-x-4">
+          <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+            <div className="flex flex-wrap justify-between items-center gap-4">
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search Student Name"
-                  className="pl-10 pr-4 py-2 border rounded-lg w-72"
+                  placeholder="Search by Name, ID, or Course"
+                  className="pl-10 pr-4 py-2 border rounded-lg w-full sm:w-56"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
+              <div className="flex flex-wrap items-center gap-4">
+                <select
+                  value={timeFilter}
+                  onChange={(e) => setTimeFilter(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="yesterday">Yesterday</option>
+                  <option value="last7days">Last 7 Days</option>
+                  <option value="last30days">Last 30 Days</option>
+                  <option value="custom">Custom Range</option>
+                </select>
+                {timeFilter === "custom" && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-2 w-36 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span>to</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-2 w-36 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                )}
+              </div>
+              <select
+                className="border rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value)}
+              >
+                <option value="studentName">Sort by Name</option>
+                <option value="totalInstallmentAmount">Sort by Total</option>
+                <option value="paidInstallmentAmount">Sort by Paid</option>
+                <option value="dueInstallmentAmount">Sort by Due</option>
+              </select>
             </div>
           </div>
 
+
           {/* Installment Students Table */}
-          <div className="bg-white shadow-md rounded-lg overflow-hidden">
+          <div className="bg-white shadow-md rounded-lg overflow-x-auto">
             <table className="min-w-full text-left border-collapse">
               <thead className="bg-gray-50">
                 <tr>
@@ -692,6 +787,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
         </div>
       )}
 
+
       {/* Update Fee Modal */}
       {showUpdateFeeModal && ( 
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
@@ -752,6 +848,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
         </div>
       )}
 
+
       {/* Installment Payment Modal */}
       {showInstallmentModal && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
@@ -811,22 +908,12 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
           </div>
         </div>
       )}
-        </div>
-
-        {/* Right side - Pie Chart spanning full height */}
-        <div className="lg:col-span-1 flex items-start justify-center lg:sticky top-6">
-          <div className="w-full max-w-xs bg-white rounded-lg shadow-sm border p-4">
-            {activeTab === 'transactions' && (
-              <FeeTransactionPieChart totalFee={totalFee} totalPaid={totalPaid} totalDue={totalDue} />
-            )}
-            {activeTab === 'installments' && (
-              <InstallmentPieChart totalAmount={totalInstallmentAmount} paidAmount={totalInstallmentPaid} dueAmount={totalInstallmentDue} />
-            )}
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
 
 export default FeesManagementSystem;
+
+
+
+

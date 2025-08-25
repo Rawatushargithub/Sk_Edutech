@@ -146,7 +146,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       gender,
       admissionDate,
     };
-
+   console.log("installments value :: ", installments);
     const missingFields = validateRequiredFields(requiredFields);
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -520,6 +520,7 @@ const registerStudent = asyncHandler(async (req, res) => {
           { session }
         );
       }
+
       // Create installment records
       const installmentRecords = [];
       if (parsedInstallments.length > 0) {
@@ -532,6 +533,10 @@ const registerStudent = asyncHandler(async (req, res) => {
                 amount: Number(installment.amount),
                 date: installment.date,
                 paid: false,
+                paymentMode: installment.paymentMode || null,
+                paymentDate: null,
+                paidAmount: 0,
+                status: "Pending"
               },
             ],
             { session }
@@ -1126,7 +1131,7 @@ const getStudents = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(limit)
     .sort({ admissionDate: -1 }); // Sort by admission date, newest first
-  console.log("students value :: ", students);
+  
   // Format the results to include the batch name in a new field
   const formattedStudents = students.map((student) => {
     // Convert to plain JavaScript object

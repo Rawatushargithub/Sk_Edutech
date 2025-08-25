@@ -199,56 +199,76 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
       });
   };
   
-  // Handle installment payment
+  // Handle installment payment with partial payment support
   const handleInstallmentPayment = (studentId, installmentId) => {
-  const amount = parseFloat(installmentPayment.amount);
-  if (isNaN(amount) || amount <= 0) {
-    alert("Please enter a valid amount greater than zero");
-    return;
-  }
+    const amount = parseFloat(installmentPayment.amount);
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid amount greater than zero");
+      return;
+    }
 
+    const paymentData = {
+      amount: amount,
+      paymentMode: installmentPayment.paymentMode,
+      date: installmentPayment.date,
+    };
 
-  const paymentData = {
-    installmentId: installmentId,
-    amount: amount,
-    paymentMode: installmentPayment.paymentMode,
-    date: installmentPayment.date,
-  };
-
-
-  // Make API call to update installment
-  axios.put(`${API_BASE_URL}/api/v1/installments/${installmentId}/update-payment`, paymentData)
-    .then(response => {
-      if (response.data.success) {
-        // Update local state with the response data
-        const updatedStudents = installmentStudents.map(student => {
-          if (student._id === studentId) {
-            // Update the specific installment
-            const updatedInstallments = student.installments.map(inst => {
-              if (inst._id === installmentId) {
-                return { ...inst, paid: true };
-              }
-              return inst;
-            });
-            
-            return {
-              ...student,
-              installments: updatedInstallments
-            };
+    // Make API call to update installment
+    axios.put(`${API_BASE_URL}/api/v1/institute_fees/installments/${installmentId}/update-payment`, paymentData)
+      .then(response => {
+        if (response.data.success) {
+          const { updatedInstallments, overpayment, totalProcessed } = response.data.data;
+          
+          // Show success message with payment details
+          let message = `Payment of ₹${totalProcessed} processed successfully.`;
+          if (overpayment > 0) {
+            message += ` Overpayment of ₹${overpayment} detected.`;
           }
-          return student;
-        });
+          alert(message);
 
+          // Update local state with all affected installments
+          const updatedStudents = installmentStudents.map(student => {
+            if (student._id === studentId) {
+              // Update installments with the response data
+              const updatedInstallmentsList = student.installments.map(inst => {
+                const updatedInst = updatedInstallments.find(updated => updated._id === inst._id);
+                if (updatedInst) {
+                  return {
+                    ...inst,
+                    paid: updatedInst.paid,
+                    paidAmount: updatedInst.paidAmount,
+                    status: updatedInst.status,
+                    paymentMode: updatedInst.paymentMode,
+                    paymentDate: updatedInst.paymentDate
+                  };
+                }
+                return inst;
+              });
+              
+              // Recalculate totals
+              const totalInstallmentAmount = updatedInstallmentsList.reduce((sum, inst) => sum + inst.amount, 0);
+              const paidInstallmentAmount = updatedInstallmentsList.reduce((sum, inst) => sum + (inst.paidAmount || 0), 0);
+              const dueInstallmentAmount = totalInstallmentAmount - paidInstallmentAmount;
 
-        setInstallmentStudents(updatedStudents);
-        setShowInstallmentModal(false);
-        setInstallmentPayment({
-          installmentId: "",
-          amount: "",
-          paymentMode: "Cash",
-          date: new Date().toISOString().slice(0, 10),
+              return {
+                ...student,
+                installments: updatedInstallmentsList,
+                totalInstallmentAmount,
+                paidInstallmentAmount,
+                dueInstallmentAmount
+              };
+            }
+            return student;
+          });
+
+          setInstallmentStudents(updatedStudents);
+          setShowInstallmentModal(false);
+          setInstallmentPayment({
+            installmentId: "",
+            amount: "",
+            paymentMode: "Cash",
+            date: new Date().toISOString().slice(0, 10),
         });
-        alert("Installment payment recorded successfully!");
       } else {
         alert("Error: " + response.data.message);
       }
@@ -258,7 +278,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
       const errorMessage = error.response?.data?.message || "Failed to update installment payment";
       alert("Error: " + errorMessage);
     });
-};
+  };
 
 
   // Mock data initialization
@@ -278,14 +298,20 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
       })
       .catch((error) => console.error("Error fetching students:", error));
 
-
+ 
     // Fetch installment students
-// axios
-//   .get(`${API_BASE_URL}/api/v1/institute_fees/installments/students?franchiseId=${franchiseId}`)
-//   .then((response) => {
-//     console.log("Installment data:", response);
-
-    // setInstallmentStudents(mockInstallmentStudents);
+    axios
+      .get(`${API_BASE_URL}/api/v1/institute_fees/installments/students?franchiseId=${franchiseId}`)
+      .then((response) => {
+        console.log("Installment data:", response);
+        if (response.data.success) {
+          setInstallmentStudents(response.data.data);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching installment students:", error);
+        setInstallmentStudents([]);
+      });
   }, []);
 
   // Export Functions
@@ -941,7 +967,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
                       }
                       className="hover:bg-gray-50 cursor-pointer transition-colors"
                     >
-                      <td className="py-3 px-4 border-b">{student._id}</td>
+                      <td className="py-3 px-4 border-b">{student.rollNumber}</td>
                       <td className="py-3 px-4 border-b font-medium">{student.studentName}</td>
                       <td className="py-3 px-4 border-b">{student.course.courseName}</td>
                       <td className="py-3 px-4 border-b">₹{student.totalInstallmentAmount.toLocaleString()}</td>
@@ -970,6 +996,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
                                   <tr>
                                     <th className="py-2 px-4 border-b font-medium">Installment Name</th>
                                     <th className="py-2 px-4 border-b font-medium">Amount</th>
+                                    <th className="py-2 px-4 border-b font-medium">Paid Amount</th>
                                     <th className="py-2 px-4 border-b font-medium">Due Date</th>
                                     <th className="py-2 px-4 border-b font-medium">Status</th>
                                     <th className="py-2 px-4 border-b font-medium">Actions</th>
@@ -980,26 +1007,30 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
                                     <tr key={installment.id} className="hover:bg-gray-50">
                                       <td className="py-2 px-4 border-b">{installment.installmentName}</td>
                                       <td className="py-2 px-4 border-b">₹{installment.amount.toLocaleString()}</td>
+                                      <td className="py-2 px-4 border-b">₹{(installment.paidAmount || 0).toLocaleString()}</td>
                                       <td className="py-2 px-4 border-b">{installment.date}</td>
                                       <td className="py-2 px-4 border-b">
                                         <span
                                           className={`px-2 py-1 rounded-full text-xs font-medium ${
                                             installment.paid
                                               ? "bg-green-100 text-green-800"
+                                              : (installment.paidAmount > 0)
+                                              ? "bg-yellow-100 text-yellow-800"
                                               : "bg-red-100 text-red-800"
                                           }`}
                                         >
-                                          {installment.paid ? "Paid" : "Pending"}
+                                          {installment.paid ? "Paid" : (installment.paidAmount > 0) ? "Partial" : "Pending"}
                                         </span>
                                       </td>
                                       <td className="py-2 px-4 border-b">
                                         {!installment.paid && (
                                           <button
                                             onClick={() => {
+                                              const remainingAmount = installment.amount - (installment.paidAmount || 0);
                                               setInstallmentPayment({
                                                 ...installmentPayment,
-                                                installmentId: installment.id,
-                                                amount: installment.amount.toString(),
+                                                installmentId: installment._id,
+                                                amount: remainingAmount.toString(),
                                               });
                                               setShowInstallmentModal(student._id);
                                             }}
@@ -1029,7 +1060,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
 
       {/* Update Fee Modal */}
       {showUpdateFeeModal && ( 
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-96">
             <h2 className="text-xl font-bold mb-4">Update Fee</h2>
             <div className="mb-4">
@@ -1090,7 +1121,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
 
       {/* Installment Payment Modal */}
       {showInstallmentModal && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-96">
             <h2 className="text-xl font-bold mb-4">Record Installment Payment</h2>
             <div className="mb-4">

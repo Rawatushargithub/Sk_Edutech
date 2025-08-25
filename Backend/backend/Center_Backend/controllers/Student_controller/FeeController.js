@@ -10,7 +10,6 @@ export const getAllStudentsFeeDetails = async (req, res) => {
       const { page = 1, limit = 10, search = "", course = "" , franchiseId } = req.query;
       const pageNumber = parseInt(page);
       const limitNumber = parseInt(limit);
-      
       // Build the filter query
       const query = {};
       console.log("franchiseId value :: ", franchiseId);
@@ -35,16 +34,19 @@ export const getAllStudentsFeeDetails = async (req, res) => {
         query.courseInterested = course;
       }
       
-      // Find all students with populated fee details
-      const students = await Student.find(query)
+      // Find all students with populated fee details, excluding those with installments
+      const students = await Student.find({
+        ...query,
+        $or: [
+          { installmentDetails: { $exists: false } },
+          { installmentDetails: { $size: 0 } }
+        ]
+      })
         .populate('feeDetails')
         .skip((pageNumber - 1) * limitNumber)
         .limit(limitNumber)
-        .sort({ createdAt: -1 });
-        if(students)
-          {
-            console.log("student data get fetched" , students)
-          }
+        .sort({ createdAt: -1 }); 
+        
       // Count total documents for pagination
       const totalStudents = await Student.countDocuments(query);
 
@@ -285,7 +287,7 @@ export const getInstallmentStudents = async (req, res) => {
       
       const totalInstallmentAmount = installments.reduce((sum, inst) => sum + inst.amount, 0);
       const paidInstallmentAmount = installments.reduce((sum, inst) => 
-        sum + (inst.paid ? inst.amount : 0), 0
+        sum + (inst.paidAmount || 0), 0
       );
       const dueInstallmentAmount = totalInstallmentAmount - paidInstallmentAmount;
 
@@ -306,7 +308,10 @@ export const getInstallmentStudents = async (req, res) => {
           amount: inst.amount,
           date: inst.date,
           paid: inst.paid || false,
-          paidAmount: inst.paid ? inst.amount : 0
+          paidAmount: inst.paidAmount || 0,
+          status: inst.status || "Pending",
+          paymentMode: inst.paymentMode,
+          paymentDate: inst.paymentDate
         }))
       };
     });
@@ -340,7 +345,7 @@ export const getInstallmentStudents = async (req, res) => {
   }
 };
 
-// Update installment payment
+// Update installment payment with partial payment and overflow logic
 export const updateInstallmentPayment = async (req, res) => {
   try {
     const { installmentId } = req.params;
@@ -360,29 +365,76 @@ export const updateInstallmentPayment = async (req, res) => {
       });
     }
 
-    // Find and update the installment
-    const updatedInstallment = await Installment.findByIdAndUpdate(
-      installmentId,
-      {
-        paid: true,
-        paymentMode,
-        paymentDate: date,
-        paidAmount: amount
-      },
-      { new: true }
-    );
+    const paymentAmount = Number(amount);
 
-    if (!updatedInstallment) {
+    // Find the current installment
+    const currentInstallment = await Installment.findById(installmentId);
+    if (!currentInstallment) {
       return res.status(404).json({
         success: false,
         message: "Installment not found"
       });
     }
 
+    // Get all installments for this student, sorted by date
+    const allInstallments = await Installment.find({ 
+      studentId: currentInstallment.studentId 
+    }).sort({ date: 1 });
+
+    // Find current installment index
+    const currentIndex = allInstallments.findIndex(inst => 
+      inst._id.toString() === installmentId
+    );
+
+    if (currentIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Installment not found in student records"
+      });
+    }
+
+    let remainingAmount = paymentAmount;
+    const updatedInstallments = [];
+
+    // Process payment starting from current installment
+    for (let i = currentIndex; i < allInstallments.length && remainingAmount > 0; i++) {
+      const installment = allInstallments[i];
+      const currentPaid = installment.paidAmount || 0;
+      const remainingDue = installment.amount - currentPaid;
+
+      if (remainingDue > 0) {
+        const paymentForThis = Math.min(remainingAmount, remainingDue);
+        const newPaidAmount = currentPaid + paymentForThis;
+        
+        // Update installment
+        const updatedInstallment = await Installment.findByIdAndUpdate(
+          installment._id,
+          {
+            paidAmount: newPaidAmount,
+            paid: newPaidAmount >= installment.amount,
+            paymentMode: i === currentIndex ? paymentMode : installment.paymentMode,
+            paymentDate: i === currentIndex ? date : installment.paymentDate,
+            status: newPaidAmount >= installment.amount ? "Paid" : "Partial"
+          },
+          { new: true }
+        );
+
+        updatedInstallments.push(updatedInstallment);
+        remainingAmount -= paymentForThis;
+      }
+    }
+
+    // If there's still remaining amount, it means overpayment beyond all installments
+    let overpayment = remainingAmount;
+
     res.status(200).json({
       success: true,
       message: "Installment payment updated successfully",
-      data: updatedInstallment
+      data: {
+        updatedInstallments,
+        overpayment: overpayment > 0 ? overpayment : 0,
+        totalProcessed: paymentAmount - overpayment
+      }
     });
 
   } catch (error) {
@@ -421,7 +473,7 @@ export const getStudentInstallments = async (req, res) => {
     const installments = student.installmentDetails || [];
     const totalAmount = installments.reduce((sum, inst) => sum + inst.amount, 0);
     const paidAmount = installments.reduce((sum, inst) => 
-      sum + (inst.paid ? inst.amount : 0), 0
+      sum + (inst.paidAmount || 0), 0
     );
 
     res.status(200).json({

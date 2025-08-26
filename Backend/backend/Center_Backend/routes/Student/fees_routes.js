@@ -5,10 +5,13 @@ import {
 updateStudentFeeWithTransaction, 
 //   createStudentFee,
   getAllStudentsFeeDetails,
+  getInstallmentStudents,
+  updateInstallmentPayment,
+  getStudentInstallments
 //   getFeesStatistics
 } from "../../controllers/Student_controller/FeeController.js";
 
-const router = express.Router();
+const router = express.Router(); 
 
 // Get all students fee details (with pagination and filtering)
 router.route("/students").get( getAllStudentsFeeDetails);
@@ -21,6 +24,11 @@ router.route("/students").get( getAllStudentsFeeDetails);
 
 // Update fee (add payment)
 router.post("/:studentId/update-fee", updateStudentFeeWithTransaction);
+
+// Installment routes
+router.get("/installments/students", getInstallmentStudents);
+router.put("/installments/:installmentId/update-payment", updateInstallmentPayment);
+router.get("/installments/student/:studentId", getStudentInstallments);
 
 // Create initial fee record
 // router.post("/student/:studentId", createStudentFee);

@@ -77,7 +77,7 @@ const Dashboard = () => {
           </div>
 
         </div>
-        <div className="w-full">
+        <div className="min-w-3/4 max-w-4/5">
         <NotificationMarqueeLine/>
 
         </div>
@@ -88,7 +88,7 @@ const Dashboard = () => {
             {/* Franchise Image Profile */}
 
             <div
-              className="w-10 h-10 rounded-full overflow-hidden cursor-pointer border-2 border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
+              className="w-14 h-14 rounded-full overflow-hidden cursor-pointer border-2 border-gray-300 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
               onClick={toggleProfileMenu}
             >
               {franchiseImage ? (

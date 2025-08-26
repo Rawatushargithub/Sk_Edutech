@@ -333,7 +333,7 @@ const handleSubmit = async (e) => {
         } 
       }
     }); 
-    
+     
     // Handle courseInterested separately
     formDataToSend.append("courseInterested", JSON.stringify(formData.courseInterested));
     

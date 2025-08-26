@@ -19,6 +19,18 @@ const Batches = () => {
     toTime: "",
   });
 
+  // Edit batch state
+  const [editMode, setEditMode] = useState(false);
+  const [editingBatch, setEditingBatch] = useState(null);
+  const [editTimeInputs, setEditTimeInputs] = useState({
+    fromTime: "",
+    toTime: "",
+  });
+  const [editData, setEditData] = useState({
+    batchTiming: "",
+    batchLimit: 0,
+  });
+
   // Generate time options from 6 AM to 10 PM
   const generateTimeOptions = () => {
     const times = [];
@@ -122,19 +134,133 @@ if (timeInputs.fromTime >= timeInputs.toTime) {
     }
   };
 
+  const handleEditTimeChange = (field, value) => {
+    const updatedEditTimeInputs = { ...editTimeInputs, [field]: value };
+    setEditTimeInputs(updatedEditTimeInputs);
+
+    // Convert 24-hour format to 12-hour format and concatenate
+    if (updatedEditTimeInputs.fromTime && updatedEditTimeInputs.toTime) {
+      const fromTime12 = formatTimeToAMPM(updatedEditTimeInputs.fromTime);
+      const toTime12 = formatTimeToAMPM(updatedEditTimeInputs.toTime);
+      const concatenatedTiming = `${fromTime12} - ${toTime12}`;
+      setEditData({ ...editData, batchTiming: concatenatedTiming });
+    } else {
+      setEditData({ ...editData, batchTiming: "" });
+    }
+  };
+
+  const startEditBatch = (batch) => {
+    setEditingBatch(batch);
+    setEditData({
+      batchTiming: batch.timings,
+      batchLimit: batch.limit,
+    });
+    
+    // Parse existing timing to set time inputs
+    if (batch.timings) {
+      const timingParts = batch.timings.split(" - ");
+      if (timingParts.length === 2) {
+        const fromTime24 = convertToTime24(timingParts[0]);
+        const toTime24 = convertToTime24(timingParts[1]);
+        setEditTimeInputs({
+          fromTime: fromTime24,
+          toTime: toTime24,
+        });
+      }
+    }
+    
+    setEditMode(true);
+  };
+
+  // Helper function to convert 12-hour time to 24-hour format
+  const convertToTime24 = (time12) => {
+    if (!time12) return "";
+    const [time, period] = time12.split(" ");
+    let [hours, minutes] = time.split(":");
+    hours = parseInt(hours, 10);
+    
+    if (period === "AM" && hours === 12) {
+      hours = 0;
+    } else if (period === "PM" && hours !== 12) {
+      hours += 12;
+    }
+    
+    return `${hours.toString().padStart(2, "0")}:${minutes}`;
+  };
+
+  const cancelEdit = () => {
+    setEditMode(false);
+    setEditingBatch(null);
+    setEditData({ batchTiming: "", batchLimit: 0 });
+    setEditTimeInputs({ fromTime: "", toTime: "" });
+  };
+
+  const handleEditBatch = async () => {
+    if (!editData.batchTiming || !editData.batchLimit) {
+      alert("Batch timing and limit are required!");
+      return;
+    }
+
+    // Add time validation
+    if (!editTimeInputs.fromTime || !editTimeInputs.toTime) {
+      alert("Please select both start and end times!");
+      return;
+    }
+
+    // Check if end time is after start time
+    if (editTimeInputs.fromTime >= editTimeInputs.toTime) {
+      alert("End time must be after start time!");
+      return;
+    }
+
+    try {
+      const franchiseId = localStorage.getItem("franchiseID");
+      await axios.patch(
+        `${API_BASE_URL}/api/v1/institute_batche/${editingBatch.id}/edit?franchiseId=${franchiseId}`,
+        editData
+      );
+      
+      alert("Batch updated successfully");
+      fetchBatches();
+      cancelEdit();
+    } catch (error) {
+      console.error("Error updating batch", error);
+      alert("Failed to update batch");
+    }
+  };
+
   const deleteBatch = async (batchId) => {
     try {
       const franchiseId = localStorage.getItem("franchiseID");
       await axios.delete(
         `${API_BASE_URL}/api/v1/institute_batche/${batchId}?franchiseId=${franchiseId}`
       );
-      alert("Successfully deleted");
+      alert("Batch deleted successfully.");
       // Refresh the batches list after deletion
       fetchBatches();
     } catch (error) {
       console.log(error.message);
-      alert("Failed to delete");
+      alert("Failed to delete the batch. Please try again.");
     }
+  };
+
+  // Guarded delete handler with validations and messages
+  const handleDeleteClick = (batch) => {
+    const enrolled = Number(batch.currentStudents) || 0;
+
+    if (enrolled > 0) {
+      alert(
+        "This batch cannot be deleted because students are currently enrolled. Deleting the batch would permanently remove the associated student registrations and data."
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this batch? This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    deleteBatch(batch.id);
   };
 
   return (
@@ -288,18 +414,147 @@ if (timeInputs.fromTime >= timeInputs.toTime) {
                 <td className="border p-2">{batch.currentStudents}</td>
                 <td className="border p-2">{batch.limit}</td>
                 <td className="border p-2">
-                  <button
-                    onClick={() => deleteBatch(batch.id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      onClick={() => startEditBatch(batch)}
+                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => deleteBatch(batch.id)}
+                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Edit Batch Modal */}
+      {editMode && (
+        <div className="fixed inset-0 bg-grey bg-opacity-100 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96 max-w-md">
+            <h3 className="text-xl font-bold mb-4 text-blue-600">
+              Edit Batch: {editingBatch?.name}
+            </h3>
+            
+            <div className="space-y-4">
+              {/* From Time */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  <span className="flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2 text-green-600"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    From Time
+                  </span>
+                </label>
+                <input
+                  type="time"
+                  className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  value={editTimeInputs.fromTime}
+                  onChange={(e) => handleEditTimeChange("fromTime", e.target.value)}
+                />
+                {editTimeInputs.fromTime && (
+                  <div className="mt-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                    📅 {formatTimeToAMPM(editTimeInputs.fromTime)}
+                  </div>
+                )}
+              </div>
+
+              {/* To Time */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  <span className="flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2 text-red-600"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    To Time
+                  </span>
+                </label>
+                <input
+                  type="time"
+                  className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  value={editTimeInputs.toTime}
+                  onChange={(e) => handleEditTimeChange("toTime", e.target.value)}
+                />
+                {editTimeInputs.toTime && (
+                  <div className="mt-1 text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+                    📅 {formatTimeToAMPM(editTimeInputs.toTime)}
+                  </div>
+                )}
+              </div>
+
+              {/* Max Students */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">
+                  Max Students
+                </label>
+                <input
+                  type="number"
+                  className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="0"
+                  value={editData.batchLimit || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setEditData({
+                      ...editData,
+                      batchLimit: value === "" ? 0 : Math.max(0, parseInt(value) || 0),
+                    });
+                  }}
+                />
+              </div>
+
+              {/* Display concatenated timing */}
+              {editData.batchTiming && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <span className="text-sm text-blue-600 font-medium">
+                    Updated Timing:{" "}
+                  </span>
+                  <span className="font-bold text-blue-800">{editData.batchTiming}</span>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={handleEditBatch}
+                  className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 font-medium"
+                >
+                  Update Batch
+                </button>
+                <button
+                  onClick={cancelEdit}
+                  className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

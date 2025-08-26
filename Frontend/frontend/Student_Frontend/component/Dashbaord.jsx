@@ -4,36 +4,20 @@ import StatsSection from "./dashboard_Component/StatsSection";
 import QuickActions from "./dashboard_Component/QuickActions";
 import ToggleSection from "./dashboard_Component/ToggleSection";
 import Notes from "../pages/Notes";
-import Fees from "../pages/Fees"; 
+import Fees from "../pages/Fees";
 import CourseDetails from "../pages/CourseDetails";
 
-const Dashboard = () => {
-    const [selectedTab, setSelectedTab] = useState("Dashboard");
-
+// In Dashboard
+const Dashboard = ({ student, setSelectedComponent }) => {
     return (
-        <div className="m-5">
-            
-
-            {/* Conditional Rendering Based on SelectedTab */}
-            {selectedTab === "Dashboard" && (
-                <>
-                   <TopBar />
-                    <StatsSection />
-                    <QuickActions setTab={setSelectedTab} />
-                    <ToggleSection />
-                    
-                </>
-            )}
-
-            {selectedTab === "Notes" && <Notes />}
-            {selectedTab === "Fees" && <Fees />}
-            {selectedTab === "CourseDetails" && <CourseDetails />}
-
-            
-            {/* Placeholder for future sections */}
-            {selectedTab === "Attendance" && <p>Attendance Section Coming Soon...</p>}
-        </div>
+        <>
+            <TopBar />
+            <StatsSection />
+            <QuickActions setTab={setSelectedComponent} />
+            <ToggleSection />
+        </>
     );
 };
+
 
 export default Dashboard;

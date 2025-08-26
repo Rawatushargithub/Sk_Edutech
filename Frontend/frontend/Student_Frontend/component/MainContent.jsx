@@ -34,7 +34,7 @@ const MainContent = () => {
   const renderComponent = () => {
     switch (selectedComponent) {
       case "Dashboard":
-        return <Dashboard student={student}  />;
+        return <Dashboard student={student} setSelectedComponent={setSelectedComponent}  />;
       case "Manage Profile":
         return <ManageProfile  />;
       case "Fees":

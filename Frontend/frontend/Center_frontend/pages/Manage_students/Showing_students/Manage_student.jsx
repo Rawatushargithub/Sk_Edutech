@@ -15,7 +15,7 @@ import API_BASE_URL from "../../../../config";
 import { FaUser } from "react-icons/fa";
 // Import for Excel export
 import * as XLSX from 'xlsx';
-// Import for PDF export
+// Import for PDF export 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable'; // Import autoTable separately
 
@@ -73,6 +73,7 @@ const StudentAdmissionList = () => {
     }
   };
 
+
   // Existing useEffect
   useEffect(() => {
     const fetchStudents = async () => {
@@ -83,10 +84,12 @@ const StudentAdmissionList = () => {
         );
         console.log("data coming from franchise:-" , response.data); // Log the response data for debugging
         if (Array.isArray(response.data)) {
-          setStudents(response.data);
+          const merged = await mergeFeesIntoStudents(response.data);
+          setStudents(merged);
         } else if (response.data && typeof response.data === "object") {
           const studentsArray = response.data.data || response.data.students || [];
-          setStudents(studentsArray);
+          const merged = await mergeFeesIntoStudents(studentsArray);
+          setStudents(merged);
         } else {
           console.error("Unexpected response format:", response.data);
           setStudents([]);
@@ -226,9 +229,9 @@ const StudentAdmissionList = () => {
       setShowExportDropdown(false);
       alert('Preparing Excel file... This may take a moment.');
 
-      // Fetch detailed data for all students
-      const detailedData = await fetchAllDetailedData();
-      const exportData = prepareExportData(detailedData);
+      // Use current filtered students instead of all students
+      const dataToExport = filteredStudents.length > 0 ? filteredStudents : students;
+      const exportData = prepareExportData(dataToExport);
       
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
@@ -273,7 +276,7 @@ const StudentAdmissionList = () => {
       XLSX.writeFile(wb, fileName);
       
       // Show success message
-      alert(`Excel file "${fileName}" has been downloaded successfully with all student details!`);
+      alert(`Excel file "${fileName}" has been downloaded successfully with ${exportData.length} student records!`);
     } catch (error) {
       console.error('Error exporting to Excel:', error);
       alert('Error exporting to Excel. Please try again.');
@@ -286,8 +289,8 @@ const StudentAdmissionList = () => {
       setShowExportDropdown(false);
       alert('Preparing PDF file... This may take a moment.');
 
-      // Fetch detailed data for all students
-      const detailedData = await fetchAllDetailedData();
+      // Use current filtered students instead of all students
+      const dataToExport = filteredStudents.length > 0 ? filteredStudents : students;
       
       const doc = new jsPDF('l', 'mm', 'a4'); // landscape orientation
       
@@ -301,7 +304,7 @@ const StudentAdmissionList = () => {
       doc.text(`Generated on: ${currentDate}`, 14, 28);
       
       // Prepare data for PDF table
-      const exportData = prepareExportData(detailedData);
+      const exportData = prepareExportData(dataToExport);
       
       // Define columns for PDF (selecting key columns to fit better)
       const columns = [
@@ -352,7 +355,7 @@ const StudentAdmissionList = () => {
       doc.save(fileName);
       
       // Show success message
-      alert(`PDF file "${fileName}" has been downloaded successfully with student details!`);
+      alert(`PDF file "${fileName}" has been downloaded successfully with ${dataToExport.length} student records!`);
     } catch (error) {
       console.error('Error exporting to PDF:', error);
       alert('Error exporting to PDF. Please try again.');
@@ -441,6 +444,37 @@ const StudentAdmissionList = () => {
 
   const handleViewForm = () => {
     setShowFormPopup(true);
+  };
+
+  // Merge fees data (from fees endpoint) into base students by rollNumber
+  const mergeFeesIntoStudents = async (baseStudents) => {
+    try {
+      const franchiseId = localStorage.getItem('franchiseID');
+      const resp = await axios.get(
+        `${API_BASE_URL}/api/v1/institute_fees/students?limit=1000&page=1&franchiseId=${franchiseId}`
+      );
+      const feeList = resp.data?.data || [];
+      const feeMap = new Map(feeList.map((s) => [s.rollNumber, s]));
+
+      return baseStudents.map((s) => {
+        const fee = feeMap.get(s.rollNumber);
+        if (fee) {
+          const dueFee = typeof fee.dueFee === 'number'
+            ? fee.dueFee
+            : (Number(fee.totalFee || 0) - Number(fee.paidFee || 0));
+          return {
+            ...s,
+            totalFee: fee.totalFee,
+            paidFee: fee.paidFee,
+            dueFee,
+          };
+        }
+        return s;
+      });
+    } catch (error) {
+      console.error('Error fetching fees data:', error);
+      return baseStudents;
+    }
   };
 
   const handleViewIDCard = () => {
@@ -643,6 +677,7 @@ const StudentAdmissionList = () => {
                 <th className="border border-gray-300 px-4 py-2">Course ID</th>
                 <th className="border border-gray-300 px-4 py-2">Batch</th>
                 <th className="border border-gray-300 px-4 py-2">Admission Date</th>
+                <th className="border border-gray-300 px-4 py-2">Due Fee</th>
                 <th className="border border-gray-300 px-4 py-2">Referral Code</th>
                 <th className="border border-gray-300 px-4 py-2">Referral Name</th>
                 
@@ -688,6 +723,7 @@ const StudentAdmissionList = () => {
                   <td className="border border-gray-300 px-4 py-2">{student.courseInterested?.courseCode}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.selectedBatch || student.batch}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.admissionDate}</td>
+                  <td className="border border-gray-300 px-4 py-2 text-red-600">₹{Number((student.dueFee ?? (Number(student.totalFee || 0) - Number(student.paidFee || 0))) || 0).toLocaleString()}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.referralCode}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.referralName}</td>
                   

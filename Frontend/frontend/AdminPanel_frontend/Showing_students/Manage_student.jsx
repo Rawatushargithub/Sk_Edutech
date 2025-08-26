@@ -28,6 +28,8 @@ const StudentAdmissionList = () => {
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showFormPopup, setShowFormPopup] = useState(false);
   const [showIdCardPopup, setShowIdCardPopup] = useState(false);
+  const [showStatusPopup, setShowStatusPopup] = useState(false);
+  const [statusToggleStudent, setStatusToggleStudent] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [timeFilter, setTimeFilter] = useState("all"); // State for time filter

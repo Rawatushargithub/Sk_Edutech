@@ -154,8 +154,20 @@ const AddCoursebyAdmin = ({ mode }) => {
     }
   }, [isEditMode, courseId, navigate, mode]);
 
-  const handleInputChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  // const handleInputChange = (e) =>
+  //   setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "courseCode") {
+      // Remove all spaces from input
+      const noSpaceValue = value.replace(/\s/g, "");
+      setFormData({ ...formData, [name]: noSpaceValue });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
 
   const handleVideoLinkChange = (index, e) => {
     const updatedVideos = [...courseVideoLinks];
@@ -405,11 +417,12 @@ const AddCoursebyAdmin = ({ mode }) => {
                     value={formData.courseCode}
                     onChange={handleInputChange}
                     required
-                    className={
-                      isEditMode ? disabledInputStyle : noRingInputStyle
-                    }
+                    className={isEditMode ? disabledInputStyle : noRingInputStyle}
                     disabled={isEditMode}
+                    pattern="^\S+$"
+                    title="No spaces allowed in course code"
                   />
+
                 </div>
                 <div>
                   <label

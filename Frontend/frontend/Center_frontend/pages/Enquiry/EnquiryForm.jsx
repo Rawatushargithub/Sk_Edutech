@@ -107,7 +107,9 @@ const EnquiryForm = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    // Trim string values to remove leading/trailing spaces, except for mobile and postcode
+    const trimmedValue = typeof value === 'string' && name !== 'studentMobile' && name !== 'alternateMobile' && name !== 'postCode' ? value.trim() : value;
+    setFormData({ ...formData, [name]: trimmedValue });
   };
 
   const handleCourseChange = (e) => {
@@ -149,7 +151,9 @@ const EnquiryForm = () => {
     if (name === 'installmentAmount') {
       installments[index][name] = parseFloat(value) || 0;
     } else {
-      installments[index][name] = value;
+      // Trim string values for installment fields
+      const trimmedValue = typeof value === 'string' ? value.trim() : value;
+      installments[index][name] = trimmedValue;
     }
     
     setFormData({ ...formData, installments });
@@ -177,9 +181,21 @@ const EnquiryForm = () => {
     // Prepare student data with proper formatting and type conversion
     const studentData = {
       ...formData,
-      studentName: `${formData.abbreviation} ${formData.studentName}`,
+      studentName: `${formData.abbreviation.trim()} ${formData.studentName.trim()}`,
       franchiseId: franchiseId,
       status: "pending",
+      // Trim string fields before sending to backend
+      fatherHusbandName: formData.fatherHusbandName.trim(),
+      surnameName: formData.surnameName.trim(),
+      motherName: formData.motherName.trim(),
+      email: formData.email.trim(),
+      city: formData.city.trim(),
+      permanentAddress: formData.permanentAddress.trim(),
+      referralCode: formData.referralCode.trim(),
+      caste: formData.caste.trim(),
+      qualifications: formData.qualifications.trim(),
+      occupation: formData.occupation.trim(),
+      remarks: formData.remarks.trim(),
       // Convert dates to DD-MM-YYYY format for backend
       dob: convertDateToBackendFormat(formData.dob),
       admissionDate: convertDateToBackendFormat(formData.admissionDate),

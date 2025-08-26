@@ -207,10 +207,16 @@ const handleChange = (e) => {
   }
   
   if (name === 'email') {
-    // Basic email format check
-    if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    // Basic email format check and trim
+    processedValue = value.trim();
+    if (processedValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(processedValue)) {
       // You can add visual feedback here if needed
     }
+  }
+  
+  // Trim text fields to remove leading/trailing spaces
+  if (typeof processedValue === 'string' && name !== 'studentMobile' && name !== 'alternateMobile' && name !== 'postCode') {
+    processedValue = processedValue.trim();
   }
   
   // Roll number handling removed as it will be auto-generated
@@ -321,7 +327,7 @@ const handleSubmit = async (e) => {
       formDataToSend.append("studentSignature", formData.studentSignature);
     }
 
-    // Append other fields
+    // Append other fields with trimming for string values
     Object.entries(formData).forEach(([key, value]) => {
       if (key !== "studentPhoto" && key !== "studentSignature" && key !== "courseInterested"  && value !== null && value !== undefined) {
         if (typeof value === 'object' && !Array.isArray(value)) {
@@ -329,7 +335,9 @@ const handleSubmit = async (e) => {
         } else if (Array.isArray(value)) {
           formDataToSend.append(key, JSON.stringify(value));
         } else {
-          formDataToSend.append(key, value);
+          // Trim string values to remove leading/trailing spaces
+          const trimmedValue = typeof value === 'string' ? value.trim() : value;
+          formDataToSend.append(key, trimmedValue);
         } 
       }
     }); 

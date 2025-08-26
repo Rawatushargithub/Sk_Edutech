@@ -35,17 +35,38 @@ const CourseUpdateForm = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    let processedValue = type === 'checkbox' ? checked : value;
+    
+    // Trim string values to remove leading/trailing spaces
+    if (typeof processedValue === 'string') {
+      processedValue = processedValue.trim();
+    }
+    
     setFormData(prevState => ({
       ...prevState,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: processedValue
     }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Create a copy of formData with trimmed string values
+    const trimmedFormData = { ...formData };
+    Object.keys(trimmedFormData).forEach(key => {
+      if (typeof trimmedFormData[key] === 'string') {
+        trimmedFormData[key] = trimmedFormData[key].trim();
+      } else if (Array.isArray(trimmedFormData[key])) {
+        // Trim array elements if they are strings
+        trimmedFormData[key] = trimmedFormData[key].map(item => 
+          typeof item === 'string' ? item.trim() : item
+        );
+      }
+    });
+    
     const index = localStorage.getItem('editCourseIndex');
     const courses = JSON.parse(localStorage.getItem('courses')) || [];
-    courses[index] = formData;
+    courses[index] = trimmedFormData;
     localStorage.setItem('courses', JSON.stringify(courses));
     localStorage.removeItem('editCourseIndex');
     localStorage.removeItem('editCourseData');
@@ -226,7 +247,8 @@ const CourseUpdateForm = () => {
                     value={link}
                     onChange={(e) => {
                       const newLinks = [...formData.videoLinks];
-                      newLinks[index] = e.target.value;
+                      // Trim video link values
+                      newLinks[index] = e.target.value.trim();
                       setFormData(prevState => ({
                         ...prevState,
                         videoLinks: newLinks

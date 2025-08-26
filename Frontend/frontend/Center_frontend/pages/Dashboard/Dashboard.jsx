@@ -71,13 +71,14 @@ const Dashboard = () => {
     <div className="px-6 space-y-8">
       <div className=" text-black flex items-center justify-between top-0 px-4 py-2">
         {/* Franchise Owner Info */}
-        <div className="flex items-center space-x-4">
-          <div className="text-lg font-semibold">
-            Welcome, <span className="text-blue-400">{franchiseName}</span>
+        {/* <div className="flex items-center space-x-6">
+          <div className="text-xl font-bold ">
+            Welcome 
           </div>
 
-        </div>
-        <div className="min-w-3/4 max-w-4/5">
+        </div> */}
+        <div className="min-w-3/4 max-w-8/9 flex flex-col">
+        <span className="px-10 text-lg font-bold text-blue-400"><span className="font-bold text-black">Welcome,</span> {franchiseName}</span>
         <NotificationMarqueeLine/>
 
         </div>

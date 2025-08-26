@@ -271,13 +271,13 @@ const updateFranchiseStatusVerification = asyncHandler(async (req, res) => {
         let htmlBody = '';
 
         // Construct the email body based on your template
-        textBody = `Congrats ${ownerName},\n\nSK Edutech Admin has verified and activated your plan to be a prestigious franchise for the interval of ${interval} from ${presentDate} to ${expiryDate}.\n\n`;
+        textBody = `Congrats ${ownerName},\n\nSK Edutech has verified and activated your plan to be a prestigious franchise for the interval of ${interval} from ${presentDate} to ${expiryDate}.\n\n`;
         htmlBody = `<p>Congrats ${ownerName},</p>
-                    <p>SK Edutech Admin has verified and activated your plan to be a prestigious franchise for the interval of <b>${interval}</b> from <b>${presentDate}</b> to <b>${expiryDate}</b>.</p>`;
+                    <p>SK Edutech has verified and activated your plan to be a prestigious franchise for the interval of <b>${interval}</b> from <b>${presentDate}</b> to <b>${expiryDate}</b>.</p>`;
 
         // Always include Franchise ID and the (potentially newly generated) password
-        textBody += `Your Franchise ID is ${loginId} and password is ${passwordToSend}. Please use your PHONE NUMBER and given PASSWORD as credentials to login in your dashboard.\n\n`;
-        htmlBody += `<p>Your Franchise ID is <b>${loginId}</b> and password is <b>${passwordToSend}</b>. Please use your PHONE NUMBER and given PASSWORD as credentials to login in your dashboard.</p>`;
+        textBody += `Your Franchise ID is ${loginId} and password is ${passwordToSend}. Please use your PHONE NUMBER and given PASSWORD as credentials to login in your dashboard through www.skedutech.com/institute and do "Center Login" using the given credentials.\n\n`;
+        htmlBody += `<p>Your Franchise ID is <b>${loginId}</b> and password is <b>${passwordToSend}</b>. Please use your PHONE NUMBER and given PASSWORD as credentials to login in your dashboard through www.skedutech.com/institute and do "Center Login" using the given credentials.</p>`;
 
         console.log(`--- Franchise Activated & Verified ---`);
         console.log(`   Franchise ID: ${loginId}`);
@@ -286,10 +286,10 @@ const updateFranchiseStatusVerification = asyncHandler(async (req, res) => {
         console.log(`----------------------------------------------------------------`);
 
 
-        textBody += `If you have any other doubts. Please contact us at contact@skedutech.com\n\nWe will try to resolve the issue if any at the earliest possible.\n\nRegards,\nThe SK Edutech Team`;
-        htmlBody += `<p>If you have any other doubts. Please contact us at contact@skedutech.com</p>
-                     <p>We will try to resolve the issue if any at the earliest possible.</p>
-                     <p>Regards,<br>The SK Edutech Team</p>`;
+        textBody += `In case you forget the password, please contact us at contact@skedutech.com\n\nWe will resolve the issue if any at the earliest possible.\n\nRegards,\nSK Edutech`;
+        htmlBody += `<p>In case you forget the password, please contact us at contact@skedutech.com</p>
+                     <p>We will resolve the issue if any at the earliest possible.</p>
+                     <p>Regards,<br>SK Edutech</p>`;
 
         // Send the activation/verification email
         try {

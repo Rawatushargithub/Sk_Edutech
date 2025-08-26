@@ -110,13 +110,11 @@ const EnquiryForm = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-
   const handleCourseChange = (e) => {
     const selectedCourseId = e.target.value;
     if (selectedCourseId) {
-
       const selectedCourse = courses.find(
-        (course) => course._id === selectedOption.value
+        (course) => course._id === selectedCourseId
       );
       if (selectedCourse) {
         setFormData({
@@ -314,7 +312,7 @@ const EnquiryForm = () => {
               <div className="grid grid-cols-4 gap-6">
                 <div>
                   <label htmlFor="courseFees" className={labelStyle}>Course Fees (₹)</label>
-                  <input type="number" id="courseFees" name="courseFees" value={formData.courseFees} onChange={handleInputChange} className={inputStyle} readOnly />
+                  <input type="number" id="courseFees" name="courseFees" value={formData.courseFees} onChange={handleInputChange} className={inputStyle} />
                 </div>
                 <div>
                   <label htmlFor="discountRate" className={labelStyle}>Discount Rate (%)</label>
@@ -329,23 +327,7 @@ const EnquiryForm = () => {
                   <input type="number" id="totalFees" name="totalFees" value={formData.totalFees} className={inputStyle} readOnly />
                 </div>
               </div>
-              <div className="grid grid-cols-4 gap-6">
-                <div>
-                  <label htmlFor="feesReceived" className={labelStyle}>Fees Received (₹)</label>
-                  <input type="number" id="feesReceived" name="feesReceived" value={formData.feesReceived} onChange={handleInputChange} className={inputStyle} />
-                </div>
-                <div>
-                  <label htmlFor="paymentMode" className={labelStyle}>Payment Mode</label>
-                  <select id="paymentMode" name="paymentMode" value={formData.paymentMode} onChange={handleInputChange} className={inputStyle}>
-                    <option value="Cash">Cash</option>
-                    <option value="Online">Online</option>
-                    <option value="Cheque">Cheque</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="balance" className={labelStyle}>Balance (₹)</label>
-                  <input type="number" id="balance" name="balance" value={formData.balance} className={inputStyle} readOnly />
-                </div>
+              <div className="grid grid-cols-1 gap-6">
                 <div>
                   <label htmlFor="remarks" className={labelStyle}>Remarks</label>
                   <input type="text" id="remarks" name="remarks" value={formData.remarks} onChange={handleInputChange} className={inputStyle} />

@@ -88,13 +88,13 @@ const getStudents = asyncHandler(async (req, res) => {
 
   // Query database with projections for only the fields we need
   const students = await Student.find(filter)
-    .select(
-      "studentPhoto studentName status franchiseId courseInterested studentMobile referralCode email rollNumber admissionDate selectedBatch"
-    )
     .populate({
       path: 'selectedBatch',
       select: 'batchName' // Only select the batchName field
     })
+    .select(
+      "studentPhoto studentName status franchiseId courseInterested studentMobile referralCode email rollNumber admissionDate selectedBatch"
+    )
     .skip(skip)
     .limit(limit)
     .sort({ admissionDate: -1 }); // Sort by admission date, newest first
@@ -153,7 +153,10 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
 
   const student = await Student.findById(studentId)
     .populate("feeDetails")
-    .populate("selectedBatch");
+    .populate({
+      path: "selectedBatch",
+      select: "batchName batchTiming",
+    });
 
   if (!student) {
     throw new ApiError(404, "Student not found");
@@ -278,6 +281,32 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   }
 
   // TOP SECTION - Header Information
+  // Franchise Name
+  if (franchise) {
+    drawText(franchise.franchiseName, 24, 620, rgb(0, 0, 0), boldFont, 14);
+  }
+
+  // Franchise Logo
+  if (franchise && franchise.franchiseLogoUrl) {
+    try {
+      const logoUrl = franchise.franchiseLogoUrl;
+      const logoResponse = await axios.get(logoUrl, {
+        responseType: "arraybuffer",
+      });
+      const logoBytes = Buffer.from(logoResponse.data, "binary");
+      let logoImage;
+      if (logoUrl.includes(".jpg") || logoUrl.includes(".jpeg")) {
+        logoImage = await pdfDoc.embedJpg(logoBytes);
+      } else {
+        logoImage = await pdfDoc.embedPng(logoBytes);
+      }
+      // page.drawImage(logoImage, { x: 24, y: 640, width: 50, height: 50 });
+      page.drawImage(logoImage, { x: 256, y: 709, width: 45, height: 45 });
+    } catch (error) {
+      console.error("Error fetching or embedding franchise logo:", error);
+    }
+  }
+
   // Admission Date (top left, after "ADMISSION DATE :")
   drawText(
     student.admissionDate
@@ -358,13 +387,13 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   // RIGHT SIDE - OFFICE USE ONLY SECTION
   // Course Fees (after "COURSE FEES :")
   if (student.feeDetails) {
-    drawText(`Rs${student.feeDetails.courseFees}`, 77, 238);
+    drawText(`Rs ${student.feeDetails.courseFees}`, 77, 238);
 
     // Paid Fees (after "PAID FEES :")
-    drawText(`Rs${student.feeDetails.feesReceived}`, 269, 238);
+    drawText(`Rs ${student.feeDetails.feesReceived}`, 269, 238);
 
     // Balance Fees (after "BALANCE FEES :")
-    drawText(`Rs${student.feeDetails.balance}`, 455, 238);
+    drawText(`Rs ${student.feeDetails.balance}`, 455, 238);
   }
 
   // Contact Number (after "CONTACT NO. :")
@@ -536,7 +565,7 @@ const generateIdCard = asyncHandler(async (req, res) => {
     10
   );
   drawText(student.rollNumber, 66, 83);
-  drawText(capitalizeText(student.courseInterested?.courseName || ""), 66, 108);
+  drawText(capitalizeText(student.courseInterested?.courseCode || ""), 66, 108);
   drawText(
     student.admissionDate
       ? new Date(student.admissionDate).toLocaleDateString("en-GB")
@@ -551,7 +580,7 @@ const generateIdCard = asyncHandler(async (req, res) => {
   );
   drawText(student.studentMobile, 66, 96);
 
-  drawText(franchise.address, 38, 13, rgb(1, 1, 1));
+  drawText(franchise.address, 22, 15, rgb(1, 1, 1));
   // Add "M:" prefix to franchise mobile number
   drawText(`M: ${franchise.mobile}`, 75, 39);
 

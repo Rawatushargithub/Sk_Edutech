@@ -157,7 +157,9 @@ const RequestStackTable = () => {
         return (
             <div className="text-center p-4">
                 <p className="text-gray-600 mb-4">No franchises found requiring action.</p>
-                <Link to="/admin/franchises" className="text-blue-600 hover:underline">
+                <Link 
+                to="/admin/franchises" 
+                className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">
                     Back to Active Franchises List
                 </Link>
             </div>
@@ -168,7 +170,8 @@ const RequestStackTable = () => {
         <div className="overflow-x-auto p-4">
              <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-semibold">Franchise Requests & Management</h2>
-                <Link to="/franchises" className="text-blue-600 hover:underline">
+                <Link to="/admin/franchises" 
+                className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">
                     &larr; Back to Active List
                 </Link>
             </div>

@@ -42,10 +42,18 @@ const FeesManagementSystem = () => {
     amount: "",
     paymentMode: "Cash",
     date: new Date().toISOString().slice(0, 10),
+    paymentType: "normal"
   });
+  const [paymentMode, setPaymentMode] = useState("normal"); // normal, full_payment, custom
+  const [totalDueAmount, setTotalDueAmount] = useState(0);
 
   // Export states
   const [showExportDropdown, setShowExportDropdown] = useState(false);
+
+  // Payment History Modal states
+  const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState(false);
+  const [selectedPaymentHistory, setSelectedPaymentHistory] = useState([]);
+  const [selectedInstallmentName, setSelectedInstallmentName] = useState('');
 
 
 
@@ -199,7 +207,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
       });
   };
   
-  // Handle installment payment with partial payment support
+  // Enhanced installment payment handler with flexible payment scenarios
   const handleInstallmentPayment = (studentId, installmentId) => {
     const amount = parseFloat(installmentPayment.amount);
     if (isNaN(amount) || amount <= 0) {
@@ -211,19 +219,36 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
       amount: amount,
       paymentMode: installmentPayment.paymentMode,
       date: installmentPayment.date,
+      paymentType: installmentPayment.paymentType
     };
 
     // Make API call to update installment
     axios.put(`${API_BASE_URL}/api/v1/institute_fees/installments/${installmentId}/update-payment`, paymentData)
       .then(response => {
         if (response.data.success) {
-          const { updatedInstallments, overpayment, totalProcessed } = response.data.data;
+          const { updatedInstallments, paymentScenario, overpayment, totalProcessed, studentTotals } = response.data.data;
           
-          // Show success message with payment details
-          let message = `Payment of ₹${totalProcessed} processed successfully.`;
-          if (overpayment > 0) {
-            message += ` Overpayment of ₹${overpayment} detected.`;
+          // Show enhanced success message based on payment scenario
+          let message = `Payment of ₹${totalProcessed.toLocaleString()} processed successfully.`;
+          
+          switch(paymentScenario) {
+            case "full_payment":
+              message += " All installments have been marked as paid!";
+              break;
+            case "overpayment":
+              message += ` Payment distributed across multiple installments.`;
+              if (overpayment > 0) {
+                message += ` Excess amount: ₹${overpayment.toLocaleString()}`;
+              }
+              break;
+            case "underpayment":
+              message += " Partial payment recorded. Remaining balance updated.";
+              break;
+            case "exact_payment":
+              message += " Installment fully paid!";
+              break;
           }
+          
           alert(message);
 
           // Update local state with all affected installments
@@ -237,25 +262,23 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
                     ...inst,
                     paid: updatedInst.paid,
                     paidAmount: updatedInst.paidAmount,
+                    remainingAmount: updatedInst.remainingAmount || 0,
                     status: updatedInst.status,
                     paymentMode: updatedInst.paymentMode,
-                    paymentDate: updatedInst.paymentDate
+                    paymentDate: updatedInst.paymentDate,
+                    paymentHistory: updatedInst.paymentHistory || []
                   };
                 }
                 return inst;
               });
               
-              // Recalculate totals
-              const totalInstallmentAmount = updatedInstallmentsList.reduce((sum, inst) => sum + inst.amount, 0);
-              const paidInstallmentAmount = updatedInstallmentsList.reduce((sum, inst) => sum + (inst.paidAmount || 0), 0);
-              const dueInstallmentAmount = totalInstallmentAmount - paidInstallmentAmount;
-
+              // Use totals from backend response
               return {
                 ...student,
                 installments: updatedInstallmentsList,
-                totalInstallmentAmount,
-                paidInstallmentAmount,
-                dueInstallmentAmount
+                totalInstallmentAmount: studentTotals.totalInstallmentAmount,
+                paidInstallmentAmount: studentTotals.paidInstallmentAmount,
+                dueInstallmentAmount: studentTotals.dueInstallmentAmount
               };
             }
             return student;
@@ -268,15 +291,53 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
             amount: "",
             paymentMode: "Cash",
             date: new Date().toISOString().slice(0, 10),
-        });
-      } else {
-        alert("Error: " + response.data.message);
-      }
-    })
-    .catch(error => {
-      console.error("Error updating installment:", error);
-      const errorMessage = error.response?.data?.message || "Failed to update installment payment";
-      alert("Error: " + errorMessage);
+            paymentType: "normal"
+          });
+          setPaymentMode("normal");
+        } else {
+          alert("Error: " + response.data.message);
+        }
+      })
+      .catch(error => {
+        console.error("Error updating installment:", error);
+        const errorMessage = error.response?.data?.message || "Failed to update installment payment";
+        alert("Error: " + errorMessage);
+      });
+  };
+
+  // Calculate total due amount for a student
+  const calculateStudentDueAmount = (student) => {
+    return student.installments.reduce((sum, inst) => {
+      const remaining = inst.amount - (inst.paidAmount || 0);
+      return sum + (remaining > 0 ? remaining : 0);
+    }, 0);
+  };
+
+  // Handle payment mode change
+  const handlePaymentModeChange = (mode, student, installment) => {
+    setPaymentMode(mode);
+    const studentDueAmount = calculateStudentDueAmount(student);
+    setTotalDueAmount(studentDueAmount);
+    
+    let amount = "";
+    switch(mode) {
+      case "full_payment":
+        amount = studentDueAmount.toString();
+        break;
+      case "normal":
+        const remainingAmount = installment.amount - (installment.paidAmount || 0);
+        amount = remainingAmount.toString();
+        break;
+      case "custom":
+        amount = "";
+        break;
+    }
+    
+    setInstallmentPayment({
+      ...installmentPayment,
+      installmentId: installment._id,
+      amount: amount,
+      paymentType: mode
     });
   };
 
@@ -1003,45 +1064,101 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {student.installments.map((installment) => (
-                                    <tr key={installment.id} className="hover:bg-gray-50">
-                                      <td className="py-2 px-4 border-b">{installment.installmentName}</td>
-                                      <td className="py-2 px-4 border-b">₹{installment.amount.toLocaleString()}</td>
-                                      <td className="py-2 px-4 border-b">₹{(installment.paidAmount || 0).toLocaleString()}</td>
-                                      <td className="py-2 px-4 border-b">{installment.date}</td>
-                                      <td className="py-2 px-4 border-b">
-                                        <span
-                                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                            installment.paid
-                                              ? "bg-green-100 text-green-800"
-                                              : (installment.paidAmount > 0)
-                                              ? "bg-yellow-100 text-yellow-800"
-                                              : "bg-red-100 text-red-800"
-                                          }`}
-                                        >
-                                          {installment.paid ? "Paid" : (installment.paidAmount > 0) ? "Partial" : "Pending"}
-                                        </span>
-                                      </td>
-                                      <td className="py-2 px-4 border-b">
-                                        {!installment.paid && (
-                                          <button
-                                            onClick={() => {
-                                              const remainingAmount = installment.amount - (installment.paidAmount || 0);
-                                              setInstallmentPayment({
-                                                ...installmentPayment,
-                                                installmentId: installment._id,
-                                                amount: remainingAmount.toString(),
-                                              });
-                                              setShowInstallmentModal(student._id);
-                                            }}
-                                            className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600 transition-colors"
+                                  {student.installments.map((installment) => {
+                                    const remainingAmount = installment.amount - (installment.paidAmount || 0);
+                                    const isFullyPaid = installment.paid || remainingAmount <= 0;
+                                    const isPartiallyPaid = installment.paidAmount > 0 && !isFullyPaid;
+                                    
+                                    return (
+                                      <tr key={installment._id} className="hover:bg-gray-50">
+                                        <td className="py-2 px-4 border-b">{installment.installmentName}</td>
+                                        <td className="py-2 px-4 border-b">₹{installment.amount.toLocaleString()}</td>
+                                        <td className="py-2 px-4 border-b">
+                                          <div className="flex flex-col">
+                                            <span>₹{(installment.paidAmount || 0).toLocaleString()}</span>
+                                            {remainingAmount > 0 && (
+                                              <span className="text-xs text-red-600">
+                                                (Due: ₹{remainingAmount.toLocaleString()})
+                                              </span>
+                                            )}
+                                          </div>
+                                        </td>
+                                        <td className="py-2 px-4 border-b">{installment.date}</td>
+                                        <td className="py-2 px-4 border-b">
+                                          <span
+                                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                              installment.status === "Fully_Paid_Early"
+                                                ? "bg-blue-100 text-blue-800"
+                                                : isFullyPaid
+                                                ? "bg-green-100 text-green-800"
+                                                : isPartiallyPaid
+                                                ? "bg-yellow-100 text-yellow-800"
+                                                : "bg-red-100 text-red-800"
+                                            }`}
                                           >
-                                            Pay Now
-                                          </button>
-                                        )}
-                                      </td>
-                                    </tr>
-                                  ))}
+                                            {installment.status === "Fully_Paid_Early" 
+                                              ? "Paid Early" 
+                                              : isFullyPaid 
+                                              ? "Paid" 
+                                              : isPartiallyPaid 
+                                              ? "Partial" 
+                                              : "Pending"}
+                                          </span>
+                                        </td>
+                                        <td className="py-2 px-4 border-b">
+                                          <div className="flex gap-1">
+                                            {!isFullyPaid && (
+                                              <>
+                                                <button
+                                                  onClick={() => {
+                                                    handlePaymentModeChange("normal", student, installment);
+                                                    setShowInstallmentModal(student._id);
+                                                  }}
+                                                  className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600 transition-colors"
+                                                  title="Pay remaining amount for this installment"
+                                                >
+                                                  Pay
+                                                </button>
+                                                <button
+                                                  onClick={() => {
+                                                    handlePaymentModeChange("full_payment", student, installment);
+                                                    setShowInstallmentModal(student._id);
+                                                  }}
+                                                  className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition-colors"
+                                                  title="Pay all remaining fees"
+                                                >
+                                                  Pay All
+                                                </button>
+                                                <button
+                                                  onClick={() => {
+                                                    handlePaymentModeChange("custom", student, installment);
+                                                    setShowInstallmentModal(student._id);
+                                                  }}
+                                                  className="bg-purple-500 text-white px-2 py-1 rounded text-xs hover:bg-purple-600 transition-colors"
+                                                  title="Pay custom amount"
+                                                >
+                                                  Custom
+                                                </button>
+                                              </>
+                                            )}
+                                            {installment.paymentHistory && installment.paymentHistory.length > 0 && (
+                                              <button
+                                                onClick={() => {
+                                                  setSelectedPaymentHistory(installment.paymentHistory);
+                                                  setSelectedInstallmentName(installment.installmentName);
+                                                  setShowPaymentHistoryModal(true);
+                                                }}
+                                                className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600 transition-colors"
+                                                title="View payment history"
+                                              >
+                                                History
+                                              </button>
+                                            )}
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
                                 </tbody>
                               </table>
                             </div>
@@ -1058,60 +1175,108 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
       )}
 
 
-      {/* Update Fee Modal */}
+      {/* Enhanced Update Fee Modal */}
       {showUpdateFeeModal && ( 
-        <div className="fixed inset-0 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-96">
-            <h2 className="text-xl font-bold mb-4">Update Fee</h2>
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Amount</label>
-              <input
-                type="number"
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={newPayment.amount || ""}
-                onChange={(e) =>
-                  setNewPayment({ ...newPayment, amount: e.target.value })
-                }
-                placeholder="₹0"
-              />
+        <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-white bg-opacity-20 p-2 rounded-full">
+                    <CreditCard className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">Update Fee Payment</h2>
+                    <p className="text-blue-100 text-sm">Record new payment transaction</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowUpdateFeeModal(false)}
+                  className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Payment Mode</label>
-              <select
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={newPayment.mode}
-                onChange={(e) =>
-                  setNewPayment({ ...newPayment, mode: e.target.value })
-                }
-              >
-                <option value="Cash">Cash</option>
-                <option value="Card">Card</option>
-                <option value="UPI">UPI</option>
-              </select>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-6">
+              {/* Amount Input */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 flex items-center space-x-2">
+                  <IndianRupee className="w-4 h-4 text-green-600" />
+                  <span>Payment Amount</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-lg font-medium"
+                    value={newPayment.amount || ""}
+                    onChange={(e) =>
+                      setNewPayment({ ...newPayment, amount: e.target.value })
+                    }
+                    placeholder="Enter amount"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    <span className="text-gray-400 text-sm">INR</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Mode */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 flex items-center space-x-2">
+                  <CreditCard className="w-4 h-4 text-blue-600" />
+                  <span>Payment Method</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['Cash', 'Card', 'UPI'].map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setNewPayment({ ...newPayment, mode })}
+                      className={`p-3 rounded-xl border-2 transition-all duration-200 font-medium ${
+                        newPayment.mode === mode
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                      }`}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Date Input */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 flex items-center space-x-2">
+                  <Calendar className="w-4 h-4 text-purple-600" />
+                  <span>Payment Date</span>
+                </label>
+                <input
+                  type="date"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  value={newPayment.date}
+                  onChange={(e) =>
+                    setNewPayment({ ...newPayment, date: e.target.value })
+                  }
+                />
+              </div>
             </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Date</label>
-              <input
-                type="date"
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={newPayment.date}
-                onChange={(e) =>
-                  setNewPayment({ ...newPayment, date: e.target.value })
-                }
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
+
+            {/* Modal Footer */}
+            <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex justify-end space-x-3">
               <button
                 onClick={() => setShowUpdateFeeModal(false)}
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                className="px-6 py-2.5 text-gray-600 font-medium rounded-xl border-2 border-gray-200 hover:bg-gray-100 transition-colors duration-200"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleUpdateFee(showUpdateFeeModal)}
-                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                className="px-6 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white font-medium rounded-xl hover:from-green-600 hover:to-green-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
               >
-                Update
+                Record Payment
               </button>
             </div>
           </div>
@@ -1119,11 +1284,39 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
       )}
 
 
-      {/* Installment Payment Modal */}
+      {/* Enhanced Installment Payment Modal */}
       {showInstallmentModal && (
-        <div className="fixed inset-0 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-96">
-            <h2 className="text-xl font-bold mb-4">Record Installment Payment</h2>
+        <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-96 max-h-96 overflow-y-auto">
+            <h2 className="text-xl font-bold mb-4">
+              {paymentMode === "full_payment" ? "Pay All Fees" : 
+               paymentMode === "custom" ? "Custom Payment" : "Pay Installment"}
+            </h2>
+            
+            {/* Payment Type Info */}
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+              <div className="text-sm text-gray-600">
+                {paymentMode === "full_payment" && (
+                  <div>
+                    <p className="font-medium text-blue-600">Full Payment Mode</p>
+                    <p>This will pay all remaining installments (₹{totalDueAmount.toLocaleString()})</p>
+                  </div>
+                )}
+                {paymentMode === "normal" && (
+                  <div>
+                    <p className="font-medium text-green-600">Normal Payment Mode</p>
+                    <p>Pay remaining amount for this installment</p>
+                  </div>
+                )}
+                {paymentMode === "custom" && (
+                  <div>
+                    <p className="font-medium text-purple-600">Custom Payment Mode</p>
+                    <p>Enter any amount. Excess will be applied to next installments</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="mb-4">
               <label className="block text-gray-700 mb-2">Amount</label>
               <input
@@ -1133,9 +1326,33 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
                 onChange={(e) =>
                   setInstallmentPayment({ ...installmentPayment, amount: e.target.value })
                 }
-                placeholder="Enter amount"
+                placeholder={paymentMode === "full_payment" ? `₹${totalDueAmount}` : "Enter amount"}
+                min="1"
               />
+              {paymentMode === "custom" && (
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => setInstallmentPayment({...installmentPayment, amount: "1000"})}
+                    className="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
+                  >
+                    ₹1,000
+                  </button>
+                  <button
+                    onClick={() => setInstallmentPayment({...installmentPayment, amount: "5000"})}
+                    className="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
+                  >
+                    ₹5,000
+                  </button>
+                  <button
+                    onClick={() => setInstallmentPayment({...installmentPayment, amount: totalDueAmount.toString()})}
+                    className="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
+                  >
+                    All (₹{totalDueAmount.toLocaleString()})
+                  </button>
+                </div>
+              )}
             </div>
+            
             <div className="mb-4">
               <label className="block text-gray-700 mb-2">Payment Mode</label>
               <select
@@ -1150,6 +1367,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
                 <option value="UPI">UPI</option>
               </select>
             </div>
+            
             <div className="mb-4">
               <label className="block text-gray-700 mb-2">Date</label>
               <input
@@ -1161,18 +1379,136 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
                 }
               />
             </div>
+            
             <div className="flex justify-end space-x-2">
               <button
-                onClick={() => setShowInstallmentModal(false)}
+                onClick={() => {
+                  setShowInstallmentModal(false);
+                  setPaymentMode("normal");
+                }}
                 className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleInstallmentPayment(showInstallmentModal, installmentPayment.installmentId)}
-                className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
+                className={`text-white px-4 py-2 rounded-lg transition-colors ${
+                  paymentMode === "full_payment" ? "bg-blue-500 hover:bg-blue-600" :
+                  paymentMode === "custom" ? "bg-purple-500 hover:bg-purple-600" :
+                  "bg-green-500 hover:bg-green-600"
+                }`}
               >
-                Record Payment
+                {paymentMode === "full_payment" ? "Pay All Fees" : "Record Payment"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment History Modal */}
+      {showPaymentHistoryModal && (
+        <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden transform transition-all duration-300 scale-100">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-gray-600 to-gray-700 text-white p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-white bg-opacity-20 p-2 rounded-full">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">Payment History</h2>
+                    <p className="text-gray-200 text-sm">{selectedInstallmentName}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPaymentHistoryModal(false)}
+                  className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 max-h-96 overflow-y-auto">
+              {selectedPaymentHistory.length > 0 ? (
+                <div className="space-y-4">
+                  {selectedPaymentHistory.map((payment, index) => (
+                    <div key={index} className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border-l-4 border-blue-500 hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="bg-green-100 p-2 rounded-full">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-800 text-lg">
+                              ₹{payment.amount?.toLocaleString() || 0}
+                            </h3>
+                            <p className="text-sm text-gray-600">Payment #{index + 1}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <Calendar className="w-4 h-4 text-gray-500" />
+                            <span className="text-sm font-medium text-gray-700">
+                              {payment.paymentDate || 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <CreditCard className="w-4 h-4 text-gray-500" />
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                              payment.paymentMode === 'Cash' 
+                                ? 'bg-green-100 text-green-700'
+                                : payment.paymentMode === 'Card'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-purple-100 text-purple-700'
+                            }`}>
+                              {payment.paymentMode || 'N/A'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {payment.remarks && (
+                        <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200">
+                          <div className="flex items-start space-x-2">
+                            <div className="bg-blue-100 p-1 rounded">
+                              <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-gray-600 mb-1">Remarks:</p>
+                              <p className="text-sm text-gray-800">{payment.remarks}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Clock className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-600 mb-2">No Payment History</h3>
+                  <p className="text-gray-500">No payments have been recorded for this installment yet.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                Total Payments: <span className="font-semibold">{selectedPaymentHistory.length}</span>
+              </div>
+              <button
+                onClick={() => setShowPaymentHistoryModal(false)}
+                className="px-6 py-2.5 bg-gray-600 text-white font-medium rounded-xl hover:bg-gray-700 transition-colors duration-200"
+              >
+                Close
               </button>
             </div>
           </div>

@@ -26,7 +26,7 @@ app.use(cors());
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:5174'], // allowed frontends
 }));
-
+ 
 // Database Connection
 const PORT = process.env.PORT || 8000; // Adjusted to reflect your running port
 const DB_NAME = "SK_Edutech"; // Changed to lowercase to match existing DB
@@ -136,6 +136,7 @@ import institute_EnquiryRoutes from "./backend/Center_Backend/routes/enquiryStud
 import institute_questionBankRoutes from "./backend/Center_Backend/routes/questionBankroutes.js";
 import Certificate_routes from './backend//Center_Backend/routes/certificate.routes.js';
 import getCenterCertificate  from './backend/Center_Backend/routes/CenterCertificate.routes.js';
+import marksheetRoutes from './backend/Center_Backend/routes/marksheet.routes.js';
 // import institute_detailsRoutes from "../Backend/backend/Center_Backend/routes/";
 // import getCenterCertificate from './backend/Center_Backend/controllers/centerCertificate.controller.js' 
 
@@ -150,6 +151,7 @@ app.use("/api/v1/institute_enquiry", institute_EnquiryRoutes);
 app.use("/api/v1/institute_question_bank", institute_questionBankRoutes);
 app.use("/api/v1/institute_certificates", Certificate_routes);
 app.use("/api/v1/certificates", getCenterCertificate);
+app.use("/api/v1/institute_marksheet", marksheetRoutes);
 
 
 

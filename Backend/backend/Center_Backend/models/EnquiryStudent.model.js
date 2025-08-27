@@ -21,7 +21,7 @@ const enquiryStudentSchema = new mongoose.Schema({
 }, 
   studentMobile: { type: String, required: true },
   alternateMobile: { type: String },
-  email: { type: String, unique: true },
+  email: { type: String, required: true },
   
   dob: { type: String, required: true }, // Format: dd-mm-yyyy
   gender: { type: String, enum: ["Male", "Female", "Other"], required: true },

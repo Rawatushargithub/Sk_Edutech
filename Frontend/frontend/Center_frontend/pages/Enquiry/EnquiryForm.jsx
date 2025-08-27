@@ -163,12 +163,48 @@ const EnquiryForm = () => {
 
   const handlenquiry = async (e) => {
     e.preventDefault();
-    if (!formData.studentName.trim() || !formData.fatherHusbandName.trim() || !formData.motherName.trim() || !formData.studentMobile.trim() || !formData.courseInterested.courseName) {
-      toast.error("Please fill all required fields");
+    if (!formData.studentName.trim()) {
+      toast.error("Student Name is a required field");
+      return;
+    }
+    if (!formData.relationType.trim()) {
+      toast.error("Relation is a required field");
+      return;
+    }
+    if (!formData.fatherHusbandName.trim()) {
+      toast.error("Father/Husband Name is a required field");
+      return;
+    }
+    if (!formData.motherName.trim()) {
+      toast.error("Mother Name is a required field");
+      return;
+    }
+    if (!formData.courseInterested.courseName) {
+      toast.error("Course Interested is a required field");
+      return;
+    }
+    if (!formData.studentMobile.trim()) {
+      toast.error("Student Mobile is a required field");
       return;
     }
     if (formData.studentMobile.length !== 10) {
       toast.error("Mobile number must be 10 digits");
+      return;
+    }
+    if (!formData.dob) {
+      toast.error("Date of Birth is a required field");
+      return;
+    }
+    if (!formData.gender) {
+      toast.error("Gender is a required field");
+      return;
+    }
+    if (!formData.admissionDate) {
+      toast.error("Admission Date is a required field");
+      return;
+    }
+    if (!formData.enquiryDate) {
+      toast.error("Enquiry Date is a required field");
       return;
     }
 

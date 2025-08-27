@@ -95,7 +95,7 @@ const CertificatePreview = () => {
 
       <div className="bg-white border-4 border-blue-600 rounded-lg shadow-lg w-full max-w-3xl px-10 py-8 text-center relative print:border-black print:shadow-none print:px-16 print:py-10">
         <div className="absolute top-4 left-6 text-sm font-medium text-gray-700 print:static print:mb-4 print:text-center">
-          Certificate ID:{" "}
+          Enrollement Number:{" "}
           <span className="text-blue-700 font-semibold">
             {certificateData.certificateId}
           </span>

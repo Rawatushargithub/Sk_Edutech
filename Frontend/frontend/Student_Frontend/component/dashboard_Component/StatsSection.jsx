@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { BookOpen, CreditCard, Calendar, User, Clock, Disc, Loader } from "lucide-react";
 import API_BASE_URL from "../../../config"; // Adjust the import path as necessary
+import { data } from "react-router-dom";
 
 const StatsSection = () => {
   const [balanceFees, setBalanceFees] = useState(null);
@@ -9,6 +10,12 @@ const StatsSection = () => {
   const [error, setError] = useState(null);
   const [daysRemaining, setDaysRemaining] = useState(0);
   const [progress, setProgress] = useState(0);
+
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [courseDetails, setCourseDetails] = useState(null);
+  const [loadingCourse, setLoadingCourse] = useState(false);
+  const [errorCourse, setErrorCourse] = useState(null);
 
 
   // Get student data from localStorage
@@ -35,6 +42,9 @@ const StatsSection = () => {
         setLoading(false);
       }
     };
+
+
+
 
     if (studentId) {
       fetchFees();
@@ -103,6 +113,36 @@ const StatsSection = () => {
     }
   };
 
+  const fetchCourseDetails = async () => {
+    setLoadingCourse(true);
+    setErrorCourse(null);
+    try {
+      console.log("student coursecode :", courseCode);
+      const res = await axios.post(`${API_BASE_URL}/api/v1/coursedetails/course-syllabus`, {
+        courseCode,
+      });
+      setCourseDetails(res.data);
+      // console.log("course details :", res.data)
+      console.log("data :", courseDetails); // assuming backend returns course details object
+    } catch (err) {
+      console.error("Error fetching course details:", err);
+      setErrorCourse("Unable to load course details.");
+    } finally {
+      setLoadingCourse(false);
+    }
+  };
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+    fetchCourseDetails(); // fetch details when modal is opened
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setCourseDetails(null);
+  };
+
+
   // Calculate days remaining in course (dummy calculation - replace with actual logic)
   // const daysRemaining = 120; // Example: 120 days remaining
 
@@ -134,7 +174,7 @@ const StatsSection = () => {
             <div className="flex items-start mb-3">
               <User className="h-5 w-5 mr-2 text-sky-500 mt-1" />
               <div>
-                <p className="text-xs text-gray-500 uppercase">Roll Number</p>
+                <p className="text-xs text-gray-500 uppercase">Registration Number</p>
                 <p className="text-base font-medium text-gray-800">{rollNumber}</p>
               </div>
             </div>
@@ -142,7 +182,7 @@ const StatsSection = () => {
             <div className="flex items-start">
               <Calendar className="h-5 w-5 mr-2 text-sky-500 mt-1" />
               <div>
-                <p className="text-xs text-gray-500 uppercase">Enrollment Date</p>
+                <p className="text-xs text-gray-500 uppercase">Registration Date</p>
                 <p className="text-base font-medium text-gray-800">{formatDate(enrollmentDate)}</p>
               </div>
             </div>
@@ -220,12 +260,55 @@ const StatsSection = () => {
             </div>
 
             <div className="mt-4">
-              
+              <button
+                onClick={handleOpenModal}
+                className="w-full bg-white border border-sky-600 text-sky-600 hover:bg-sky-50 py-2 px-4 rounded transition-colors flex items-center justify-center"
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                Course Details
+              </button>
+
             </div>
           </div>
 
         </div>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
+            {/* Close button */}
+            <button
+              onClick={handleCloseModal}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-xl font-semibold text-sky-600 mb-4">Course Details</h2>
+
+            {loadingCourse ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader className="h-6 w-6 text-sky-500 animate-spin" />
+                <p className="ml-2 text-gray-500">Loading...</p>
+              </div>
+            ) : errorCourse ? (
+              <p className="text-red-500">{errorCourse}</p>
+            ) : courseDetails ? (
+              <div className="space-y-3">
+                <p><span className="font-semibold">Course Name:</span> {courseDetails.data.courseName}</p>
+                {/* <p><span className="font-semibold">Duration:</span> {courseDetails.data.duration} months</p> */}
+                <p><span className="font-semibold">Syllabus:</span> {courseDetails.data.syllabus}</p>
+                {/* <p><span className="font-semibold">Instructor:</span> {courseDetails.data.instructor}</p> */}
+                {/* Add more fields based on backend response */}
+              </div>
+            ) : (
+              <p className="text-gray-500">No course details available.</p>
+            )}
+          </div>
+        </div>
+      )}
+
 
       {/* Quick Stats Row */}
       {/* <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">

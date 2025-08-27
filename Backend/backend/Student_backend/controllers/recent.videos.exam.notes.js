@@ -44,8 +44,8 @@ export const getLatestExam = async (req, res) => {
   try {
     const { rollNumber, franchiseId } = req.params;
 
-    console.log("roll number :", rollNumber);
-    console.log("franchise number :", franchiseId);
+    // console.log("roll number :", rollNumber);
+    // console.log("franchise number :", franchiseId);
 
     // 1. Find the student
     const student = await Student.findOne({ rollNumber }).populate("selectedBatch");
@@ -64,7 +64,7 @@ export const getLatestExam = async (req, res) => {
     const batchName = batch.name;
     const batchId = batch._id.toString();
 
-    console.log(" bactch info: ", batchId, batchName, batchTiming);
+    // console.log(" bactch info: ", batchId, batchName, batchTiming);
     // 3. Find exams with same franchise & batch info
     const exams = await Exam.find({ 
         franchiseId: franchiseId, 
@@ -74,7 +74,7 @@ export const getLatestExam = async (req, res) => {
       })
       .sort({ createdAt: -1 }); // latest exams first
 
-    console.log("exams: " ,exams)
+    // console.log("exams: " ,exams)
 
     if (!exams || exams.length === 0) {
       return res.status(404).json({ message: "No exams found for this batch" });

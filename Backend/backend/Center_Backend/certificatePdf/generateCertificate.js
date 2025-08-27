@@ -13,23 +13,7 @@ export const downloadCertificate = async (req, res) => {
   const { certificateId } = req.params;
   // console.log("Certificate ID:", certificateId);
 
- 
-
   try {
-    // ✅ MOCK CERTIFICATE DATA FOR TESTING
-    // const cert = {
-    //   studentName: "Ankur Kumar",
-    //   courseName: "Machine Learning",
-    //   rollNumber: "SKC1001",
-    //   session: "2025 - 2030",
-    //   percentage: "85",
-    //   grade: "A+",
-    //   instituteName: "AK CLASSES",
-    //   instituteEmail: "info@akclasses.com",
-    //   institutePhone: "+91-9876543210",
-    //   examDate: "2025-06-25",
-    // };
-
     const cert = await Certificate.findOne({
       "courses.results.certificateId": certificateId,
     });
@@ -55,6 +39,10 @@ export const downloadCertificate = async (req, res) => {
     if (!matchingResult) {
       return res.status(404).json({ error: "Matching certificate result not found" });
     }
+
+    // Get the franchiseId from the certificate document (not from result)
+    const franchiseId = cert.franchiseId;
+    console.log("Certificate found in Franchise ID:", franchiseId);
 
     // Step 2: Load and modify the PDF
     const templatePath = path.join(__dirname, "..", "..", "templates", "certificate.pdf");
@@ -92,14 +80,13 @@ export const downloadCertificate = async (req, res) => {
       "base64"
     );
 
-
     // Embed QR image
     const qrImage = await pdfDoc.embedPng(qrImageBuffer);
 
     // Define QR size and position
     const qrSize = 100;
     const qrX = 485;
-    const qrY = 67;
+    const qrY = 72;
 
     page.drawImage(qrImage, {
       x: qrX,
@@ -113,7 +100,7 @@ export const downloadCertificate = async (req, res) => {
     if (imageUrl.endsWith(".png")) {
       embeddedImage = await pdfDoc.embedPng(imageBuffer);
     } else {
-      embeddedImage = await pdfDoc.embedJpg(imageBuffer); chrome
+      embeddedImage = await pdfDoc.embedJpg(imageBuffer);
     }
 
     let embeddedSignature;
@@ -122,7 +109,6 @@ export const downloadCertificate = async (req, res) => {
     } else {
       embeddedSignature = await pdfDoc.embedJpg(signatureBuffer);
     }
-
 
     const imageDims = embeddedImage.scale(0.15);
     const signatureDims = embeddedSignature.scale(0.05);
@@ -155,26 +141,17 @@ export const downloadCertificate = async (req, res) => {
     const scaledImageHeight = actualImageHeight * imageScale;
 
     // Optional: center the image inside the box (adjust X, Y)
-    const boxTopY = height - 180; // top Y position of the image box
+    const boxTopY = height - 174; // top Y position of the image box
     const imageX = 482 + (targetImageWidth - scaledImageWidth) / 2;
     const imageY = boxTopY - targetImageHeight + (targetImageHeight - scaledImageHeight) / 2;
 
     page.drawText(studentName, {
       x: centerX,
-      y: height - 322, // your Y position
+      y: height - 318, // your Y position
       size: fontSize,
       font,
       color: rgb(0.976, 0.596, 0.0078),
     });
-    // Draw a border box to visualize image bounds
-    // page.drawRectangle({
-    //   x: 480,
-    //   y: boxTopY - targetImageHeight,
-    //   width: targetImageWidth,
-    //   height: targetImageHeight,
-    //   borderWidth: 1,
-    //   borderColor: rgb(1, 0, 0), // red border
-    // });
 
     // Draw image inside the box
     page.drawImage(embeddedImage, {
@@ -184,9 +161,9 @@ export const downloadCertificate = async (req, res) => {
       height: scaledImageHeight,
     });
 
-    // Signature box with 9:16 aspect ratio
+    // Signature box with aspect ratio
     const targetSignatureWidth = 80;
-    const targetSignatureHeight = 38; // ~80
+    const targetSignatureHeight = 38;
 
     // Get actual signature image dimensions
     const actualSigWidth = embeddedSignature.width;
@@ -204,21 +181,11 @@ export const downloadCertificate = async (req, res) => {
 
     // Signature box top-left reference point
     const sigBoxX = 485;
-    const sigBoxTopY = height - 280;
+    const sigBoxTopY = height - 274;
 
     // Center signature inside the box
     const sigX = sigBoxX + (targetSignatureWidth - scaledSigWidth) / 2;
     const sigY = sigBoxTopY - targetSignatureHeight + (targetSignatureHeight - scaledSigHeight) / 2;
-
-    // Draw border around signature area (optional)
-    // page.drawRectangle({
-    //   x: sigBoxX,
-    //   y: sigBoxTopY - targetSignatureHeight,
-    //   width: targetSignatureWidth,
-    //   height: targetSignatureHeight,
-    //   borderWidth: 1,
-    //   borderColor: rgb(0, 0, 1), // Blue border
-    // });
 
     // Draw the signature image
     page.drawImage(embeddedSignature, {
@@ -228,30 +195,34 @@ export const downloadCertificate = async (req, res) => {
       height: scaledSigHeight,
     });
 
-    page.drawText(matchingCourse.courseName || "", { x: 140, y: height - 395, size: 16, font, color: rgb(0.976, 0.596, 0.0078), });
-    page.drawText(`${matchingResult.rollNumber || ""}`, { x: 485, y: height - 160, size: 16, font, color: rgb(0.976, 0.596, 0.0078), });
-    page.drawText(`${matchingResult.certificateId || ""}`, { x: 180, y: height - 160, size: 16, font, color: rgb(0.976, 0.596, 0.0078), });
+    // Add all the text fields - using franchiseId from document level, not result level
+    page.drawText(matchingCourse.courseName || "", { x: 140, y: height - 387, size: 16, font, color: rgb(0.976, 0.596, 0.0078), });
+    page.drawText(`${matchingResult.certificateId || ""}`, { x: 425, y: height - 152, size: 16, font, color: rgb(0.976, 0.596, 0.0078), });
+    page.drawText(`${matchingResult.rollNumber || ""}`, { x: 180, y: height - 152, size: 16, font, color: rgb(0.976, 0.596, 0.0078), });
 
-    page.drawText(`${matchingResult.session || ""}`, { x: 280, y: height - 248, size: 15, font, color: rgb(0.976, 0.596, 0.0078), });
-    page.drawText(`${matchingResult.percentage || ""}%`, { x: 157, y: height - 417, size: 15, font, color: rgb(0.976, 0.596, 0.0078), });
-    page.drawText(`${matchingResult.grade || ""}+ `, { x: 276, y: height - 417, size: 15, font, color: rgb(0.976, 0.596, 0.0078), });
-    page.drawText(`${matchingResult.courseSubject || ""}`, { x: 190, y: height - 450, size: 16, font, color: rgb(0.976, 0.596, 0.0078), });
+    page.drawText(`${matchingResult.session || ""}`, { x: 278, y: height - 240, size: 15, font, color: rgb(0.976, 0.596, 0.0078), });
+    page.drawText(`${matchingResult.percentage || ""}%`, { x: 157, y: height - 408, size: 15, font, color: rgb(0.976, 0.596, 0.0078), });
+    page.drawText(`${matchingResult.grade || ""}+ `, { x: 276, y: height - 408, size: 15, font, color: rgb(0.976, 0.596, 0.0078), });
+    page.drawText(`${matchingResult.courseSubject || ""}`, { x: 190, y: height - 440, size: 16, font, color: rgb(0.976, 0.596, 0.0078), });
 
-    page.drawText(`${matchingResult.instituteName || ""}`, { x: 32, y: 328, size: 12, font, color: rgb(0.976, 0.596, 0.0078), });
-    page.drawText(`${matchingResult.certificateId || ""}`, { x: 245, y: 330, size: 7, font, color: rgb(0.976, 0.596, 0.0078), });
+    page.drawText(`${matchingResult.instituteName || ""}`, { x: 32, y: 338, size: 12, font, color: rgb(0.976, 0.596, 0.0078), });
+    // Use franchiseId from document level (cert.franchiseId), not from matchingResult
+    page.drawText(`${franchiseId || "Null"}`, { x: 246, y: 338, size: 8, font, color: rgb(0.976, 0.596, 0.0078), });
 
-    page.drawText(`${matchingResult.instituteEmail || ""}`, { x: 335, y: 50, size: 12, font });
-    page.drawText(`${matchingResult.institutePhone || ""}`, { x: 360, y: 65, size: 12, font });
+    page.drawText(`${matchingResult.instituteEmail || ""}`, { x: 335, y: 58, size: 12, font });
+    page.drawText(`${matchingResult.institutePhone || ""}`, { x: 360, y: 73, size: 12, font });
+    
     const rawDate = matchingResult.examDate || "";
     const formattedDate = rawDate ? formatDate(rawDate) : "";
 
     page.drawText(formattedDate, {
       x: 470,
-      y: height - 357,
+      y: height - 350,
       size: 16,
       font,
       color: rgb(0.976, 0.596, 0.0078),
     });
+    
     const pdfBytes = await pdfDoc.save();
 
     res.setHeader("Content-Type", "application/pdf");
@@ -262,53 +233,3 @@ export const downloadCertificate = async (req, res) => {
     res.status(500).json({ error: "Failed to generate certificate PDF" });
   }
 };
-
-
-// import fs from "fs";
-// import path from "path";
-// import { fileURLToPath } from "url";
-// import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-// import Certificate from "../models/certificate.model.js"; // adjust path if needed
-
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
-
-// export const downloadCertificate = async (req, res) => {
-//   const { certificateId } = req.params;
-
-//   try {
-//     const cert = await Certificate.findOne({
-//       "courses.results.certificateId": certificateId,
-//     });
-//     if (!cert) return res.status(404).json({ error: "Certificate not found" });
-
-//     const templatePath = path.join(__dirname, "..", "..", "templates", "certificate.pdf");
-//     const templateBytes = fs.readFileSync(templatePath);
-
-//     const pdfDoc = await PDFDocument.load(templateBytes);
-//     const page = pdfDoc.getPages()[0];
-//     const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-//     const { width, height } = page.getSize();
-
-//     // Example placements (adjust x/y for real template)
-//     page.drawText(cert.studentName, { x: 100, y: height - 100, size: 14, font, color: rgb(0, 0, 0) });
-//     page.drawText(cert.courseName, { x: 100, y: height - 130, size: 12, font, color: rgb(0, 0, 0) });
-//     page.drawText(`Roll No: ${cert.rollNumber}`, { x: 100, y: height - 160, size: 12, font });
-//     page.drawText(`Session: ${cert.session}`, { x: 100, y: height - 190, size: 12, font });
-//     page.drawText(`Percentage: ${cert.percentage}%`, { x: 100, y: height - 220, size: 12, font });
-//     page.drawText(`Grade: ${cert.grade}`, { x: 100, y: height - 250, size: 12, font });
-//     page.drawText(`Institute: ${cert.instituteName}`, { x: 100, y: height - 280, size: 12, font });
-//     page.drawText(`Email: ${cert.instituteEmail}`, { x: 100, y: height - 310, size: 12, font });
-//     page.drawText(`Phone: ${cert.institutePhone}`, { x: 100, y: height - 340, size: 12, font });
-//     page.drawText(`Exam Date: ${cert.examDate}`, { x: 100, y: height - 370, size: 12, font });
-
-//     const pdfBytes = await pdfDoc.save();
-
-//     res.setHeader("Content-Type", "application/pdf");
-//     res.setHeader("Content-Disposition", `attachment; filename=${cert.studentName}_certificate.pdf`);
-//     res.send(pdfBytes);
-//   } catch (err) {
-//     console.error("Download error:", err);
-//     res.status(500).json({ error: "Failed to generate certificate PDF" });
-//   }
-// };

@@ -44,7 +44,7 @@ export const getCoursesByFranchise = async (req, res) => {
       ]
     }).sort({ createdAt: -1 });
 
-    console.log("course :", courses);
+    // console.log("course :", courses);
     if (!courses.length) {
       return res.status(404).json({
         success: false,
@@ -64,5 +64,35 @@ export const getCoursesByFranchise = async (req, res) => {
       success: false,
       message: "Server error while fetching courses",
     });
+  }
+};
+
+export const getCourseSyllabus = async (req, res) => {
+  try {
+    const { courseCode } = req.body;
+
+    console.log("course code :",courseCode);
+    if (!courseCode) {
+      return res.status(400).json({ success: false, message: "Course code is required" });
+    }
+
+    const course = await Course.findOne({ courseCode }).select("courseCode courseName courseSyllabus");
+
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        courseCode: course.courseCode,
+        courseName: course.courseName,
+        syllabus: course.courseSyllabus,
+      }
+    });
+    // console.log("data :", data)
+  } catch (error) {
+    console.error("Error fetching course syllabus:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };

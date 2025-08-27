@@ -81,19 +81,20 @@ export const loginStudent = asyncHandler(async (req, res) => {
     }
 
     // ✅ Check if account is active
-    if (!student.status) {
+    // console.log("status :", student.status);
+    if (!(student.status === "active" || student.status === "Certified")) {
       return res.status(401).json({
         success: false,
-        message: "Your account has been deactivated. Please contact support.",
-        code: 'ACCOUNT_DEACTIVATED'
+        message: "Your account is not active. Please contact support for assistance.",
+        code: 'ACCOUNT_INACTIVE'
       });
     }
 
     // console.log("Student name:", student.studentName);
     // console.log("Father husband name:", student.fatherHusbandName);
-    console.log("Attempting login for roll number:", rollNumber);
-    console.log("Provided password:", student.password);
-    console.log("given password:", password);
+    // console.log("Attempting login for roll number:", rollNumber);
+    // console.log("Provided password:", student.password);
+    // console.log("given password:", password);
     // ✅ Compare password using the schema method (recommended) or bcrypt directly
     const isPasswordMatch = await bcrypt.compare(password, student.password);
     console.log("bcrypt.compare result:", isPasswordMatch);
@@ -290,7 +291,7 @@ export const getFranchiseLogo = async (req, res) => {
       return res.status(404).json({ success: false, message: "Franchise not found" });
     }
 
-    const logoUrl = franchise.instituteLogoUrl || franchise.ownerPhotoUrl || "Null";
+    const logoUrl = franchise.franchiseLogoUrl || franchise.ownerPhotoUrl || "Null";
     const phoneNumber = franchise.mobile;
     const Name = franchise.franchiseName;
     const email = franchise.email;

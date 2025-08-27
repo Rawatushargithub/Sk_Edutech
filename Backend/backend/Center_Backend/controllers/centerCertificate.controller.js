@@ -32,17 +32,17 @@ export const getCenterCertificate = async (req, res) => {
         const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
         // ========== Insert Passport-Size Photo ==========
-        if (franchise.ownerPhotoUrl) {
+        if (franchise.franchiseLogoUrl) {
             let photoBytes;
-            if (franchise.ownerPhotoUrl.startsWith('http')) {
-                const fetchRes = await fetch(franchise.ownerPhotoUrl);
+            if (franchise.franchiseLogoUrl.startsWith('http')) {
+                const fetchRes = await fetch(franchise.franchiseLogoUrl);
                 photoBytes = await fetchRes.arrayBuffer();
             } else {
-                const photoPath = path.join(__dirname, '..', '..', 'uploads', franchise.ownerPhoto);
+                const photoPath = path.join(__dirname, '..', '..', 'uploads', franchise.franchiseLogoUrl);
                 photoBytes = fs.readFileSync(photoPath);
             }
 
-            const imageExt = franchise.ownerPhotoUrl.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
+            const imageExt = franchise.franchiseLogoUrl.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
             const pdfImage =
                 imageExt === 'png'
                     ? await pdfDoc.embedPng(photoBytes)
@@ -50,7 +50,7 @@ export const getCenterCertificate = async (req, res) => {
 
             firstPage.drawImage(pdfImage, {
                 x: 400,
-                y: 710,
+                y: 720,
                 width: 78,
                 height: 78
             });
@@ -66,14 +66,14 @@ export const getCenterCertificate = async (req, res) => {
 
         firstPage.drawImage(qrImage, {
             x: 405,
-            y: 20,
+            y: 22,
             width: 80,
             height: 80
         });
 
         // ========== Franchise Name Box ==========
         const boxXName = 95;
-        const boxYName = 575;
+        const boxYName = 582;
         const boxWidthName = 350;
         const boxHeightName = 40;
 
@@ -102,51 +102,108 @@ export const getCenterCertificate = async (req, res) => {
             color: rgb(0, 0, 0)
         });
 
-        // ========== Address Box (Two Lines) ==========
-        const addressLine1 = franchise.address || '';
-        const addressLine2 = `${franchise.city || ''}, ${franchise.state || ''} - ${franchise.postalCode || ''}`;
+               // ✅ Helper: Word wrap
+        function wrapText(text, font, fontSize, maxWidth) {
+            const words = text.split(' ');
+            let lines = [];
+            let currentLine = '';
 
+            for (let word of words) {
+                const testLine = currentLine ? `${currentLine} ${word}` : word;
+                const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+                if (testWidth <= maxWidth) {
+                    currentLine = testLine;
+                } else {
+                    lines.push(currentLine);
+                    currentLine = word;
+                }
+            }
+            if (currentLine) lines.push(currentLine);
+            return lines;
+        }
+
+        // ========== Address Box (Auto-Wrapped) ==========
         const boxXAddr = 95;
-        const boxYAddr = 530;
+        const boxYAddr = 540;
         const boxWidthAddr = 350;
         const boxHeightAddr = 45;
-
-        // firstPage.drawRectangle({
-        //     x: boxXAddr,
-        //     y: boxYAddr,
-        //     width: boxWidthAddr,
-        //     height: boxHeightAddr,
-        //     borderColor: rgb(0, 0, 0),
-        //     borderWidth: 1
-        // });
 
         const fontSizeAddr = 14;
         const lineSpacingAddr = 15;
 
-        const textWidthAddr1 = boldFont.widthOfTextAtSize(addressLine1, fontSizeAddr);
-        const textWidthAddr2 = boldFont.widthOfTextAtSize(addressLine2, fontSizeAddr);
+        let addressLines = [];
 
-        const textXAddr1 = boxXAddr + (boxWidthAddr - textWidthAddr1) / 2;
-        const textXAddr2 = boxXAddr + (boxWidthAddr - textWidthAddr2) / 2;
+        // Wrap both parts
+        addressLines = [
+            ...wrapText(franchise.address || '', boldFont, fontSizeAddr, boxWidthAddr),
+            ...wrapText(`${franchise.city || ''}, ${franchise.state || ''} - ${franchise.postalCode || ''}`, boldFont, fontSizeAddr, boxWidthAddr)
+        ];
 
+        // Calculate height and starting Y
         const textHeightAddr = boldFont.heightAtSize(fontSizeAddr);
-        const startYAddr = boxYAddr + (boxHeightAddr - (textHeightAddr * 2 + lineSpacingAddr - 5)) / 2 + 5;
+        const totalTextHeight = addressLines.length * (textHeightAddr + 2);
+        let startYAddr = boxYAddr + (boxHeightAddr - totalTextHeight) / 2 + (addressLines.length - 1) * lineSpacingAddr;
 
-        firstPage.drawText(addressLine1, {
-            x: textXAddr1,
-            y: startYAddr + lineSpacingAddr,
-            size: fontSizeAddr,
-            font: boldFont,
-            color: rgb(0, 0, 1)
+        addressLines.forEach((line, i) => {
+            const textWidth = boldFont.widthOfTextAtSize(line, fontSizeAddr);
+            const textX = boxXAddr + (boxWidthAddr - textWidth) / 2;
+            const textY = startYAddr - i * lineSpacingAddr;
+
+            firstPage.drawText(line, {
+                x: textX,
+                y: textY,
+                size: fontSizeAddr,
+                font: boldFont,
+                color: rgb(0, 0, 1)
+            });
         });
 
-        firstPage.drawText(addressLine2, {
-            x: textXAddr2,
-            y: startYAddr,
-            size: fontSizeAddr,
-            font: boldFont,
-            color: rgb(0, 0, 1)
-        });
+        // // ========== Address Box (Two Lines) ==========
+        // const addressLine1 = franchise.address || '';
+        // const addressLine2 = `${franchise.city || ''}, ${franchise.state || ''} - ${franchise.postalCode || ''}`;
+
+        // const boxXAddr = 95;
+        // const boxYAddr = 540;
+        // const boxWidthAddr = 350;
+        // const boxHeightAddr = 45;
+
+        // // firstPage.drawRectangle({
+        // //     x: boxXAddr,
+        // //     y: boxYAddr,
+        // //     width: boxWidthAddr,
+        // //     height: boxHeightAddr,
+        // //     borderColor: rgb(0, 0, 0),
+        // //     borderWidth: 1
+        // // });
+
+        // const fontSizeAddr = 14;
+        // const lineSpacingAddr = 15;
+
+        // const textWidthAddr1 = boldFont.widthOfTextAtSize(addressLine1, fontSizeAddr);
+        // const textWidthAddr2 = boldFont.widthOfTextAtSize(addressLine2, fontSizeAddr);
+
+        // const textXAddr1 = boxXAddr + (boxWidthAddr - textWidthAddr1) / 2;
+        // const textXAddr2 = boxXAddr + (boxWidthAddr - textWidthAddr2) / 2;
+
+        // const textHeightAddr = boldFont.heightAtSize(fontSizeAddr);
+        // const startYAddr = boxYAddr + (boxHeightAddr - (textHeightAddr * 2 + lineSpacingAddr - 5)) / 2 + 5;
+
+        // firstPage.drawText(addressLine1, {
+        //     x: textXAddr1,
+        //     y: startYAddr + lineSpacingAddr,
+        //     size: fontSizeAddr,
+        //     font: boldFont,
+        //     color: rgb(0, 0, 1)
+        // });
+
+        // firstPage.drawText(addressLine2, {
+        //     x: textXAddr2,
+        //     y: startYAddr,
+        //     size: fontSizeAddr,
+        //     font: boldFont,
+        //     color: rgb(0, 0, 1)
+        // });
 
         // ========== Owner Name & Franchise ID ==========
         const ownerName = franchise.ownerName || '';
@@ -157,7 +214,7 @@ export const getCenterCertificate = async (req, res) => {
 
         firstPage.drawText(ownerName, {
             x: xOwner,
-            y: 522,
+            y: 530,
             size: fontSizeOwner,
             color: rgb(0, 0, 0),
             font: boldFont
@@ -165,7 +222,7 @@ export const getCenterCertificate = async (req, res) => {
 
         firstPage.drawText(franchise.franchiseId || '', {
             x: 300,
-            y: 383,
+            y: 390,
             size: 18,
             color: rgb(0, 0, 0),
             font: boldFont
@@ -188,7 +245,7 @@ export const getCenterCertificate = async (req, res) => {
 
         firstPage.drawText(formatDate(activationDate), {
             x: 140,
-            y: 350,
+            y: 358,
             size: 13,
             color: rgb(0, 0, 0),
             font: boldFont
@@ -196,7 +253,7 @@ export const getCenterCertificate = async (req, res) => {
 
         firstPage.drawText(formatDate(activationDate), {
             x: 420,
-            y: 350,
+            y: 358,
             size: 13,
             color: rgb(0, 0, 0),
             font: boldFont
@@ -204,7 +261,7 @@ export const getCenterCertificate = async (req, res) => {
 
         firstPage.drawText(formatDate(expiryDate), {
             x: 420,
-            y: 325,
+            y: 333,
             size: 13,
             color: rgb(0, 0, 0),
             font: boldFont

@@ -22,9 +22,34 @@ import fs from "fs" // fs is file system library provided by node js
     
         try {
             console.log("Uploading file to Cloudinary:", localfilepath);
-            const response = await cloudinary.uploader.upload(localfilepath, {
-                resource_type: "raw", // Automatically detect file type (e.g., image, video)
-            });
+            
+            // Determine resource type based on file extension
+            const fileExtension = localfilepath.split('.').pop().toLowerCase();
+            let resourceType = "auto";
+            let uploadOptions = {};
+            
+            if (fileExtension === 'pdf') {
+                resourceType = "raw";
+                uploadOptions = {
+                    resource_type: resourceType,
+                    access_mode: "public", // Make PDFs publicly accessible
+                    type: "upload"
+                };
+            } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension)) {
+                resourceType = "image";
+                uploadOptions = {
+                    resource_type: resourceType
+                };
+            } else {
+                // For other file types (doc, docx, txt, etc.)
+                resourceType = "raw";
+                uploadOptions = {
+                    resource_type: resourceType,
+                    access_mode: "public"
+                };
+            }
+            
+            const response = await cloudinary.uploader.upload(localfilepath, uploadOptions);
     
             console.log("File successfully uploaded to Cloudinary:", response);
             fs.unlinkSync(localfilepath); // Remove the file from the local server after uploading
@@ -40,28 +65,43 @@ import fs from "fs" // fs is file system library provided by node js
         }
     };
 
-    // Function to delete image from Cloudinary
-    const deleteFromCloudinary = async (imageUrl) => {
-        if (!imageUrl) return null;
+    // Function to delete file from Cloudinary (handles both images and raw files like PDFs)
+    const deleteFromCloudinary = async (fileUrl) => {
+        if (!fileUrl) return null;
         
         try {
             // Extract public_id from Cloudinary URL
-            const publicId = extractPublicId(imageUrl);
+            const publicId = extractPublicId(fileUrl);
             
             if (!publicId) {
-                console.error("Could not extract public_id from URL:", imageUrl);
-                return null;
+                console.error("Could not extract public_id from URL:", fileUrl);
+                return { success: false, error: "Could not extract public_id" };
             }
             
-            console.log("Deleting image from Cloudinary with public_id:", publicId);
+            console.log("Deleting file from Cloudinary with public_id:", publicId);
             
-            const response = await cloudinary.uploader.destroy(publicId);
-            console.log("Image deleted from Cloudinary:", response);
+            // Determine if it's a raw file (like PDF) based on URL or extension
+            const isRawFile = fileUrl.includes('/raw/') || publicId.includes('.pdf') || publicId.includes('.doc') || publicId.includes('.docx');
             
-            return response;
+            let response;
+            if (isRawFile) {
+                // For raw files (PDFs, docs, etc.), use resource_type: "raw"
+                response = await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
+            } else {
+                // For images, use default resource_type
+                response = await cloudinary.uploader.destroy(publicId);
+            }
+            
+            console.log("File deletion response from Cloudinary:", response);
+            
+            return { 
+                success: response.result === 'ok', 
+                result: response.result,
+                response: response 
+            };
         } catch (error) {
-            console.error("Error deleting image from Cloudinary:", error);
-            return null;
+            console.error("Error deleting file from Cloudinary:", error);
+            return { success: false, error: error.message };
         }
     };
 
@@ -70,7 +110,7 @@ import fs from "fs" // fs is file system library provided by node js
         try {
             console.log("Extracting public_id from Cloudinary URL:", cloudinaryUrl);
             // Example URL: https://res.cloudinary.com/demo/image/upload/v1234567890/sample.jpg
-            // Extract the public_id which is the part after the last '/' and before the file extension
+            // For raw files: https://res.cloudinary.com/demo/raw/upload/v1234567890/sample.pdf
             const urlParts = cloudinaryUrl.split('/');
             const uploadIndex = urlParts.findIndex(part => part === 'upload');
             
@@ -84,9 +124,20 @@ import fs from "fs" // fs is file system library provided by node js
                 publicIdPart = publicIdPart.split('/').slice(1).join('/');
             }
             
-            // Remove file extension
-            const publicId = publicIdPart.replace(/\.[^/.]+$/, '');
+            // For raw files (PDFs, docs, etc.), keep the file extension as part of public_id
+            // For images, remove the file extension
+            const isRawFile = cloudinaryUrl.includes('/raw/') || publicIdPart.includes('.pdf') || publicIdPart.includes('.doc') || publicIdPart.includes('.docx');
             
+            let publicId;
+            if (isRawFile) {
+                // Keep extension for raw files
+                publicId = publicIdPart;
+            } else {
+                // Remove extension for images
+                publicId = publicIdPart.replace(/\.[^/.]+$/, '');
+            }
+            
+            console.log("Extracted public_id:", publicId, "| isRawFile:", isRawFile);
             return publicId;
         } catch (error) {
             console.error("Error extracting public_id:", error);

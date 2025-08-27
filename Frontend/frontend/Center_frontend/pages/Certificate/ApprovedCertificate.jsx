@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Download } from 'lucide-react';
+import { Download, ChevronDown, ChevronRight } from 'lucide-react';
 import API_BASE_URL from "../../../config.js";
 
 const ApprovedCertificates = () => {
@@ -9,7 +9,7 @@ const ApprovedCertificates = () => {
   const [filteredCertificates, setFilteredCertificates] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [certificateId, setCertificateId] = useState("");
+  const [openCourses, setOpenCourses] = useState({});
 
   useEffect(() => {
     const id = localStorage.getItem("franchiseID");
@@ -19,7 +19,9 @@ const ApprovedCertificates = () => {
   }, []);
 
   useEffect(() => {
-    if (franchiseId) fetchApprovedCertificates();
+    if (franchiseId) {
+      fetchApprovedCertificates();
+    }
   }, [franchiseId]);
 
   const fetchApprovedCertificates = async () => {
@@ -52,7 +54,6 @@ const ApprovedCertificates = () => {
       const filteredCourses = cert.courses.map((course) => {
         const filteredResults = course.results.filter((result) => {
           return (
-            // setCertificateId(result.certificateId) ||
             result.certificateId?.toLowerCase().includes(query) ||
             result.studentName?.toLowerCase().includes(query)
           );
@@ -66,103 +67,132 @@ const ApprovedCertificates = () => {
     setFilteredCertificates(filtered);
   };
 
-  // console.log("ID :" , result.certificateId);
-  return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-4">Approved Certificates</h2>
+  const toggleCourse = (courseIdentifier) => {
+    setOpenCourses(prev => ({
+      ...prev,
+      [courseIdentifier]: !prev[courseIdentifier]
+    }));
+  };
 
-      <div className="flex mb-6">
-        <input
-          type="text"
-          placeholder="Search by Name or Certificate ID"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="border px-4 py-2 rounded-l w-full"
-        />
-        <button
-          onClick={handleSearch}
-          className="bg-blue-600 text-white px-4 py-2 rounded-r hover:bg-blue-700"
-        >
-          Search
-        </button>
+  return (
+    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
+      <h2 className="text-2xl sm:text-3xl font-bold text-slate-700 mb-6">Approved Certificates</h2>
+
+      <div className="mb-6 p-4 bg-white shadow-md rounded-lg">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <input
+            type="text"
+            placeholder="Search by Name or Certificate ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="border p-3 rounded-lg shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-slate-500"
+          />
+          <button
+            onClick={handleSearch}
+            className="bg-slate-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors"
+          >
+            Search
+          </button>
+        </div>
       </div>
 
-      {loading && <p>Loading approved certificates...</p>}
+      {loading && <p className="text-center text-gray-500 py-8">Loading approved certificates...</p>}
 
-      {filteredCertificates.length > 0 ? (
-        <div className="space-y-6">
+      {!loading && filteredCertificates.length > 0 ? (
+        <div className="space-y-8">
           {filteredCertificates.map((cert) => (
-            <div key={cert._id} className="border rounded-lg p-4 bg-gray-50">
-              <h3 className="text-lg font-semibold mb-3">
-                Franchise ID: {cert.franchiseId}
+            <div key={cert._id} className="bg-white shadow-lg rounded-lg p-4 sm:p-6">
+              <h3 className="text-xl font-bold text-slate-800 mb-4 border-b pb-2">
+                Franchise: <span className="font-medium">{cert.franchiseId}</span>
               </h3>
 
-              {cert.courses.map((course, i) => (
-                <div key={i} className="mb-4">
-                  <h4 className="text-md font-medium mb-2 text-blue-600">
-                    Course: {course.courseCode} - {course.courseName} (Exam: {course.examId})
-                  </h4>
+              <div className="space-y-4">
+                {cert.courses.map((course, i) => {
+                  const courseIdentifier = `${cert._id}-${course.courseCode}-${i}`;
+                  const isCourseOpen = openCourses[courseIdentifier];
+                  return (
+                    <div key={courseIdentifier} className="border border-gray-200 rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => toggleCourse(courseIdentifier)}
+                        className="w-full flex items-center justify-between p-4 bg-gray-100 hover:bg-gray-200 transition-colors focus:outline-none"
+                      >
+                        <div className="text-left">
+                          <h4 className="text-lg font-semibold text-slate-700">
+                            {course.courseName}
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            Course Code: {course.courseCode} | Exam: {course.examId}
+                          </p>
+                        </div>
+                        {
+                          isCourseOpen ? 
+                          <ChevronDown className="w-6 h-6 text-slate-600" /> : 
+                          <ChevronRight className="w-6 h-6 text-slate-500" />
+                        }
+                      </button>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full border text-sm">
-                      <thead>
-                        <tr className="bg-green-100">
-                          <th className="border px-3 py-2">Certificate ID</th>
-                          <th className="border px-3 py-2">Roll No</th>
-                          <th className="border px-3 py-2">Name</th>
-                          <th className="border px-3 py-2">Father</th>
-                          <th className="border px-3 py-2">Institute</th>
-                          <th className="border px-3 py-2">% Marks</th>
-                          <th className="border px-3 py-2">Grade</th>
-                          <th className="border px-3 py-2">Status</th>
-                          <th className="border px-3 py-2">Action</th>
-
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {course.results.map((result, ri) => (
-                          <tr key={ri}>
-                            <td className="border px-3 py-2">{result.certificateId}</td>
-                            <td className="border px-3 py-2">{result.rollNumber}</td>
-                            <td className="border px-3 py-2">{result.studentName}</td>
-                            <td className="border px-3 py-2">{result.fatherName}</td>
-                            <td className="border px-3 py-2">{result.instituteName}</td>
-                            <td className="border px-3 py-2">{result.percentage}%</td>
-                            <td className="border px-3 py-2">{result.grade}</td>
-                            <td className="border px-3 py-2 text-green-700 font-semibold">✓ Approved</td>
-                            <td className="border px-3 py-2">
-                              <button
-                                className="flex items-center justify-center gap-2 rounded-lg border-2 border-blue-900 bg-blue-900 px-4 py-2 text-white hover:bg-blue-800 transition-colors"
-                                onClick={() =>
-                                  window.open(
-                                    `${API_BASE_URL}/api/v1/institute_certificates/download/${encodeURIComponent(result.certificateId)}`,
-                                    "_blank"
-                                  )
-                                }
-                                aria-label="Download certificate"
-                              >
-                                <Download className="w-4 h-4" />
-                                Download
-                              </button>
-
-
-
-                            </td>
-
-
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ))}
+                      {isCourseOpen && (
+                        <div className="p-4 bg-white">
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left text-gray-600">
+                              <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                  <th scope="col" className="px-4 py-3">Certificate ID</th>
+                                  <th scope="col" className="px-4 py-3">Roll No</th>
+                                  <th scope="col" className="px-4 py-3">Name</th>
+                                  <th scope="col" className="px-4 py-3">Father's Name</th>
+                                  <th scope="col" className="px-4 py-3">Institute</th>
+                                  <th scope="col" className="px-4 py-3">% Marks</th>
+                                  <th scope="col" className="px-4 py-3">Grade</th>
+                                  <th scope="col" className="px-4 py-3">Status</th>
+                                  <th scope="col" className="px-4 py-3">Action</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {course.results.map((result, ri) => (
+                                  <tr key={ri} className="border-b hover:bg-gray-50">
+                                    <td className="px-4 py-3 font-medium text-gray-900">{result.certificateId}</td>
+                                    <td className="px-4 py-3">{result.rollNumber}</td>
+                                    <td className="px-4 py-3">{result.studentName}</td>
+                                    <td className="px-4 py-3">{result.fatherName}</td>
+                                    <td className="px-4 py-3">{result.instituteName}</td>
+                                    <td className="px-4 py-3">{result.percentage}%</td>
+                                    <td className="px-4 py-3">{result.grade}</td>
+                                    <td className="px-4 py-3 text-green-600 font-semibold">✓ Approved</td>
+                                    <td className="px-4 py-3">
+                                      <button
+                                        className="flex items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
+                                        onClick={() =>
+                                          window.open(
+                                            `${API_BASE_URL}/api/v1/institute_certificates/download/${encodeURIComponent(result.certificateId)}`,
+                                            "_blank"
+                                          )
+                                        }
+                                        aria-label="Download certificate"
+                                      >
+                                        <Download className="w-4 h-4" />
+                                        <span>Download</span>
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ))}
         </div>
       ) : (
         !loading && (
-          <p className="text-gray-600">No approved certificates found.</p>
+          <div className="text-center py-10 bg-white rounded-lg shadow p-6">
+             <p className="text-gray-500">No approved certificates found.</p>
+          </div>
         )
       )}
     </div>

@@ -146,7 +146,7 @@ const registerStudent = asyncHandler(async (req, res) => {
       gender,
       admissionDate,
     };
-
+   console.log("installments value :: ", installments);
     const missingFields = validateRequiredFields(requiredFields);
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -520,6 +520,7 @@ const registerStudent = asyncHandler(async (req, res) => {
           { session }
         );
       }
+
       // Create installment records
       const installmentRecords = [];
       if (parsedInstallments.length > 0) {
@@ -532,6 +533,10 @@ const registerStudent = asyncHandler(async (req, res) => {
                 amount: Number(installment.amount),
                 date: installment.date,
                 paid: false,
+                paymentMode: installment.paymentMode || null,
+                paymentDate: null,
+                paidAmount: 0,
+                status: "Pending"
               },
             ],
             { session }
@@ -1126,7 +1131,7 @@ const getStudents = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(limit)
     .sort({ admissionDate: -1 }); // Sort by admission date, newest first
-  console.log("students value :: ", students);
+  
   // Format the results to include the batch name in a new field
   const formattedStudents = students.map((student) => {
     // Convert to plain JavaScript object
@@ -1263,6 +1268,7 @@ const toggleStudentStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     console.log("toggleStudentStatus called with id:", id, "status:", status);
+    
     // Validate student ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -1270,13 +1276,13 @@ const toggleStudentStatus = async (req, res) => {
         message: "Invalid student ID format",
       });
     }
-    console.log("Type of status:", typeof status, "Value:", status);
 
-    // Validate status
-    if (typeof status !== "boolean") {
+    // Validate status - now accepts enum values
+    const validStatuses = ["active", "inactive", "Certified"];
+    if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Status must be a boolean value",
+        message: "Status must be one of: active, inactive, Certified",
       });
     }
 
@@ -1294,20 +1300,12 @@ const toggleStudentStatus = async (req, res) => {
         message: "Student not found",
       });
     }
-    console.log(student.toObject()); // Safely prints the raw document
-    console.log(
-      "Updated student:",
-      student.status,
-      "roll number: ",
-      student.rollNumber
-    );
-    const studentcheck = await Student.findById(id);
-    console.log("Updated student status:", studentcheck);
+    
+    console.log("Updated student:", student.status, "roll number:", student.rollNumber);
+    
     res.status(200).json({
       success: true,
-      message: `Student status updated to ${
-        status ? "Active" : "Inactive"
-      } successfully`,
+      message: `Student status updated to ${status} successfully`,
       data: {
         id: student._id,
         studentName: student.studentName,
@@ -1454,6 +1452,32 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   }
 
   // TOP SECTION - Header Information
+  // Franchise Name
+  if (franchise) {
+    drawText(franchise.franchiseName, 170, 692, rgb(0, 0, 0), boldFont, 20);
+  }
+
+  // Franchise Logo
+  if (franchise && franchise.franchiseLogoUrl) {
+    try {
+      const logoUrl = franchise.franchiseLogoUrl;
+      const logoResponse = await axios.get(logoUrl, {
+        responseType: "arraybuffer",
+      });
+      const logoBytes = Buffer.from(logoResponse.data, "binary");
+      let logoImage;
+      if (logoUrl.includes(".jpg") || logoUrl.includes(".jpeg")) {
+        logoImage = await pdfDoc.embedJpg(logoBytes);
+      } else {
+        logoImage = await pdfDoc.embedPng(logoBytes);
+      }
+      // page.drawImage(logoImage, { x: 112, y: 692, width: 50, height: 50 });
+      page.drawImage(logoImage, { x: 256, y: 709, width: 45, height: 45 });
+    } catch (error) {
+      console.error("Error fetching or embedding franchise logo:", error);
+    }
+  }
+
   // Admission Date (top left, after "ADMISSION DATE :")
   drawText(
     student.admissionDate
@@ -1534,13 +1558,13 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   // RIGHT SIDE - OFFICE USE ONLY SECTION
   // Course Fees (after "COURSE FEES :")
   if (student.feeDetails) {
-    drawText(`Rs${student.feeDetails.courseFees}`, 77, 238);
+    drawText(`Rs ${student.feeDetails.courseFees}`, 77, 238);
 
     // Paid Fees (after "PAID FEES :")
-    drawText(`Rs${student.feeDetails.feesReceived}`, 269, 238);
+    drawText(`Rs ${student.feeDetails.feesReceived}`, 269, 238);
 
     // Balance Fees (after "BALANCE FEES :")
-    drawText(`Rs${student.feeDetails.balance}`, 455, 238);
+    drawText(`Rs ${student.feeDetails.balance}`, 455, 238);
   }
 
   // Contact Number (after "CONTACT NO. :")
@@ -1672,19 +1696,19 @@ const generateIdCard = asyncHandler(async (req, res) => {
   // Populate ID card fields on first page with capitalization
   drawText(capitalizeText(student.studentName), 31, 147, rgb(0, 0, 0), boldFont, 10);
   drawText(student.rollNumber, 66, 83);
-  drawText(capitalizeText(student.courseInterested?.courseName || ''), 66, 108);
+  drawText(capitalizeText(student.courseInterested?.courseCode || ''), 66, 108);
   drawText(student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('en-GB') : '', 66, 134);
   drawText(capitalizeText(student.fatherHusbandName || student.motherName), 66, 120);
   drawText(student.studentMobile, 66, 96);
   
-  drawText(franchise.address, 38, 13, rgb(1, 1, 1));
+  drawText(franchise.address, 25, 15, rgb(1, 1, 1), font, 4);
   // Add "M:" prefix to franchise mobile number
   drawText(`M: ${franchise.mobile}`, 75, 39);
 
   // 1. Place franchise name on first page (centered at 64,243)
   const franchiseName = capitalizeText(franchise.franchiseName || franchise.name || '');
   firstPage.drawText(franchiseName, { 
-    x: 27, 
+    x: 10, 
     y: 234, 
     font: boldFont, 
     size: 10, 
@@ -1697,8 +1721,8 @@ const generateIdCard = asyncHandler(async (req, res) => {
   // const secondPageStartX = secondPageCenterX - (franchiseNameWidth / 2); // Center the text
   
   secondPage.drawText(franchiseName, { 
-    x: 72, 
-    y: 134, 
+    x: 66,
+    y: 133, 
     font: boldFont, 
     size: 4, 
     color: rgb(0, 0, 0) 

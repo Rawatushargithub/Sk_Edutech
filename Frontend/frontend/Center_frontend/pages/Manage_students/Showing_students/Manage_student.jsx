@@ -15,7 +15,7 @@ import API_BASE_URL from "../../../../config";
 import { FaUser } from "react-icons/fa";
 // Import for Excel export
 import * as XLSX from 'xlsx';
-// Import for PDF export
+// Import for PDF export 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable'; // Import autoTable separately
 
@@ -34,6 +34,9 @@ const StudentAdmissionList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [timeFilter, setTimeFilter] = useState("all");
   const [filteredStudents, setFilteredStudents] = useState([]);
+  const [activeTab, setActiveTab] = useState("active");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   // New state for export dropdown
   const [showExportDropdown, setShowExportDropdown] = useState(false);
@@ -70,20 +73,23 @@ const StudentAdmissionList = () => {
     }
   };
 
+
   // Existing useEffect
   useEffect(() => {
     const fetchStudents = async () => {
       try {
         const franchiseId = localStorage.getItem('franchiseID');
         const response = await axios.get(
-          `${API_BASE_URL}/api/v1/institute_student/get_students?franchiseId=${franchiseId}`
+          `${API_BASE_URL}/api/v1/institute_student/get_students?franchiseId=${franchiseId}` 
         );
         console.log("data coming from franchise:-" , response.data); // Log the response data for debugging
         if (Array.isArray(response.data)) {
-          setStudents(response.data);
+          const merged = await mergeFeesIntoStudents(response.data);
+          setStudents(merged);
         } else if (response.data && typeof response.data === "object") {
           const studentsArray = response.data.data || response.data.students || [];
-          setStudents(studentsArray);
+          const merged = await mergeFeesIntoStudents(studentsArray);
+          setStudents(merged);
         } else {
           console.error("Unexpected response format:", response.data);
           setStudents([]);
@@ -100,6 +106,15 @@ const StudentAdmissionList = () => {
   useEffect(() => {
     let tempStudents = students;
 
+    // 1. Filter by active tab status
+    if (activeTab === 'active') {
+      tempStudents = tempStudents.filter(student => student.status === 'active' || student.status === 'true');
+    } else if (activeTab === 'inactive') {
+      tempStudents = tempStudents.filter(student => student.status === 'inactive' || student.status === 'false');
+    } else if (activeTab === 'certified') {
+      tempStudents = tempStudents.filter(student => student.status === 'Certified');
+    }
+
     // Apply search term filter
     if (searchTerm.trim() !== "") {
       tempStudents = tempStudents.filter(s =>
@@ -114,31 +129,45 @@ const StudentAdmissionList = () => {
     // Apply time filter
     if (timeFilter !== "all") {
       const now = new Date();
-      tempStudents = tempStudents.filter(student => {
-        const admissionDate = new Date(student.admissionDate);
-        if (isNaN(admissionDate.getTime())) return false; // Skip invalid dates
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      const filterDate = (date) => {
+        const admissionDate = new Date(date);
+        if (isNaN(admissionDate.getTime())) return false;
 
         switch (timeFilter) {
-          case "week":
-            return admissionDate >= new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
-          case "month":
-            return admissionDate >= new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-          case "last_month":
-            const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            const end = new Date(now.getFullYear(), now.getMonth(), 0);
-            return admissionDate >= start && admissionDate <= end;
-          case "three_months":
-            return admissionDate >= new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
-          case "year":
-            return admissionDate >= new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-          default: return true;
+          case "today":
+            return admissionDate >= today;
+          case "yesterday":
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            return admissionDate >= yesterday && admissionDate < today;
+          case "last7days":
+            const last7days = new Date(today);
+            last7days.setDate(today.getDate() - 7);
+            return admissionDate >= last7days;
+          case "last30days":
+            const last30days = new Date(today);
+            last30days.setDate(today.getDate() - 30);
+            return admissionDate >= last30days;
+          case "custom":
+            if (startDate && endDate) {
+              const start = new Date(startDate);
+              const end = new Date(endDate);
+              end.setHours(23, 59, 59, 999); // Include the entire end day
+              return admissionDate >= start && admissionDate <= end;
+            }
+            return true;
+          default:
+            return true;
         }
-      });
+      };
+      tempStudents = tempStudents.filter(student => filterDate(student.admissionDate));
     }
 
     setFilteredStudents(tempStudents);
     setCurrentPage(1); // Reset to first page whenever filter changes
-  }, [students, searchTerm, timeFilter]);
+  }, [students, searchTerm, timeFilter, activeTab, startDate, endDate]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const entriesPerPage = 10;
@@ -159,7 +188,11 @@ const StudentAdmissionList = () => {
   const prepareExportData = (studentsData) => {
     return studentsData.map((student, index) => ({
       'S/N': index + 1,
-      'Status': student.status ? 'Active' : 'Inactive',
+      'Status': student.status === 'active' || student.status === 'true' 
+        ? 'Active' 
+        : student.status === 'Certified'
+        ? 'Certified'
+        : 'Inactive',
       'Batch': student.selectedBatch || '',
       'Student Name': student.studentName || '',
       'Student ID': student.rollNumber || '',
@@ -196,9 +229,9 @@ const StudentAdmissionList = () => {
       setShowExportDropdown(false);
       alert('Preparing Excel file... This may take a moment.');
 
-      // Fetch detailed data for all students
-      const detailedData = await fetchAllDetailedData();
-      const exportData = prepareExportData(detailedData);
+      // Use current filtered students instead of all students
+      const dataToExport = filteredStudents.length > 0 ? filteredStudents : students;
+      const exportData = prepareExportData(dataToExport);
       
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
@@ -243,7 +276,7 @@ const StudentAdmissionList = () => {
       XLSX.writeFile(wb, fileName);
       
       // Show success message
-      alert(`Excel file "${fileName}" has been downloaded successfully with all student details!`);
+      alert(`Excel file "${fileName}" has been downloaded successfully with ${exportData.length} student records!`);
     } catch (error) {
       console.error('Error exporting to Excel:', error);
       alert('Error exporting to Excel. Please try again.');
@@ -256,8 +289,8 @@ const StudentAdmissionList = () => {
       setShowExportDropdown(false);
       alert('Preparing PDF file... This may take a moment.');
 
-      // Fetch detailed data for all students
-      const detailedData = await fetchAllDetailedData();
+      // Use current filtered students instead of all students
+      const dataToExport = filteredStudents.length > 0 ? filteredStudents : students;
       
       const doc = new jsPDF('l', 'mm', 'a4'); // landscape orientation
       
@@ -271,7 +304,7 @@ const StudentAdmissionList = () => {
       doc.text(`Generated on: ${currentDate}`, 14, 28);
       
       // Prepare data for PDF table
-      const exportData = prepareExportData(detailedData);
+      const exportData = prepareExportData(dataToExport);
       
       // Define columns for PDF (selecting key columns to fit better)
       const columns = [
@@ -322,7 +355,7 @@ const StudentAdmissionList = () => {
       doc.save(fileName);
       
       // Show success message
-      alert(`PDF file "${fileName}" has been downloaded successfully with student details!`);
+      alert(`PDF file "${fileName}" has been downloaded successfully with ${dataToExport.length} student records!`);
     } catch (error) {
       console.error('Error exporting to PDF:', error);
       alert('Error exporting to PDF. Please try again.');
@@ -357,9 +390,22 @@ const StudentAdmissionList = () => {
   const confirmStatusToggle = async () => {
     if (!statusToggleStudent) return;
 
+    // ✅ ADD THIS CHECK
+  if (statusToggleStudent.status === 'Certified') {
+    alert('Certified students cannot have their status changed.');
+    setShowStatusPopup(false);
+    setStatusToggleStudent(null);
+    return;
+  }
+
     try {
-      const newStatus = !statusToggleStudent.status;
-      
+      // Determine next status based on current status
+      let newStatus;
+      if (statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true') {
+        newStatus = 'inactive';
+      } else if (statusToggleStudent.status === 'inactive' || statusToggleStudent.status === 'false') {
+        newStatus = 'active';
+      } 
       const response = await axios.patch(
         `${API_BASE_URL}/api/v1/institute_student/toggle_status/${statusToggleStudent._id}`,
         { status: newStatus }
@@ -398,6 +444,37 @@ const StudentAdmissionList = () => {
 
   const handleViewForm = () => {
     setShowFormPopup(true);
+  };
+
+  // Merge fees data (from fees endpoint) into base students by rollNumber
+  const mergeFeesIntoStudents = async (baseStudents) => {
+    try {
+      const franchiseId = localStorage.getItem('franchiseID');
+      const resp = await axios.get(
+        `${API_BASE_URL}/api/v1/institute_fees/students?limit=1000&page=1&franchiseId=${franchiseId}`
+      );
+      const feeList = resp.data?.data || [];
+      const feeMap = new Map(feeList.map((s) => [s.rollNumber, s]));
+
+      return baseStudents.map((s) => {
+        const fee = feeMap.get(s.rollNumber);
+        if (fee) {
+          const dueFee = typeof fee.dueFee === 'number'
+            ? fee.dueFee
+            : (Number(fee.totalFee || 0) - Number(fee.paidFee || 0));
+          return {
+            ...s,
+            totalFee: fee.totalFee,
+            paidFee: fee.paidFee,
+            dueFee,
+          };
+        }
+        return s;
+      });
+    } catch (error) {
+      console.error('Error fetching fees data:', error);
+      return baseStudents;
+    }
   };
 
   const handleViewIDCard = () => {
@@ -481,6 +558,40 @@ const StudentAdmissionList = () => {
           </div>
         </div>
 
+        {/* Tabs for student status */}
+        <div className="mb-4 border-b border-gray-200">
+          <ul className="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500">
+            <li className="mr-2">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`inline-block p-4 rounded-t-lg border-b-2 ${activeTab === 'all' ? 'text-blue-600 border-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}`}>
+                All Students
+              </button>
+            </li>
+            <li className="mr-2">
+              <button
+                onClick={() => setActiveTab('active')}
+                className={`inline-block p-4 rounded-t-lg border-b-2 ${activeTab === 'active' ? 'text-blue-600 border-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}`}>
+                Active Students
+              </button>
+            </li>
+            <li className="mr-2">
+              <button
+                onClick={() => setActiveTab('inactive')}
+                className={`inline-block p-4 rounded-t-lg border-b-2 ${activeTab === 'inactive' ? 'text-blue-600 border-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}`}>
+                Inactive Students
+              </button>
+            </li>
+            <li className="mr-2">
+              <button
+                onClick={() => setActiveTab('certified')}
+                className={`inline-block p-4 rounded-t-lg border-b-2 ${activeTab === 'certified' ? 'text-blue-600 border-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}`}>
+                Certified Students
+              </button>
+            </li>
+          </ul>
+        </div>
+
         {/* Filter and Search Controls */}
         <div className="flex flex-col md:flex-row justify-between items-center my-4 gap-4">
   {/* Left: Showing X of Y */}
@@ -515,18 +626,37 @@ const StudentAdmissionList = () => {
     </div>
 
     {/* Filter Dropdown */}
-    <select
-      value={timeFilter}
-      onChange={e => setTimeFilter(e.target.value)}
-      className="p-2 border border-gray-300 rounded-md"
-    >
-      <option value="all">All Time</option>
-      <option value="week">This Week</option>
-      <option value="month">This Month</option>
-      <option value="last_month">Last Month</option>
-      <option value="three_months">Last 3 Months</option>
-      <option value="year">This Year</option>
-    </select>
+    <div className="flex items-center gap-4">
+      <select
+        value={timeFilter}
+        onChange={(e) => setTimeFilter(e.target.value)}
+        className="p-2 border border-gray-300 rounded-md"
+      >
+        <option value="all">All Time</option>
+        <option value="today">Today</option>
+        <option value="yesterday">Yesterday</option>
+        <option value="last7days">Last 7 Days</option>
+        <option value="last30days">Last 30 Days</option>
+        <option value="custom">Custom Range</option>
+      </select>
+      {timeFilter === 'custom' && (
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="p-2 border border-gray-300 rounded-md"
+          />
+          <span>to</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="p-2 border border-gray-300 rounded-md"
+          />
+        </div>
+      )}
+    </div>
   </div>
 </div>
 
@@ -540,15 +670,17 @@ const StudentAdmissionList = () => {
                 <th className="border border-gray-300 px-4 py-2">S/N</th>
                 <th className="border border-gray-300 px-4 py-2">Action</th>
                 <th className="border border-gray-300 px-4 py-2">Status</th>
-                <th className="border border-gray-300 px-4 py-2">Batch</th>
                 <th className="border border-gray-300 px-4 py-2">Student Name</th>
                 <th className="border border-gray-300 px-4 py-2">StudentID</th>
                 <th className="border border-gray-300 px-4 py-2">Course Name</th>
-                <th className="border border-gray-300 px-4 py-2">Course ID</th>
                 <th className="border border-gray-300 px-4 py-2">Mobile</th>
+                <th className="border border-gray-300 px-4 py-2">Course ID</th>
+                <th className="border border-gray-300 px-4 py-2">Batch</th>
+                <th className="border border-gray-300 px-4 py-2">Admission Date</th>
+                <th className="border border-gray-300 px-4 py-2">Due Fee</th>
                 <th className="border border-gray-300 px-4 py-2">Referral Code</th>
                 <th className="border border-gray-300 px-4 py-2">Referral Name</th>
-                <th className="border border-gray-300 px-4 py-2">Admission Date</th>
+                
               </tr>
             </thead>
             <tbody>
@@ -566,24 +698,35 @@ const StudentAdmissionList = () => {
                     </button>
                   </td>
                   <td className="p-2 border">
-                    <button 
-                      onClick={() => handleStatusToggleClick(student)}
-                      className={`px-2 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
-                        student.status ? "bg-green-200 text-green-800 hover:bg-green-300" : "bg-red-200 text-red-800 hover:bg-red-300"
-                      }`}
-                    >
-                      {student.status ? "Active" : "Inactive"}
+                  <button 
+  {...(student.status !== 'Certified' && { onClick: () => handleStatusToggleClick(student) })}
+  className={`px-2 py-1 rounded-full text-sm font-medium ${
+    student.status === 'Certified'
+      ? "bg-blue-200 text-blue-800 cursor-not-allowed opacity-75" 
+      : student.status === 'active' || student.status === 'true' 
+        ? "bg-green-200 text-green-800 hover:bg-green-300" 
+        : "bg-red-200 text-red-800 hover:bg-red-300"
+  }`}
+  disabled={student.status === 'Certified'}
+>
+                      {student.status === 'active' || student.status === 'true' 
+                        ? "Active" 
+                        : student.status === 'Certified'
+                        ? "Certified"
+                        : "Inactive"}
                     </button>
                   </td>
-                  <td className="border border-gray-300 px-4 py-2">{student.selectedBatch || student.batch}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.studentName}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.rollNumber}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.courseInterested?.courseName}</td>
-                  <td className="border border-gray-300 px-4 py-2">{student.courseInterested?.courseCode}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.studentMobile}</td>
+                  <td className="border border-gray-300 px-4 py-2">{student.courseInterested?.courseCode}</td>
+                  <td className="border border-gray-300 px-4 py-2">{student.selectedBatch || student.batch}</td>
+                  <td className="border border-gray-300 px-4 py-2">{student.admissionDate}</td>
+                  <td className="border border-gray-300 px-4 py-2 text-red-600">₹{Number((student.dueFee ?? (Number(student.totalFee || 0) - Number(student.paidFee || 0))) || 0).toLocaleString()}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.referralCode}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.referralName}</td>
-                  <td className="border border-gray-300 px-4 py-2">{student.admissionDate}</td>
+                  
                 </tr>
               ))}
             </tbody>
@@ -628,8 +771,18 @@ const StudentAdmissionList = () => {
             <p className="text-gray-600 mb-6">
               Are you sure you want to change the status of{" "}
               <strong>{statusToggleStudent.studentName}</strong> to{" "}
-              <strong className={statusToggleStudent.status ? "text-red-600" : "text-green-600"}>
-                {statusToggleStudent.status ? "Inactive" : "Active"}
+              <strong className={
+                statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' 
+                  ? "text-red-600" 
+                  : statusToggleStudent.status === 'Certified'
+                  ? "text-green-600"
+                  : "text-green-600"
+              }>
+                {statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' 
+                  ? "Inactive" 
+                  : statusToggleStudent.status === 'Certified'
+                  ? "Active"
+                  : "Active"}
               </strong>?
             </p>
             <div className="flex justify-end space-x-3">
@@ -642,12 +795,16 @@ const StudentAdmissionList = () => {
               <button
                 onClick={confirmStatusToggle}
                 className={`px-4 py-2 rounded text-white transition-colors ${
-                  statusToggleStudent.status
+                  statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true'
                     ? "bg-red-500 hover:bg-red-600"
                     : "bg-green-500 hover:bg-green-600"
                 }`}
               >
-                {statusToggleStudent.status ? "Deactivate" : "Activate"}
+                {statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' 
+                  ? "Deactivate" 
+                  : statusToggleStudent.status === 'Certified'
+                  ? "Activate"
+                  : "Activate"}
               </button>
             </div>
           </div>

@@ -8,7 +8,7 @@ const StudentProfile = ({ student, onClose, onEdit, onViewForm, onViewIDCard }) 
   // Handle edit with student data
   const handleEditProfile = () => {
     // Store student data in localStorage as fallback
-    localStorage.setItem('editStudentData', JSON.stringify(student));
+    localStorage.setItem("editStudentData", JSON.stringify(student));
     // Call the onEdit function from parent with student data
     if (onEdit) {
       onEdit(student._id);
@@ -83,7 +83,11 @@ Referral Code: ${student.referralCode || "N/A"}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-8 h-8"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
                 </div>
@@ -99,10 +103,15 @@ Referral Code: ${student.referralCode || "N/A"}
             <h2 className="text-xl font-bold text-gray-800 mb-2">
               {student.studentName || "Student Name"}
             </h2>
-            <div className={`font-medium text-gray-400 mb-2`}>{student.rollNumber}</div>
+            <div className={`font-medium text-gray-400 mb-2`}>
+              {student.rollNumber}
+            </div>
 
             <span
-              className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${student.status
+
+              className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                student.status
+
                   ? "bg-green-100 text-green-800"
                   : "bg-red-100 text-red-800"
                 }`}
@@ -115,34 +124,48 @@ Referral Code: ${student.referralCode || "N/A"}
           <div className="mb-4">
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <span className="text-sm font-medium text-gray-700">Mobile</span>
-              <span className="text-sm text-gray-800">{student.studentMobile || "N/A"}</span>
+              <span className="text-sm text-gray-800">
+                {student.studentMobile || "N/A"}
+              </span>
             </div>
 
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <span className="text-sm font-medium text-gray-700">Email</span>
-              <span className="text-sm text-gray-800 truncate ml-2">{student.email || "N/A"}</span>
+              <span className="text-sm text-gray-800 truncate ml-2">
+                {student.email || "N/A"}
+              </span>
             </div>
 
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <span className="text-sm font-medium text-gray-700">Course</span>
-              <span className="text-sm text-gray-800">{student.courseInterested?.courseName || "N/A"}</span>
+              <span className="text-sm text-gray-800">
+                {student.courseInterested?.courseName || "N/A"}
+              </span>
             </div>
 
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
               <span className="text-sm font-medium text-gray-700">Batch</span>
-              <span className="text-sm text-gray-800">{student.batch || "N/A"}</span>
+              <span className="text-sm text-gray-800">
+                {student.batch || "N/A"}
+              </span>
             </div>
 
-
-
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-sm font-medium text-gray-700">Admission Date</span>
-              <span className="text-sm text-gray-800">{student.admissionDate || "N/A"}</span>
+              <span className="text-sm font-medium text-gray-700">
+                Admission Date
+              </span>
+              <span className="text-sm text-gray-800">
+                {student.admissionDate || "N/A"}
+              </span>
             </div>
 
             <div className="flex items-center justify-between py-2">
-              <span className="text-sm font-medium text-gray-700">Referral Code</span>
-              <span className="text-sm text-gray-800">{student.referralCode || "N/A"}</span>
+              <span className="text-sm font-medium text-gray-700">
+                Referral Code
+              </span>
+              <span className="text-sm text-gray-800">
+                {student.referralCode || "N/A"}
+              </span>
             </div>
           </div>
 
@@ -215,7 +238,6 @@ Referral Code: ${student.referralCode || "N/A"}
           </div>
         </div>
       </div>
-
     </div>
   );
 };

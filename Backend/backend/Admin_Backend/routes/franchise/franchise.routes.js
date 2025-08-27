@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import {
     addFranchiseByAdmin,
-    // applyForFranchise, // Placeholder for future use
     getFranchiseRequests,
     updateFranchiseStatusVerification,
     getAllFranchises,
@@ -16,6 +15,8 @@ import {
     getFranchiseCount,
     getFranchiseByFranchiseId,
     updateFranchiseContact ,
+    getStudentCountByFranchise,
+    getAllFranchiseStudentCounts,
 
 } from '../../controllers/Franchise/franchise.controller.js';
 import { upload } from '../../middlewares/franchise.multer.middleware.js'; // Assuming multer middleware is configured here
@@ -69,33 +70,12 @@ router.post("/login", loginFranchise);
 router.get("/verify/:franchiseId", verificationCheck);
 router.patch("/:franchiseId/status", updateFranchiseStatusOnly);
 
-// --- Franchise Self Info Route ---
-// This endpoint returns the franchise info for the currently logged-in franchise user
-router.route('/me').get(
-    // requireFranchiseAuth, // Uncomment if you have authentication middleware
-    async (req, res, next) => {
-        try {
-            // You must have authentication middleware that sets req.user._id to the franchise's MongoDB _id
-            const franchiseId = req.user?._id;
-            if (!franchiseId) {
-                return res.status(401).json({ statusCode: 401, message: "Unauthorized: Franchise not logged in" });
-            }
-            // Reuse the getFranchiseById controller logic
-            req.params.franchiseId = franchiseId;
-            return getFranchiseById(req, res, next);
-        } catch (err) {
-            next(err);
-        }
-    }
-);
 
 router.get("/getprofile/:franchiseId", getFranchiseByFranchiseId);
 
+router.get('/:franchiseId/count', getStudentCountByFranchise);
 
-// --- Franchise Application Route (Future Implementation) ---
-// router.route('/apply').post(
-//     upload.fields([ ...fields needed for application... ]),
-//     applyForFranchise
-// );
+// Route to get student counts for all franchises
+router.get('/students/counts', getAllFranchiseStudentCounts);
 
 export default router;

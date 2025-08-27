@@ -291,7 +291,10 @@ export const getFranchiseLogo = async (req, res) => {
       return res.status(404).json({ success: false, message: "Franchise not found" });
     }
 
-    const logoUrl = franchise.franchiseLogoUrl || franchise.ownerPhotoUrl || "Null";
+
+    const logoUrl = franchise.instituteLogoUrl || franchise.franchiseLogoUrl || "Null";
+
+
     const phoneNumber = franchise.mobile;
     const Name = franchise.franchiseName;
     const email = franchise.email;
@@ -340,6 +343,3 @@ export const getStudentImage = async (req, res) => {
     res.status(500).json({ error: "Server Error" });
   }
 };
-
-
-

@@ -132,13 +132,25 @@ const Fees_table = ({
   };
 
   // Handle Adding Installments
-  const addInstallment = () => {
-    setInstallments([...installments, { name: "", amount: 0, date: "" }]);
+  const addInstallment = () => {  
+    const newInstallments = [...installments, { name: "", amount: 0, date: "", paymentMode: "Cash" }];
+    setInstallments(newInstallments);
+    // Update parent formData immediately
+    setFormData((prev) => ({
+      ...prev,
+      installments: newInstallments,
+    }));
   };
 
   // Handle Removing Installments
   const removeInstallment = (index) => {
-    setInstallments(installments.filter((_, i) => i !== index));
+    const newInstallments = installments.filter((_, i) => i !== index);
+    setInstallments(newInstallments);
+    // Update parent formData immediately
+    setFormData((prev) => ({
+      ...prev,
+      installments: newInstallments,
+    }));
   };
 
   // Handle Installment Change
@@ -146,6 +158,11 @@ const Fees_table = ({
     const updatedInstallments = [...installments];
     updatedInstallments[index][field] = value;
     setInstallments(updatedInstallments);
+    // Update parent formData immediately
+    setFormData((prev) => ({
+      ...prev,
+      installments: updatedInstallments,
+    }));
   };
 
   // Recalculate when dependencies change - include formData.courseFees
@@ -281,7 +298,7 @@ const Fees_table = ({
       <div>
         <h2 className="font-bold">Installment Details</h2>
         {installments.map((installment, index) => (
-          <div className="grid grid-cols-5 gap-4 items-center mb-2" key={index}>
+          <div className="grid grid-cols-6 gap-4 items-center mb-2" key={index}>
             <input
               type="text"
               placeholder="Installment Name"
@@ -308,6 +325,17 @@ const Fees_table = ({
                 handleInstallmentChange(index, "date", e.target.value)
               }
             />
+            <select
+              className="col-span-1 border rounded px-2 py-2"
+              value={installment.paymentMode || "Cash"}
+              onChange={(e) =>
+                handleInstallmentChange(index, "paymentMode", e.target.value)
+              }
+            >
+              <option value="Cash">Cash</option>
+              <option value="Card">Card</option>
+              <option value="UPI">UPI</option>
+            </select>
             <button
               type="button"
               className="col-span-1 bg-red-500 text-white px-4 py-2 rounded"

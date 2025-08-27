@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, Trash2 } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useStudentContext } from "../../context/StudentContext.jsx";
@@ -12,10 +13,10 @@ const EnquiryForm = () => {
   const [formData, setFormData] = useState({
     abbreviation: "Mr.",
     studentName: "",
-    relation: "S/o",
-    guardianName: "",
+    relationType: "S/o",
+    fatherHusbandName: "",
+    surnameName: "",
     motherName: "",
-    // Updated courseInterested structure to match schema
     courseInterested: {
       courseName: "",
       courseCode: "",
@@ -23,14 +24,26 @@ const EnquiryForm = () => {
     studentMobile: "",
     alternateMobile: "",
     email: "",
-    dateOfBirth: "",
+    dob: "",
     gender: "",
-    state: "",
     city: "",
-    postcode: "",
+    postCode: "",
     permanentAddress: "",
     referralCode: "",
-    enquiryDate: new Date().toISOString().split("T")[0], // Set default to today
+    caste: "",
+    qualifications: "",
+    occupation: "",
+    admissionDate: new Date().toISOString().split("T")[0],
+    enquiryDate: new Date().toISOString().split("T")[0],
+    courseFees: 0,
+    discountRate: 0,
+    discountAmount: 0,
+    totalFees: 0,
+    feesReceived: 0,
+    paymentMode: "Cash",
+    balance: 0,
+    remarks: "",
+    installments: [],
   });
 
   const navigate = useNavigate();
@@ -38,96 +51,73 @@ const EnquiryForm = () => {
   const [error, setError] = useState(null);
   const [courses, setCourses] = useState([]);
 
-  // Indian States Data
-  const indianStates = [
-    { value: "andhra-pradesh", label: "Andhra Pradesh" },
-    { value: "arunachal-pradesh", label: "Arunachal Pradesh" },
-    { value: "assam", label: "Assam" },
-    { value: "bihar", label: "Bihar" },
-    { value: "chhattisgarh", label: "Chhattisgarh" },
-    { value: "goa", label: "Goa" },
-    { value: "gujarat", label: "Gujarat" },
-    { value: "haryana", label: "Haryana" },
-    { value: "himachal-pradesh", label: "Himachal Pradesh" },
-    { value: "jharkhand", label: "Jharkhand" },
-    { value: "karnataka", label: "Karnataka" },
-    { value: "kerala", label: "Kerala" },
-    { value: "madhya-pradesh", label: "Madhya Pradesh" },
-    { value: "maharashtra", label: "Maharashtra" },
-    { value: "manipur", label: "Manipur" },
-    { value: "meghalaya", label: "Meghalaya" },
-    { value: "mizoram", label: "Mizoram" },
-    { value: "nagaland", label: "Nagaland" },
-    { value: "odisha", label: "Odisha" },
-    { value: "punjab", label: "Punjab" },
-    { value: "rajasthan", label: "Rajasthan" },
-    { value: "sikkim", label: "Sikkim" },
-    { value: "tamil-nadu", label: "Tamil Nadu" },
-    { value: "telangana", label: "Telangana" },
-    { value: "tripura", label: "Tripura" },
-    { value: "uttar-pradesh", label: "Uttar Pradesh" },
-    { value: "uttarakhand", label: "Uttarakhand" },
-    { value: "west-bengal", label: "West Bengal" },
-  ];
-
-  // Fetch courses on component mount
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-                const franchiseId = localStorage.getItem('franchiseID');
-
+        const franchiseId = localStorage.getItem('franchiseID');
         const response = await axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`);
-        console.log("course fetching :: ", response);
-        setCourses(response.data); // Assuming the response is an array of course object
+        setCourses(response.data);
       } catch (error) {
         console.error("Error fetching courses:", error);
         toast.error("Failed to fetch courses");
       }
     };
-
     fetchCourses();
   }, []);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+  useEffect(() => {
+    const courseFees = parseFloat(formData.courseFees) || 0;
+    const discountRate = parseFloat(formData.discountRate) || 0;
+    const feesReceived = parseFloat(formData.feesReceived) || 0;
 
-    // Validation for mobile number
-    if (name === "studentMobile" || name === "alternateMobile") {
-      if (value === "" || /^\d{0,10}$/.test(value)) {
-        setFormData({ ...formData, [name]: value });
-      }
-      return;
-    }
+    const discountAmount = (courseFees * discountRate) / 100;
+    const totalFees = courseFees - discountAmount;
+    const balance = totalFees - feesReceived;
 
-    // Validation for postcode
-    if (name === "postcode") {
-      if (value === "" || /^\d{0,6}$/.test(value)) {
-        setFormData({ ...formData, [name]: value });
-      }
-      return;
-    }
+    setFormData(prev => ({
+      ...prev,
+      discountAmount: discountAmount.toFixed(2),
+      totalFees: totalFees.toFixed(2),
+      balance: balance.toFixed(2)
+    }));
+  }, [formData.courseFees, formData.discountRate, formData.feesReceived]);
 
-    // Validation for city (only letters, spaces, and basic punctuation)
-    if (name === "city") {
-      if (value === "" || /^[a-zA-Z\s.-]*$/.test(value)) {
-        setFormData({ ...formData, [name]: value });
-      }
-      return;
-    }
-
-    // For all other fields
-    setFormData({ ...formData, [name]: value });
+  // Convert date from YYYY-MM-DD to DD-MM-YYYY format
+  const convertDateToBackendFormat = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
 
-  // Handler for course selection
+  // Convert date from DD-MM-YYYY to YYYY-MM-DD format for input display
+  const convertDateToInputFormat = (dateString) => {
+    if (!dateString) return "";
+    if (dateString.includes('-') && dateString.split('-')[0].length === 4) {
+      return dateString; // Already in YYYY-MM-DD format
+    }
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}-${parts[1]}-${parts[0]}`; // Convert DD-MM-YYYY to YYYY-MM-DD
+    }
+    return dateString;
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    // Trim string values to remove leading/trailing spaces, except for mobile and postcode
+    const trimmedValue = typeof value === 'string' && name !== 'studentMobile' && name !== 'alternateMobile' && name !== 'postCode' ? value.trim() : value;
+    setFormData({ ...formData, [name]: trimmedValue });
+  };
+
   const handleCourseChange = (e) => {
     const selectedCourseId = e.target.value;
-
     if (selectedCourseId) {
       const selectedCourse = courses.find(
         (course) => course._id === selectedCourseId
       );
-
       if (selectedCourse) {
         setFormData({
           ...formData,
@@ -135,121 +125,116 @@ const EnquiryForm = () => {
             courseName: selectedCourse.courseName,
             courseCode: selectedCourse.courseCode,
           },
+          courseFees: selectedCourse.courseFees || 0,
         });
-      } else {
-        toast.error("Invalid course selection");
       }
     } else {
-      // Reset course selection if no course is selected
       setFormData({
         ...formData,
-        courseInterested: {
-          courseName: "",
-          courseCode: "",
-        },
+        courseInterested: { courseName: "", courseCode: "" },
+        courseFees: 0,
       });
     }
   };
 
+  const addInstallment = () => {
+    setFormData({
+      ...formData,
+      installments: [...formData.installments, { installmentDate: "", installmentAmount: 0 }]
+    });
+  };
+
+  const handleInstallmentChange = (index, e) => {
+    const { name, value } = e.target;
+    const installments = [...formData.installments];
+    
+    if (name === 'installmentAmount') {
+      installments[index][name] = parseFloat(value) || 0;
+    } else {
+      // Trim string values for installment fields
+      const trimmedValue = typeof value === 'string' ? value.trim() : value;
+      installments[index][name] = trimmedValue;
+    }
+    
+    setFormData({ ...formData, installments });
+  };
+
+  const removeInstallment = (index) => {
+    const installments = [...formData.installments];
+    installments.splice(index, 1);
+    setFormData({ ...formData, installments });
+  };
+
   const handlenquiry = async (e) => {
     e.preventDefault();
-
-    // Validation
-    if (!formData.studentName.trim()) {
-      toast.error("Student name is required");
+    if (!formData.studentName.trim() || !formData.fatherHusbandName.trim() || !formData.motherName.trim() || !formData.studentMobile.trim() || !formData.courseInterested.courseName) {
+      toast.error("Please fill all required fields");
       return;
     }
-
-    if (!formData.guardianName.trim()) {
-      toast.error("Guardian name is required");
-      return;
-    }
-
-    if (!formData.motherName.trim()) {
-      toast.error("Mother name is required");
-      return;
-    }
-
-    if (!formData.studentMobile.trim()) {
-      toast.error("Student mobile is required");
-      return;
-    }
-
     if (formData.studentMobile.length !== 10) {
       toast.error("Mobile number must be 10 digits");
       return;
     }
 
-    if (!formData.courseInterested.courseName) {
-      toast.error("Please select a course");
-      return;
-    }
-
     const franchiseId = localStorage.getItem("franchiseID");
-
-    // Create student object from form data
+    
+    // Prepare student data with proper formatting and type conversion
     const studentData = {
-      studentName: `${formData.abbreviation} ${formData.studentName}`,
-      relation: formData.relation,
-      guardianName: formData.guardianName,
-      motherName: formData.motherName,
-      courseInterested: formData.courseInterested, // Now properly structured
-      studentMobile: formData.studentMobile,
-      alternateMobile: formData.alternateMobile,
-      email: formData.email,
-      dateOfBirth: formData.dateOfBirth,
-      gender: formData.gender,
-      state: formData.state,
-      city: formData.city,
-      postcode: formData.postcode,
-      permanentAddress: formData.permanentAddress,
-      referralCode: formData.referralCode,
-      enquiryDate: formData.enquiryDate,
+      ...formData,
+      studentName: `${formData.abbreviation.trim()} ${formData.studentName.trim()}`,
       franchiseId: franchiseId,
       status: "pending",
+      // Trim string fields before sending to backend
+      fatherHusbandName: formData.fatherHusbandName.trim(),
+      surnameName: formData.surnameName.trim(),
+      motherName: formData.motherName.trim(),
+      email: formData.email.trim(),
+      city: formData.city.trim(),
+      permanentAddress: formData.permanentAddress.trim(),
+      referralCode: formData.referralCode.trim(),
+      caste: formData.caste.trim(),
+      qualifications: formData.qualifications.trim(),
+      occupation: formData.occupation.trim(),
+      remarks: formData.remarks.trim(),
+      // Convert dates to DD-MM-YYYY format for backend
+      dob: convertDateToBackendFormat(formData.dob),
+      admissionDate: convertDateToBackendFormat(formData.admissionDate),
+      enquiryDate: convertDateToBackendFormat(formData.enquiryDate),
+      // Ensure numeric fields are properly converted
+      courseFees: parseFloat(formData.courseFees) || 0,
+      discountRate: parseFloat(formData.discountRate) || 0,
+      discountAmount: parseFloat(formData.discountAmount) || 0,
+      totalFees: parseFloat(formData.totalFees) || 0,
+      feesReceived: parseFloat(formData.feesReceived) || 0,
+      balance: parseFloat(formData.balance) || 0,
+      // Process installments to ensure proper format
+      installments: formData.installments.map(installment => ({
+        installmentDate: convertDateToBackendFormat(installment.installmentDate),
+        installmentAmount: parseFloat(installment.installmentAmount) || 0
+      }))
     };
+
+    console.log("Sending student data:", studentData); // Debug log
 
     try {
       setLoading(true);
-      // Send data to backend
-      const response = await axios.post(
-        `${API_BASE_URL}/api/v1/institute_enquiry`,
-        studentData
-      );
-      console.log(response);
-
-      // Add to local context
+      const response = await axios.post(`${API_BASE_URL}/api/v1/institute_enquiry`, studentData);
       addStudent(response.data);
-
-      // Show success message
       toast.success("Enquiry submitted successfully!");
-
-      // Reset loading state
       setLoading(false);
-
-      // Navigate back to home page after a short delay
-      setTimeout(() => {
-        navigate("/institute");
-      }, 1500);
+      setTimeout(() => navigate("/institute"), 1500);
     } catch (err) {
       setLoading(false);
       setError("Failed to submit enquiry");
-      console.error("Error submitting enquiry:", err);
-
-      // Better error handling
-      const errorMessage =
-        err.response?.data?.message ||
-        "Failed to submit enquiry. Please try again.";
+      const errorMessage = err.response?.data?.message || "Failed to submit enquiry. Please try again.";
       toast.error(errorMessage);
+      console.error("Error submitting enquiry:", err.response?.data || err.message);
     }
   };
 
-  const GoBack = () => {
-    navigate("/institute");
-  };
+  const GoBack = () => navigate("/institute");
 
-  const inputStyle =
-    "w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
+  const inputStyle = "w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
   const labelStyle = "block text-sm font-medium text-gray-700 mb-2";
   const requiredStar = <span className="text-red-500 ml-1">*</span>;
 
@@ -258,161 +243,59 @@ const EnquiryForm = () => {
       <ToastContainer position="top-right" autoClose={5000} />
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          {/* Header */}
-          <div className="bg-[#457B9D] from-blue-500 to-blue-600 px-8 py-4">
-            <h1 className="text-2xl font-bold text-white">
-              Add New Student Enquiry
-            </h1>
+          <div className="bg-[#457B9D] px-8 py-4">
+            <h1 className="text-2xl font-bold text-white">Add New Student Enquiry</h1>
           </div>
-
-          {/* Form Content */}
           <form onSubmit={handlenquiry} className="p-8 space-y-8">
-            {/* Loading spinner */}
-            {loading && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white p-4 rounded-lg">
-                  <p className="text-gray-800">Processing...</p>
-                </div>
-              </div>
-            )}
-
-            {/* Error message */}
-            {error && (
-              <div
-                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-                role="alert"
-              >
-                <strong className="font-bold">Error!</strong>
-                <span className="block sm:inline"> {error}</span>
-              </div>
-            )}
-
             {/* Personal Information Section */}
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">
-                Personal Information
-              </h2>
-
-              {/* Name Row */}
+              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Personal Information</h2>
               <div className="grid grid-cols-12 gap-6">
                 <div className="col-span-2">
-                  <label htmlFor="abbreviation" className={labelStyle}>
-                    Title {requiredStar}
-                  </label>
-                  <select
-                    id="abbreviation"
-                    name="abbreviation"
-                    value={formData.abbreviation}
-                    onChange={handleInputChange}
-                    required
-                    className={inputStyle}
-                  >
+                  <label htmlFor="abbreviation" className={labelStyle}>Title {requiredStar}</label>
+                  <select id="abbreviation" name="abbreviation" value={formData.abbreviation} onChange={handleInputChange} required className={inputStyle}>
                     <option value="Mr.">Mr.</option>
                     <option value="Mrs.">Mrs.</option>
                     <option value="Ms.">Ms.</option>
                   </select>
                 </div>
-
-                <div className="col-span-7">
-                  <label htmlFor="studentName" className={labelStyle}>
-                    Student Name {requiredStar}
-                  </label>
-                  <input
-                    type="text"
-                    id="studentName"
-                    name="studentName"
-                    value={formData.studentName}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="Enter Student Name"
-                    className={inputStyle}
-                  />
+                <div className="col-span-5">
+                  <label htmlFor="studentName" className={labelStyle}>Student Name {requiredStar}</label>
+                  <input type="text" id="studentName" name="studentName" value={formData.studentName} onChange={handleInputChange} required placeholder="Enter Student Name" className={inputStyle} />
                 </div>
-
+                <div className="col-span-5">
+                  <label htmlFor="surnameName" className={labelStyle}>Surname</label>
+                  <input type="text" id="surnameName" name="surnameName" value={formData.surnameName} onChange={handleInputChange} placeholder="Enter Surname" className={inputStyle} />
+                </div>
+              </div>
+              <div className="grid grid-cols-12 gap-6">
                 <div className="col-span-3">
-                  <label htmlFor="relation" className={labelStyle}>
-                    Relation {requiredStar}{" "}
-                  </label>
-                  <select
-                    id="relation"
-                    name="relation"
-                    value={formData.relation}
-                    onChange={handleInputChange}
-                    required
-                    className={inputStyle}
-                  >
+                  <label htmlFor="relationType" className={labelStyle}>Relation {requiredStar}</label>
+                  <select id="relationType" name="relationType" value={formData.relationType} onChange={handleInputChange} required className={inputStyle}>
                     <option value="S/o">S/o</option>
                     <option value="D/o">D/o</option>
                     <option value="W/o">W/o</option>
                   </select>
                 </div>
+                <div className="col-span-9">
+                  <label htmlFor="fatherHusbandName" className={labelStyle}>Father/Husband Name {requiredStar}</label>
+                  <input type="text" id="fatherHusbandName" name="fatherHusbandName" value={formData.fatherHusbandName} onChange={handleInputChange} required placeholder="Enter Father/Husband Name" className={inputStyle} />
+                </div>
               </div>
-
-              {/* Family Information Row */}
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="guardianName" className={labelStyle}>
-                    Father/Husband Name {requiredStar}
-                  </label>
-                  <input
-                    type="text"
-                    id="guardianName"
-                    name="guardianName"
-                    value={formData.guardianName}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="Enter Father/Husband Name"
-                    className={inputStyle}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="motherName" className={labelStyle}>
-                    Mother Name {requiredStar}
-                  </label>
-                  <input
-                    type="text"
-                    id="motherName"
-                    name="motherName"
-                    value={formData.motherName}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="Enter Mother Name"
-                    className={inputStyle}
-                  />
-                </div>
+              <div>
+                <label htmlFor="motherName" className={labelStyle}>Mother Name {requiredStar}</label>
+                <input type="text" id="motherName" name="motherName" value={formData.motherName} onChange={handleInputChange} required placeholder="Enter Mother Name" className={inputStyle} />
               </div>
             </div>
 
-            {/* Course & Contact Section */}
+            {/* Course & Contact Details Section */}
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">
-                Course & Contact Details
-              </h2>
-
+              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Course & Contact Details</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="courseInterested" className={labelStyle}>
-                    Course Interested {requiredStar}
-                  </label>
-                  <select
-                    id="courseInterested"
-                    name="courseInterested"
-                    onChange={handleCourseChange}
-                    value={
-                      formData.courseInterested.courseName
-                        ? courses.find(
-                            (course) =>
-                              course.courseName ===
-                                formData.courseInterested.courseName &&
-                              course.courseCode ===
-                                formData.courseInterested.courseCode
-                          )?._id || ""
-                        : ""
-                    }
-                    required
-                    className={inputStyle}
-                  >
+
+                  <label htmlFor="courseInterested" className={labelStyle}>Course Interested {requiredStar}</label>
+                  <select id="courseInterested" name="courseInterested" onChange={handleCourseChange} value={formData.courseInterested.courseName ? courses.find(c => c.courseName === formData.courseInterested.courseName)?._id : ""} required className={inputStyle}>
                     <option value="">Select a course</option>
                     {courses.map((course) => (
                       <option key={course._id} value={course._id}>
@@ -420,232 +303,185 @@ const EnquiryForm = () => {
                       </option>
                     ))}
                   </select>
-                  {formData.courseInterested.courseName && (
-                    <div className="mt-2 text-sm text-gray-600">
-                      Selected: {formData.courseInterested.courseName} -{" "}
-                      {formData.courseInterested.courseCode}
-                    </div>
-                  )}
-                </div>
 
+                </div>
                 <div>
-                  <label htmlFor="studentMobile" className={labelStyle}>
-                    Student Mobile {requiredStar}
-                  </label>
-                  <input
-                    type="tel"
-                    id="studentMobile"
-                    name="studentMobile"
-                    value={formData.studentMobile}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="Enter Mobile Number"
-                    className={inputStyle}
-                    maxLength="10"
-                  />
+                  <label htmlFor="studentMobile" className={labelStyle}>Student Mobile {requiredStar}</label>
+                  <input type="tel" id="studentMobile" name="studentMobile" value={formData.studentMobile} onChange={handleInputChange} required placeholder="Enter Mobile Number" className={inputStyle} maxLength="10" />
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="alternateMobile" className={labelStyle}>
-                    Alternate Mobile
-                  </label>
-                  <input
-                    type="tel"
-                    id="alternateMobile"
-                    name="alternateMobile"
-                    value={formData.alternateMobile}
-                    onChange={handleInputChange}
-                    placeholder="Enter Alternate Mobile"
-                    className={inputStyle}
-                    maxLength="10"
-                  />
+                  <label htmlFor="alternateMobile" className={labelStyle}>Alternate Mobile</label>
+                  <input type="tel" id="alternateMobile" name="alternateMobile" value={formData.alternateMobile} onChange={handleInputChange} placeholder="Enter Alternate Mobile" className={inputStyle} maxLength="10" />
                 </div>
-
                 <div>
-                  <label htmlFor="email" className={labelStyle}>
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="Enter Email Address"
-                    className={inputStyle}
-                  />
+                  <label htmlFor="email" className={labelStyle}>Email</label>
+                  <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="Enter Email Address" className={inputStyle} />
                 </div>
               </div>
             </div>
 
-            {/* Personal Details Section */}
+            {/* Fee Details Section */}
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">
-                Additional Details
-              </h2>
+              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Fee Details</h2>
+              <div className="grid grid-cols-4 gap-6">
+                <div>
+                  <label htmlFor="courseFees" className={labelStyle}>Course Fees (₹)</label>
+                  <input type="number" id="courseFees" name="courseFees" value={formData.courseFees} onChange={handleInputChange} className={inputStyle} />
+                </div>
+                <div>
+                  <label htmlFor="discountRate" className={labelStyle}>Discount Rate (%)</label>
+                  <input type="number" id="discountRate" name="discountRate" value={formData.discountRate} onChange={handleInputChange} className={inputStyle} />
+                </div>
+                <div>
+                  <label htmlFor="discountAmount" className={labelStyle}>Discount Amount (₹)</label>
+                  <input type="number" id="discountAmount" name="discountAmount" value={formData.discountAmount} className={inputStyle} readOnly />
+                </div>
+                <div>
+                  <label htmlFor="totalFees" className={labelStyle}>Total Fees (₹)</label>
+                  <input type="number" id="totalFees" name="totalFees" value={formData.totalFees} className={inputStyle} readOnly />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-6">
+                <div>
+                  <label htmlFor="remarks" className={labelStyle}>Remarks</label>
+                  <input type="text" id="remarks" name="remarks" value={formData.remarks} onChange={handleInputChange} className={inputStyle} />
+                </div>
+              </div>
+            </div>
 
+            {/* Installment Details Section */}
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Installment Details</h2>
+              {formData.installments.map((installment, index) => (
+                <div key={index} className="grid grid-cols-3 gap-6 items-end">
+                  <div>
+                    <label className={labelStyle}>Installment Date</label>
+                    <input 
+                      type="date" 
+                      name="installmentDate" 
+                      value={installment.installmentDate} 
+                      onChange={(e) => handleInstallmentChange(index, e)} 
+                      className={inputStyle} 
+                    />
+                  </div>
+                  <div>
+                    <label className={labelStyle}>Installment Amount (₹)</label>
+                    <input 
+                      type="number" 
+                      name="installmentAmount" 
+                      value={installment.installmentAmount} 
+                      onChange={(e) => handleInstallmentChange(index, e)} 
+                      className={inputStyle} 
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                  <div className="flex justify-center">
+                    <button 
+                      type="button" 
+                      onClick={() => removeInstallment(index)} 
+                      className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                      title="Remove Installment"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <button type="button" onClick={addInstallment} className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                Add Installment
+              </button>
+            </div>
+
+            {/* Additional Details Section */}
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Additional Details</h2>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="dateOfBirth" className={labelStyle}>
-                    Date of Birth
-                  </label>
+                  <label htmlFor="dob" className={labelStyle}>Date of Birth</label>
                   <div className="relative">
-                    <input
-                      type="date"
-                      id="dateOfBirth"
-                      name="dateOfBirth"
-                      value={formData.dateOfBirth}
-                      onChange={handleInputChange}
-                      className={inputStyle}
+                    <input 
+                      type="date" 
+                      id="dob" 
+                      name="dob" 
+                      value={formData.dob} 
+                      onChange={handleInputChange} 
+                      className={inputStyle} 
                     />
                     <Calendar className="absolute right-3 top-3 h-5 w-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
-
                 <div>
-                  <label htmlFor="gender" className={labelStyle}>
-                    Gender
-                  </label>
-                  <select
-                    id="gender"
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleInputChange}
-                    className={inputStyle}
-                  >
+                  <label htmlFor="gender" className={labelStyle}>Gender</label>
+                  <select id="gender" name="gender" value={formData.gender} onChange={handleInputChange} className={inputStyle}>
                     <option value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
               </div>
-
               <div className="grid grid-cols-3 gap-6">
                 <div>
-                  <label htmlFor="state" className={labelStyle}>
-                    State
-                  </label>
-                  <select
-                    id="state"
-                    name="state"
-                    value={formData.state}
-                    onChange={handleInputChange}
-                    className={inputStyle}
-                  >
-                    <option value="">Select State</option>
-                    {indianStates.map((state) => (
-                      <option key={state.value} value={state.value}>
-                        {state.label}
-                      </option>
-                    ))}
-                  </select>
+                  <label htmlFor="city" className={labelStyle}>City</label>
+                  <input type="text" id="city" name="city" value={formData.city} onChange={handleInputChange} placeholder="Enter City" className={inputStyle} />
                 </div>
-
                 <div>
-                  <label htmlFor="city" className={labelStyle}>
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    id="city"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    placeholder="Enter City"
-                    className={inputStyle}
-                  />
+                  <label htmlFor="postCode" className={labelStyle}>Postcode</label>
+                  <input type="text" id="postCode" name="postCode" value={formData.postCode} onChange={handleInputChange} placeholder="Enter Postcode" className={inputStyle} maxLength="6" />
                 </div>
-
                 <div>
-                  <label htmlFor="postcode" className={labelStyle}>
-                    Postcode
-                  </label>
-                  <input
-                    type="text"
-                    id="postcode"
-                    name="postcode"
-                    value={formData.postcode}
-                    onChange={handleInputChange}
-                    placeholder="Enter Postcode"
-                    className={inputStyle}
-                    maxLength="6"
-                  />
+                  <label htmlFor="caste" className={labelStyle}>Caste</label>
+                  <input type="text" id="caste" name="caste" value={formData.caste} onChange={handleInputChange} placeholder="Enter Caste" className={inputStyle} />
                 </div>
               </div>
-
               <div>
-                <label htmlFor="permanentAddress" className={labelStyle}>
-                  Permanent Address
-                </label>
-                <textarea
-                  id="permanentAddress"
-                  name="permanentAddress"
-                  value={formData.permanentAddress}
-                  onChange={handleInputChange}
-                  placeholder="Enter Permanent Address..."
-                  rows={3}
-                  className={inputStyle}
-                />
+                <label htmlFor="permanentAddress" className={labelStyle}>Permanent Address</label>
+                <textarea id="permanentAddress" name="permanentAddress" value={formData.permanentAddress} onChange={handleInputChange} placeholder="Enter Permanent Address..." rows={3} className={inputStyle} />
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="qualifications" className={labelStyle}>Qualifications</label>
+                  <input type="text" id="qualifications" name="qualifications" value={formData.qualifications} onChange={handleInputChange} placeholder="Enter Qualifications" className={inputStyle} />
+                </div>
+                <div>
+                  <label htmlFor="occupation" className={labelStyle}>Occupation</label>
+                  <input type="text" id="occupation" name="occupation" value={formData.occupation} onChange={handleInputChange} placeholder="Enter Occupation" className={inputStyle} />
+                </div>
               </div>
             </div>
 
-            {/* Additional Information Section */}
+            {/* Other Information Section */}
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">
-                Other Information
-              </h2>
-
+              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Other Information</h2>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="referralCode" className={labelStyle}>
-                    Referral Code (If Any)
-                  </label>
-                  <input
-                    type="text"
-                    id="referralCode"
-                    name="referralCode"
-                    value={formData.referralCode}
-                    onChange={handleInputChange}
-                    placeholder="Enter Referral Code"
-                    className={inputStyle}
-                  />
+                  <label htmlFor="referralCode" className={labelStyle}>Referral Code (If Any)</label>
+                  <input type="text" id="referralCode" name="referralCode" value={formData.referralCode} onChange={handleInputChange} placeholder="Enter Referral Code" className={inputStyle} />
                 </div>
-
                 <div>
-                  <label htmlFor="enquiryDate" className={labelStyle}>
-                    Enquiry Date {requiredStar}
-                  </label>
+                  <label htmlFor="enquiryDate" className={labelStyle}>Enquiry Date {requiredStar}</label>
                   <div className="relative">
-                    <input
-                      type="date"
-                      id="enquiryDate"
-                      name="enquiryDate"
-                      value={formData.enquiryDate}
-                      onChange={handleInputChange}
-                      required
-                      className={inputStyle}
-                    />
+                    <input type="date" id="enquiryDate" name="enquiryDate" value={formData.enquiryDate} onChange={handleInputChange} required className={inputStyle} />
                     <Calendar className="absolute right-3 top-3 h-5 w-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex justify-end space-x-4 pt-6 border-t">
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-[#457B9D] from-blue-500 to-blue-600 px-8 py-4 text-white rounded-md hover:bg-[#2e5369] focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className="bg-[#457B9D] px-8 py-4 text-white rounded-md hover:bg-[#2e5369] focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Processing..." : "Save Enquiry"}
               </button>
-              <button
-                type="button"
-                onClick={GoBack}
+              <button 
+                type="button" 
+                onClick={GoBack} 
                 className="px-6 py-2.5 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors font-medium"
               >
                 Cancel

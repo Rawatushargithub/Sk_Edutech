@@ -11,6 +11,13 @@ import {
 
 const Footer = () => {
   const navigate = useNavigate();
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
   const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -80,7 +87,7 @@ const Footer = () => {
                         <div>
                             <h3 className="font-semibold text-lg mb-3">Quick Links</h3>
                             <ul className="space-y-2">
-                                <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/')} >Home</li>
+                                <li className="cursor-pointer hover:text-orange-400" onClick={scrollToTop} >Home</li>
                                 {/* <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/our-services')} >Our Services</li> */}
                                 <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/about-us')} >About Us</li>
                                 <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/', { state: { scrollTo: 'contactUs' } })} >Contact Us</li>

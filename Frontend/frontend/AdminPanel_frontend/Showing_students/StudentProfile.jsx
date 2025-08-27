@@ -5,27 +5,16 @@ const StudentProfile = ({
   student,
   onClose,
   onEdit,
+  onViewForm,
   onViewIDCard,
   onShare,
 }) => {
-  const [showFormView, setShowFormView] = useState(false);
-
   // Handle edit with student data
   const handleEditProfile = () => {
     // Call the onEdit function from parent with student data
     if (onEdit) {
       onEdit(student.id);
     }
-  };
-
-  // Handle view form
-  const handleViewForm = () => {
-    setShowFormView(true);
-  };
-
-  // Handle close form view
-  const handleCloseFormView = () => {
-    setShowFormView(false);
   };
 
   return (
@@ -174,8 +163,8 @@ const StudentProfile = ({
               <div className="flex justify-center space-x-3">
                 <button
                   className="flex items-center justify-center w-10 h-10 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
-                  onClick={handleViewForm}
-                  title="View Form"
+                  onClick={onViewForm}
+                  title="Download Form"
                 >
                   <svg
                     className="w-5 h-5"
@@ -195,7 +184,7 @@ const StudentProfile = ({
                 <button
                   className="flex items-center justify-center w-10 h-10 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
                   onClick={onViewIDCard}
-                  title="View ID Card"
+                  title="Download ID Card"
                 >
                   <svg
                     className="w-5 h-5"
@@ -237,10 +226,6 @@ const StudentProfile = ({
         </div>
       </div>
 
-      {/* Student Form View Modal */}
-      {showFormView && (
-        <StudentFormView student={student} onClose={handleCloseFormView} />
-      )}
     </>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { FaCheckCircle, FaTimesCircle, FaWallet, FaSearch } from "react-icons/fa";
 import axios from "axios";
 import API_BASE_URL from "../../config"; // Adjust the import path as necessary
@@ -6,13 +6,17 @@ import API_BASE_URL from "../../config"; // Adjust the import path as necessary
 const AdminWalletApproval = () => {
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState(""); 
+  const [filter, setFilter] = useState('pending_approval');
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState('institute'); // 'all', 'institute', 'student'
+  const [searchQuery, setSearchQuery] = useState("");
+  const [timeFilter, setTimeFilter] = useState("all");
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     fetchTransactions();
   }, [filter]);
- 
+
   const fetchTransactions = async () => {
     setIsLoading(true);
     try {
@@ -39,9 +43,9 @@ const AdminWalletApproval = () => {
       alert("Failed to approve transaction");
     }
   };
- 
+
   const handleReject = async (transactionId) => {
-    try { 
+    try {
       await axios.post(`${API_BASE_URL}/api/v1/adminwallet/transactions/${transactionId}/reject`);
       setTransactions(
         transactions.map((transaction) =>
@@ -61,45 +65,200 @@ const AdminWalletApproval = () => {
     return new Date(dateString).toLocaleDateString('en-IN', options);
   };
 
-  // Filter transactions by search query
-  const filteredTransactions = transactions.filter(
-    (transaction) =>
-      transaction.institute?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      transaction.paymentId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      transaction._id?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-console.log("filter transactions:: " , filteredTransactions)
+  // Date filtering logic
+  const isDateInRange = (date, timeFilter, startDate, endDate) => {
+    if (!date) return true;
+
+    const itemDate = new Date(date);
+    if (isNaN(itemDate.getTime())) return false;
+
+    if (timeFilter === 'all') {
+      return true;
+    }
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    switch (timeFilter) {
+      case 'today':
+        return itemDate >= today;
+      case 'yesterday':
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        return itemDate >= yesterday && itemDate < today;
+      case 'last7days':
+        const last7days = new Date(today);
+        last7days.setDate(today.getDate() - 7);
+        return itemDate >= last7days;
+      case 'last30days':
+        const last30days = new Date(today);
+        last30days.setDate(today.getDate() - 30);
+        return itemDate >= last30days;
+      case 'custom':
+        if (startDate && endDate) {
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          return itemDate >= start && itemDate <= end;
+        }
+        return true;
+      default:
+        return true;
+    }
+  };
+
+  // Combined filtering
+  const filteredTransactions = useMemo(() => {
+    console.log('Filtering transactions. Current filter states:', { 
+      status: filter, 
+      type: transactionTypeFilter, 
+      time: timeFilter, 
+      search: searchQuery 
+    });
+    console.log('Raw transactions:', transactions);
+
+    const result = transactions.filter(transaction => {
+      // Status filter
+      const statusMatch = filter === 'all' || transaction.status === filter;
+      
+      // Transaction type filter based on paymentId
+      const typeMatch = (() => {
+        if (transactionTypeFilter === 'all') return true;
+        if (transactionTypeFilter === 'institute') {
+          return transaction.paymentId && transaction.paymentId !== 'N/A';
+        }
+        if (transactionTypeFilter === 'student') {
+          return !transaction.paymentId || transaction.paymentId === 'N/A';
+        }
+        return true;
+      })();
+      
+      // Date filter
+      const dateMatch = isDateInRange(transaction.timestamp, timeFilter, startDate, endDate);
+      
+      // Search filter
+      const searchMatch = 
+        !searchQuery ||
+        (transaction.franchise?.franchiseName?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (transaction.institute?.email?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (transaction.paymentId?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (transaction._id?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (transaction.amount?.toString().toLowerCase().includes(searchQuery.toLowerCase()));
+
+      return statusMatch && typeMatch && dateMatch && searchMatch;
+    });
+
+    console.log('Filtered transactions:', result);
+    return result;
+  }, [transactions, filter, transactionTypeFilter, timeFilter, startDate, endDate, searchQuery]);
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold flex items-center">
           <FaWallet className="mr-2" /> Wallet Transaction Approvals
         </h1>
-        
-        <div className="flex items-center">
-          {/* Search box */}
-          <div className="relative mr-4">
-            <input
-              type="text"
-              className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Search institute or payment ID..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <FaSearch className="absolute left-3 top-3 text-gray-400" />
-          </div>
-          
-          {/* Filter dropdown */}
+      </div>
+      <div className="flex justify-between items-center mb-4">
+        {/* Search input */}
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Search by institute, amount, or ID..."
+            className="border rounded-lg px-4 py-2 w-96 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        {/* Time Filter Dropdown */}
+        <div className="flex items-center gap-2">
+          <label htmlFor="timeFilter" className="font-semibold">Show:</label>
           <select
-            className="border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            id="timeFilter"
+            className="border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={timeFilter}
+            onChange={(e) => setTimeFilter(e.target.value)}
           >
-            <option value="pending_approval">Pending Approval</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="all">All Transactions</option>
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last7days">Last 7 Days</option>
+            <option value="last30days">Last 30 Days</option>
+            <option value="custom">Custom Range</option>
           </select>
+          {timeFilter === 'custom' && (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                className="border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+              <span>-</span>
+              <input
+                type="date"
+                className="border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="flex justify-start items-center mb-4 space-x-2">
+        {/* Filter cards */}
+        <div className="flex border rounded-lg overflow-hidden">
+          {[
+            { value: 'all', label: 'All Statuses' },
+            { value: 'pending_approval', label: 'Pending' },
+            { value: 'approved', label: 'Approved' },
+            { value: 'rejected', label: 'Rejected' },
+          ].map((item, index) => (
+            <button
+              key={item.value}
+              onClick={() => setFilter(item.value)}
+              className={`px-4 py-2 text-sm font-medium focus:outline-none ${ 
+                filter === item.value
+                  ? 'bg-gray-400 text-gray-900'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              } ${index < 3 ? 'border-r border-gray-200' : ''}`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex border rounded-lg overflow-hidden">
+            <button
+                onClick={() => setTransactionTypeFilter('all')}
+                className={`px-4 py-2 text-sm font-medium focus:outline-none ${ 
+                transactionTypeFilter === 'all'
+                    ? 'bg-gray-400 text-gray-900'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                } border-r border-gray-200`}
+            >
+                All Types
+            </button>
+            <button
+                onClick={() => setTransactionTypeFilter('institute')}
+                className={`px-4 py-2 text-sm font-medium focus:outline-none ${ 
+                transactionTypeFilter === 'institute'
+                    ? 'bg-gray-400 text-gray-900'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                } border-r border-gray-200`}
+            >
+                Institute
+            </button>
+            <button
+                onClick={() => setTransactionTypeFilter('student')}
+                className={`px-4 py-2 text-sm font-medium focus:outline-none ${ 
+                transactionTypeFilter === 'student'
+                    ? 'bg-gray-400 text-gray-900'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+            >
+                Student
+            </button>
         </div>
       </div>
 
@@ -113,7 +272,7 @@ console.log("filter transactions:: " , filteredTransactions)
           <p className="text-gray-600">No transactions found</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow overflow-y-auto h-[70vh]">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -137,7 +296,7 @@ console.log("filter transactions:: " , filteredTransactions)
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-200 ">
               {filteredTransactions.map((transaction) => (
                 <tr key={transaction._id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

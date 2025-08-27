@@ -110,19 +110,26 @@ const StudentProfileDetails = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    let processedValue = type === "checkbox" ? checked : value;
+    
+    // Trim string values to remove leading/trailing spaces, except for mobile and postcode
+    if (typeof processedValue === 'string' && name !== 'studentMobile' && name !== 'alternateMobile' && name !== 'postCode') {
+      processedValue = processedValue.trim();
+    }
+    
     if (name.startsWith("courseInterested.")) {
       const field = name.split(".")[1];
       setFormData((prev) => ({
         ...prev,
         courseInterested: {
           ...prev.courseInterested,
-          [field]: value,
+          [field]: processedValue,
         },
       }));
     } else {
       setFormData((prev) => ({
         ...prev,
-        [name]: type === "checkbox" ? checked : value,
+        [name]: processedValue,
       }));
     }
   };
@@ -191,7 +198,7 @@ const StudentProfileDetails = () => {
       // Get changed data (excluding files)
       const changedData = getChangedFields(originalData, formData);
 
-      // Add text fields to FormData
+      // Add text fields to FormData with trimming
       Object.keys(changedData).forEach((key) => {
         if (key !== "studentPhoto" && key !== "studentSignature") {
           if (
@@ -200,7 +207,12 @@ const StudentProfileDetails = () => {
           ) {
             formDataToSend.append(key, JSON.stringify(changedData[key]));
           } else {
-            formDataToSend.append(key, changedData[key]);
+            // Trim string values before sending to backend, except for mobile and postcode
+            let valueToSend = changedData[key];
+            if (typeof valueToSend === 'string' && key !== 'studentMobile' && key !== 'alternateMobile' && key !== 'postCode') {
+              valueToSend = valueToSend.trim();
+            }
+            formDataToSend.append(key, valueToSend);
           }
         }
       });

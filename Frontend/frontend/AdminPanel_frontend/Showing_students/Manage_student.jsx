@@ -10,7 +10,6 @@ import axios from "axios";
 import StudentProfile from "./StudentProfile"; // Import the new component
 import FormView from "./FormView";
 import IdCardView from "./IdCardView";
-import SharePopup from "./SharePopup";
 import API_BASE_URL from "../../config";
 import { FaCircleCheck, FaPerson, FaPersonCirclePlus, FaPersonDotsFromLine, FaPersonRifle } from "react-icons/fa6";
 import { FaArrowUp, FaUser, FaSearch, FaTimes } from "react-icons/fa";
@@ -29,44 +28,18 @@ const StudentAdmissionList = () => {
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showFormPopup, setShowFormPopup] = useState(false);
   const [showIdCardPopup, setShowIdCardPopup] = useState(false);
-  const [showSharePopup, setShowSharePopup] = useState(false);
+  const [showStatusPopup, setShowStatusPopup] = useState(false);
+  const [statusToggleStudent, setStatusToggleStudent] = useState(null);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [timeFilter, setTimeFilter] = useState("all"); // State for time filter
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [activeTab, setActiveTab] = useState("active"); // State for active tab
 
   // New state for export dropdown
   const [showExportDropdown, setShowExportDropdown] = useState(false);
-  // State for detailed students data
-  const [detailedStudents, setDetailedStudents] = useState([]);
 
-  // Function to fetch detailed student data (if needed)
-  const fetchDetailedStudentData = async (studentId) => {
-    try {
-      const response = await axios.get(
-        `${API_BASE_URL}/api/v1/admin_student/get_student/${studentId}`
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching detailed data for student ${studentId}:`, error);
-      return null;
-    }
-  };
-
-  // Function to fetch all detailed student data
-  const fetchAllDetailedData = async () => {
-    try {
-      const detailedData = await Promise.all(
-        filteredStudents.map(async (student) => {
-          const detailedStudent = await fetchDetailedStudentData(student._id);
-          return detailedStudent || student; // Fallback to basic data if detailed fetch fails
-        })
-      );
-      setDetailedStudents(detailedData);
-      return detailedData;
-    } catch (error) {
-      console.error('Error fetching detailed student data:', error);
-      return filteredStudents; // Fallback to basic data
-    }
-  };
 
   // Then modify your useEffect fetch to ensure you're setting an array
   useEffect(() => {
@@ -74,7 +47,7 @@ const StudentAdmissionList = () => {
       try {
         const response = await axios.get(
           `${API_BASE_URL}/api/v1/admin_student/get_students`
-        );
+        ); 
         console.log("students data 1 :: ", response.data);
 
         // Check if response.data is an array, if not, handle appropriately
@@ -107,6 +80,16 @@ const StudentAdmissionList = () => {
   useEffect(() => {
     let tempStudents = students;
 
+    // 1. Filter by active tab status
+    if (activeTab === 'active') {
+      tempStudents = tempStudents.filter(student => student.status === 'active' || student.status === 'true' || student.status === true);
+    } else if (activeTab === 'inactive') {
+      tempStudents = tempStudents.filter(student => student.status === 'inactive' || student.status === 'false' || student.status === false);
+    } else if (activeTab === 'certified') {
+      tempStudents = tempStudents.filter(student => student.status === 'Certified');
+    }
+
+
     // 1. Filter by search term
     if (searchTerm.trim() !== "") {
       tempStudents = tempStudents.filter(
@@ -122,54 +105,55 @@ const StudentAdmissionList = () => {
     }
 
     // 2. Filter by time
-    if (timeFilter !== "all") {
-      const now = new Date();
-      tempStudents = tempStudents.filter((student) => {
-        const admissionDate = new Date(student.admissionDate);
-        if (isNaN(admissionDate.getTime())) return false; // Skip invalid dates
+    // 2. Filter by time
+    const isDateInRange = (date, filter, start, end) => {
+      if (!date) return true;
+      const itemDate = new Date(date);
+      if (isNaN(itemDate.getTime())) return false;
 
-        switch (timeFilter) {
-          case "week": {
-            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-            startOfWeek.setHours(0, 0, 0, 0);
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(endOfWeek.getDate() + 6);
-            endOfWeek.setHours(23, 59, 59, 999);
-            return admissionDate >= startOfWeek && admissionDate <= endOfWeek;
-          }
-          case "month": {
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            endOfMonth.setHours(23, 59, 59, 999);
-            return admissionDate >= startOfMonth && admissionDate <= endOfMonth;
-          }
-          case "last_month": {
-            const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-            endOfLastMonth.setHours(23, 59, 59, 999);
-            return admissionDate >= startOfLastMonth && admissionDate <= endOfLastMonth;
-          }
-          case "last_three_months": {
-            const threeMonthsAgo = new Date();
-            threeMonthsAgo.setMonth(now.getMonth() - 3);
-            threeMonthsAgo.setHours(0, 0, 0, 0);
-            return admissionDate >= threeMonthsAgo && admissionDate <= now;
-          }
-          case "year": {
-            const startOfYear = new Date(now.getFullYear(), 0, 1);
-            const endOfYear = new Date(now.getFullYear(), 11, 31);
-            endOfYear.setHours(23, 59, 59, 999);
-            return admissionDate >= startOfYear && admissionDate <= endOfYear;
-          }
-          default:
-            return true;
+      if (filter === 'all') return true;
+
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      switch (filter) {
+        case 'today':
+          return itemDate >= today;
+        case 'yesterday': {
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+          return itemDate >= yesterday && itemDate < today;
         }
-      });
-    }
+        case 'last7days': {
+          const last7days = new Date(today);
+          last7days.setDate(today.getDate() - 7);
+          return itemDate >= last7days;
+        }
+        case 'last30days': {
+          const last30days = new Date(today);
+          last30days.setDate(today.getDate() - 30);
+          return itemDate >= last30days;
+        }
+        case 'custom':
+          if (start && end) {
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            endDate.setHours(23, 59, 59, 999); // Include the entire end day
+            return itemDate >= startDate && itemDate <= endDate;
+          }
+          return true;
+        default:
+          return true;
+      }
+    };
+
+    tempStudents = tempStudents.filter(student => 
+      isDateInRange(student.admissionDate, timeFilter, startDate, endDate)
+    );
 
     setFilteredStudents(tempStudents);
     setCurrentPage(1); // Reset to the first page whenever filters change
-  }, [searchTerm, timeFilter, students]);
+  }, [searchTerm, timeFilter, students, activeTab, startDate, endDate]);
  console.log("Filtered Students: ", filteredStudents);
   const [currentPage, setCurrentPage] = useState(1);
   const entriesPerPage = 10;
@@ -211,7 +195,7 @@ const StudentAdmissionList = () => {
     return studentsData.map((student, index) => ({
       'S/N': index + 1,
       'Franchise ID': student.franchiseId || '',
-      'Status': student.status ? 'Active' : 'Inactive',
+      'Status': student.status === 'Certified' ? 'Certified' : (student.status === 'active' || student.status === 'true' || student.status === true) ? 'Active' : 'Inactive',
       'Student Name': student.studentName || '',
       'Student ID': student.rollNumber || '',
       'Course Name': student.courseInterested?.courseName || '',
@@ -377,7 +361,7 @@ const StudentAdmissionList = () => {
   const toggleExportDropdown = () => {
     setShowExportDropdown(!showExportDropdown);
   };
-
+ 
   // Close dropdown when clicking outside
   const closeDropdownOnOutsideClick = (e) => {
     if (showExportDropdown && !e.target.closest('.export-dropdown-container')) {
@@ -400,23 +384,85 @@ const StudentAdmissionList = () => {
 
   const handleViewForm = () => {
     setShowFormPopup(true);
-    console.log("view form is working");
   };
 
   const handleViewIDCard = () => {
     setShowIdCardPopup(true);
-    console.log("view idis working");
   };
 
   const handleShare = () => {
-    console.log("handleshare is working");
-    setShowSharePopup(true);
+    if (!selectedStudent) return;
+    const studentDetails = `
+      Name: ${selectedStudent.studentName}
+      Batch: ${selectedStudent.batch}
+      Course: ${selectedStudent.courseInterested.courseName}
+      Mobile: ${selectedStudent.studentMobile}
+      Email: ${selectedStudent.email}
+    `;
+    navigator.clipboard.writeText(studentDetails.trim());
+    alert('Student details copied to clipboard');
+  };
+
+  // Status toggle functions
+  const handleStatusToggleClick = (student) => {
+    setStatusToggleStudent(student);
+    setShowStatusPopup(true);
+  };
+
+  const confirmStatusToggle = async () => {
+    if (!statusToggleStudent) return;
+
+    // Check if student is certified - prevent status changes
+    if (statusToggleStudent.status === 'Certified') {
+      alert('Certified students cannot have their status changed.');
+      setShowStatusPopup(false);
+      setStatusToggleStudent(null);
+      return;
+    }
+
+    try {
+      // Determine next status based on current status
+      let newStatus;
+      if (statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' || statusToggleStudent.status === true) {
+        newStatus = 'inactive';
+      } else {
+        newStatus = 'active';
+      }
+
+      const response = await axios.patch(
+        `${API_BASE_URL}/api/v1/admin_student/toggle_status/${statusToggleStudent._id}`,
+        { status: newStatus }
+      );
+
+      if (response.data.success) {
+        const updatedStudents = students.map((student) => {
+          if (student._id === statusToggleStudent._id) {
+            return { ...student, status: newStatus };
+          }
+          return student;
+        });
+
+        setStudents(updatedStudents);
+      } else {
+        alert('Failed to update student status. Please try again.');
+      }
+    } catch (error) {
+      console.error("Error updating status: ", error);
+      alert('Error updating student status. Please try again.');
+    }
+
+    setShowStatusPopup(false);
+    setStatusToggleStudent(null);
+  };
+
+  const cancelStatusToggle = () => {
+    setShowStatusPopup(false);
+    setStatusToggleStudent(null);
   };
 
   const closePopup = () => {
     setShowFormPopup(false);
     setShowIdCardPopup(false);
-    setShowSharePopup(false);
     setShowProfilePopup(false);
     setSelectedStudent(null);
   };
@@ -479,6 +525,40 @@ const StudentAdmissionList = () => {
           </div>
         </div>
 
+        {/* Tabs for student status */}
+        <div className="mb-4 border-b border-gray-200">
+          <ul className="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500">
+            <li className="mr-2">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`inline-block p-4 rounded-t-lg border-b-2 ${activeTab === 'all' ? 'text-blue-600 border-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}`}>
+                All Students
+              </button>
+            </li>
+            <li className="mr-2">
+              <button
+                onClick={() => setActiveTab('active')}
+                className={`inline-block p-4 rounded-t-lg border-b-2 ${activeTab === 'active' ? 'text-blue-600 border-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}`}>
+                Active Students
+              </button>
+            </li>
+            <li className="mr-2">
+              <button
+                onClick={() => setActiveTab('inactive')}
+                className={`inline-block p-4 rounded-t-lg border-b-2 ${activeTab === 'inactive' ? 'text-blue-600 border-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}`}>
+                Inactive Students
+              </button>
+            </li>
+            <li className="mr-2">
+              <button
+                onClick={() => setActiveTab('certified')}
+                className={`inline-block p-4 rounded-t-lg border-b-2 ${activeTab === 'certified' ? 'text-blue-600 border-blue-600' : 'border-transparent hover:text-gray-600 hover:border-gray-300'}`}>
+                Certified Students
+              </button>
+            </li>
+          </ul>
+        </div>
+
         {/* Filter and Search Controls */}
         <div className="flex flex-col md:flex-row justify-between items-center my-4 gap-4">
           {/* Left: Showing X of Y */}
@@ -507,18 +587,37 @@ const StudentAdmissionList = () => {
             </div>
 
             {/* Filter Dropdown */}
-            <select
-              value={timeFilter}
-              onChange={(e) => setTimeFilter(e.target.value)}
-              className="p-2 border border-gray-300 rounded-md"
-            >
-              <option value="all">All Time</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="last_month">Last Month</option>
-              <option value="three_months">Last 3 Months</option>
-              <option value="year">This Year</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <select
+                value={timeFilter}
+                onChange={(e) => setTimeFilter(e.target.value)}
+                className="p-2 border border-gray-300 rounded-md"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="last7days">Last 7 Days</option>
+                <option value="last30days">Last 30 Days</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              {timeFilter === 'custom' && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="p-2 border border-gray-300 rounded-md"
+                  />
+                  <span>to</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="p-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -581,11 +680,17 @@ const StudentAdmissionList = () => {
                     
                     <td className="p-2 border">
                       <button 
-                        className={`px-2 py-1 rounded-full text-sm font-medium  ${
-                          student.status ? "bg-green-200 text-green-800 " : "bg-red-200 text-red-800"
+                        {...(student.status !== 'Certified' && { onClick: () => handleStatusToggleClick(student) })}
+                        className={`px-2 py-1 rounded-full text-sm font-medium ${
+                          student.status === 'Certified'
+                            ? "bg-blue-200 text-blue-800 cursor-not-allowed opacity-75" 
+                            : (student.status === 'active' || student.status === 'true' || student.status === true)
+                              ? "bg-green-200 text-green-800 hover:bg-green-300" 
+                              : "bg-red-200 text-red-800 hover:bg-red-300"
                         }`}
+                        disabled={student.status === 'Certified'}
                       >
-                        {student.status ? "Active" : "Inactive"}
+                        {student.status === 'Certified' ? "Certified" : (student.status === 'active' || student.status === 'true' || student.status === true) ? "Active" : "Inactive"}
                       </button>
                     </td>                
                     <td className="border border-gray-300 px-4 py-2">
@@ -646,11 +751,54 @@ const StudentAdmissionList = () => {
                 ? "bg-gray-300 cursor-not-allowed"
                 : "bg-blue-500 text-white"
             }`}
-          >
+          > 
             Next
           </button>
         </div> 
       </div>
+
+      {/* Status Toggle Confirmation Popup */}
+      {showStatusPopup && statusToggleStudent && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Confirm Status Change</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to change the status of{" "}
+              <strong>{statusToggleStudent.studentName}</strong> to{" "}
+              <strong className={
+                (statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' || statusToggleStudent.status === true)
+                  ? "text-red-600" 
+                  : "text-green-600"
+              }>
+                {(statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' || statusToggleStudent.status === true)
+                  ? "Inactive" 
+                  : "Active"}?
+              </strong>
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelStatusToggle}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmStatusToggle}
+                className={`px-4 py-2 rounded text-white transition-colors ${
+                  (statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' || statusToggleStudent.status === true)
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "bg-green-500 hover:bg-green-600"
+                }`}
+              >
+                {(statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' || statusToggleStudent.status === true)
+                  ? "Deactivate" 
+                  : "Activate"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Student Profile Popup */}
       {showProfilePopup && selectedStudent && (
         <StudentProfile
@@ -671,12 +819,6 @@ const StudentAdmissionList = () => {
       )}
       {showIdCardPopup && (
         <IdCardView 
-        student={selectedStudent} 
-        onClose={closePopup} 
-        />
-      )}
-      {showSharePopup && (
-        <SharePopup 
         student={selectedStudent} 
         onClose={closePopup} 
         />

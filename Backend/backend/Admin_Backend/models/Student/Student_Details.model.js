@@ -42,8 +42,12 @@ const studentSchema = new mongoose.Schema({
   selectedBatch: { type: mongoose.Schema.Types.ObjectId, ref: "Batch" }, // Linked Batch
 
   admissionDate: { type: String, required: true }, // Format: dd-mm-yyyy
-  displayAdmissionOptions: { type: Boolean, default: false },
-  status: { type: Boolean, default: true } // For ID card, admission form & fee receipt
+  displayAdmissionOptions: { type: Boolean, default: false }, // For ID card, admission form & fee receipt
+  status: { 
+    type: String, 
+    enum: ["active", "inactive", "Certified"], 
+    default: "active" 
+  }
 }, { timestamps: true });
 
 // Prevent OverwriteModelError

@@ -9,7 +9,7 @@ function FranchiseListPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate(); // Hook for navigation
-    const [statusFilter, setStatusFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState("Active");
 
     // Define fetchFranchises using useCallback
     const fetchFranchises = useCallback(async () => {
@@ -35,7 +35,7 @@ function FranchiseListPage() {
                 displayError = `Server Error (${err.response.status}): ${err.response.data?.message || err.message}`;
             } else if (err.request) {
                 displayError = "Could not connect to the server. Please check if it's running.";
-            } else {
+            } else { 
                 displayError = err.message;
             }
             toast.error(displayError);

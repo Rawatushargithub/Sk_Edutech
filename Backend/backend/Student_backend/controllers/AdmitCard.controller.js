@@ -318,7 +318,7 @@ export const generateAdmitCard = async (req, res) => {
             },
             institute: {
                 instituteName: franchise.franchiseName,
-                photo: franchise.ownerPhotoUrl,
+                photo: franchise.franchiseLogoUrl,
                 instituteNumber: franchise.mobile,
                 signature: franchise.franchiseSignatureUrl,
                 centerContact: franchise.mobile,

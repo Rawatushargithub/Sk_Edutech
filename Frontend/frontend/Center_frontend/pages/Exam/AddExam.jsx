@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Select from 'react-select'; // Import react-select
 import API_BASE_URL from "../../../config"; // Adjust the import path as necessary
 
 const AddExam = () => {
@@ -263,22 +264,11 @@ const AddExam = () => {
   const filteredQuestions = questions.filter((questionItem) => {
     const searchTerm = questionSearchQuery.toLowerCase();
 
-    // Handle nested question structure from your schema
-    if (questionItem.question) {
-      // Check if question text matches
-      const questionText = questionItem.question.question || '';
-      const qNo = questionItem.question.qNo ? questionItem.question.qNo.toString() : '';
+    // The question text is directly in questionItem.question
+    const questionText = (questionItem.question || '').toLowerCase();
+    const qNo = (questionItem.qNo || '').toString();
 
-      return questionText.toLowerCase().includes(searchTerm) ||
-        qNo.includes(searchTerm);
-    }
-
-    // Fallback for direct properties
-    const questionText = questionItem.questionText || '';
-    const topic = questionItem.topic || '';
-
-    return questionText.toLowerCase().includes(searchTerm) ||
-      topic.toLowerCase().includes(searchTerm);
+    return questionText.includes(searchTerm) || qNo.includes(searchTerm);
   });
 
   // Get exam type indicator color
@@ -338,7 +328,7 @@ const AddExam = () => {
                     name="examType"
                     value={type}
                     checked={newExam.examType === type}
-                    onChange={(e) => setNewExam({ ...newExam, examType: e.target.value })}
+                    onChange={(e) => setNewExam({ ...newExam, examType: e.target.value.trim() })}
                     className="w-5 h-5 text-blue-600"
                   />
                   <div className="flex flex-col">
@@ -352,29 +342,24 @@ const AddExam = () => {
           {/* Course Code with Search */}
           <div>
             <label className="block text-gray-700 mb-2">Course Code</label>
-            <div className="relative">
-              <input
-                type="text"
-                className="w-full p-2 border rounded mb-2"
-                placeholder="Search courses..."
-                value={courseSearchQuery}
-                onChange={(e) => setCourseSearchQuery(e.target.value)}
-              />
-              <select
-                className="w-full p-2 border rounded"
-                value={newExam.courseCode}
-                onChange={(e) =>
-                  setNewExam({ ...newExam, courseCode: e.target.value })
-                }
-              >
-                <option value="">Select Course</option>
-                {filteredCourses.map((course) => (
-                  <option key={course.courseName} value={course.courseCode}>
-                    {course.courseCode} ({course.courseName})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              options={courses.map(course => ({
+                value: course.courseCode,
+                label: `${course.courseCode} (${course.courseName})`
+              }))}
+              onChange={selectedOption => 
+                setNewExam({ ...newExam, courseCode: selectedOption ? selectedOption.value.trim() : "" })
+              }
+              value={courses.map(course => ({
+                value: course.courseCode,
+                label: `${course.courseCode} (${course.courseName})`
+              })).find(option => option.value === newExam.courseCode)}
+              isClearable
+              isSearchable
+              placeholder="Select or search for a course..."
+              className="w-full"
+              classNamePrefix="select"
+            />
           </div>
 
           {/* Question Bank - Only for Online Exams */}
@@ -495,7 +480,7 @@ const AddExam = () => {
               className="w-full p-2 border rounded"
               value={newExam.examDate}
               onChange={(e) =>
-                setNewExam({ ...newExam, examDate: e.target.value })
+                setNewExam({ ...newExam, examDate: e.target.value.trim() })
               }
             />
           </div>
@@ -589,7 +574,7 @@ const AddExam = () => {
                 className="w-full p-2 border rounded"
                 value={newExam.totalQuestions}
                 onChange={(e) =>
-                  setNewExam({ ...newExam, totalQuestions: e.target.value })
+                  setNewExam({ ...newExam, totalQuestions: e.target.value.trim() })
                 }
                 placeholder="Enter total questions"
               />
@@ -602,7 +587,7 @@ const AddExam = () => {
                 className="w-full p-2 border rounded"
                 value={newExam.totalMarks}
                 onChange={(e) =>
-                  setNewExam({ ...newExam, totalMarks: e.target.value })
+                  setNewExam({ ...newExam, totalMarks: e.target.value.trim() })
                 }
                 placeholder="Enter total marks"
               />
@@ -615,7 +600,7 @@ const AddExam = () => {
                 className="w-full p-2 border rounded"
                 value={newExam.passingMarks}
                 onChange={(e) =>
-                  setNewExam({ ...newExam, passingMarks: e.target.value })
+                  setNewExam({ ...newExam, passingMarks: e.target.value.trim() })
                 }
                 placeholder="Enter passing marks"
               />
@@ -677,4 +662,3 @@ const AddExam = () => {
 };
 
 export default AddExam;
-

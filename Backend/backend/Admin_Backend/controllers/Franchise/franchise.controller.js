@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
 import Franchise  from '../../models/franchise/franchise.models.js';
+import Student from "../../models/Student/Student_Details.model.js"
 import { asyncHandler } from '../../utils/asynchanlder.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
@@ -54,13 +55,13 @@ const addFranchiseByAdmin = asyncHandler(async (req, res) => {
     }
 
     // --- Handle File Uploads ---
-    let ownerPhotoUrl = null;
+    let franchiseLogoUrl = null;
     let franchiseSignatureUrl = null;
     if (req.files) {
         if (req.files.ownerPhoto && req.files.ownerPhoto[0]) {
             const photoUploadResult = await uploadOnCloudinary(req.files.ownerPhoto[0].path);
             if (!photoUploadResult) throw new ApiError(500, "Failed to upload owner photo");
-            ownerPhotoUrl = photoUploadResult.url;
+            franchiseLogoUrl = photoUploadResult.url;
         }
         if (req.files.franchiseSignature && req.files.franchiseSignature[0]) {
             const signatureUploadResult = await uploadOnCloudinary(req.files.franchiseSignature[0].path);
@@ -96,7 +97,7 @@ const addFranchiseByAdmin = asyncHandler(async (req, res) => {
         // activationDate: null, // Do not set activation date initially
         gstNumber,
         atcCode,
-        ownerPhotoUrl,
+        franchiseLogoUrl,
         franchiseSignatureUrl,
         requestDate: new Date() // Set request date now
         // expireDate will be calculated by pre-save hook when activationDate is set later
@@ -270,13 +271,13 @@ const updateFranchiseStatusVerification = asyncHandler(async (req, res) => {
         let htmlBody = '';
 
         // Construct the email body based on your template
-        textBody = `Congrats ${ownerName},\n\nSK Edutech Admin has verified and activated your plan to be a prestigious franchise for the interval of ${interval} from ${presentDate} to ${expiryDate}.\n\n`;
+        textBody = `Congrats ${ownerName},\n\nSK Edutech has verified and activated your plan to be a prestigious franchise for the interval of ${interval} from ${presentDate} to ${expiryDate}.\n\n`;
         htmlBody = `<p>Congrats ${ownerName},</p>
-                    <p>SK Edutech Admin has verified and activated your plan to be a prestigious franchise for the interval of <b>${interval}</b> from <b>${presentDate}</b> to <b>${expiryDate}</b>.</p>`;
+                    <p>SK Edutech has verified and activated your plan to be a prestigious franchise for the interval of <b>${interval}</b> from <b>${presentDate}</b> to <b>${expiryDate}</b>.</p>`;
 
         // Always include Franchise ID and the (potentially newly generated) password
-        textBody += `Your Franchise ID is ${loginId} and password is ${passwordToSend}. Please use these credentials to login in your dashboard.\n\n`;
-        htmlBody += `<p>Your Franchise ID is <b>${loginId}</b> and password is <b>${passwordToSend}</b>. Please use these credentials to login in your dashboard.</p>`;
+        textBody += `Your Franchise ID is ${loginId} and password is ${passwordToSend}. Please use your PHONE NUMBER and given PASSWORD as credentials to login in your dashboard through www.skedutech.com/institute and do "Center Login" using the given credentials.\n\n`;
+        htmlBody += `<p>Your Franchise ID is <b>${loginId}</b> and password is <b>${passwordToSend}</b>. Please use your PHONE NUMBER and given PASSWORD as credentials to login in your dashboard through www.skedutech.com/institute and do "Center Login" using the given credentials.</p>`;
 
         console.log(`--- Franchise Activated & Verified ---`);
         console.log(`   Franchise ID: ${loginId}`);
@@ -285,10 +286,10 @@ const updateFranchiseStatusVerification = asyncHandler(async (req, res) => {
         console.log(`----------------------------------------------------------------`);
 
 
-        textBody += `If you have any other doubts. Please contact us at help@skedutech.in\n\nWe will try to resolve the issue if any at the earliest possible.\n\nRegards,\nThe SK Edutech Team`;
-        htmlBody += `<p>If you have any other doubts. Please contact us at help@skedutech.in</p>
-                     <p>We will try to resolve the issue if any at the earliest possible.</p>
-                     <p>Regards,<br>The SK Edutech Team</p>`;
+        textBody += `In case you forget the password, please contact us at contact@skedutech.com\n\nWe will resolve the issue if any at the earliest possible.\n\nRegards,\nSK Edutech`;
+        htmlBody += `<p>In case you forget the password, please contact us at contact@skedutech.com</p>
+                     <p>We will resolve the issue if any at the earliest possible.</p>
+                     <p>Regards,<br>SK Edutech</p>`;
 
         // Send the activation/verification email
         try {
@@ -443,7 +444,7 @@ const updateFranchiseById = asyncHandler(async (req, res) => {
         if (req.files.ownerPhoto?.[0]) {
             const photoUploadResult = await uploadOnCloudinary(req.files.ownerPhoto[0].path);
             if (!photoUploadResult) throw new ApiError(500, "Failed to upload owner photo");
-            updateData.ownerPhotoUrl = photoUploadResult.url;
+            updateData.franchiseLogoUrl = photoUploadResult.url;
         }
 
         if (req.files.franchiseSignature?.[0]) {
@@ -661,7 +662,7 @@ export const loginFranchise = async (req, res) => {
         email: franchise.email,
         mobile: franchise.mobile,
         franchiseName: franchise.franchiseName,
-        franchiseImage: franchise.ownerPhotoUrl,
+        franchiseImage: franchise.franchiseLogoUrl,
         franchiseId: franchise.franchiseId,
         address: franchise.address,
         ownerName: franchise.ownerName,
@@ -748,6 +749,113 @@ export const updateFranchiseContact = async (req, res) => {
   }
 };
 
+ const getStudentCountByFranchise = async (req, res) => {
+    try {
+        const { franchiseId } = req.params;
+        
+        if (!franchiseId) {
+            return res.status(400).json({
+                statusCode: 400,
+                success: false,
+                message: "Franchise ID is required",
+                data: null
+            });
+        }
+
+        // Count active students for the franchise
+        const studentCount = await Student.countDocuments({
+            franchiseId: franchiseId,
+            status: true // Only count active students
+        });
+
+        return res.status(200).json({
+            statusCode: 200,
+            success: true,
+            message: "Student count retrieved successfully",
+            data: {
+                franchiseId: franchiseId,
+                studentCount: studentCount
+            }
+        });
+
+    } catch (error) {
+        console.error("Error getting student count:", error);
+        return res.status(500).json({
+            statusCode: 500,
+            success: false,
+            message: "Internal server error while fetching student count",
+            data: null
+        });
+    }
+};
+
+// Get student counts for all franchises
+const getAllFranchiseStudentCounts = async (req, res) => {
+    try {
+        console.log("Getting all franchise student counts...");
+        
+        // First, let's check if there are any students at all
+        const totalStudents = await Student.countDocuments();
+        console.log("Total students in database:", totalStudents);
+        
+        // Check students with franchiseId
+        const studentsWithFranchiseId = await Student.countDocuments({
+            franchiseId: { $exists: true, $ne: null, $ne: "" }
+        });
+        console.log("Students with franchiseId:", studentsWithFranchiseId);
+        
+        // Get a sample student to check the data structure
+        const sampleStudent = await Student.findOne({}).select('franchiseId status studentName');
+        console.log("Sample student:", sampleStudent);
+        
+        // Aggregate student counts by franchiseId
+        const studentCounts = await Student.aggregate([
+            {
+                $match: {
+                    // $or: [
+                    //     { status: true },           // Boolean true (old format)
+                    //     { status: "active" },       // String "active" (new format)
+                    //     { status: "Certified" }     // Also include certified students if needed
+                    // ],
+                    franchiseId: { $exists: true, $ne: null, $ne: "" } // Ensure franchiseId exists
+                }
+            },
+            {
+                $group: {
+                    _id: "$franchiseId",
+                    studentCount: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    franchiseId: "$_id",
+                    studentCount: 1
+                }
+            }
+        ]);
+
+        console.log("Aggregated student counts:", studentCounts);
+
+        return res.status(200).json({
+            statusCode: 200,
+            success: true,
+            message: "Student counts for all franchises retrieved successfully",
+            data: studentCounts
+        });
+
+    } catch (error) {
+        console.error("Error getting all franchise student counts:", error);
+        return res.status(500).json({
+            statusCode: 500,
+            success: false,
+            message: "Internal server error while fetching student counts",
+            data: null
+        });
+    }
+};
+
+
 // Export controllers
 export {
     addFranchiseByAdmin, // Renamed from createFranchise
@@ -761,4 +869,6 @@ export {
     resendFranchiseCredentials, // New
     getRecentFranchises,
     getFranchiseCount,
+    getStudentCountByFranchise,
+    getAllFranchiseStudentCounts,
 };

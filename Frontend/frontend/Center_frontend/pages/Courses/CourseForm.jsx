@@ -184,14 +184,17 @@ const CourseForm = ({ mode }) => {
       const noSpaceValue = value.replace(/\s/g, "");
       setFormData({ ...formData, [name]: noSpaceValue });
     } else {
-      setFormData({ ...formData, [name]: value });
+      // Trim string values to remove leading/trailing spaces
+      const trimmedValue = typeof value === 'string' ? value.trim() : value;
+      setFormData({ ...formData, [name]: trimmedValue });
     }
   };
 
 
   const handleVideoLinkChange = (index, e) => {
     const updatedVideos = [...courseVideoLinks];
-    updatedVideos[index][e.target.name] = e.target.value;
+    const trimmedValue = typeof e.target.value === 'string' ? e.target.value.trim() : e.target.value;
+    updatedVideos[index][e.target.name] = trimmedValue;
     setCourseVideoLinks(updatedVideos);
   };
   const addVideoLink = () =>
@@ -241,7 +244,9 @@ const CourseForm = ({ mode }) => {
         url: "",
       }; // Clear URL if file is chosen
     } else {
-      updatedNotes[index][name] = value;
+      // Trim string values to remove leading/trailing spaces
+      const trimmedValue = typeof value === 'string' ? value.trim() : value;
+      updatedNotes[index][name] = trimmedValue;
     }
     setNotes(updatedNotes);
   };
@@ -299,9 +304,12 @@ const CourseForm = ({ mode }) => {
     // }
     // submissionData.append('franchiseId', franchiseId);
 
-    Object.keys(formData).forEach((key) =>
-      submissionData.append(key, formData[key])
-    );
+    Object.keys(formData).forEach((key) => {
+      const value = formData[key];
+      // Trim string values to remove leading/trailing spaces before submission
+      const trimmedValue = typeof value === 'string' ? value.trim() : value;
+      submissionData.append(key, trimmedValue);
+    });
     submissionData.append("franchiseId", franchiseId);
 
     const validVideoLinks = courseVideoLinks

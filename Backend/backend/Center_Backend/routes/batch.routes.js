@@ -5,6 +5,7 @@ import {
   getBatchSeats,
   createBatch,
   updateBatch,  
+  editBatch,
   deleteBatch
 } from "../controllers/batch.controller.js"
 
@@ -21,6 +22,9 @@ router.post('/createBatch', createBatch);
 
 // Update batch
 router.put('/:batchId', updateBatch);
+
+// Edit batch (only timing and allowed students)
+router.patch('/:batchId/edit', editBatch);
 
 // Delete batch
 router.delete('/:batchId', deleteBatch);

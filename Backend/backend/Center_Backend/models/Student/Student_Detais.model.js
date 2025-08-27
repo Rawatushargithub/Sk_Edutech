@@ -47,7 +47,11 @@ const studentSchema = new mongoose.Schema({
 
   admissionDate: { type: String, required: true }, // Format: dd-mm-yyyy
   displayAdmissionOptions: { type: Boolean, default: false }, // For ID card, admission form & fee receipt
-  status: { type: Boolean, default: true },
+  status: { 
+    type: String, 
+    enum: ["active", "inactive", "Certified"], 
+    default: "active" 
+  },
   otp: {
   type: String,
   default: null

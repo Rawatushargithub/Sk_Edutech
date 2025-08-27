@@ -5,18 +5,20 @@ import { toast, ToastContainer } from "react-toastify"; // Using react-hot-toast
 import "react-toastify/dist/ReactToastify.css"; // Keep for now if styles are used, but prefer react-hot-toast styling
 import toastHot from 'react-hot-toast'; // Renamed to avoid conflict if ToastContainer from react-toastify is used
 import { Toaster as HotToaster } from 'react-hot-toast';
+import Select from 'react-select';
 import API_BASE_URL from "../../config";
 
 
 import { MdDelete, MdVideoLibrary, MdEdit } from "react-icons/md";
-import { PlusCircle } from "lucide-react";
-
-
+import { PlusCircle, Search } from "lucide-react";
+console.log("video.jsx is working")
+ 
 const UploadCourseVideo1 = () => {
   const navigate = useNavigate();
   const [allCourses, setAllCourses] = useState([]); // For dropdown
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [videosToDisplay, setVideosToDisplay] = useState([]); // Videos from selected course's courseVideoLinks
+  const [searchTerm, setSearchTerm] = useState("");
   
   // const [newVideo, setNewVideo] = useState({ course: "", title: "", link: "" }); // Removed, adding videos via CourseForm or dedicated page
   // const [thumbnailPreview, setThumbnailPreview] = useState(null); // Removed
@@ -25,6 +27,7 @@ const UploadCourseVideo1 = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [loadingVideos, setLoadingVideos] = useState(false);
+  const [deletingVideoId, setDeletingVideoId] = useState(null);
   const videosPerPage = 12;
 
   // const courses = ["BCA", "MBA", "B.Tech", "M.Tech", "B.Sc"]; // Replaced by dynamic fetch
@@ -97,16 +100,65 @@ const UploadCourseVideo1 = () => {
     return videoId;
   };
 
-  // handleDeleteVideo is removed as video management is now part of CourseForm
+  // Delete video function
+  const handleDeleteVideo = async (videoId, videoTitle) => {
+    if (!window.confirm(`Are you sure you want to delete "${videoTitle}"?`)) {
+      return;
+    }
+
+    setDeletingVideoId(videoId);
+    try {
+      const franchiseId = localStorage.getItem('franchiseID');
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/institute_courses/${selectedCourseId}/videos/${videoId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ franchiseId })
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete video');
+      }
+
+      const data = await response.json();
+      toastHot.success('Video deleted successfully!');
+      
+      // Update the videos display by refreshing the course data
+      const course = allCourses.find(c => c._id === selectedCourseId);
+      if (course && data.course) {
+        // Update the course in allCourses with the new video links
+        const updatedCourses = allCourses.map(c => 
+          c._id === selectedCourseId ? { ...c, courseVideoLinks: data.course.courseVideoLinks } : c
+        );
+        setAllCourses(updatedCourses);
+        setVideosToDisplay(data.course.courseVideoLinks);
+      }
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      toastHot.error(`Error deleting video: ${error.message}`);
+    } finally {
+      setDeletingVideoId(null);
+    }
+  };
+
+  // Filter videos by search term
+  const filteredVideos = videosToDisplay.filter(video =>
+    video.title && video.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Pagination Logic
   const indexOfLastVideo = currentPage * videosPerPage;
   const indexOfFirstVideo = indexOfLastVideo - videosPerPage;
-  const currentVideosToDisplay = videosToDisplay.slice(indexOfFirstVideo, indexOfLastVideo);
+  const currentVideosToDisplay = filteredVideos.slice(indexOfFirstVideo, indexOfLastVideo);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  const totalPages = Math.ceil(videosToDisplay.length / videosPerPage);
+  const totalPages = Math.ceil(filteredVideos.length / videosPerPage);
 
   const inputStyle = "w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500";
   const buttonBaseStyle = "px-6 py-2.5 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors";
@@ -128,24 +180,46 @@ const UploadCourseVideo1 = () => {
             </button>
         </div>
 
-        {/* Course Filter */}
-        <div className="mb-6 p-4 bg-white shadow-md rounded-lg">
-          <label htmlFor="courseFilter" className="block text-sm font-medium text-gray-700 mb-1">Select Course to View Videos</label>
-          <select
-            id="courseFilter"
-            className={inputStyle}
-            value={selectedCourseId}
-            onChange={(e) => setSelectedCourseId(e.target.value)}
-            disabled={loadingCourses}
-          >
-            <option value="">-- Select a Course --</option>
-            {loadingCourses && <option disabled>Loading courses...</option>}
-            {allCourses.map((course) => (
-              <option key={course._id} value={course._id}>
-                {course.courseName} ({course.courseCode})
-              </option>
-            ))}
-          </select>
+        {/* Filters */}
+        <div className="mb-6 p-4 bg-white shadow-md rounded-lg flex flex-col sm:flex-row gap-4 items-center">
+          <div className="flex-grow w-full sm:w-auto">
+            <label htmlFor="courseFilter" className="block text-sm font-medium text-gray-700 mb-1">Filter by Course</label>
+            <Select
+              id="courseFilter"
+              options={allCourses.map(course => ({
+                value: course._id,
+                label: `${course.courseName} (${course.courseCode})`
+              }))}
+              value={allCourses.map(course => ({
+                value: course._id,
+                label: `${course.courseName} (${course.courseCode})`
+              })).find(option => option.value === selectedCourseId)}
+              onChange={selectedOption => setSelectedCourseId(selectedOption ? selectedOption.value : "")}
+              isLoading={loadingCourses}
+              isClearable
+              isSearchable
+              placeholder="-- Select or search for a Course --"
+              className="w-full"
+              classNamePrefix="select"
+            />
+          </div>
+          <div className="flex-grow w-full sm:w-auto">
+            <label htmlFor="videoSearch" className="block text-sm font-medium text-gray-700 mb-1">Search Videos</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                id="videoSearch"
+                type="text"
+                placeholder="Search by video title..."
+                className={`${inputStyle} pl-10`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                disabled={!selectedCourseId}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Video List */}
@@ -163,8 +237,15 @@ const UploadCourseVideo1 = () => {
               <p className="text-sm text-gray-400 mt-2">You can add videos by editing the course.</p>
             </div>
         )}
+        {!loadingVideos && selectedCourseId && videosToDisplay.length > 0 && filteredVideos.length === 0 && (
+            <div className="text-center py-10 bg-white rounded-lg shadow p-6">
+              <MdVideoLibrary size={48} className="mx-auto text-gray-300 mb-4" />
+              <p className="text-gray-500">No videos found matching your search.</p>
+              <p className="text-sm text-gray-400 mt-2">Try adjusting your search term or clear the search to see all videos.</p>
+            </div>
+        )}
 
-        {!loadingVideos && selectedCourseId && videosToDisplay.length > 0 && (
+        {!loadingVideos && selectedCourseId && filteredVideos.length > 0 && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {currentVideosToDisplay.map((video, index) => {
@@ -186,7 +267,23 @@ const UploadCourseVideo1 = () => {
                         <h3 className="text-md font-semibold text-slate-800 mb-1 truncate" title={video.title}>{video.title || 'Untitled Video'}</h3>
                         {/* <p className="text-xs text-gray-500">Course: {allCourses.find(c=>c._id === selectedCourseId)?.courseName}</p> */}
                       </div>
-                       {/* Edit/Delete buttons removed - manage via CourseForm */}
+                      <div className="flex justify-end mt-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteVideo(video._id, video.title);
+                          }}
+                          disabled={deletingVideoId === video._id}
+                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Delete Video"
+                        >
+                          {deletingVideoId === video._id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                          ) : (
+                            <MdDelete size={18} />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

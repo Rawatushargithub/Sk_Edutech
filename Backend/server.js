@@ -130,7 +130,6 @@ import studentRouter from "./backend/Center_Backend/routes/Student/Student.route
 import courseRouter from "./backend/Center_Backend/routes/Courses.routes.js"
 import feesRouter from "./backend/Center_Backend/routes/Student/fees_routes.js" 
 import batchRouter from "./backend/Center_Backend/routes/batch.routes.js";
-import institute_notesRoutes from "./backend/Center_Backend/routes/notesRoutes.js"
 import institute_examRoutes from "./backend/Center_Backend/routes/examRoutes.js"
 import institute_walletRoutes from "./backend/Center_Backend/routes/payment.routes.js"
 import institute_EnquiryRoutes from "./backend/Center_Backend/routes/enquiryStudent.route.js";
@@ -144,7 +143,7 @@ app.use("/api/v1/institute_student" , studentRouter);
 app.use("/api/v1/institute_courses" , courseRouter); 
 app.use("/api/v1/institute_fees" , feesRouter);
 app.use("/api/v1/institute_batche" , batchRouter); 
-app.use("/api/v1/institute_note", institute_notesRoutes);
+
 app.use("/api/v1/institute_exam", institute_examRoutes);
 app.use("/api/v1/institute_wallet", institute_walletRoutes);
 app.use("/api/v1/institute_enquiry", institute_EnquiryRoutes);

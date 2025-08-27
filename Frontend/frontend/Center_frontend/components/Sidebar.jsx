@@ -19,6 +19,7 @@ import { IoMdClock } from "react-icons/io";
 import { RiBookShelfLine } from "react-icons/ri";
 import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
 import { MdSupportAgent } from "react-icons/md";
+import { HiDocumentText } from "react-icons/hi";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -86,6 +87,11 @@ const Sidebar = () => {
       title: "Courses",
       icon: <RiBookShelfLine className="w-5 h-5" />,
       action: () => navigate("/institute/Courses"),
+    },
+    {
+      title: "Marksheet",
+      icon: <HiDocumentText className="w-5 h-5" />,
+      action: () => navigate("/institute/marksheet"),
     },
     {
       title: "Help & Support",

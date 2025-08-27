@@ -41,6 +41,7 @@ import QuestionBankSystem from "../Center_frontend/pages/QuestionBank/QuestionBa
 import ApprovedCertificates from "../Center_frontend/pages/Certificate/ApprovedCertificate.jsx";
 
 import SkEduTechSupport from "../Center_frontend/pages/HelpSupport.jsx";
+import Marksheet from "../Center_frontend/pages/Marksheet/Marksheet.jsx";
 
 
 
@@ -112,6 +113,7 @@ useEffect(() => {
               <Route path="approve-certificate" element={<ApprovedCertificates />} />
               <Route path="Enquiries" element={< Enquiries/>} />
               <Route path="Question-bank" element={<QuestionBankSystem/>} />
+              <Route path="marksheet" element={<Marksheet />} />
               <Route path="helpsupport" element={<SkEduTechSupport />} />
 
               

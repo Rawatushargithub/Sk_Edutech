@@ -6,7 +6,8 @@ import {
     getStudentMarksheet,
     getFranchiseMarksheets,
     deleteMarksheet,
-    publishMarksheet
+    publishMarksheet,
+    downloadApprovedMarksheet
 } from '../controllers/marksheet.controller.js';
 
 const router = express.Router();
@@ -21,7 +22,7 @@ router.get('/students/:courseId', getCourseStudents);
 router.post('/create', createOrUpdateMarksheet);
 
 // Get specific student marksheet
-router.get('/student/:studentId/course/:courseId', getStudentMarksheet);
+router.get('/student/:studentId/course/:courseCode', getStudentMarksheet);
 
 // Get all marksheets for franchise
 router.get('/all', getFranchiseMarksheets);
@@ -31,5 +32,8 @@ router.patch('/publish/:marksheetId', publishMarksheet);
 
 // Delete marksheet
 router.delete('/:marksheetId', deleteMarksheet);
+
+// Download approved marksheet
+router.get('/download/:studentId/:courseCode', downloadApprovedMarksheet);
 
 export default router;

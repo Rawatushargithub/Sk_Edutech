@@ -207,6 +207,7 @@ console.log("Franchise ID::" , franchiseId)
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
+        <h1 className='bg-red-500 text-white text-center'> Still in progress</h1>
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Student Marksheet Management</h1>
           <p className="text-gray-600">Generate and manage student marksheets for your courses</p>

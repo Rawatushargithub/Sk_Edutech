@@ -45,6 +45,11 @@ export const addStudent = async (req, res) => {
       balance,
       remarks,
       installments = [],
+      enquiryStatus,
+      // priority, // Commented out - not needed
+      holdUntilDate,
+      nextContactDate,
+      contactAttempts,
     } = req.body;
 
     console.log("=== FRANCHISE ID CHECK ===");
@@ -205,9 +210,22 @@ export const addStudent = async (req, res) => {
       balance: processedBalance,
       remarks: remarks?.trim() || '',
       installments: processedInstallments,
-      status: 'pending'
+      status: 'pending',
+      // Status management fields - Only OPEN and ON_HOLD allowed
+      enquiryStatus: ['OPEN', 'ON_HOLD'].includes(enquiryStatus) ? enquiryStatus : 'OPEN',
+      // priority: priority || 'MEDIUM', // Commented out - not needed
+      holdUntilDate: holdUntilDate ? new Date(holdUntilDate) : null,
+      nextContactDate: nextContactDate ? new Date(nextContactDate) : null,
+      contactAttempts: contactAttempts || 0,
+      statusHistory: [{
+        status: ['OPEN', 'ON_HOLD'].includes(enquiryStatus) ? enquiryStatus : 'OPEN',
+        changedBy: 'System',
+        changeDate: new Date(),
+        remarks: 'Initial enquiry creation'
+      }],
     };
-
+    
+    delete studentData.rollNumber;
     console.log("Final student data to be saved:");
     console.log(JSON.stringify(studentData, null, 2));
 
@@ -240,6 +258,8 @@ export const addStudent = async (req, res) => {
     console.log("- balance:", savedStudent.balance);
     console.log("- remarks:", savedStudent.remarks);
     console.log("- installments count:", savedStudent.installments?.length);
+    console.log("- enquiryStatus:", savedStudent.enquiryStatus);
+    // console.log("- priority:", savedStudent.priority); // Commented out
     console.log("- Full saved document:", JSON.stringify(savedStudent.toObject(), null, 2));
     console.log("=== ADD STUDENT DEBUG END ===");
 
@@ -252,7 +272,9 @@ export const addStudent = async (req, res) => {
         installmentsCount: savedStudent.installments?.length || 0,
         courseFees: savedStudent.courseFees,
         totalFees: savedStudent.totalFees,
-        balance: savedStudent.balance
+        balance: savedStudent.balance,
+        enquiryStatus: savedStudent.enquiryStatus,
+        // priority: savedStudent.priority // Commented out
       }
     });
 
@@ -271,11 +293,24 @@ export const addStudent = async (req, res) => {
   }
 };
 
-// Get all student enquiries filtered by franchiseId
+// Get all student enquiries filtered by franchiseId with status filters and date range
 export const getStudents = async (req, res) => {
   try {
-    const { franchiseId, page = 1, limit = 10, search = "" } = req.query;
+    const { 
+      franchiseId, 
+      page = 1, 
+      limit = 10, 
+      search = "", 
+      status, 
+      // priority, // Commented out - not needed
+      tab,
+      dateRange, // New parameter for date filtering
+      startDate,
+      endDate
+    } = req.query;
     console.log("franchiseId value :: ", franchiseId);
+    console.log("Query parameters:", req.query);
+    
     // Validate franchiseId
     if (!franchiseId) {
       return res.status(400).json({
@@ -290,23 +325,104 @@ export const getStudents = async (req, res) => {
     // Build the filter query
     const query = { franchiseId: franchiseId };
     
+    // Add tab-based filtering - Only OPEN and ON_HOLD allowed
+    if (tab && tab !== "all") {
+      if (['OPEN', 'ON_HOLD'].includes(tab)) {
+        query.enquiryStatus = tab;
+      }
+    }
+    
+    // Add specific status filter - Only OPEN and ON_HOLD allowed
+    if (status && status !== "all" && ['OPEN', 'ON_HOLD'].includes(status)) {
+      query.enquiryStatus = status;
+    }
+    
+    // Add priority filter - Commented out as not needed
+    // if (priority && priority !== "all") {
+    //   query.priority = priority;
+    // }
+
+    // Add date range filtering for holdUntilDate
+    if (dateRange || (startDate && endDate)) {
+      let dateQuery = {};
+      const now = new Date();
+      
+      if (dateRange) {
+        switch (dateRange) {
+          case 'today':
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            dateQuery = {
+              $gte: todayStart,
+              $lte: todayEnd
+            };
+            break;
+            
+          case 'yesterday':
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStart = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+            const yesterdayEnd = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59);
+            dateQuery = {
+              $gte: yesterdayStart,
+              $lte: yesterdayEnd
+            };
+            break;
+            
+          case 'last7days':
+            const sevenDaysAgo = new Date(now);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            dateQuery = {
+              $gte: sevenDaysAgo,
+              $lte: now
+            };
+            break;
+            
+          case 'last30days':
+            const thirtyDaysAgo = new Date(now);
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            dateQuery = {
+              $gte: thirtyDaysAgo,
+              $lte: now
+            };
+            break;
+        }
+      } else if (startDate && endDate) {
+        // Custom range
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // Include the entire end date
+        dateQuery = {
+          $gte: start,
+          $lte: end
+        };
+      }
+      
+      if (Object.keys(dateQuery).length > 0) {
+        query.createdAt = dateQuery;
+      }
+    }
+    
     // Add search functionality if search parameter exists
     if (search) {
       query.$or = [
         { studentName: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
         { studentMobile: { $regex: search, $options: 'i' } },
-        // { rollNumber: { $regex: search, $options: 'i' } }
+        { enquiryId: { $regex: search, $options: 'i' } }
       ];
     }
     
+    console.log("Final query:", JSON.stringify(query, null, 2));
+    
     // Get filtered students with pagination
     const students = await EnquiryStudent.find(query)
-      .select('enquiryId studentName email studentMobile dob city courseFees discountAmount totalFees feesReceived balance paymentMode remarks courseInterested gender permanentAddress enquiryDate installments')
+      .select('enquiryId studentName email studentMobile dob city courseFees discountAmount totalFees feesReceived balance paymentMode remarks courseInterested gender permanentAddress enquiryDate installments enquiryStatus holdUntilDate nextContactDate contactAttempts statusHistory lastContactDate')
       .skip((pageNumber - 1) * limitNumber)
       .limit(limitNumber)
       .sort({ createdAt: -1 });
-    console.log("Students fetched:", students);
+    console.log("Students fetched:", students.length);
+    
     // Count total documents for pagination
     const totalStudents = await EnquiryStudent.countDocuments(query);
     
@@ -321,8 +437,184 @@ export const getStudents = async (req, res) => {
       }
     });
   } catch (error) { 
+    console.error("Error in getStudents:", error);
     res.status(500).json({ 
       success: false,
+      error: error.message 
+    });
+  }
+};
+
+// Update enquiry status - Only OPEN and ON_HOLD allowed
+export const updateEnquiryStatus = async (req, res) => {
+  try {
+    const enquiryId = req.params.id;
+    const { franchiseId } = req.query;
+    const { enquiryStatus, holdUntilDate, remarks, changedBy } = req.body;
+    
+    console.log("Updating status for enquiry:", enquiryId);
+    console.log("Update data:", req.body);
+    
+    if (!franchiseId) {
+      return res.status(400).json({
+        success: false,
+        message: 'FranchiseID is required'
+      });
+    }
+    
+    if (!enquiryStatus || !['OPEN', 'ON_HOLD'].includes(enquiryStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Enquiry status is required and must be either OPEN or ON_HOLD'
+      });
+    }
+    
+    const updateData = {
+      enquiryStatus,
+      // priority: priority || 'MEDIUM', // Commented out - not needed
+      lastContactDate: new Date(),
+      $push: {
+        statusHistory: {
+          status: enquiryStatus,
+          changedBy: changedBy || 'User',
+          changeDate: new Date(),
+          remarks: remarks || ''
+        }
+      }
+    };
+    
+    if (holdUntilDate) updateData.holdUntilDate = new Date(holdUntilDate);
+    
+    // Increment contact attempts for OPEN status
+    if (enquiryStatus === 'OPEN') updateData.$inc = { contactAttempts: 1 };
+    
+    const enquiry = await EnquiryStudent.findOneAndUpdate(
+      { _id: enquiryId, franchiseId: franchiseId },
+      updateData,
+      { new: true }
+    );
+
+    if (!enquiry) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Enquiry not found or does not belong to this franchise' 
+      });
+    }
+
+    console.log("Status updated successfully for enquiry:", enquiry.enquiryId);
+    
+    res.json({
+      success: true,
+      message: 'Status updated successfully',
+      data: enquiry
+    });
+  } catch (error) {
+    console.error("Error updating enquiry status:", error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
+// Get status summary for dashboard - Only OPEN and ON_HOLD
+export const getStatusSummary = async (req, res) => {
+  try {
+    const { franchiseId } = req.query;
+    
+    if (!franchiseId) {
+      return res.status(400).json({
+        success: false,
+        message: 'FranchiseID is required'
+      });
+    }
+    
+    const pipeline = [
+      { $match: { franchiseId: franchiseId } },
+      {
+        $group: {
+          _id: '$enquiryStatus',
+          count: { $sum: 1 }
+        }
+      }
+    ];
+    
+    const statusCounts = await EnquiryStudent.aggregate(pipeline);
+    
+    // Format the response - Only OPEN and ON_HOLD
+    const summary = {
+      OPEN: 0,
+      ON_HOLD: 0,
+      // Commented out closed statuses
+      // CLOSED_CONVERTED: 0,
+      // CLOSED_NOT_INTERESTED: 0,
+      // CLOSED_UNRESPONSIVE: 0
+    };
+    
+    statusCounts.forEach(item => {
+      if (summary.hasOwnProperty(item._id)) {
+        summary[item._id] = item.count;
+      }
+    });
+    
+    // Calculate totals
+    const totalEnquiries = Object.values(summary).reduce((sum, count) => sum + count, 0);
+    // const totalClosed = summary.CLOSED_CONVERTED + summary.CLOSED_NOT_INTERESTED + summary.CLOSED_UNRESPONSIVE;
+    // const conversionRate = totalEnquiries > 0 ? ((summary.CLOSED_CONVERTED / totalEnquiries) * 100).toFixed(2) : 0;
+    
+    res.json({
+      success: true,
+      data: {
+        statusCounts: summary,
+        totalEnquiries,
+        // totalClosed, // Commented out
+        // conversionRate: parseFloat(conversionRate) // Commented out
+      }
+    });
+  } catch (error) {
+    console.error("Error getting status summary:", error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
+// Get enquiries ready to contact (ON_HOLD with holdUntilDate <= today)
+export const getReadyToContact = async (req, res) => {
+  try {
+    const { franchiseId } = req.query;
+    
+    if (!franchiseId) {
+      return res.status(400).json({
+        success: false,
+        message: 'FranchiseID is required'
+      });
+    }
+    
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // End of today
+    
+    const enquiries = await EnquiryStudent.find({
+      franchiseId: franchiseId,
+      enquiryStatus: 'ON_HOLD',
+      holdUntilDate: { $lte: today }
+    })
+    .select('enquiryId studentName studentMobile email holdUntilDate courseInterested') // Removed priority
+    .sort({ holdUntilDate: 1 });
+    
+    res.json({
+      success: true,
+      data: enquiries,
+      count: enquiries.length
+    });
+  } catch (error) {
+    console.error("Error getting ready to contact enquiries:", error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
       error: error.message 
     });
   }

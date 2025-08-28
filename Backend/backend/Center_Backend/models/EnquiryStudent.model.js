@@ -18,7 +18,7 @@ const enquiryStudentSchema = new mongoose.Schema({
   courseInterested: { 
     courseName: {type: String, required: true},
     courseCode: {type: String, required: true}  
-}, 
+  }, 
   studentMobile: { type: String, required: true },
   alternateMobile: { type: String },
   email: { type: String, required: true },
@@ -54,8 +54,37 @@ const enquiryStudentSchema = new mongoose.Schema({
   installments: [{
     installmentDate: { type: String },
     installmentAmount: { type: Number }
-  }]
-  
+  }],
+  enquiryStatus: {
+  type: String,
+  enum: ['OPEN', 'ON_HOLD'],
+  default: 'OPEN'
+  },
+  holdUntilDate: {
+    type: Date,
+    default: null
+  },
+  lastContactDate: {
+    type: Date,
+    default: null
+  },
+  nextContactDate: {
+    type: Date,
+    default: null
+  },
+  contactAttempts: {
+    type: Number,
+    default: 0
+  },
+  statusHistory: [{
+    status: String,
+    changedBy: String,
+    changeDate: {
+      type: Date,
+      default: Date.now
+    },
+    remarks: String
+  }],
 }, { timestamps: true });
 
 const EnquiryStudent = mongoose.model('EnquiryStudent', enquiryStudentSchema);

@@ -44,6 +44,10 @@ const EnquiryForm = () => {
     balance: 0,
     remarks: "",
     installments: [],
+    // Status Management Fields - Simplified
+    enquiryStatus: 'OPEN',
+    holdUntilDate: '',
+    contactAttempts: 0,
   });
 
   const navigate = useNavigate();
@@ -191,6 +195,10 @@ const EnquiryForm = () => {
       toast.error("Mobile number must be 10 digits");
       return;
     }
+    if (!formData.email.trim()) {
+      toast.error("Email is a required field");
+      return;
+    }
     if (!formData.dob) {
       toast.error("Date of Birth is a required field");
       return;
@@ -231,7 +239,11 @@ const EnquiryForm = () => {
       installments: formData.installments.map(installment => ({
         installmentDate: convertDateToBackendFormat(installment.installmentDate),
         installmentAmount: parseFloat(installment.installmentAmount) || 0
-      }))
+      })),
+      // Status management fields - Simplified
+      enquiryStatus: formData.enquiryStatus,
+      holdUntilDate: formData.holdUntilDate || null,
+      contactAttempts: 0,
     };
 
     console.log("Sending student data:", studentData); // Debug log
@@ -313,7 +325,6 @@ const EnquiryForm = () => {
               <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Course & Contact Details</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-
                   <label htmlFor="courseInterested" className={labelStyle}>Course Interested {requiredStar}</label>
                   <select id="courseInterested" name="courseInterested" onChange={handleCourseChange} value={formData.courseInterested.courseName ? courses.find(c => c.courseName === formData.courseInterested.courseName)?._id : ""} required className={inputStyle}>
                     <option value="">Select a course</option>
@@ -323,7 +334,6 @@ const EnquiryForm = () => {
                       </option>
                     ))}
                   </select>
-
                 </div>
                 <div>
                   <label htmlFor="studentMobile" className={labelStyle}>Student Mobile {requiredStar}</label>
@@ -336,9 +346,31 @@ const EnquiryForm = () => {
                   <input type="tel" id="alternateMobile" name="alternateMobile" value={formData.alternateMobile} onChange={handleInputChange} placeholder="Enter Alternate Mobile" className={inputStyle} maxLength="10" />
                 </div>
                 <div>
-                  <label htmlFor="email" className={labelStyle}>Email</label>
+                  <label htmlFor="email" className={labelStyle}>Email {requiredStar}</label>
                   <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="Enter Email Address" className={inputStyle} />
                 </div>
+              </div>
+            </div>
+
+            {/* Status Management Section - Simplified */}
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Status Management</h2>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className={labelStyle}>Enquiry Status</label>
+                  <select name="enquiryStatus" value={formData.enquiryStatus} onChange={handleInputChange} className={inputStyle}>
+                    <option value="OPEN">Open</option>
+                    <option value="ON_HOLD">On Hold</option>
+                  </select>
+                </div>
+                
+                {formData.enquiryStatus === 'ON_HOLD' && (
+                  <div>
+                    <label className={labelStyle}>Contact After Date</label>
+                    <input type="date" name="holdUntilDate" value={formData.holdUntilDate} onChange={handleInputChange} className={inputStyle} />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -420,7 +452,7 @@ const EnquiryForm = () => {
               <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Additional Details</h2>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="dob" className={labelStyle}>Date of Birth</label>
+                  <label htmlFor="dob" className={labelStyle}>Date of Birth {requiredStar}</label>
                   <div className="relative">
                     <input 
                       type="date" 
@@ -434,7 +466,7 @@ const EnquiryForm = () => {
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="gender" className={labelStyle}>Gender</label>
+                  <label htmlFor="gender" className={labelStyle}>Gender {requiredStar}</label>
                   <select id="gender" name="gender" value={formData.gender} onChange={handleInputChange} className={inputStyle}>
                     <option value="">Select Gender</option>
                     <option value="Male">Male</option>

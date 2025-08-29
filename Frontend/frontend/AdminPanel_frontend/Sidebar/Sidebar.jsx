@@ -17,7 +17,7 @@ import { BiSolidInstitution } from "react-icons/bi";
 import { GrAchievement, GrGallery } from "react-icons/gr";
 import { TbHomePlus } from "react-icons/tb";
 import { RiBookShelfLine } from "react-icons/ri";
-
+import { TbCertificate2 } from "react-icons/tb";
 
 
 const Sidebar = () => {
@@ -44,6 +44,7 @@ const Sidebar = () => {
         { title: "Wallet approval", icon: <FaMoneyBill1Wave className="w-5 h-5" />, link: "/admin/wallet" },
         { title: "Courses", icon: <RiBookShelfLine className="w-5 h-5" />, link: "/admin/courses" },
         { title: "Certificates", icon: <TbCertificate className="w-5 h-5" />, link: "/admin/Certificates" },
+        { title: "Marksheet", icon: <TbCertificate2 className="w-5 h-5" />, link: "/admin/marksheet" },
         { title: "Notification", icon: <TbNotification className="w-5 h-5" />, link: "/admin/notification" },
 
       ],

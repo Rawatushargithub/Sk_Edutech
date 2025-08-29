@@ -24,7 +24,7 @@ const enquiryStudentSchema = new mongoose.Schema({
   email: { type: String, required: true },
   
   dob: { type: String}, // Format: dd-mm-yyyy
-  gender: { type: String, enum: ["Male", "Female", "Other"] },
+  gender: { type: String, enum: ["Male", "Female", "Other"], default: "Male" },
   city: { type: String },
   postCode: { type: String },
   permanentAddress: { type: String },

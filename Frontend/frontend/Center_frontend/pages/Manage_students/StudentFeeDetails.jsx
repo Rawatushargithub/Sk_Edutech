@@ -120,30 +120,35 @@ const FeesManagementSystem = () => {
   };
 
 
+  // Helper to normalize active status
+  const isActiveStatus = (s) => {
+    const st = (s?.status ?? '').toString().toLowerCase();
+    return st === 'active' || st === 'true';
+  };
+
   const filteredStudents = getFilteredAndSortedData(students, search, sortKey, timeFilter, startDate, endDate);
   const filteredInstallmentStudents = getFilteredAndSortedData(installmentStudents, search, sortKey, timeFilter, startDate, endDate);
 
 
   // Calculate totals for normal fees based on filtered students for real-time updates
-  const totalFee = filteredStudents.reduce((acc, student) => acc + student.totalFee, 0);
-  const totalPaid = filteredStudents.reduce((acc, student) => acc + student.paidFee, 0);
-  const totalDue = filteredStudents.reduce((acc, student) => acc + student.dueFee, 0);
+  // Custom card logic per requirement:
+  // - Total Fee: for active students use totalFee, for inactive use paidFee
+  // - Received Fee: sum of paidFee for all students
+  // - Balance Fee: sum of dueFee for active students only
+  const totalFee = filteredStudents.reduce((acc, student) => acc + (isActiveStatus(student) ? (student.totalFee || 0) : (student.paidFee || 0)), 0);
+  const totalPaid = filteredStudents.reduce((acc, student) => acc + (student.paidFee || 0), 0);
+  const totalDue = filteredStudents.reduce((acc, student) => acc + (isActiveStatus(student) ? (student.dueFee || 0) : 0), 0);
 
 
   // Update these calculations based on your actual data structure
-const totalInstallmentAmount = installmentStudents.reduce((acc, student) => {
-  const studentTotal = student.installments?.reduce((sum, inst) => sum + inst.amount, 0) || 0;
-  return acc + studentTotal;
-}, 0);
+  // Installments: use filtered list and apply same active/inactive rules
+  const totalInstallmentAmount = filteredInstallmentStudents.reduce((acc, student) => acc + (isActiveStatus(student) ? (student.totalInstallmentAmount || (student.installments?.reduce((sum, inst) => sum + (inst.amount || 0), 0) || 0)) : (student.paidInstallmentAmount || 0)), 0);
 
 
-const totalInstallmentPaid = installmentStudents.reduce((acc, student) => {
-  const studentPaid = student.installments?.reduce((sum, inst) => sum + (inst.paid ? inst.amount : 0), 0) || 0;
-  return acc + studentPaid;
-}, 0);
+  const totalInstallmentPaid = filteredInstallmentStudents.reduce((acc, student) => acc + (student.paidInstallmentAmount || (student.installments?.reduce((sum, inst) => sum + (inst.paid ? (inst.amount || 0) : 0), 0) || 0)), 0);
 
 
-const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
+  const totalInstallmentDue = filteredInstallmentStudents.reduce((acc, student) => acc + (isActiveStatus(student) ? (student.dueInstallmentAmount ?? ((student.totalInstallmentAmount || (student.installments?.reduce((sum, inst) => sum + (inst.amount || 0), 0) || 0)) - (student.paidInstallmentAmount || 0))) : 0), 0);
 
 
   // Handle normal fee update
@@ -356,6 +361,18 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
           dueFee: student.totalFee - student.paidFee, // Ensure dueFee is properly calculated
         }));
         setStudents(updatedStudents);
+        // Fetch statuses and merge into fee students by rollNumber
+        axios
+          .get(`${API_BASE_URL}/api/v1/institute_student/get_students?franchiseId=${franchiseId}`)
+          .then((resp) => {
+            const arr = Array.isArray(resp.data) ? resp.data : (resp.data?.data || []);
+            const statusMap = new Map(arr.map((s) => [s.rollNumber, s.status]));
+            setStudents((prev) => prev.map((st) => ({
+              ...st,
+              status: statusMap.get(st.rollNumber) ?? st.status ?? 'active',
+            })));
+          })
+          .catch((e) => console.error('Error merging statuses into fee students:', e));
       })
       .catch((error) => console.error("Error fetching students:", error));
 
@@ -366,7 +383,20 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
       .then((response) => {
         console.log("Installment data:", response);
         if (response.data.success) {
-          setInstallmentStudents(response.data.data);
+          const list = response.data.data || [];
+          setInstallmentStudents(list);
+          // Merge statuses into installment students too
+          axios
+            .get(`${API_BASE_URL}/api/v1/institute_student/get_students?franchiseId=${franchiseId}`)
+            .then((resp) => {
+              const arr = Array.isArray(resp.data) ? resp.data : (resp.data?.data || []);
+              const statusMap = new Map(arr.map((s) => [s.rollNumber, s.status]));
+              setInstallmentStudents((prev) => prev.map((st) => ({
+                ...st,
+                status: statusMap.get(st.rollNumber) ?? st.status ?? 'active',
+              })));
+            })
+            .catch((e) => console.error('Error merging statuses into installment students:', e));
         }
       })
       .catch((error) => {
@@ -861,7 +891,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
                   <React.Fragment key={student.id}>
                     <tr
                       onClick={() => setSelectedStudent(selectedStudent === student.id ? null : student.id)}
-                      className="hover:bg-gray-50 cursor-pointer transition-colors"
+                      className={`bg-gray-50 cursor-pointer transition-colors ${!isActiveStatus(student) ? 'bg-red-50' : ''}`}
                     >
                       <td className="py-3 px-4 border-b whitespace-nowrap">{student.rollNumber}</td>
                       <td className="py-3 px-4 border-b font-medium whitespace-nowrap">{student.studentName}</td>
@@ -1026,7 +1056,7 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
                           selectedInstallmentStudent === student._id ? null : student._id
                         )
                       }
-                      className="hover:bg-gray-50 cursor-pointer transition-colors"
+                      className={`bg-gray-50 cursor-pointer transition-colors ${!isActiveStatus(student) ? 'bg-red-50' : ''}`}
                     >
                       <td className="py-3 px-4 border-b">{student.rollNumber}</td>
                       <td className="py-3 px-4 border-b font-medium">{student.studentName}</td>
@@ -1519,7 +1549,3 @@ const totalInstallmentDue = totalInstallmentAmount - totalInstallmentPaid;
 };
 
 export default FeesManagementSystem;
-
-
-
-

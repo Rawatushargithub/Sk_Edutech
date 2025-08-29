@@ -22,10 +22,19 @@ const requestOtp = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid email format.");
     }
 
-    const otp = generateOtp();
-    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
-
-    await Otp.findOneAndUpdate({ email }, { otp, otpExpiry }, { upsert: true, new: true });
+    // Reuse existing unexpired OTP if present to avoid frequent regeneration
+    const existing = await Otp.findOne({ email });
+    const now = new Date();
+    let otp;
+    let otpExpiry;
+    if (existing && existing.otp && existing.otpExpiry && existing.otpExpiry > now) {
+        otp = String(existing.otp);
+        otpExpiry = existing.otpExpiry;
+    } else {
+        otp = generateOtp();
+        otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
+        await Otp.findOneAndUpdate({ email }, { otp, otpExpiry }, { upsert: true, new: true });
+    }
 
     console.log(`[HomepageFranchiseController] Generated OTP for ${email}: ${otp}`);
 
@@ -41,15 +50,30 @@ const requestOtp = asyncHandler(async (req, res) => {
         );
     } catch (error) {
         console.error("Failed to send OTP email:", error);
+        // In development, allow flow to continue without email delivery
+        if (process.env.NODE_ENV !== 'production') {
+            return res.status(200).json(
+                new ApiResponse(200, { devOtp: otp }, "OTP generated locally (email not sent). Use the devOtp for testing.")
+            );
+        }
         throw new ApiError(500, "Failed to send OTP. Please try again later.");
     }
 });
 
 const submitWithOtp = asyncHandler(async (req, res) => {
     console.log("Received body for submitWithOtp:", JSON.stringify(req.body, null, 2));
-    const { email, otp, franchiseName, ownerName, designation, dob, mobile, address, state, city, postalCode, country, totalComputers, totalStudents, planValidityDays, gstNumber, atcCode } = req.body;
+    let { email, otp, franchiseName, ownerName, designation, dob, mobile, address, state, city, postalCode, country, totalComputers, totalStudents, planValidityDays, gstNumber, atcCode } = req.body;
     const franchiseLogoFile = req.files?.franchiseLogo?.[0];
     const franchiseSignatureFile = req.files?.franchiseSignature?.[0];
+    const ownerAadharFile = req.files?.ownerAadhar?.[0];
+    const ownerPanFile = req.files?.ownerPan?.[0];
+    const ownerHigherEducationFile = req.files?.ownerHigherEducation?.[0];
+    const ownerPhotoFile = req.files?.ownerPhoto?.[0];
+
+    // Normalize
+    if (typeof otp !== 'undefined' && otp !== null) {
+        otp = String(otp).trim();
+    }
 
     if (!email || !otp) {
         throw new ApiError(400, "Email and OTP are required for submission.");
@@ -61,13 +85,36 @@ const submitWithOtp = asyncHandler(async (req, res) => {
         throw new ApiError(400, "OTP not found. Please request a new one.");
     }
 
-    if (otpRecord.otp !== otp) {
+    if (process.env.NODE_ENV !== 'production') {
+        console.log(`[OTP Debug] Stored OTP for ${email}:`, String(otpRecord.otp).trim(), 'Provided:', otp);
+    }
+    if (String(otpRecord.otp).trim() !== otp) {
         throw new ApiError(400, "Invalid OTP. Please check and try again.");
     }
 
     if (otpRecord.otpExpiry < new Date()) {
         throw new ApiError(400, "OTP has expired. Please request a new OTP.");
     }
+
+    // Validate and upload files
+    const validateFile = (file, allowedMimes, minBytes, maxBytes, label) => {
+        if (!file) return;
+        if (minBytes && file.size < minBytes) {
+            throw new ApiError(400, `${label} must be at least ${Math.round(minBytes/1024)} KB`);
+        }
+        if (maxBytes && file.size > maxBytes) {
+            throw new ApiError(400, `${label} must be at most ${Math.round(maxBytes/1024)} KB`);
+        }
+        if (allowedMimes && !allowedMimes.includes(file.mimetype)) {
+            throw new ApiError(400, `${label} must be one of types: ${allowedMimes.join(', ')}`);
+        }
+    };
+
+    // Constraints
+    validateFile(ownerAadharFile, ["application/pdf"], 50 * 1024, 1 * 1024 * 1024, "Owner Aadhar");
+    validateFile(ownerPanFile, ["application/pdf"], 20 * 1024, 500 * 1024, "Owner PAN");
+    validateFile(ownerHigherEducationFile, ["application/pdf", "image/jpeg", "image/jpg"], 50 * 1024, 2 * 1024 * 1024, "Owner Higher Education Certificate");
+    validateFile(ownerPhotoFile, ["image/jpeg", "image/jpg", "image/png"], 20 * 1024, 200 * 1024, "Owner Passport Size Photo");
 
     // OTP is valid, create the franchise application
     let franchiseLogoUrl = null;
@@ -80,6 +127,30 @@ const submitWithOtp = asyncHandler(async (req, res) => {
     if (franchiseSignatureFile) {
         const uploadResult = await uploadBufferToCloudinary(franchiseSignatureFile.buffer, franchiseSignatureFile.originalname, "franchise_signatures");
         franchiseSignatureUrl = uploadResult.secure_url;
+    }
+
+    let ownerAadharUrl = null;
+    if (ownerAadharFile) {
+        const uploadResult = await uploadBufferToCloudinary(ownerAadharFile.buffer, ownerAadharFile.originalname, "franchise_owner_aadhar");
+        ownerAadharUrl = uploadResult.secure_url;
+    }
+
+    let ownerPanUrl = null;
+    if (ownerPanFile) {
+        const uploadResult = await uploadBufferToCloudinary(ownerPanFile.buffer, ownerPanFile.originalname, "franchise_owner_pan");
+        ownerPanUrl = uploadResult.secure_url;
+    }
+
+    let ownerHigherEducationUrl = null;
+    if (ownerHigherEducationFile) {
+        const uploadResult = await uploadBufferToCloudinary(ownerHigherEducationFile.buffer, ownerHigherEducationFile.originalname, "franchise_owner_higher_education");
+        ownerHigherEducationUrl = uploadResult.secure_url;
+    }
+
+    let ownerPhotoUrl = null;
+    if (ownerPhotoFile) {
+        const uploadResult = await uploadBufferToCloudinary(ownerPhotoFile.buffer, ownerPhotoFile.originalname, "franchise_owner_photo");
+        ownerPhotoUrl = uploadResult.secure_url;
     }
 
     const newApplication = await Franchise.create({
@@ -101,6 +172,10 @@ const submitWithOtp = asyncHandler(async (req, res) => {
         atcCode,
         franchiseLogoUrl,
         franchiseSignatureUrl,
+        ownerAadharUrl,
+        ownerPanUrl,
+        ownerHigherEducationUrl,
+        ownerPhotoUrl,
         applicationType: 'FranchiseApplied',
         status: 'Pending',
         otpVerified: true,

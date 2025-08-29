@@ -114,6 +114,19 @@ const franchiseSchema = new Schema(
         franchiseSignatureUrl: {
             type: String, // URL from Cloudinary
         },
+        // Owner documents
+        ownerAadharUrl: {
+            type: String,
+        },
+        ownerPanUrl: {
+            type: String,
+        },
+        ownerHigherEducationUrl: {
+            type: String,
+        },
+        ownerPhotoUrl: {
+            type: String,
+        },
         // Request & Activation Tracking
         requestDate: { // Date the application was submitted or admin created
             type: Date,

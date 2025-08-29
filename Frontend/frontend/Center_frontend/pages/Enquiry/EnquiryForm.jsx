@@ -171,18 +171,7 @@ const EnquiryForm = () => {
       toast.error("Student Name is a required field");
       return;
     }
-    if (!formData.relationType.trim()) {
-      toast.error("Relation is a required field");
-      return;
-    }
-    if (!formData.fatherHusbandName.trim()) {
-      toast.error("Father/Husband Name is a required field");
-      return;
-    }
-    if (!formData.motherName.trim()) {
-      toast.error("Mother Name is a required field");
-      return;
-    }
+  
     if (!formData.courseInterested.courseName) {
       toast.error("Course Interested is a required field");
       return;
@@ -199,14 +188,7 @@ const EnquiryForm = () => {
       toast.error("Email is a required field");
       return;
     }
-    if (!formData.dob) {
-      toast.error("Date of Birth is a required field");
-      return;
-    }
-    if (!formData.gender) {
-      toast.error("Gender is a required field");
-      return;
-    }
+    
     if (!formData.admissionDate) {
       toast.error("Admission Date is a required field");
       return;
@@ -254,11 +236,11 @@ const EnquiryForm = () => {
       addStudent(response.data);
       toast.success("Enquiry submitted successfully!");
       setLoading(false);
-      setTimeout(() => navigate("/institute"), 1500);
+      setTimeout(() => navigate("/institute/Enquiries"), 1500);
     } catch (err) {
       setLoading(false);
       setError("Failed to submit enquiry");
-      const errorMessage = err.response?.data?.message || "Failed to submit enquiry. Please try again.";
+      const errorMessage = err.response?.data?.message || "Failed to submit enquiry. Please try again. Ensure that all fields are filled.";
       toast.error(errorMessage);
       console.error("Error submitting enquiry:", err.response?.data || err.message);
     }
@@ -284,8 +266,8 @@ const EnquiryForm = () => {
               <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Personal Information</h2>
               <div className="grid grid-cols-12 gap-6">
                 <div className="col-span-2">
-                  <label htmlFor="abbreviation" className={labelStyle}>Title {requiredStar}</label>
-                  <select id="abbreviation" name="abbreviation" value={formData.abbreviation} onChange={handleInputChange} required className={inputStyle}>
+                  <label htmlFor="abbreviation" className={labelStyle}>Title </label>
+                  <select id="abbreviation" name="abbreviation" value={formData.abbreviation} onChange={handleInputChange} className={inputStyle}>
                     <option value="Mr.">Mr.</option>
                     <option value="Mrs.">Mrs.</option>
                     <option value="Ms.">Ms.</option>
@@ -302,21 +284,21 @@ const EnquiryForm = () => {
               </div>
               <div className="grid grid-cols-12 gap-6">
                 <div className="col-span-3">
-                  <label htmlFor="relationType" className={labelStyle}>Relation {requiredStar}</label>
-                  <select id="relationType" name="relationType" value={formData.relationType} onChange={handleInputChange} required className={inputStyle}>
+                  <label htmlFor="relationType" className={labelStyle}>Relation </label>
+                  <select id="relationType" name="relationType" value={formData.relationType} onChange={handleInputChange} className={inputStyle}>
                     <option value="S/o">S/o</option>
                     <option value="D/o">D/o</option>
                     <option value="W/o">W/o</option>
                   </select>
                 </div>
                 <div className="col-span-9">
-                  <label htmlFor="fatherHusbandName" className={labelStyle}>Father/Husband Name {requiredStar}</label>
-                  <input type="text" id="fatherHusbandName" name="fatherHusbandName" value={formData.fatherHusbandName} onChange={handleInputChange} required placeholder="Enter Father/Husband Name" className={inputStyle} />
+                  <label htmlFor="fatherHusbandName" className={labelStyle}>Father/Husband Name </label>
+                  <input type="text" id="fatherHusbandName" name="fatherHusbandName" value={formData.fatherHusbandName} onChange={handleInputChange} placeholder="Enter Father/Husband Name" className={inputStyle} />
                 </div>
               </div>
               <div>
-                <label htmlFor="motherName" className={labelStyle}>Mother Name {requiredStar}</label>
-                <input type="text" id="motherName" name="motherName" value={formData.motherName} onChange={handleInputChange} required placeholder="Enter Mother Name" className={inputStyle} />
+                <label htmlFor="motherName" className={labelStyle}>Mother Name </label>
+                <input type="text" id="motherName" name="motherName" value={formData.motherName} onChange={handleInputChange} placeholder="Enter Mother Name" className={inputStyle} />
               </div>
             </div>
 
@@ -347,7 +329,7 @@ const EnquiryForm = () => {
                 </div>
                 <div>
                   <label htmlFor="email" className={labelStyle}>Email {requiredStar}</label>
-                  <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="Enter Email Address" className={inputStyle} />
+                  <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} required placeholder="Enter Email Address" className={inputStyle} />
                 </div>
               </div>
             </div>
@@ -452,7 +434,7 @@ const EnquiryForm = () => {
               <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Additional Details</h2>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="dob" className={labelStyle}>Date of Birth {requiredStar}</label>
+                  <label htmlFor="dob" className={labelStyle}>Date of Birth </label>
                   <div className="relative">
                     <input 
                       type="date" 
@@ -466,7 +448,7 @@ const EnquiryForm = () => {
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="gender" className={labelStyle}>Gender {requiredStar}</label>
+                  <label htmlFor="gender" className={labelStyle}>Gender </label>
                   <select id="gender" name="gender" value={formData.gender} onChange={handleInputChange} className={inputStyle}>
                     <option value="">Select Gender</option>
                     <option value="Male">Male</option>

@@ -9,7 +9,7 @@ const enquiryStudentSchema = new mongoose.Schema({
     required: true
   },
   studentName: { type: String, required: true }, 
-  relationType: { type: String , required: true }, 
+  relationType: { type: String }, 
   fatherHusbandName: { type: String },
   includeFatherHusband: { type:Boolean , default:true} , 
   surnameName: { type: String },
@@ -23,8 +23,8 @@ const enquiryStudentSchema = new mongoose.Schema({
   alternateMobile: { type: String },
   email: { type: String, required: true },
   
-  dob: { type: String, required: true }, // Format: dd-mm-yyyy
-  gender: { type: String, enum: ["Male", "Female", "Other"], required: true },
+  dob: { type: String}, // Format: dd-mm-yyyy
+  gender: { type: String, enum: ["Male", "Female", "Other"] },
   city: { type: String },
   postCode: { type: String },
   permanentAddress: { type: String },
@@ -38,7 +38,7 @@ const enquiryStudentSchema = new mongoose.Schema({
   installmentDetails: [{ type: mongoose.Schema.Types.ObjectId, ref: "Installment" }], // Linked Installments
   selectedBatch: { type: mongoose.Schema.Types.ObjectId, ref: "Batch" }, // Linked Batch
 
-  admissionDate: { type: String, required: true }, // Format: dd-mm-yyyy
+  admissionDate: { type: String }, // Format: dd-mm-yyyy
   enquiryDate: { type: String, required: true }, // Format: dd-mm-yyyy
   displayAdmissionOptions: { type: Boolean, default: false }, // For ID card, admission form & fee receipt
   status: { type: String, default: 'pending' },

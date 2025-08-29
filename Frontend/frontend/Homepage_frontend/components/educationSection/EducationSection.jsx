@@ -1,6 +1,7 @@
 import React , { useEffect, useState }from 'react';
 import axios from "axios";
 import API_BASE_URL from "../../../config";
+import { List } from 'lucide-react';
 // center wala container jisme left right scrolling images hain
 const EducationSection = () => {
 
@@ -99,52 +100,58 @@ const EducationSection = () => {
           <h2 className="text-2xl font-bold text-center text-[#003366] mb-4">
             No.1 Education Brand in India
           </h2>
-          <p className="text-gray-700 text-lg lg:text-lg md:text-sm  ">
-            SK EDUTECH is critical in the 21st century. India, in the last two
-            decades has seen a new dawn with the help of computers and
-            technologies. The government is trying to reach out to every citizen
-            and make them digitally sound. It is said, educate a women and you
-            educate a family. In the same way, making one person in every family
-            SK EDUTECH is the key to digital India. But this rage to become
-            tech-savvy took off only after PM’s ‘Digital India’ programme.
-            <br />
-            The digital India is a flagship programme of the Government of
-            India, with a vision to transform India into a digitally empowered
-            society and knowledge economy. To make India a computer educated
-            nation and to fullfill our PM`s dream SK EDUTECH has taken the
-            initiative to take technology to the common man. Our aims to provide
-            computer education at affordable price to every section of society.
-            We believe , We will improve the socio-economic levels of the
-            community, and ultimately the country. So let’s be a part of the SK
-            EDUTECH and contribute in the development of the nation.
-            <br />
-            <br />
-            For buying pc institute franchise/ pc middle franchise/ pc coaching
-            franchise, contact us anytime.
-            <br />
-            
-            No.1 Computer Center in India No.1 Computer institute Franchise |
-            No.1 Education Brand in India SK EDUTECH is a dependable, one of a
-            kind, Best Computer Education Franchise Brand in India, The
-            Organization is Certificate of Incorporation by GOVERNMENT OF INDIA
-            Computer Institute Franchise, Computer Center Franchise, Computer
-            Education Franchise,.
-            <br />
-            <br />
-            Chance to get now/set up now/open Center/begin a franchise with
-            Govt. Job Valid Certificate or Computer Education Institute, then
-            become our Computer Education Franchisee with Free of Cost/ No
-            Franchise Fee/ India's No. 1 Computer Institute, Fees No any other
-            Hidden Charges you Can Open Set UP Your own Computer Center Very Low
-            Franchise Investment anywhere in India. Our Best Franchise is the
-            best Top suitable option for all Institute who want to Provide his
-            own Institute Name Certificate for Education. Because we offer
-            provide No.1 Best Computer Vocational Institute Franchise & Computer
-            Institute (Center) Affiliation or Computer & Vocational Study Center
-            Affiliation/ Authorization with Free of cost in all over
-            India/India’s No.1 Computer institute in India, Low Investment
-            Franchises/ how to/new computer training/ institute registration
-            Full Process/ form, process
+          <p className="text-gray-700 text-lg lg:text-lg md:text-sm">
+            🚀 SK EDUTECH – India’s No. 1 Education Brand & Computer Training Franchise
+            Empowering Digital India with Affordable Computer Education In the 21st century, computer education is not just a skill—it is a necessity.
+            Over the last two decades, India has entered a new digital era with the power of technology.
+            Supporting our Hon’ble Prime Minister’s Digital India Mission, SK EDUTECH is committed to making every citizen digitally empowered.
+          </p>
+          <p className="text-gray-700 text-lg lg:text-lg md:text-sm">
+            Our motto is simple: Educate one member in every family and empower the entire nation.
+            With affordable computer education, government-recognized certification, and 100% career-oriented training, SK EDUTECH is transforming India into a knowledge-driven economy.
+          </p>
+          <p className="text-gray-700 text-lg lg:text-lg md:text-sm">
+            Why Choose SK EDUTECH?
+          </p>
+          <ul className="text-gray-700 text-lg lg:text-lg md:text-sm">
+            <li>✔ India’s No.1 Computer Education Brand</li>
+            <li>✔ Trusted & Registered with Certificate of Incorporation – Government of India</li>
+            <li>✔ Free Franchise Setup – No Franchise Fee & No Hidden Charges</li>
+            <li>✔ Low Investment, High Return Education Business Opportunity</li>
+            <li>✔ Govt. Valid Certificates for Students – boosting employability</li>
+            <li>✔ Nationwide Support for Institute Setup & Growth</li>
+          </ul>
+          <p className="text-gray-700 text-lg lg:text-lg md:text-sm">
+            Franchise Opportunities with SK EDUTECH Whether you are looking for a computer coaching center franchise,
+            vocational training institute affiliation, or low-investment education business, SK EDUTECH provides the best computer institute franchise in India.
+          </p>
+          <p className="text-gray-700 text-lg lg:text-lg md:text-sm">
+            Franchise Benefits:
+          </p>
+          <ul className="text-gray-700 text-lg lg:text-lg md:text-sm">
+            <li>Open your own computer center with NO royalty and NO hidden costs.</li>
+            <li>Use your own institute name with SK EDUTECH affiliation.</li>
+            <li>Get ready-made syllabus, study material, and government-approved certifications.</li>
+            <li>Support in marketing, center setup, and staff training.</li>
+          </ul>
+          <p className="text-gray-700 text-lg lg:text-lg md:text-sm">
+            Franchise Options:
+          </p>
+          <ul className="text-gray-700 text-lg lg:text-lg md:text-sm">
+            <li>✅ PC Institute Franchise.</li>
+            <li>✅ PC Middle Franchise.</li>
+            <li>✅ Computer Coaching Center Franchise.</li>
+            <li>✅ Vocational Training Institute Franchise.</li>
+          </ul>
+          <p className="text-gray-700 text-lg lg:text-lg md:text-sm">
+            Our Mission<br />
+            To make India a computer-educated nation by offering quality, affordable IT education to every section of society.
+            By training students in digital literacy and vocational skills, SK EDUTECH aims to improve socio-economic levels and contribute to the dream of a Digital India.
+          </p>
+          <p className="text-gray-700 text-lg lg:text-lg md:text-sm">
+            📌 Start your own Computer Education Franchise today with SK EDUTECH – India’s No.1 Computer Institute Brand.<br />
+            👉 Be your own boss, uplift your community, and join the mission to build a digitally empowered India.<br />
+            📞 Contact Us Now to get started with your Free Franchise Setup anywhere in India!
           </p>
         </div>
 

@@ -10,24 +10,93 @@ console.log("[Mailer Debug] MAIL_USERNAME:", process.env.MAIL_USERNAME);
 console.log("[Mailer Debug] MAIL_PASSWORD:", process.env.MAIL_PASSWORD ? "Exists" : "MISSING or Empty");
 console.log("[Mailer Debug] MAIL_FROM_ADDRESS:", process.env.MAIL_FROM_ADDRESS);
 console.log("[Mailer Debug] MAIL_FROM_NAME:", process.env.MAIL_FROM_NAME);
-
+console.log("[Mailer Debug] MAIL_FORCE_SMTP:", process.env.MAIL_FORCE_SMTP);
 
 const mailPort = parseInt(process.env.MAIL_PORT, 10); // Ensure port is a number
 
-const transporter = nodemailer.createTransport({
-    host: process.env.MAIL_HOST,
-    port: mailPort,
-    secure: mailPort === 465, // `secure: true` is only for port 465. Port 587 uses STARTTLS (secure: false initially).
-    auth: {
-        user: process.env.MAIL_USERNAME, 
-        pass: process.env.MAIL_PASSWORD, 
-    },
-    // For port 587 (STARTTLS), you might not need specific tls options unless there are issues.
-    // If issues persist with 587, sometimes this helps:
-    // tls: {
-    //    ciphers:'SSLv3' // Or other specific ciphers if required by provider
-    // }
-});
+// Build transporter dynamically so we can fallback to Ethereal in dev
+const buildTransporter = async () => {
+    const configured = Boolean(process.env.MAIL_HOST && process.env.MAIL_USERNAME && process.env.MAIL_PASSWORD);
+    const isProd = process.env.NODE_ENV === 'production';
+    const forceSmtp = String(process.env.MAIL_FORCE_SMTP || '').toLowerCase() === 'true';
+
+    if (configured) {
+        const configuredHost = String(process.env.MAIL_HOST).toLowerCase().trim();
+        const looksLocal = configuredHost === 'localhost' || configuredHost === '127.0.0.1';
+        const transporter = nodemailer.createTransport({
+            host: process.env.MAIL_HOST,
+            port: mailPort,
+            secure: mailPort === 465,
+            auth: {
+                user: process.env.MAIL_USERNAME,
+                pass: process.env.MAIL_PASSWORD,
+            },
+        });
+
+        // If forced or in production, use configured SMTP and do not fallback
+        if (forceSmtp || isProd) {
+            console.log(`[Mailer] Using Configured SMTP (${process.env.MAIL_HOST}:${mailPort}) [forced=${forceSmtp}, prod=${isProd}]`);
+            // Optional: verify and throw explicit error if misconfigured
+            try {
+                await Promise.race([
+                    transporter.verify(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('verify timeout')), 5000)),
+                ]);
+            } catch (e) {
+                console.error('[Mailer] Configured SMTP verification failed:', e.message);
+                throw new Error(`Configured SMTP verification failed: ${e.message}`);
+            }
+            return transporter;
+        }
+
+        // Development: allow fallback if localhost or verification fails
+        if (!isProd) {
+            if (looksLocal) {
+                console.warn('[Mailer] Detected localhost SMTP in development. Falling back to Ethereal test SMTP.');
+            } else {
+                try {
+                    await Promise.race([
+                        transporter.verify(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('verify timeout')), 4000)),
+                    ]);
+                    console.log(`[Mailer] Using Configured SMTP (${process.env.MAIL_HOST}:${mailPort}) [dev verified]`);
+                    return transporter;
+                } catch (e) {
+                    console.warn('[Mailer] Configured SMTP verify failed in development, falling back to Ethereal. Reason:', e.message);
+                }
+            }
+            const testAccount = await nodemailer.createTestAccount();
+            console.warn('[Mailer] Using Ethereal test SMTP account for development.');
+            return nodemailer.createTransport({
+                host: 'smtp.ethereal.email',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: testAccount.user,
+                    pass: testAccount.pass,
+                },
+            });
+        }
+    }
+
+    if (!isProd) {
+        // Auto-provision a test SMTP account from ethereal.email in development
+        const testAccount = await nodemailer.createTestAccount();
+        console.warn('[Mailer] Using Ethereal test SMTP account for development.');
+        return nodemailer.createTransport({
+            host: 'smtp.ethereal.email',
+            port: 587,
+            secure: false,
+            auth: {
+                user: testAccount.user,
+                pass: testAccount.pass,
+            },
+        });
+    }
+
+    // Production without configuration -> throw
+    throw new Error('Mail server configuration is missing. Cannot send email.');
+};
 
 /**
  * Sends an email.
@@ -39,26 +108,26 @@ const transporter = nodemailer.createTransport({
  * @returns {Promise<object>} Promise resolving with info object from Nodemailer.
  */
 const sendEmail = async ({ to, subject, text, html }) => {
-    // Check if essential mail configurations are loaded
-    if (!process.env.MAIL_HOST || !process.env.MAIL_USERNAME || !process.env.MAIL_PASSWORD) {
-        console.error("Mailer environment variables (MAIL_HOST, MAIL_USERNAME, MAIL_PASSWORD) are not set. Email will not be sent.");
-        // In a real scenario, you might throw an error or have a fallback.
-        // For this setup, we'll prevent Nodemailer from trying to connect without config.
-        throw new Error("Mail server configuration is missing. Cannot send email.");
-    }
-    
     const mailOptions = {
-        from: `"${process.env.MAIL_FROM_NAME || 'SK Education'}" <${process.env.MAIL_FROM_ADDRESS || process.env.MAIL_USERNAME}>`, // sender address
-        to: to, // list of receivers
-        subject: subject, // Subject line
-        text: text, // plain text body
-        html: html, // html body (optional)
+        from: `"${process.env.MAIL_FROM_NAME || 'SK Education'}" <${process.env.MAIL_FROM_ADDRESS || process.env.MAIL_USERNAME}>`,
+        to,
+        subject,
+        text,
+        html,
     };
 
     try {
-        console.log(`[Mailer] Attempting to send email via ${process.env.MAIL_HOST} to ${to} with subject "${subject}"`);
+        const transporter = await buildTransporter();
+        console.log(`[Mailer] Attempting to send email to ${to} with subject "${subject}"`);
         const info = await transporter.sendMail(mailOptions);
         console.log('[Mailer] Email sent successfully: %s', info.messageId);
+
+        // If using Ethereal, log preview URL for easy testing
+        const previewUrl = nodemailer.getTestMessageUrl(info);
+        if (previewUrl) {
+            console.log(`[Mailer] Preview URL: ${previewUrl}`);
+            info.previewUrl = previewUrl;
+        }
         return info;
     } catch (error) {
         console.error(`[Mailer] Error sending email to ${to}:`, error);

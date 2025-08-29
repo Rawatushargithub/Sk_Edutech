@@ -102,6 +102,19 @@ function EditFranchiseForm() {
         if (data.franchiseSignature && data.franchiseSignature[0]) {
             formData.append('franchiseSignature', data.franchiseSignature[0]);
         }
+        // Newly added document fields
+        if (data.ownerAadhar && data.ownerAadhar[0]) {
+            formData.append('ownerAadhar', data.ownerAadhar[0]); // expect PDF
+        }
+        if (data.ownerPan && data.ownerPan[0]) {
+            formData.append('ownerPan', data.ownerPan[0]); // expect PDF
+        }
+        if (data.ownerHigherEducation && data.ownerHigherEducation[0]) {
+            formData.append('ownerHigherEducation', data.ownerHigherEducation[0]); // PDF or image
+        }
+        if (data.ownerPhoto && data.ownerPhoto[0]) {
+            formData.append('ownerPhoto', data.ownerPhoto[0]); // JPG/PNG
+        }
 
         // If no actual data changed (including files), inform user
         let hasChanges = false;
@@ -293,6 +306,26 @@ function EditFranchiseForm() {
                             <input type="file" id="franchiseSignature" {...register("franchiseSignature")} accept="image/*" className="mt-1 block w-full text-base text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-base file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer" />
                             {franchiseData?.franchiseSignatureUrl && !watch('franchiseSignature')?.[0] && <a href={franchiseData.franchiseSignatureUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1 block">View current signature</a>}
                         </div>
+                        <div>
+                            <label htmlFor="ownerAadhar" className={labelClass}>Owner Aadhar (PDF)</label>
+                            <input type="file" id="ownerAadhar" {...register("ownerAadhar")} accept="application/pdf" className="mt-1 block w-full text-base text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-base file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer" />
+                            {franchiseData?.ownerAadharUrl && !watch('ownerAadhar')?.[0] && <a href={franchiseData.ownerAadharUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1 block">View current Aadhar</a>}
+                        </div>
+                        <div>
+                            <label htmlFor="ownerPan" className={labelClass}>Owner PAN (PDF)</label>
+                            <input type="file" id="ownerPan" {...register("ownerPan")} accept="application/pdf" className="mt-1 block w-full text-base text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-base file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer" />
+                            {franchiseData?.ownerPanUrl && !watch('ownerPan')?.[0] && <a href={franchiseData.ownerPanUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1 block">View current PAN</a>}
+                        </div>
+                        <div>
+                            <label htmlFor="ownerHigherEducation" className={labelClass}>Higher Education Certificate (PDF/JPG)</label>
+                            <input type="file" id="ownerHigherEducation" {...register("ownerHigherEducation")} accept="application/pdf,image/*" className="mt-1 block w-full text-base text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-base file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer" />
+                            {franchiseData?.ownerHigherEducationUrl && !watch('ownerHigherEducation')?.[0] && <a href={franchiseData.ownerHigherEducationUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1 block">View current certificate</a>}
+                        </div>
+                        <div>
+                            <label htmlFor="ownerPhoto" className={labelClass}>Owner Photo (JPG/PNG)</label>
+                            <input type="file" id="ownerPhoto" {...register("ownerPhoto")} accept="image/*" className="mt-1 block w-full text-base text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:text-base file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer" />
+                            {franchiseData?.ownerPhotoUrl && !watch('ownerPhoto')?.[0] && <a href={franchiseData.ownerPhotoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1 block">View current photo</a>}
+                        </div>
                     </div>
                 </section>
 
@@ -321,7 +354,6 @@ function EditFranchiseForm() {
     </select>
     {errors.status && <p className={errorClass}>{errors.status.message}</p>}
 </div>
-
 
 
 

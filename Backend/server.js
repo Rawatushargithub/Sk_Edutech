@@ -84,6 +84,7 @@ import adminRoutes from "./backend/Admin_Backend/routes/AdminPanel/admin.panel.j
 import adminstudentRouter from "./backend/Admin_Backend/routes/student.routes.js"; // Import student router
 import notificationRoutes from "./backend/Admin_Backend/routes/Notification/notification.routes.js"; // Import notification router
 import AdminCourseListRouter from "./backend/Admin_Backend/routes/admin.course.routes.js"
+import MarksheetrRouter from "./backend/Admin_Backend/routes/admin.marksheet.routes.js"
 // admin routes
 app.use("/api/v1/mainSliderImages",mainSliderRouter)
 app.use("/api/v1/marquee",marqueeRoutes)
@@ -97,6 +98,7 @@ app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/admin/courses", AdminCourseListRouter);
 app.use("/api/v1/admin_courses", adminCourseRouter); // Add admin course routes
 app.use("/api/v1/notification", notificationRoutes);
+app.use("/api/v1/marksheet", MarksheetrRouter);
 
 //Student Routes
 import StudentRoutes from "./backend/Student_backend/routes/studentRoutes.js"

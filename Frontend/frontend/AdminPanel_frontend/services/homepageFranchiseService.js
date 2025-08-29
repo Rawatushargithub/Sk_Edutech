@@ -37,11 +37,8 @@ export const submitFranchiseApplicationWithOtp = async (formData) => {
     const url = '/submit-with-otp'; // POST /api/v1/homepage-franchises/submit-with-otp
     console.log(`[HomepageFranchiseService] Submitting application with OTP to: ${skMergedHomepageFranchiseApi.defaults.baseURL}${url}`);
     try {
-        const response = await skMergedHomepageFranchiseApi.post(url, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data', // FormData includes files
-            },
-        });
+        // Do NOT set Content-Type manually; let Axios/browser set proper boundary
+        const response = await skMergedHomepageFranchiseApi.post(url, formData);
         console.log("[HomepageFranchiseService] Raw response from submitFranchiseApplicationWithOtp:", response);
         // Expected: { statusCode: 201, message: "Application submitted successfully. Please wait for super admin approval!" }
         return response.data;

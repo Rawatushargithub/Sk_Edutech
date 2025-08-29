@@ -16,7 +16,7 @@ console.log("video.jsx is working")
 const UploadCourseVideo1 = () => {
   const navigate = useNavigate();
   const [allCourses, setAllCourses] = useState([]); // For dropdown
-  const [selectedCourseId, setSelectedCourseId] = useState("");
+  const [selectedCourseId, setSelectedCourseId] = useState("ALL"); // Default to 'ALL'
   const [videosToDisplay, setVideosToDisplay] = useState([]); // Videos from selected course's courseVideoLinks
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -64,8 +64,17 @@ const UploadCourseVideo1 = () => {
 }, []);
 
   useEffect(() => {
+    setLoadingVideos(true);
+    if (selectedCourseId === 'ALL') {
+      const aggregated = allCourses.flatMap(c => c.courseVideoLinks || []);
+      setVideosToDisplay(aggregated);
+      setLoadingVideos(false);
+      setPlayingVideoLink(null);
+      setCurrentPage(1);
+      return;
+    }
+
     if (selectedCourseId) {
-      setLoadingVideos(true);
       const course = allCourses.find(c => c._id === selectedCourseId);
       if (course && course.courseVideoLinks) {
         setVideosToDisplay(course.courseVideoLinks);
@@ -77,9 +86,9 @@ const UploadCourseVideo1 = () => {
       setCurrentPage(1); // Reset pagination
     } else {
       setVideosToDisplay([]);
+      setLoadingVideos(false);
     }
-  }, [selectedCourseId, allCourses]);
-
+   }, [selectedCourseId, allCourses]);
 
   const extractYoutubeVideoId = (url) => {
     if (!url) return null; // Return null if URL is empty or undefined
@@ -186,15 +195,15 @@ const UploadCourseVideo1 = () => {
             <label htmlFor="courseFilter" className="block text-sm font-medium text-gray-700 mb-1">Filter by Course</label>
             <Select
               id="courseFilter"
-              options={allCourses.map(course => ({
+              options={[{ value: 'ALL', label: 'All Courses' }, ...allCourses.map(course => ({
                 value: course._id,
                 label: `${course.courseName} (${course.courseCode})`
-              }))}
-              value={allCourses.map(course => ({
+              }))]}
+              value={[{ value: 'ALL', label: 'All Courses' }, ...allCourses.map(course => ({
                 value: course._id,
                 label: `${course.courseName} (${course.courseCode})`
-              })).find(option => option.value === selectedCourseId)}
-              onChange={selectedOption => setSelectedCourseId(selectedOption ? selectedOption.value : "")}
+              }))].find(option => option.value === selectedCourseId)}
+              onChange={selectedOption => setSelectedCourseId(selectedOption ? selectedOption.value : "ALL")}
               isLoading={loadingCourses}
               isClearable
               isSearchable
@@ -216,7 +225,7 @@ const UploadCourseVideo1 = () => {
                 className={`${inputStyle} pl-10`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                disabled={!selectedCourseId}
+                disabled={loadingCourses}
               />
             </div>
           </div>
@@ -224,20 +233,14 @@ const UploadCourseVideo1 = () => {
 
         {/* Video List */}
         {loadingVideos && <p className="text-center text-gray-500 py-8">Loading videos...</p>}
-        {!loadingVideos && !selectedCourseId && (
+        {!loadingVideos && videosToDisplay.length === 0 && (
             <div className="text-center py-10 bg-white rounded-lg shadow p-6">
               <MdVideoLibrary size={48} className="mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">Please select a course to view its videos.</p>
-            </div>
-        )}
-        {!loadingVideos && selectedCourseId && videosToDisplay.length === 0 && (
-            <div className="text-center py-10 bg-white rounded-lg shadow p-6">
-              <MdVideoLibrary size={48} className="mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">No videos found for this course.</p>
+              <p className="text-gray-500">No videos found.</p>
               <p className="text-sm text-gray-400 mt-2">You can add videos by editing the course.</p>
             </div>
         )}
-        {!loadingVideos && selectedCourseId && videosToDisplay.length > 0 && filteredVideos.length === 0 && (
+        {!loadingVideos && videosToDisplay.length > 0 && filteredVideos.length === 0 && (
             <div className="text-center py-10 bg-white rounded-lg shadow p-6">
               <MdVideoLibrary size={48} className="mx-auto text-gray-300 mb-4" />
               <p className="text-gray-500">No videos found matching your search.</p>
@@ -245,7 +248,7 @@ const UploadCourseVideo1 = () => {
             </div>
         )}
 
-        {!loadingVideos && selectedCourseId && filteredVideos.length > 0 && (
+        {!loadingVideos && filteredVideos.length > 0 && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {currentVideosToDisplay.map((video, index) => {
@@ -273,9 +276,9 @@ const UploadCourseVideo1 = () => {
                             e.stopPropagation();
                             handleDeleteVideo(video._id, video.title);
                           }}
-                          disabled={deletingVideoId === video._id}
+                          disabled={deletingVideoId === video._id || selectedCourseId === 'ALL'}
                           className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Delete Video"
+                          title={selectedCourseId === 'ALL' ? 'Select a specific course to delete videos' : 'Delete Video'}
                         >
                           {deletingVideoId === video._id ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>

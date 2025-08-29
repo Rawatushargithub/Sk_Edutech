@@ -21,12 +21,23 @@ const Navbar = () => {
       behavior: "smooth",
     });
   };
+  const Logo_Home = () => {
+    if (window.location.pathname === "/") {
+      // Already on home, just scroll to top
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      // Navigate to home
+      navigate("/");
+    }
+  };
 
   const handleLinkClick = (link) => {
     if (link) {
       navigate(link);
     }
   };
+
+
 
   const [showModal, setShowModal] = useState(false);
 
@@ -46,7 +57,7 @@ const Navbar = () => {
     {
       title: "HOME",
       hasDropdown: false,
-      link: "/",
+      // link: "/",
     },
     {
       title: "ABOUT",
@@ -56,10 +67,10 @@ const Navbar = () => {
         { title: "Our Aim", link: "/our-aim" },
     //  { title: "Accreditation", link: "/accreditation" },
         { title: "Privacy", link: "/privacy-policy" },
-        { title: "Message", link: "/message"},
         { title: "Refund & Cancellation Policy", link: "/refund-policy" },
         { title: "Public Note", link: "/public-note" },
         { title: "Terms & Conditions" , link : "/terms-conditions"},
+        { title: "Message from the Managing Director", link: "/message"},
 
       ],
     },
@@ -173,7 +184,7 @@ const Navbar = () => {
 
         {/* Logo */}
         <div className="py-4 w-44 ml-15">
-                    <img src="/assets/Logo.jpg" alt="Logo" onClick={scrollToTop} className="cursor-pointer" />
+                    <img src="/assets/Logo.jpg" alt="Logo" onClick={Logo_Home} className="cursor-pointer" />
         </div>
 
         {/* Navigation */}
@@ -191,10 +202,10 @@ const Navbar = () => {
                   onClick={(e) => {
                     if (item.title === 'HOME') {
                       e.preventDefault();
-                      scrollToTop();
+                      Logo_Home();
                     } else if (!item.hasDropdown) {
                       e.preventDefault();
-                      handleLinkClick(item.link);
+                      handleLinkClick(item.onClick);
                     } else {
                       e.preventDefault();
                     }
@@ -235,6 +246,7 @@ const Navbar = () => {
                         : "opacity-0 scale-y-0 invisible"
                     }`}
                   >
+                    <ul>
                     {item.dropdownItems.map((dropdownItem, dropdownIndex) => (
                       <li 
                         key={dropdownIndex}
@@ -279,6 +291,7 @@ const Navbar = () => {
                         )}
                       </li>
                     ))}
+                    </ul>
                   </div>
                 )}
               </li>
@@ -376,7 +389,7 @@ const Navbar = () => {
                     onClick={(e) => {
                       e.preventDefault();
                       if (item.title === 'HOME') {
-                        scrollToTop();
+                        Logo_Home();
                       } else {
                         handleLinkClick(item.link);
                       }
@@ -469,6 +482,7 @@ const Navbar = () => {
         {/* Navigation */}
         <nav className="hidden lg:flex">
           <ul className="flex">
+            
             {navItems.map((item, index) => (
               <li
                 key={index}
@@ -481,7 +495,7 @@ const Navbar = () => {
                   onClick={(e) => {
                     if (item.title === 'HOME') {
                       e.preventDefault();
-                      scrollToTop();
+                      Logo_Home();
                     } else if (!item.hasDropdown) {
                       e.preventDefault();
                       handleLinkClick(item.link);
@@ -517,16 +531,17 @@ const Navbar = () => {
                 </a>
 
                 {/* Dropdown menu */}
-                {item.hasDropdown && window.scrollY && (
-                  <div
-                    className={`absolute left-0 w-52 z-10 bg-white shadow-lg py-2 rounded-b-lg transform transition-all duration-300 ease-in-out origin-top ${
-                      activeDropdown === index
-                        ? "opacity-100 scale-y-100"
-                        : "opacity-0 scale-y-0 invisible"
-                    }`}
-                  >
+                {item.hasDropdown && window.scrollY > 0 && (
+                <div
+                  className={`absolute left-0 w-52 z-10 bg-white shadow-lg py-2 rounded-b-lg transform transition-all duration-300 ease-in-out origin-top ${
+                    activeDropdown === index
+                      ? "opacity-100 scale-y-100"
+                      : "opacity-0 scale-y-0 invisible"
+                  }`}
+                >
+                  <ul>
                     {item.dropdownItems.map((dropdownItem, dropdownIndex) => (
-                      <li 
+                      <li
                         key={dropdownIndex}
                         className="relative"
                         onMouseEnter={() => dropdownItem.hasNestedDropdown && setActiveNestedDropdown(dropdownIndex)}
@@ -537,8 +552,8 @@ const Navbar = () => {
                           onClick={(e) => {
                             e.preventDefault();
                             if (!dropdownItem.hasNestedDropdown) {
-                                handleLinkClick(dropdownItem.link);
-                                setActiveDropdown(null);
+                              handleLinkClick(dropdownItem.link);
+                              setActiveDropdown(null);
                             }
                           }}
                           className="flex justify-between items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-500 transition-colors duration-300"
@@ -569,13 +584,13 @@ const Navbar = () => {
                         )}
                       </li>
                     ))}
-                  </div>
-                )}
-              </li>
-            ))}
+                  </ul>
+                </div>
+              )}
+            </li>
+          ))}
           </ul>
         </nav>
-
         <button 
           onClick={studentLogin}
           className="hidden lg:block ml-auto mr-6 bg-transparent hover:bg-[#003366] text-[#003366] font-semibold text-xl hover:text-white py-2 px-8 m border border-[#003366] hover:border-transparent rounded-md duration-300"

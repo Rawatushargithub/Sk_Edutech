@@ -43,7 +43,11 @@ router.route("/check-uniqueness").get(checkUniqueness);
 router.route("/submit-with-otp").post(
     upload.fields([
         { name: 'franchiseLogo', maxCount: 1 },
-        { name: 'franchiseSignature', maxCount: 1 }
+        { name: 'franchiseSignature', maxCount: 1 },
+        { name: 'ownerAadhar', maxCount: 1 },
+        { name: 'ownerPan', maxCount: 1 },
+        { name: 'ownerHigherEducation', maxCount: 1 },
+        { name: 'ownerPhoto', maxCount: 1 }
     ]),
     submitWithOtp
 );

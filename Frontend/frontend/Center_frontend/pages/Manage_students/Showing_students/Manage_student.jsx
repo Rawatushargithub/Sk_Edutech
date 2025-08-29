@@ -450,29 +450,69 @@ const StudentAdmissionList = () => {
   const mergeFeesIntoStudents = async (baseStudents) => {
     try {
       const franchiseId = localStorage.getItem('franchiseID');
+      // Fetch normal fee aggregates
       const resp = await axios.get(
         `${API_BASE_URL}/api/v1/institute_fees/students?limit=1000&page=1&franchiseId=${franchiseId}`
       );
       const feeList = resp.data?.data || [];
       const feeMap = new Map(feeList.map((s) => [s.rollNumber, s]));
 
+      // Fetch installment aggregates
+      const instResp = await axios.get(
+        `${API_BASE_URL}/api/v1/institute_fees/installments/students?franchiseId=${franchiseId}`
+      );
+      const instList = instResp.data?.data || [];
+      const instMap = new Map(instList.map((s) => [s.rollNumber, s]));
+
       return baseStudents.map((s) => {
         const fee = feeMap.get(s.rollNumber);
+        const inst = instMap.get(s.rollNumber);
+
+        let merged = { ...s };
+
         if (fee) {
           const dueFee = typeof fee.dueFee === 'number'
             ? fee.dueFee
             : (Number(fee.totalFee || 0) - Number(fee.paidFee || 0));
-          return {
-            ...s,
+          merged = {
+            ...merged,
             totalFee: fee.totalFee,
             paidFee: fee.paidFee,
             dueFee,
           };
         }
-        return s;
+
+        if (inst) {
+          // Prefer backend-provided totals if present
+          const totalInstallmentAmount = Number(inst.totalInstallmentAmount ?? (inst.installments?.reduce((sum, i) => sum + Number(i.amount || 0), 0) || 0));
+          const paidInstallmentAmount = Number(inst.paidInstallmentAmount ?? (inst.installments?.reduce((sum, i) => sum + Number(i.paid ? (i.amount || 0) : 0), 0) || 0));
+          const dueInstallmentAmount = Number(inst.dueInstallmentAmount ?? (totalInstallmentAmount - paidInstallmentAmount));
+
+          merged = {
+            ...merged,
+            installments: inst.installments || [],
+            totalInstallmentAmount,
+            paidInstallmentAmount,
+            dueInstallmentAmount,
+          };
+        }
+
+        // Compute displayDueFee: if installment data exists, show its due; else show normal due
+        const totalFeeNum = Number(merged.totalFee || 0);
+        const paidFeeNum = Number(merged.paidFee || 0);
+        const dueFromFeesCalc = merged.dueFee ?? (totalFeeNum - paidFeeNum);
+        const dueFromFees = Number(dueFromFeesCalc ?? 0);
+        const hasInstallments = Array.isArray(merged.installments) && merged.installments.length > 0;
+        const dueFromInstallments = Number(merged.dueInstallmentAmount || 0);
+        const displayDueFee = (hasInstallments || dueFromInstallments > 0) ? dueFromInstallments : dueFromFees;
+
+        return {
+          ...merged,
+          displayDueFee,
+        };
       });
     } catch (error) {
-      console.error('Error fetching fees data:', error);
+      console.error('Error fetching fees/installments data:', error);
       return baseStudents;
     }
   };
@@ -723,7 +763,16 @@ const StudentAdmissionList = () => {
                   <td className="border border-gray-300 px-4 py-2">{student.courseInterested?.courseCode}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.selectedBatch || student.batch}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.admissionDate}</td>
-                  <td className="border border-gray-300 px-4 py-2 text-red-600">₹{Number((student.dueFee ?? (Number(student.totalFee || 0) - Number(student.paidFee || 0))) || 0).toLocaleString()}</td>
+                  <td className="border border-gray-300 px-4 py-2 text-red-600">₹{(() => {
+                    const totalFeeNum = Number(student.totalFee || 0);
+                    const paidFeeNum = Number(student.paidFee || 0);
+                    const dueFromFeesCalc = student.dueFee ?? (totalFeeNum - paidFeeNum);
+                    const dueFromFees = Number(dueFromFeesCalc ?? 0);
+                    const dueFromInstallments = Number(student.dueInstallmentAmount || 0);
+                    const hasInstallments = Array.isArray(student.installments) && student.installments.length > 0;
+                    const display = (hasInstallments || dueFromInstallments > 0) ? dueFromInstallments : dueFromFees;
+                    return Number(isNaN(display) ? 0 : display).toLocaleString();
+                  })()}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.referralCode}</td>
                   <td className="border border-gray-300 px-4 py-2">{student.referralName}</td>
                   
@@ -772,10 +821,10 @@ const StudentAdmissionList = () => {
               Are you sure you want to change the status of{" "}
               <strong>{statusToggleStudent.studentName}</strong> to{" "}
               <strong className={
-                statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' 
-                  ? "text-red-600" 
-                  : statusToggleStudent.status === 'Certified'
+                statusToggleStudent.status === 'Certified'
                   ? "text-green-600"
+                  : statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' 
+                    ? "text-red-600" 
                   : "text-green-600"
               }>
                 {statusToggleStudent.status === 'active' || statusToggleStudent.status === 'true' 

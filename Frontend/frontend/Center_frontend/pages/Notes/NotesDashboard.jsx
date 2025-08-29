@@ -8,7 +8,7 @@ import API_BASE_URL from "../../../config";
 const NotesDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCourseId, setSelectedCourseId] = useState("");
+  const [selectedCourseId, setSelectedCourseId] = useState("ALL");
   const [allCourses, setAllCourses] = useState([]); // To populate dropdown
   const [notesToDisplay, setNotesToDisplay] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
@@ -51,8 +51,15 @@ const NotesDashboard = () => {
   // Fetch notes for the selected course
   useEffect(() => {
     console.log("Selected Course ID changed:", selectedCourseId);
+    setLoadingNotes(true);
+    if (selectedCourseId === 'ALL') {
+      const aggregated = allCourses.flatMap(c => c.courseMaterials || []);
+      setNotesToDisplay(aggregated);
+      setLoadingNotes(false);
+      return;
+    }
+
     if (selectedCourseId) {
-      setLoadingNotes(true);
       setNotesToDisplay([]);
       const course = allCourses.find(c => c._id === selectedCourseId);
       console.log("Found course for notes:", course);
@@ -68,6 +75,7 @@ const NotesDashboard = () => {
       setLoadingNotes(false);
     } else {
       setNotesToDisplay([]);
+      setLoadingNotes(false);
     }
   }, [selectedCourseId, allCourses]);
 
@@ -160,15 +168,15 @@ const NotesDashboard = () => {
               <label htmlFor="courseFilter" className="block text-sm font-medium text-gray-700 mb-1">Filter by Course</label>
               <Select
                 id="courseFilter"
-                options={allCourses.map(course => ({
+                options={[{ value: 'ALL', label: 'All Courses' }, ...allCourses.map(course => ({
                   value: course._id,
                   label: `${course.courseName} (${course.courseCode})`
-                }))}
-                value={allCourses.map(course => ({
+                }))]}
+                value={[{ value: 'ALL', label: 'All Courses' }, ...allCourses.map(course => ({
                   value: course._id,
                   label: `${course.courseName} (${course.courseCode})`
-                })).find(option => option.value === selectedCourseId)}
-                onChange={selectedOption => setSelectedCourseId(selectedOption ? selectedOption.value : "")}
+                }))].find(option => option.value === selectedCourseId)}
+                onChange={selectedOption => setSelectedCourseId(selectedOption ? selectedOption.value : "ALL")}
                 isLoading={loadingCourses}
                 isClearable
                 isSearchable
@@ -190,7 +198,7 @@ const NotesDashboard = () => {
                   className={`${inputStyle} pl-10`}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  disabled={!selectedCourseId}
+                  disabled={loadingCourses}
                 />
               </div>
             </div>
@@ -198,21 +206,14 @@ const NotesDashboard = () => {
 
           {/* Notes Display Area */}
           {loadingNotes && <p className="text-center text-gray-500 py-8">Loading notes...</p>}
-          {!loadingNotes && !selectedCourseId && (
+          {!loadingNotes && filteredNotes.length === 0 && (
             <div className="text-center py-10 bg-white rounded-lg shadow p-6">
               <FileText size={48} className="mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">Please select a course to view its notes and materials.</p>
-            </div>
-          )}
-          {!loadingNotes && selectedCourseId && filteredNotes.length === 0 && (
-            <div className="text-center py-10 bg-white rounded-lg shadow p-6">
-              <FileText size={48} className="mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">No notes found for this course or matching your search.</p>
+              <p className="text-gray-500">No notes found.</p>
               <p className="text-sm text-gray-400 mt-2">You can add notes via the "Add New Note" button or by editing the course.</p>
             </div>
           )}
-
-          {!loadingNotes && selectedCourseId && filteredNotes.length > 0 && (
+          {!loadingNotes && filteredNotes.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredNotes.map((note) => (
                 <div key={note._id || note.id} className="bg-white p-5 shadow-lg rounded-lg flex flex-col justify-between hover:shadow-xl transition-shadow">

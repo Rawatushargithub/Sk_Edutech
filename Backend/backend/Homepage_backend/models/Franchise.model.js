@@ -110,6 +110,19 @@ const franchiseSchema = new Schema(
         franchiseSignatureUrl: {
             type: String,
         },
+        // Owner documents
+        ownerAadharUrl: {
+            type: String,
+        },
+        ownerPanUrl: {
+            type: String,
+        },
+        ownerHigherEducationUrl: {
+            type: String,
+        },
+        ownerPhotoUrl: {
+            type: String,
+        },
         requestDate: {
             type: Date,
             default: Date.now,

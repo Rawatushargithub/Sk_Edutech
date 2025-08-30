@@ -311,7 +311,8 @@ export const getInstallmentStudents = async (req, res) => {
           paidAmount: inst.paidAmount || 0,
           status: inst.status || "Pending",
           paymentMode: inst.paymentMode,
-          paymentDate: inst.paymentDate
+          paymentDate: inst.paymentDate,
+          paymentHistory: inst.paymentHistory || []
         }))
       };
     });
@@ -345,11 +346,11 @@ export const getInstallmentStudents = async (req, res) => {
   }
 };
 
-// Update installment payment with partial payment and overflow logic
+// Enhanced installment payment with flexible payment scenarios
 export const updateInstallmentPayment = async (req, res) => {
   try {
     const { installmentId } = req.params;
-    const { amount, paymentMode, date } = req.body;
+    const { amount, paymentMode, date, paymentType = "normal" } = req.body;
 
     if (!installmentId) {
       return res.status(400).json({
@@ -381,6 +382,12 @@ export const updateInstallmentPayment = async (req, res) => {
       studentId: currentInstallment.studentId 
     }).sort({ date: 1 });
 
+    // Calculate total remaining amount across all installments
+    const totalDueAmount = allInstallments.reduce((sum, inst) => {
+      const remaining = inst.amount - (inst.paidAmount || 0);
+      return sum + (remaining > 0 ? remaining : 0);
+    }, 0);
+
     // Find current installment index
     const currentIndex = allInstallments.findIndex(inst => 
       inst._id.toString() === installmentId
@@ -395,45 +402,145 @@ export const updateInstallmentPayment = async (req, res) => {
 
     let remainingAmount = paymentAmount;
     const updatedInstallments = [];
+    let paymentScenario = "";
 
-    // Process payment starting from current installment
-    for (let i = currentIndex; i < allInstallments.length && remainingAmount > 0; i++) {
-      const installment = allInstallments[i];
-      const currentPaid = installment.paidAmount || 0;
-      const remainingDue = installment.amount - currentPaid;
+    // Scenario A: Full payment of all fees in one installment
+    if (paymentAmount >= totalDueAmount) {
+      paymentScenario = "full_payment";
+      
+      // Pay all remaining installments
+      for (let i = 0; i < allInstallments.length; i++) {
+        const installment = allInstallments[i];
+        const currentPaid = installment.paidAmount || 0;
+        const remainingDue = installment.amount - currentPaid;
 
-      if (remainingDue > 0) {
-        const paymentForThis = Math.min(remainingAmount, remainingDue);
-        const newPaidAmount = currentPaid + paymentForThis;
+        if (remainingDue > 0) {
+          const newPaidAmount = installment.amount;
+          
+          // Add payment to history
+          const paymentHistoryEntry = {
+            amount: remainingDue,
+            paymentMode: paymentMode,
+            paymentDate: date,
+            remarks: i === currentIndex ? "Primary payment" : "Auto-paid from overflow"
+          };
+
+          const updatedInstallment = await Installment.findByIdAndUpdate(
+            installment._id,
+            {
+              paidAmount: newPaidAmount,
+              paid: true,
+              paymentMode: paymentMode,
+              paymentDate: date,
+              remainingAmount: 0,
+              status: i === currentIndex ? "Paid" : "Fully_Paid_Early",
+              $push: { paymentHistory: paymentHistoryEntry }
+            },
+            { new: true }
+          );
+
+          updatedInstallments.push(updatedInstallment);
+          remainingAmount -= remainingDue;
+        }
+      }
+    }
+    // Scenario B & C: Overpayment or underpayment in specific installment
+    else {
+      const currentPaid = currentInstallment.paidAmount || 0;
+      const currentDue = currentInstallment.amount - currentPaid;
+
+      if (paymentAmount > currentDue) {
+        // Scenario B: Overpayment - distribute to next installments
+        paymentScenario = "overpayment";
         
-        // Update installment
+        for (let i = currentIndex; i < allInstallments.length && remainingAmount > 0; i++) {
+          const installment = allInstallments[i];
+          const instCurrentPaid = installment.paidAmount || 0;
+          const instRemainingDue = installment.amount - instCurrentPaid;
+
+          if (instRemainingDue > 0) {
+            const paymentForThis = Math.min(remainingAmount, instRemainingDue);
+            const newPaidAmount = instCurrentPaid + paymentForThis;
+            
+            const paymentHistoryEntry = {
+              amount: paymentForThis,
+              paymentMode: paymentMode,
+              paymentDate: date,
+              remarks: i === currentIndex ? "Primary payment" : "Overflow from previous installment"
+            };
+
+            const updatedInstallment = await Installment.findByIdAndUpdate(
+              installment._id,
+              {
+                paidAmount: newPaidAmount,
+                paid: newPaidAmount >= installment.amount,
+                paymentMode: paymentMode,
+                paymentDate: date,
+                remainingAmount: installment.amount - newPaidAmount,
+                status: newPaidAmount >= installment.amount ? "Paid" : "Partial",
+                $push: { paymentHistory: paymentHistoryEntry }
+              },
+              { new: true }
+            );
+
+            updatedInstallments.push(updatedInstallment);
+            remainingAmount -= paymentForThis;
+          }
+        }
+      } else {
+        // Scenario C: Underpayment or exact payment
+        paymentScenario = paymentAmount === currentDue ? "exact_payment" : "underpayment";
+        
+        const newPaidAmount = currentPaid + paymentAmount;
+        
+        const paymentHistoryEntry = {
+          amount: paymentAmount,
+          paymentMode: paymentMode,
+          paymentDate: date,
+          remarks: paymentScenario === "exact_payment" ? "Full installment payment" : "Partial payment"
+        };
+
         const updatedInstallment = await Installment.findByIdAndUpdate(
-          installment._id,
+          installmentId,
           {
             paidAmount: newPaidAmount,
-            paid: newPaidAmount >= installment.amount,
-            paymentMode: i === currentIndex ? paymentMode : installment.paymentMode,
-            paymentDate: i === currentIndex ? date : installment.paymentDate,
-            status: newPaidAmount >= installment.amount ? "Paid" : "Partial"
+            paid: newPaidAmount >= currentInstallment.amount,
+            paymentMode: paymentMode,
+            paymentDate: date,
+            remainingAmount: currentInstallment.amount - newPaidAmount,
+            status: newPaidAmount >= currentInstallment.amount ? "Paid" : "Partial",
+            $push: { paymentHistory: paymentHistoryEntry }
           },
           { new: true }
         );
 
         updatedInstallments.push(updatedInstallment);
-        remainingAmount -= paymentForThis;
+        remainingAmount = 0;
       }
     }
 
-    // If there's still remaining amount, it means overpayment beyond all installments
-    let overpayment = remainingAmount;
+    // Calculate updated student totals
+    const updatedAllInstallments = await Installment.find({ 
+      studentId: currentInstallment.studentId 
+    });
+    
+    const totalInstallmentAmount = updatedAllInstallments.reduce((sum, inst) => sum + inst.amount, 0);
+    const paidInstallmentAmount = updatedAllInstallments.reduce((sum, inst) => sum + (inst.paidAmount || 0), 0);
+    const dueInstallmentAmount = totalInstallmentAmount - paidInstallmentAmount;
 
     res.status(200).json({
       success: true,
       message: "Installment payment updated successfully",
       data: {
         updatedInstallments,
-        overpayment: overpayment > 0 ? overpayment : 0,
-        totalProcessed: paymentAmount - overpayment
+        paymentScenario,
+        overpayment: remainingAmount > 0 ? remainingAmount : 0,
+        totalProcessed: paymentAmount - remainingAmount,
+        studentTotals: {
+          totalInstallmentAmount,
+          paidInstallmentAmount,
+          dueInstallmentAmount
+        }
       }
     });
 

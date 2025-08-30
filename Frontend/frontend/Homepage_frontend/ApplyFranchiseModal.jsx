@@ -15,7 +15,9 @@ const indianStates = [
 ];
 
 const ApplyFranchiseModal = () => {
-    const { register, handleSubmit, watch, setValue, setError, reset, formState: { errors } } = useForm({
+    const { register, handleSubmit, watch, setValue, setError, clearErrors, reset, formState: { errors } } = useForm({
+        mode: 'onChange',
+        reValidateMode: 'onChange',
         defaultValues: {
             country: 'INDIA',
             planValidityDays: '',
@@ -56,6 +58,10 @@ const ApplyFranchiseModal = () => {
 
     const franchiseLogoFile = watch('franchiseLogo');
     const franchiseSignatureFile = watch('franchiseSignature');
+    const ownerAadharFile = watch('ownerAadhar');
+    const ownerPanFile = watch('ownerPan');
+    const ownerHigherEducationFile = watch('ownerHigherEducation');
+    const ownerPhotoFile = watch('ownerPhoto');
 
     const handleProceedToOtp = async (data) => {
         setIsLoading(true);
@@ -66,12 +72,20 @@ const ApplyFranchiseModal = () => {
             'franchiseName', 'ownerName', 'designation', 'dob', 'email', 'mobile',
             'address', 'state', 'city', 'postalCode', 'country',
             'totalComputers', 'totalStudents', 'planValidityDays',
-            'gstNumber', 'atcCode', 'franchiseLogo', 'franchiseSignature'
+            'gstNumber', 'atcCode', 'franchiseLogo', 'franchiseSignature',
+            'ownerAadhar', 'ownerPan', 'ownerHigherEducation', 'ownerPhoto'
         ];
 
         fieldsToInclude.forEach(key => {
             if (data[key] !== undefined && data[key] !== null) {
-                if (key === 'franchiseLogo' || key === 'franchiseSignature') {
+                if (
+                    key === 'franchiseLogo' ||
+                    key === 'franchiseSignature' ||
+                    key === 'ownerAadhar' ||
+                    key === 'ownerPan' ||
+                    key === 'ownerHigherEducation' ||
+                    key === 'ownerPhoto'
+                ) {
                     if (data[key] && data[key][0]) {
                         formData.append(key, data[key][0]);
                     }
@@ -149,6 +163,30 @@ const ApplyFranchiseModal = () => {
     const labelClass = "block text-sm font-semibold text-gray-800 mb-2 tracking-wide uppercase";
     const errorClass = "text-red-600 text-sm mt-2 font-medium";
     const sectionTitleClass = "text-2xl font-bold text-gray-900 border-b-2 border-blue-500 pb-3 mb-8 relative";
+
+    const handleInstantFileCheck = (e, fieldName, { minBytes, maxBytes, allowedMimes, label }) => {
+        const file = e.target.files?.[0];
+        if (!file) {
+            clearErrors(fieldName);
+            return;
+        }
+        if (allowedMimes && !allowedMimes.includes(file.type)) {
+            setError(fieldName, { type: 'manual', message: `${label} must be of type: ${allowedMimes.join(', ')}` });
+            e.target.value = '';
+            return;
+        }
+        if (minBytes && file.size < minBytes) {
+            setError(fieldName, { type: 'manual', message: `${label} must be at least ${Math.round(minBytes/1024)} KB` });
+            e.target.value = '';
+            return;
+        }
+        if (maxBytes && file.size > maxBytes) {
+            setError(fieldName, { type: 'manual', message: `${label} must be at most ${Math.round(maxBytes/1024)} KB` });
+            e.target.value = '';
+            return;
+        }
+        clearErrors(fieldName);
+    };
 
     return (
         <div className="p-10 bg-gradient-to-br from-white to-gray-50 w-full max-w-6xl mx-auto rounded-2xl shadow-2xl my-10 border border-gray-100">
@@ -295,6 +333,102 @@ const ApplyFranchiseModal = () => {
                                 <input type="file" id="franchiseSignature" {...register("franchiseSignature", { required: "Franchise signature is required" })} className="mt-2 block w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base transition duration-200 ease-in-out hover:border-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept="image/*" />
                                 {errors.franchiseSignature && <p className={errorClass}>{errors.franchiseSignature.message}</p>}
                                 {franchiseSignatureFile?.[0] && <span className="text-sm text-gray-500 mt-1 block truncate">{franchiseSignatureFile[0].name}</span>}
+                            </div>
+                            <div>
+                                <label htmlFor="ownerAadhar" className={labelClass}>Owner Aadhar (PDF) <span className="text-gray-500">50 KB – 1 MB</span> <span className="text-red-500">*</span></label>
+                                <input
+                                  type="file"
+                                  id="ownerAadhar"
+                                  accept="application/pdf"
+                                  {...register("ownerAadhar", {
+                                    required: "Owner Aadhar PDF is required",
+                                    validate: {
+                                      size: (files) => {
+                                        const f = files?.[0];
+                                        if (!f) return true;
+                                        const min = 50 * 1024; // 50 KB
+                                        const max = 1 * 1024 * 1024; // 1 MB
+                                        return (f.size >= min && f.size <= max) || "File size must be between 50 KB and 1 MB";
+                                      }
+                                    }
+                                  })}
+                                  onChange={(e) => handleInstantFileCheck(e, 'ownerAadhar', { minBytes: 50 * 1024, maxBytes: 1 * 1024 * 1024, allowedMimes: ['application/pdf'], label: 'Owner Aadhar' })}
+                                  className="mt-2 block w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base transition duration-200 ease-in-out hover:border-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                />
+                                {errors.ownerAadhar && <p className={errorClass}>{errors.ownerAadhar.message}</p>}
+                                {ownerAadharFile?.[0] && <span className="text-sm text-gray-500 mt-1 block truncate">{ownerAadharFile[0].name}</span>}
+                            </div>
+                            <div>
+                                <label htmlFor="ownerPan" className={labelClass}>Owner PAN (PDF) <span className="text-gray-500">20 KB – 500 KB</span> <span className="text-red-500">*</span></label>
+                                <input
+                                  type="file"
+                                  id="ownerPan"
+                                  accept="application/pdf"
+                                  {...register("ownerPan", {
+                                    required: "Owner PAN PDF is required",
+                                    validate: {
+                                      size: (files) => {
+                                        const f = files?.[0];
+                                        if (!f) return true;
+                                        const min = 20 * 1024; // 20 KB
+                                        const max = 500 * 1024; // 500 KB
+                                        return (f.size >= min && f.size <= max) || "File size must be between 20 KB and 500 KB";
+                                      }
+                                    }
+                                  })}
+                                  onChange={(e) => handleInstantFileCheck(e, 'ownerPan', { minBytes: 20 * 1024, maxBytes: 500 * 1024, allowedMimes: ['application/pdf'], label: 'Owner PAN' })}
+                                  className="mt-2 block w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base transition duration-200 ease-in-out hover:border-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                />
+                                {errors.ownerPan && <p className={errorClass}>{errors.ownerPan.message}</p>}
+                                {ownerPanFile?.[0] && <span className="text-sm text-gray-500 mt-1 block truncate">{ownerPanFile[0].name}</span>}
+                            </div>
+                            <div>
+                                <label htmlFor="ownerHigherEducation" className={labelClass}>Owner Higher Education Certificate (PDF/JPG) <span className="text-gray-500">50 KB – 2 MB</span> <span className="text-red-500">*</span></label>
+                                <input
+                                  type="file"
+                                  id="ownerHigherEducation"
+                                  accept="application/pdf,image/jpeg,image/jpg"
+                                  {...register("ownerHigherEducation", {
+                                    required: "Higher education certificate is required",
+                                    validate: {
+                                      size: (files) => {
+                                        const f = files?.[0];
+                                        if (!f) return true;
+                                        const min = 50 * 1024; // 50 KB
+                                        const max = 2 * 1024 * 1024; // 2 MB
+                                        return (f.size >= min && f.size <= max) || "File size must be between 50 KB and 2 MB";
+                                      }
+                                    }
+                                  })}
+                                  onChange={(e) => handleInstantFileCheck(e, 'ownerHigherEducation', { minBytes: 50 * 1024, maxBytes: 2 * 1024 * 1024, allowedMimes: ['application/pdf','image/jpeg','image/jpg'], label: 'Higher Education Certificate' })}
+                                  className="mt-2 block w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base transition duration-200 ease-in-out hover:border-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                />
+                                {errors.ownerHigherEducation && <p className={errorClass}>{errors.ownerHigherEducation.message}</p>}
+                                {ownerHigherEducationFile?.[0] && <span className="text-sm text-gray-500 mt-1 block truncate">{ownerHigherEducationFile[0].name}</span>}
+                            </div>
+                            <div>
+                                <label htmlFor="ownerPhoto" className={labelClass}>Owner Passport Size Photo (JPG/PNG) <span className="text-gray-500">20 KB – 200 KB</span> <span className="text-red-500">*</span></label>
+                                <input
+                                  type="file"
+                                  id="ownerPhoto"
+                                  accept="image/jpeg,image/jpg,image/png"
+                                  {...register("ownerPhoto", {
+                                    required: "Owner passport photo is required",
+                                    validate: {
+                                      size: (files) => {
+                                        const f = files?.[0];
+                                        if (!f) return true;
+                                        const min = 20 * 1024; // 20 KB
+                                        const max = 200 * 1024; // 200 KB
+                                        return (f.size >= min && f.size <= max) || "File size must be between 20 KB and 200 KB";
+                                      }
+                                    }
+                                  })}
+                                  onChange={(e) => handleInstantFileCheck(e, 'ownerPhoto', { minBytes: 20 * 1024, maxBytes: 200 * 1024, allowedMimes: ['image/jpeg','image/jpg','image/png'], label: 'Owner Passport Photo' })}
+                                  className="mt-2 block w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base transition duration-200 ease-in-out hover:border-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                />
+                                {errors.ownerPhoto && <p className={errorClass}>{errors.ownerPhoto.message}</p>}
+                                {ownerPhotoFile?.[0] && <span className="text-sm text-gray-500 mt-1 block truncate">{ownerPhotoFile[0].name}</span>}
                             </div>
                         </div>
                     </section>

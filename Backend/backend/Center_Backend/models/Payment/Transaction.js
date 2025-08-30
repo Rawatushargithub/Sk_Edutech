@@ -17,7 +17,7 @@ const TransactionSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["deposit", "withdrawal"], //change because shoeing error in frontend {depsit, wihtdarwal}
+    enum: ["deposit", "withdrawal" , "marksheet_deduction"], //change because shoeing error in frontend {depsit, wihtdarwal}
     required: true,
   },
   status: { 

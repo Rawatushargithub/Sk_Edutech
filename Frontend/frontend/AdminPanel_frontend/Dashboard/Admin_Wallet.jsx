@@ -272,7 +272,7 @@ const AdminWalletApproval = () => {
           <p className="text-gray-600">No transactions found</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow overflow-y-auto h-[70vh]">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>

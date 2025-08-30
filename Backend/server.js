@@ -26,7 +26,7 @@ app.use(cors());
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:5174'], // allowed frontends
 }));
-
+ 
 // Database Connection
 const PORT = process.env.PORT || 8000; // Adjusted to reflect your running port
 const DB_NAME = "SK_Edutech"; // Changed to lowercase to match existing DB
@@ -84,6 +84,7 @@ import adminRoutes from "./backend/Admin_Backend/routes/AdminPanel/admin.panel.j
 import adminstudentRouter from "./backend/Admin_Backend/routes/student.routes.js"; // Import student router
 import notificationRoutes from "./backend/Admin_Backend/routes/Notification/notification.routes.js"; // Import notification router
 import AdminCourseListRouter from "./backend/Admin_Backend/routes/admin.course.routes.js"
+import MarksheetrRouter from "./backend/Admin_Backend/routes/admin.marksheet.routes.js"
 // admin routes
 app.use("/api/v1/mainSliderImages",mainSliderRouter)
 app.use("/api/v1/marquee",marqueeRoutes)
@@ -97,6 +98,7 @@ app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/admin/courses", AdminCourseListRouter);
 app.use("/api/v1/admin_courses", adminCourseRouter); // Add admin course routes
 app.use("/api/v1/notification", notificationRoutes);
+app.use("/api/v1/marksheet", MarksheetrRouter);
 
 //Student Routes
 import StudentRoutes from "./backend/Student_backend/routes/studentRoutes.js"
@@ -136,6 +138,7 @@ import institute_EnquiryRoutes from "./backend/Center_Backend/routes/enquiryStud
 import institute_questionBankRoutes from "./backend/Center_Backend/routes/questionBankroutes.js";
 import Certificate_routes from './backend//Center_Backend/routes/certificate.routes.js';
 import getCenterCertificate  from './backend/Center_Backend/routes/CenterCertificate.routes.js';
+import marksheetRoutes from './backend/Center_Backend/routes/marksheet.routes.js';
 // import institute_detailsRoutes from "../Backend/backend/Center_Backend/routes/";
 // import getCenterCertificate from './backend/Center_Backend/controllers/centerCertificate.controller.js' 
 
@@ -150,6 +153,7 @@ app.use("/api/v1/institute_enquiry", institute_EnquiryRoutes);
 app.use("/api/v1/institute_question_bank", institute_questionBankRoutes);
 app.use("/api/v1/institute_certificates", Certificate_routes);
 app.use("/api/v1/certificates", getCenterCertificate);
+app.use("/api/v1/institute_marksheet", marksheetRoutes);
 
 
 

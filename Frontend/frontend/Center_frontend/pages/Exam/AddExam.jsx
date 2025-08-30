@@ -328,7 +328,7 @@ const AddExam = () => {
                     name="examType"
                     value={type}
                     checked={newExam.examType === type}
-                    onChange={(e) => setNewExam({ ...newExam, examType: e.target.value })}
+                    onChange={(e) => setNewExam({ ...newExam, examType: e.target.value.trim() })}
                     className="w-5 h-5 text-blue-600"
                   />
                   <div className="flex flex-col">
@@ -348,7 +348,7 @@ const AddExam = () => {
                 label: `${course.courseCode} (${course.courseName})`
               }))}
               onChange={selectedOption => 
-                setNewExam({ ...newExam, courseCode: selectedOption ? selectedOption.value : "" })
+                setNewExam({ ...newExam, courseCode: selectedOption ? selectedOption.value.trim() : "" })
               }
               value={courses.map(course => ({
                 value: course.courseCode,
@@ -480,7 +480,7 @@ const AddExam = () => {
               className="w-full p-2 border rounded"
               value={newExam.examDate}
               onChange={(e) =>
-                setNewExam({ ...newExam, examDate: e.target.value })
+                setNewExam({ ...newExam, examDate: e.target.value.trim() })
               }
             />
           </div>
@@ -574,7 +574,7 @@ const AddExam = () => {
                 className="w-full p-2 border rounded"
                 value={newExam.totalQuestions}
                 onChange={(e) =>
-                  setNewExam({ ...newExam, totalQuestions: e.target.value })
+                  setNewExam({ ...newExam, totalQuestions: e.target.value.trim() })
                 }
                 placeholder="Enter total questions"
               />
@@ -587,7 +587,7 @@ const AddExam = () => {
                 className="w-full p-2 border rounded"
                 value={newExam.totalMarks}
                 onChange={(e) =>
-                  setNewExam({ ...newExam, totalMarks: e.target.value })
+                  setNewExam({ ...newExam, totalMarks: e.target.value.trim() })
                 }
                 placeholder="Enter total marks"
               />
@@ -600,7 +600,7 @@ const AddExam = () => {
                 className="w-full p-2 border rounded"
                 value={newExam.passingMarks}
                 onChange={(e) =>
-                  setNewExam({ ...newExam, passingMarks: e.target.value })
+                  setNewExam({ ...newExam, passingMarks: e.target.value.trim() })
                 }
                 placeholder="Enter passing marks"
               />

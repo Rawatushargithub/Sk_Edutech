@@ -342,64 +342,66 @@ export const getStudents = async (req, res) => {
     //   query.priority = priority;
     // }
 
-    // Add date range filtering for holdUntilDate
+    // Add date range filtering for enquiryDate (DD/MM/YYYY format)
     if (dateRange || (startDate && endDate)) {
-      let dateQuery = {};
       const now = new Date();
+      let matchDates = [];
       
       if (dateRange) {
         switch (dateRange) {
           case 'today':
-            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-            dateQuery = {
-              $gte: todayStart,
-              $lte: todayEnd
-            };
+            const today = now.toISOString().split('T')[0];
+            const todayParts = today.split('-');
+            const todayDD_MM_YYYY = `${todayParts[2]}/${todayParts[1]}/${todayParts[0]}`;
+            matchDates = [todayDD_MM_YYYY];
             break;
             
           case 'yesterday':
             const yesterday = new Date(now);
             yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStart = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
-            const yesterdayEnd = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59);
-            dateQuery = {
-              $gte: yesterdayStart,
-              $lte: yesterdayEnd
-            };
+            const yesterdayISO = yesterday.toISOString().split('T')[0];
+            const yesterdayParts = yesterdayISO.split('-');
+            const yesterdayDD_MM_YYYY = `${yesterdayParts[2]}/${yesterdayParts[1]}/${yesterdayParts[0]}`;
+            matchDates = [yesterdayDD_MM_YYYY];
             break;
             
           case 'last7days':
-            const sevenDaysAgo = new Date(now);
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            dateQuery = {
-              $gte: sevenDaysAgo,
-              $lte: now
-            };
+            // Generate array of last 7 days in DD/MM/YYYY format
+            for (let i = 0; i < 7; i++) {
+              const date = new Date(now);
+              date.setDate(date.getDate() - i);
+              const dateISO = date.toISOString().split('T')[0];
+              const dateParts = dateISO.split('-');
+              matchDates.push(`${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`);
+            }
             break;
             
           case 'last30days':
-            const thirtyDaysAgo = new Date(now);
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            dateQuery = {
-              $gte: thirtyDaysAgo,
-              $lte: now
-            };
+            // Generate array of last 30 days in DD/MM/YYYY format
+            for (let i = 0; i < 30; i++) {
+              const date = new Date(now);
+              date.setDate(date.getDate() - i);
+              const dateISO = date.toISOString().split('T')[0];
+              const dateParts = dateISO.split('-');
+              matchDates.push(`${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`);
+            }
             break;
         }
       } else if (startDate && endDate) {
-        // Custom range
+        // Custom range - generate all dates between startDate and endDate in DD/MM/YYYY format
         const start = new Date(startDate);
         const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999); // Include the entire end date
-        dateQuery = {
-          $gte: start,
-          $lte: end
-        };
+        
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          const dateISO = d.toISOString().split('T')[0];
+          const dateParts = dateISO.split('-');
+          matchDates.push(`${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`);
+        }
       }
       
-      if (Object.keys(dateQuery).length > 0) {
-        query.createdAt = dateQuery;
+      if (matchDates.length > 0) {
+        console.log("Matching dates for filter:", matchDates);
+        query.enquiryDate = { $in: matchDates };
       }
     }
     

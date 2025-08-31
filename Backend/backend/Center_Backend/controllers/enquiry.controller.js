@@ -342,7 +342,7 @@ export const getStudents = async (req, res) => {
     //   query.priority = priority;
     // }
 
-    // Add date range filtering for enquiryDate (DD/MM/YYYY format)
+    // Add date range filtering for enquiryDate (DD-MM-YYYY format)
     if (dateRange || (startDate && endDate)) {
       const now = new Date();
       let matchDates = [];
@@ -352,7 +352,7 @@ export const getStudents = async (req, res) => {
           case 'today':
             const today = now.toISOString().split('T')[0];
             const todayParts = today.split('-');
-            const todayDD_MM_YYYY = `${todayParts[2]}/${todayParts[1]}/${todayParts[0]}`;
+            const todayDD_MM_YYYY = `${todayParts[2]}-${todayParts[1]}-${todayParts[0]}`;
             matchDates = [todayDD_MM_YYYY];
             break;
             
@@ -361,41 +361,41 @@ export const getStudents = async (req, res) => {
             yesterday.setDate(yesterday.getDate() - 1);
             const yesterdayISO = yesterday.toISOString().split('T')[0];
             const yesterdayParts = yesterdayISO.split('-');
-            const yesterdayDD_MM_YYYY = `${yesterdayParts[2]}/${yesterdayParts[1]}/${yesterdayParts[0]}`;
+            const yesterdayDD_MM_YYYY = `${yesterdayParts[2]}-${yesterdayParts[1]}-${yesterdayParts[0]}`;
             matchDates = [yesterdayDD_MM_YYYY];
             break;
             
           case 'last7days':
-            // Generate array of last 7 days in DD/MM/YYYY format
+            // Generate array of last 7 days in DD-MM-YYYY format
             for (let i = 0; i < 7; i++) {
               const date = new Date(now);
               date.setDate(date.getDate() - i);
               const dateISO = date.toISOString().split('T')[0];
               const dateParts = dateISO.split('-');
-              matchDates.push(`${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`);
+              matchDates.push(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`);
             }
             break;
             
           case 'last30days':
-            // Generate array of last 30 days in DD/MM/YYYY format
+            // Generate array of last 30 days in DD-MM-YYYY format
             for (let i = 0; i < 30; i++) {
               const date = new Date(now);
               date.setDate(date.getDate() - i);
               const dateISO = date.toISOString().split('T')[0];
               const dateParts = dateISO.split('-');
-              matchDates.push(`${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`);
+              matchDates.push(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`);
             }
             break;
         }
       } else if (startDate && endDate) {
-        // Custom range - generate all dates between startDate and endDate in DD/MM/YYYY format
+        // Custom range - generate all dates between startDate and endDate in DD-MM-YYYY format
         const start = new Date(startDate);
         const end = new Date(endDate);
         
         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
           const dateISO = d.toISOString().split('T')[0];
           const dateParts = dateISO.split('-');
-          matchDates.push(`${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`);
+          matchDates.push(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`);
         }
       }
       

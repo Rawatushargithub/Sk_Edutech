@@ -93,7 +93,7 @@ const EnquiryForm = () => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
-    return `${day}/${month}/${year}`; // Change from hyphens to forward slashes
+    return `${day}-${month}-${year}`; // Standardize to dd-mm-yyyy
   };
 
   // Convert date from DD-MM-YYYY to YYYY-MM-DD format for input display

@@ -438,7 +438,7 @@ const Marksheet = () => {
                         }`}
                       >
                         <h3 className="font-semibold text-gray-800">{student.studentName}</h3>
-                        <p className="text-sm text-gray-600">Roll: {student.rollNumber}</p>
+                        <p className="text-sm text-gray-600">Registration No: {student.rollNumber}</p>
                         <p className="text-sm text-gray-600">{student.email}</p>
                         <p className="text-sm text-gray-600">{student.studentMobile}</p>
                       </div>
@@ -461,7 +461,7 @@ const Marksheet = () => {
                     <h2 className="text-xl font-semibold text-gray-800">
                       Marksheet for {selectedStudent.studentName}
                     </h2>
-                    <p className="text-gray-600">Roll Number: {selectedStudent.rollNumber}</p>
+                    <p className="text-gray-600">Registration No: {selectedStudent.rollNumber}</p>
                   </div>
                   <button
                     onClick={addSubject}
@@ -671,7 +671,7 @@ const Marksheet = () => {
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Student Name</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">Roll Number</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">Registration No</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Course</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Grade</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">Percentage</th>

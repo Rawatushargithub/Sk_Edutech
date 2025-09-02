@@ -5,7 +5,7 @@ import { Mail, Phone, Lock, LogIn, AlertCircle } from "lucide-react";
 import { loginFranchise } from "../../AdminPanel_frontend/services/centerService";
 
 const CenterLoginModal = () => {
-  const [identifier, setIdentifier] = useState(""); // email or phone
+  const [franchiseId, setFranchiseId] = useState(""); // email or phone
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +21,7 @@ const CenterLoginModal = () => {
     setIsLoading(true);
     setErrorMsg("");
     try {
-      const { token, franchise } = await loginFranchise(identifier, password);
+     const { token, franchise } = await loginFranchise(franchiseId, password);
       localStorage.setItem("centerToken", token);
       localStorage.setItem("franchiseID", franchise.franchiseId);
       localStorage.setItem("franchiseName", franchise.franchiseName);
@@ -60,21 +60,22 @@ const CenterLoginModal = () => {
           <form onSubmit={handleLogin}>
             <div className="mb-4">
               <label htmlFor="identifier" className="block text-sm font-medium text-sky-800 mb-1">
-                Email or Phone
+                Franchise Id
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail size={16} className="text-sky-400" />
                 </div>
                 <input
-                  id="identifier"
+                  id="franchiseId"
                   type="text"
-                  placeholder="Enter email or phone"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="Enter Franchise ID (e.g., sk/ak/1007)"
+                  value={franchiseId}
+                  onChange={(e) => setFranchiseId(e.target.value)}
                   required
                   className="w-full pl-10 pr-3 py-3 border border-sky-200 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all"
                 />
+
               </div>
             </div>
 
@@ -132,7 +133,7 @@ const CenterLoginModal = () => {
         © {new Date().getFullYear()} Center Panel. All rights reserved.
       </div>
 
-      
+
     </div>
   );
 };

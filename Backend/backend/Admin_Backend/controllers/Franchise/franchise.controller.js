@@ -622,11 +622,9 @@ const getFranchiseCount = asyncHandler(async (req, res) => {
 
 
 export const loginFranchise = async (req, res) => {
-  const { identifier, password } = req.body; // identifier = email or mobile
+  const { franchiseId, password } = req.body; 
   try {
-    const franchise = await Franchise.findOne({
-      $or: [{ email: identifier }, { mobile: identifier }],
-    });
+    const franchise = await Franchise.findOne({ franchiseId });
 
     if (!franchise) {
       return res.status(404).json({ message: "Franchise not found" });
@@ -676,6 +674,7 @@ export const loginFranchise = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
 
 export const verificationCheck = async (req, res) => {
   try {

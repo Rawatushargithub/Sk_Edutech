@@ -153,10 +153,7 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
 
   const student = await Student.findById(studentId)
     .populate("feeDetails")
-    .populate({
-      path: "selectedBatch",
-      select: "batchName batchTiming",
-    });
+    .populate("selectedBatch");
 
   if (!student) {
     throw new ApiError(404, "Student not found");
@@ -170,10 +167,13 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   }
 
   const pdfPath = path.join(__dirname, "../../templates/blank_form.pdf");
-
+ 
   const existingPdfBytes = await fs.readFile(pdfPath);
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
   const page = pdfDoc.getPages()[0];
+
+  // Get page dimensions for centering calculations
+  const pageWidth = page.getWidth();
 
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const size = 10;
@@ -202,6 +202,29 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
     }
   };
 
+  const drawCenteredText = (
+    text,
+    y,
+    color = rgb(0, 0, 0),
+    textFont = font,
+    textSize = size
+  ) => {
+    if (text) {
+      const sanitizedText = String(text)
+        .replace(/₹/g, "Rs.")
+        .replace(/✓/g, "Y");
+      const textWidth = textFont.widthOfTextAtSize(sanitizedText, textSize);
+      const x = (pageWidth - textWidth) / 2;
+      page.drawText(sanitizedText, {
+        x,
+        y,
+        font: textFont,
+        size: textSize,
+        color,
+      });
+    }
+  };
+
   // Fetch and embed student photo (top right photo box)
   if (student.studentPhoto) {
     try {
@@ -217,7 +240,7 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
         photoImage = await pdfDoc.embedPng(photoBytes);
       }
       // Photo position in top right corner
-      page.drawImage(photoImage, { x: 460, y: 625, width: 95, height: 110 });
+      page.drawImage(photoImage, { x: 470, y: 625, width: 70, height: 75 });
     } catch (error) {
       console.error("Error fetching or embedding student photo:", error);
     }
@@ -253,10 +276,10 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   if (franchise && franchise.franchiseSignatureUrl) {
     try {
       const franchiseSignatureUrl = franchise.franchiseSignatureUrl;
-      const signatureResponse = await axios.get(franchiseSignatureUrl, {
-        responseType: "arraybuffer",
+      const signatureResponse = await axios.get(franchiseSignatureUrl, { 
+        responseType: 'arraybuffer' 
       });
-      const signatureBytes = Buffer.from(signatureResponse.data, "binary");
+      const signatureBytes = Buffer.from(signatureResponse.data, 'binary');
 
       let franchiseSignatureImage;
       if (
@@ -267,44 +290,52 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
       } else {
         franchiseSignatureImage = await pdfDoc.embedPng(signatureBytes);
       }
-      // Signature position in bottom right
-
-      page.drawImage(franchiseSignatureImage, {
-        x: 452,
-        y: 109,
-        width: 120,
-        height: 40,
-      });
+      
+      page.drawImage(franchiseSignatureImage, { x: 25, y: 100, width: 120, height: 40 });
     } catch (error) {
-      console.error("Error fetching or embedding student signature:", error);
+      console.error("Error fetching or embedding franchise signature:", error);
     }
   }
 
-  // TOP SECTION - Header Information
-  // Franchise Name
+  // TOP SECTION - CENTERED FRANCHISE INFORMATION SECTION
   if (franchise) {
-    drawText(franchise.franchiseName, 24, 620, rgb(0, 0, 0), boldFont, 14);
-  }
-
-  // Franchise Logo
-  if (franchise && franchise.franchiseLogoUrl) {
-    try {
-      const logoUrl = franchise.franchiseLogoUrl;
-      const logoResponse = await axios.get(logoUrl, {
-        responseType: "arraybuffer",
-      });
-      const logoBytes = Buffer.from(logoResponse.data, "binary");
-      let logoImage;
-      if (logoUrl.includes(".jpg") || logoUrl.includes(".jpeg")) {
-        logoImage = await pdfDoc.embedJpg(logoBytes);
-      } else {
-        logoImage = await pdfDoc.embedPng(logoBytes);
+    // Center the franchise logo first
+    if (franchise.franchiseLogoUrl) {
+      try {
+        const logoUrl = franchise.franchiseLogoUrl;
+        const logoResponse = await axios.get(logoUrl, {
+          responseType: "arraybuffer",
+        });
+        const logoBytes = Buffer.from(logoResponse.data, "binary");
+        let logoImage;
+        if (logoUrl.includes(".jpg") || logoUrl.includes(".jpeg")) {
+          logoImage = await pdfDoc.embedJpg(logoBytes);
+        } else {
+          logoImage = await pdfDoc.embedPng(logoBytes);
+        }
+        
+        // Center the logo horizontally
+        const logoWidth = 65;
+        const logoX = (pageWidth - logoWidth) / 2;
+        page.drawImage(logoImage, { 
+          x: logoX, 
+          y: 650,
+          width: logoWidth, 
+          height: 65
+        });
+      } catch (error) {
+        console.error("Error fetching or embedding franchise logo:", error);
       }
-      // page.drawImage(logoImage, { x: 24, y: 640, width: 50, height: 50 });
-      page.drawImage(logoImage, { x: 256, y: 709, width: 45, height: 45 });
-    } catch (error) {
-      console.error("Error fetching or embedding franchise logo:", error);
     }
+
+    // Center the franchise name with smaller text
+    drawCenteredText(
+      franchise.franchiseName, 
+      716, 
+      rgb(0, 0, 0), 
+      boldFont, 
+      14  // Smaller font size
+    );
   }
 
   // Admission Date (top left, after "ADMISSION DATE :")
@@ -399,11 +430,9 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   // Contact Number (after "CONTACT NO. :")
   if (franchise) {
     drawText(franchise.mobile, 244, 74);
-    drawText(franchise.address, 215, 48);
+    drawText(franchise.address, 152, 35);
   }
 
-  // // for director signn
-  // instituteSignature
   const pdfBytes = await pdfDoc.save();
 
   res.setHeader("Content-Type", "application/pdf");
@@ -429,9 +458,7 @@ const generateIdCard = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Student not found");
   }
 
-  const franchise = await Franchise.findOne({
-    franchiseId: student.franchiseId,
-  });
+  const franchise = await Franchise.findOne({ franchiseId: student.franchiseId });
   if (!franchise) {
     throw new ApiError(404, "Franchise not found");
   }
@@ -441,20 +468,32 @@ const generateIdCard = asyncHandler(async (req, res) => {
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
   const page = pdfDoc.getPages()[0];
 
+  // Get page dimensions for centering calculations
+  const pageWidth = page.getWidth();
+
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const size = 6;
 
-  const drawText = (
+  const drawText = (text, x, y, color = rgb(0, 0, 0), textFont = font, textSize = size) => {
+    if (text) {
+      page.drawText(String(text), { x, y, font: textFont, size: textSize, color });
+    }
+  };
+
+  // Helper function to draw centered text
+  const drawCenteredText = (
     text,
-    x,
     y,
     color = rgb(0, 0, 0),
     textFont = font,
-    textSize = size
+    textSize = size,
+    targetPage = page
   ) => {
     if (text) {
-      page.drawText(String(text), {
+      const textWidth = textFont.widthOfTextAtSize(String(text), textSize);
+      const x = -10 + (pageWidth - textWidth) / 2;
+      targetPage.drawText(String(text), {
         x,
         y,
         font: textFont,
@@ -464,82 +503,70 @@ const generateIdCard = asyncHandler(async (req, res) => {
     }
   };
 
+  // Helper function to get first name only
+  const getFirstName = (fullName) => {
+    if (!fullName) return '';
+    return fullName.trim().split(/\s+/)[0]; // Split by any whitespace and take first part
+  };
+
   // Fetch and embed student photo with perfect circular crop
   if (student.studentPhoto) {
     try {
       const photoUrl = student.studentPhoto;
-      const photoResponse = await axios.get(photoUrl, {
-        responseType: "arraybuffer",
-      });
-      const photoBytes = Buffer.from(photoResponse.data, "binary");
-
+      const photoResponse = await axios.get(photoUrl, { responseType: 'arraybuffer' });
+      const photoBytes = Buffer.from(photoResponse.data, 'binary');
+      
       // Create circular cropped image using Canvas with higher resolution
-      const { createCanvas, loadImage } = await import("canvas");
+      const { createCanvas, loadImage } = await import('canvas');
       const radius = 31.25; // Increased by 0.25x (25 * 1.25 = 31.25)
       const diameter = radius * 2; // 62.5 units
-
+      
       // Create high-resolution canvas (4x scale for crisp quality)
       const scale = 4;
       const canvasSize = diameter * scale;
       const canvas = createCanvas(canvasSize, canvasSize);
-      const ctx = canvas.getContext("2d");
-
+      const ctx = canvas.getContext('2d');
+      
       // Enable image smoothing for better quality
       ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-
+      ctx.imageSmoothingQuality = 'high';
+      
       // Load the image
       const img = await loadImage(photoBytes);
-
+      
       // Calculate dimensions for center cropping
       const size = Math.min(img.width, img.height);
       const offsetX = (img.width - size) / 2;
       const offsetY = (img.height - size) / 2;
-
+      
       // Create circular clipping path at high resolution
       ctx.beginPath();
-      ctx.arc(
-        canvasSize / 2,
-        canvasSize / 2,
-        canvasSize / 2,
-        0,
-        Math.PI * 2,
-        true
-      );
+      ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2, 0, Math.PI * 2, true);
       ctx.closePath();
       ctx.clip();
-
+      
       // Draw the image at high resolution (center cropped and scaled to fit)
-      ctx.drawImage(
-        img,
-        offsetX,
-        offsetY,
-        size,
-        size,
-        0,
-        0,
-        canvasSize,
-        canvasSize
-      );
-
+      ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, canvasSize, canvasSize);
+      
       // Convert canvas to PNG buffer
-      const circularImageBuffer = canvas.toBuffer("image/png");
-
+      const circularImageBuffer = canvas.toBuffer('image/png');
+      
       // Embed the circular image into PDF
       const circularImage = await pdfDoc.embedPng(circularImageBuffer);
-
+      
       // Draw the perfectly circular image at specified center position
       const centerX = 62;
       const centerY = 197;
       const imageX = centerX - radius;
       const imageY = centerY - radius;
-
-      page.drawImage(circularImage, {
-        x: imageX,
-        y: imageY,
-        width: diameter,
-        height: diameter,
+      
+      page.drawImage(circularImage, { 
+        x: imageX, 
+        y: imageY, 
+        width: diameter, 
+        height: diameter 
       });
+      
     } catch (error) {
       console.error("Error fetching or embedding student photo:", error);
     }
@@ -547,7 +574,7 @@ const generateIdCard = asyncHandler(async (req, res) => {
 
   // Helper function to capitalize text
   const capitalizeText = (text) => {
-    if (!text) return "";
+    if (!text) return '';
     return String(text).toUpperCase();
   };
 
@@ -556,85 +583,65 @@ const generateIdCard = asyncHandler(async (req, res) => {
   const secondPage = pdfDoc.getPages()[1];
 
   // Populate ID card fields on first page with capitalization
-  drawText(
-    capitalizeText(student.studentName),
-    31,
-    147,
-    rgb(0, 0, 0),
-    boldFont,
-    10
-  );
+  // Use only first name for student name
+  const firstName = getFirstName(student.studentName);
+  drawText(capitalizeText(firstName), 40, 147, rgb(0, 0, 0), boldFont, 10);
+  
   drawText(student.rollNumber, 66, 83);
-  drawText(capitalizeText(student.courseInterested?.courseCode || ""), 66, 108);
-  drawText(
-    student.admissionDate
-      ? new Date(student.admissionDate).toLocaleDateString("en-GB")
-      : "",
-    66,
-    134
-  );
-  drawText(
-    capitalizeText(student.fatherHusbandName || student.motherName),
-    66,
-    120
-  );
-  drawText(student.studentMobile, 66, 96);
-
-  drawText(franchise.address, 22, 15, rgb(1, 1, 1));
+  drawText(capitalizeText(student.courseInterested?.courseCode || ''), 66, 108);
+  drawText(student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('en-GB') : '', 66, 133);
+  drawText(capitalizeText(student.fatherHusbandName || student.motherName), 66, 120);
+  drawText(student.studentMobile, 66, 95);
+  
+  drawText(franchise.address, 25, 15, rgb(1, 1, 1), font, 4);
   // Add "M:" prefix to franchise mobile number
   drawText(`M: ${franchise.mobile}`, 75, 39);
 
-  // 1. Place franchise name on first page (centered at 64,243)
-  const franchiseName = capitalizeText(
-    franchise.franchiseName || franchise.name || ""
+  // CENTERED FRANCHISE NAME - First Page
+  // Center the franchise name with smaller text on first page
+  drawCenteredText(
+    capitalizeText(franchise.franchiseName || franchise.name || ''), 
+    237, 
+    rgb(1, 1, 1), 
+    boldFont, 
+    6,  //font
+    firstPage
   );
-  firstPage.drawText(franchiseName, {
-    x: 27,
-    y: 234,
-    font: boldFont,
-    size: 10,
-    color: rgb(1, 1, 1),
+
+  const franchiseName = capitalizeText(franchise.franchiseName || franchise.name || '');
+
+  // CENTERED FRANCHISE NAME - Second Page
+  secondPage.drawText(franchiseName, { 
+    x: 66,
+    y: 133, 
+    font: boldFont, 
+    size: 4, 
+    color: rgb(0, 0, 0) 
   });
 
-  // 2. Place franchise name on second page (centered between 64,134 and 113,134)
-  // const secondPageCenterX = (64 + 113) / 2; // Calculate center x position
-  // const franchiseNameWidth = boldFont.widthOfTextAtSize(franchiseName, 8);
-  // const secondPageStartX = secondPageCenterX - (franchiseNameWidth / 2); // Center the text
-
-  secondPage.drawText(franchiseName, {
-    x: 72,
-    y: 134,
-    font: boldFont,
-    size: 4,
-    color: rgb(0, 0, 0),
-  });
-
-  // 3. Add QR Code from template
   try {
-    const qrCodePath = path.join(__dirname, "../../templates/QR_Code.png");
+    const qrCodePath = path.join(__dirname, "../../../templates/QR_Code.png");
     const qrCodeBytes = await fs.readFile(qrCodePath);
-
+    
     // Embed PNG directly
     const qrCodeImage = await pdfDoc.embedPng(qrCodeBytes);
-
+    
     // Draw the QR code image at specified position
     secondPage.drawImage(qrCodeImage, {
       x: 80,
       y: 188,
       width: 55,
-      height: 55,
+      height: 55
     });
+    
   } catch (error) {
     console.error("Error embedding QR code:", error);
   }
-
+  
   const pdfBytes = await pdfDoc.save();
 
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename=id_card_${student.studentName}.pdf`
-  );
+  res.setHeader("Content-Disposition", `attachment; filename=id_card_${student.studentName}.pdf`);
   res.send(Buffer.from(pdfBytes));
 });
 

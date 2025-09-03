@@ -25,7 +25,7 @@ const EnquiryForm = () => {
     alternateMobile: "",
     email: "",
     dob: "",
-    gender: "",
+    gender: "Male",
     city: "",
     postCode: "",
     permanentAddress: "",
@@ -44,6 +44,10 @@ const EnquiryForm = () => {
     balance: 0,
     remarks: "",
     installments: [],
+    // Status Management Fields - Simplified
+    enquiryStatus: 'OPEN',
+    holdUntilDate: '',
+    contactAttempts: 0,
   });
 
   const navigate = useNavigate();
@@ -89,7 +93,7 @@ const EnquiryForm = () => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
+    return `${day}-${month}-${year}`; // Standardize to dd-mm-yyyy
   };
 
   // Convert date from DD-MM-YYYY to YYYY-MM-DD format for input display
@@ -167,12 +171,34 @@ const EnquiryForm = () => {
 
   const handlenquiry = async (e) => {
     e.preventDefault();
-    if (!formData.studentName.trim() || !formData.fatherHusbandName.trim() || !formData.motherName.trim() || !formData.studentMobile.trim() || !formData.courseInterested.courseName) {
-      toast.error("Please fill all required fields");
+    if (!formData.studentName.trim()) {
+      toast.error("Student Name is a required field");
+      return;
+    }
+  
+    if (!formData.courseInterested.courseName) {
+      toast.error("Course Interested is a required field");
+      return;
+    }
+    if (!formData.studentMobile.trim()) {
+      toast.error("Student Mobile is a required field");
       return;
     }
     if (formData.studentMobile.length !== 10) {
       toast.error("Mobile number must be 10 digits");
+      return;
+    }
+    if (!formData.email.trim()) {
+      toast.error("Email is a required field");
+      return;
+    }
+    
+    if (!formData.admissionDate) {
+      toast.error("Admission Date is a required field");
+      return;
+    }
+    if (!formData.enquiryDate) {
+      toast.error("Enquiry Date is a required field");
       return;
     }
 
@@ -211,7 +237,11 @@ const EnquiryForm = () => {
       installments: formData.installments.map(installment => ({
         installmentDate: convertDateToBackendFormat(installment.installmentDate),
         installmentAmount: parseFloat(installment.installmentAmount) || 0
-      }))
+      })),
+      // Status management fields - Simplified
+      enquiryStatus: formData.enquiryStatus,
+      holdUntilDate: formData.holdUntilDate || null,
+      contactAttempts: 0,
     };
 
     console.log("Sending student data:", studentData); // Debug log
@@ -222,11 +252,11 @@ const EnquiryForm = () => {
       addStudent(response.data);
       toast.success("Enquiry submitted successfully!");
       setLoading(false);
-      setTimeout(() => navigate("/institute"), 1500);
+      setTimeout(() => navigate("/institute/Enquiries"), 1500);
     } catch (err) {
       setLoading(false);
       setError("Failed to submit enquiry");
-      const errorMessage = err.response?.data?.message || "Failed to submit enquiry. Please try again.";
+      const errorMessage = err.response?.data?.message || "Failed to submit enquiry. Please try again. Ensure that all fields are filled.";
       toast.error(errorMessage);
       console.error("Error submitting enquiry:", err.response?.data || err.message);
     }
@@ -252,8 +282,8 @@ const EnquiryForm = () => {
               <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Personal Information</h2>
               <div className="grid grid-cols-12 gap-6">
                 <div className="col-span-2">
-                  <label htmlFor="abbreviation" className={labelStyle}>Title {requiredStar}</label>
-                  <select id="abbreviation" name="abbreviation" value={formData.abbreviation} onChange={handleInputChange} required className={inputStyle}>
+                  <label htmlFor="abbreviation" className={labelStyle}>Title </label>
+                  <select id="abbreviation" name="abbreviation" value={formData.abbreviation} onChange={handleInputChange} className={inputStyle}>
                     <option value="Mr.">Mr.</option>
                     <option value="Mrs.">Mrs.</option>
                     <option value="Ms.">Ms.</option>
@@ -270,21 +300,21 @@ const EnquiryForm = () => {
               </div>
               <div className="grid grid-cols-12 gap-6">
                 <div className="col-span-3">
-                  <label htmlFor="relationType" className={labelStyle}>Relation {requiredStar}</label>
-                  <select id="relationType" name="relationType" value={formData.relationType} onChange={handleInputChange} required className={inputStyle}>
+                  <label htmlFor="relationType" className={labelStyle}>Relation </label>
+                  <select id="relationType" name="relationType" value={formData.relationType} onChange={handleInputChange} className={inputStyle}>
                     <option value="S/o">S/o</option>
                     <option value="D/o">D/o</option>
                     <option value="W/o">W/o</option>
                   </select>
                 </div>
                 <div className="col-span-9">
-                  <label htmlFor="fatherHusbandName" className={labelStyle}>Father/Husband Name {requiredStar}</label>
-                  <input type="text" id="fatherHusbandName" name="fatherHusbandName" value={formData.fatherHusbandName} onChange={handleInputChange} required placeholder="Enter Father/Husband Name" className={inputStyle} />
+                  <label htmlFor="fatherHusbandName" className={labelStyle}>Father/Husband Name </label>
+                  <input type="text" id="fatherHusbandName" name="fatherHusbandName" value={formData.fatherHusbandName} onChange={handleInputChange} placeholder="Enter Father/Husband Name" className={inputStyle} />
                 </div>
               </div>
               <div>
-                <label htmlFor="motherName" className={labelStyle}>Mother Name {requiredStar}</label>
-                <input type="text" id="motherName" name="motherName" value={formData.motherName} onChange={handleInputChange} required placeholder="Enter Mother Name" className={inputStyle} />
+                <label htmlFor="motherName" className={labelStyle}>Mother Name </label>
+                <input type="text" id="motherName" name="motherName" value={formData.motherName} onChange={handleInputChange} placeholder="Enter Mother Name" className={inputStyle} />
               </div>
             </div>
 
@@ -293,7 +323,6 @@ const EnquiryForm = () => {
               <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Course & Contact Details</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-
                   <label htmlFor="courseInterested" className={labelStyle}>Course Interested {requiredStar}</label>
                   <select id="courseInterested" name="courseInterested" onChange={handleCourseChange} value={formData.courseInterested.courseName ? courses.find(c => c.courseName === formData.courseInterested.courseName)?._id : ""} required className={inputStyle}>
                     <option value="">Select a course</option>
@@ -303,7 +332,6 @@ const EnquiryForm = () => {
                       </option>
                     ))}
                   </select>
-
                 </div>
                 <div>
                   <label htmlFor="studentMobile" className={labelStyle}>Student Mobile {requiredStar}</label>
@@ -316,9 +344,31 @@ const EnquiryForm = () => {
                   <input type="tel" id="alternateMobile" name="alternateMobile" value={formData.alternateMobile} onChange={handleInputChange} placeholder="Enter Alternate Mobile" className={inputStyle} maxLength="10" />
                 </div>
                 <div>
-                  <label htmlFor="email" className={labelStyle}>Email</label>
-                  <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="Enter Email Address" className={inputStyle} />
+                  <label htmlFor="email" className={labelStyle}>Email {requiredStar}</label>
+                  <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} required placeholder="Enter Email Address" className={inputStyle} />
                 </div>
+              </div>
+            </div>
+
+            {/* Status Management Section - Simplified */}
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Status Management</h2>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className={labelStyle}>Enquiry Status</label>
+                  <select name="enquiryStatus" value={formData.enquiryStatus} onChange={handleInputChange} className={inputStyle}>
+                    <option value="OPEN">Open</option>
+                    <option value="ON_HOLD">On Hold</option>
+                  </select>
+                </div>
+                
+                {formData.enquiryStatus === 'ON_HOLD' && (
+                  <div>
+                    <label className={labelStyle}>Contact After Date</label>
+                    <input type="date" name="holdUntilDate" value={formData.holdUntilDate} onChange={handleInputChange} className={inputStyle} />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -400,7 +450,7 @@ const EnquiryForm = () => {
               <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Additional Details</h2>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="dob" className={labelStyle}>Date of Birth</label>
+                  <label htmlFor="dob" className={labelStyle}>Date of Birth </label>
                   <div className="relative">
                     <input 
                       type="date" 
@@ -414,7 +464,7 @@ const EnquiryForm = () => {
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="gender" className={labelStyle}>Gender</label>
+                  <label htmlFor="gender" className={labelStyle}>Gender </label>
                   <select id="gender" name="gender" value={formData.gender} onChange={handleInputChange} className={inputStyle}>
                     <option value="">Select Gender</option>
                     <option value="Male">Male</option>

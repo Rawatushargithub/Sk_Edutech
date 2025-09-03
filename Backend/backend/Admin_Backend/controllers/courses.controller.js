@@ -65,7 +65,7 @@ export const getCourseByIdAdmin = asyncHandler(async (req, res) => {
 //Get courses count
 export const getCoursesCount = async (req , res) => {
     try {
-        const count = await Course.countDocuments();
+        const count = await Course.countDocuments({adminApprovalStatus: "approved"});
        console.log(count)
         res.status(200).json({ count });
       } catch (error) {

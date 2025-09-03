@@ -375,7 +375,7 @@ const Wallet = () => {
     return transactionsData.map((transaction, index) => ({
       'S/N': index + 1,
       'Date': formatDate(transaction.timestamp || transaction.createdAt || transaction.date),
-      'Amount': `₹ ${transaction.amount}`,
+      'Amount': `Rs.${transaction.amount}`,
       'Type': transaction.type === "deposit"
         ? "Add Money"
         : transaction.type === "marksheet_deduction"
@@ -477,6 +477,7 @@ const Wallet = () => {
         alternateRowStyles: { fillColor: [245, 245, 245] },
         margin: { top: 40, right: 14, bottom: 20, left: 14 },
         columnStyles: {
+          0: { cellWidth: 15 }, // S/N column - made shorter
           1: { cellWidth: 40 }, // Date column wider
           2: { cellWidth: 25 }, // Amount column
           3: { cellWidth: 35 }, // Type column wider

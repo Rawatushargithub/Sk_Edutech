@@ -252,7 +252,18 @@ const ApplyFranchiseModal = () => {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
                             <div className="lg:col-span-2">
                                 <label htmlFor="address" className={labelClass}>Address <span className="text-red-500">*</span></label>
-                                <textarea id="address" {...register("address", { required: "Address is required" })} className="mt-2 block w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base transition duration-200 ease-in-out placeholder-gray-400 hover:border-gray-300 resize-none" rows="4" placeholder="Enter your complete address"></textarea>
+                                <textarea 
+                                    id="address" 
+                                    {...register("address", { required: "Address is required" })} 
+                                    className="mt-2 block w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base transition duration-200 ease-in-out placeholder-gray-400 hover:border-gray-300 resize-none" 
+                                    rows="4" 
+                                    placeholder="Enter your complete address"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                ></textarea>
                                 {errors.address && <p className={errorClass}>{errors.address.message}</p>}
                             </div>
                             <div>
@@ -324,7 +335,10 @@ const ApplyFranchiseModal = () => {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
                             <div>
                                 <label htmlFor="franchiseLogo" className={labelClass}>Franchise Logo <span className="text-red-500">*</span></label>
-                                <input type="file" id="franchiseLogo" {...register("franchiseLogo", { required: "Franchise logo is required" })} className="mt-2 block w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base transition duration-200 ease-in-out hover:border-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept="image/*" />
+                                <input type="file" id="franchiseLogo" {...register("franchiseLogo", { required: "Franchise logo is required" })} className="mt-2 block w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base transition duration-200 ease-in-out hover:border-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept="image/jpeg,image/png,image/jpg" />
+                                <p className="text-xs text-gray-500 mt-2">
+                                    <strong>Important:</strong> Upload a square logo (1:1 aspect ratio) in JPG or PNG format. Recommended minimum size is 100x100 pixels. This logo will appear on student ID cards and admission forms.
+                                </p>
                                 {errors.franchiseLogo && <p className={errorClass}>{errors.franchiseLogo.message}</p>}
                                 {franchiseLogoFile?.[0] && <span className="text-sm text-gray-500 mt-1 block truncate">{franchiseLogoFile[0].name}</span>}
                             </div>

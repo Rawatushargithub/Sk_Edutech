@@ -111,6 +111,7 @@ import videoRoutes from "./backend/Student_backend/routes/videoRoutes.js";
 import AdmitCardRoutes from "./backend/Student_backend/routes/admitcard.routes.js"
 import CourseRouter from "./backend/Student_backend/routes/student.course.routes.js"
 import NotesVideosExam from "./backend/Student_backend/routes/student.video.notes.exam.routes.js"
+import starRating from "./backend/Student_backend/routes/star.routes.js"
 
 // Student Routes 
 app.use("/api/v1/student", StudentRoutes);
@@ -123,6 +124,9 @@ app.use("/api/v1/feedback", feedbackRoutes);
 app.use("/api/v1/admit-card", AdmitCardRoutes);
 app.use("/api/v1/coursedetails", CourseRouter);
 app.use("/api/v1/recentlyadded", NotesVideosExam);
+app.use("/api/v1/student/exams", starRating);
+
+
 
 
 

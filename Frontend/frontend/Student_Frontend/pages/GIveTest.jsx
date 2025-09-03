@@ -496,7 +496,7 @@ const GiveTest = () => {
   const stats = getStats();
 
   return (
-    <div className="flex max-w-7xl mx-auto p-6 min-h-screen gap-6" ref={fullscreenRef}>
+    <div className="flex max-w-7xl mx-auto p-6 min-h-screen gap-6 bg-cover bg-center"  style={{ backgroundImage: "url('/testbackground.png')" }} ref={fullscreenRef}>
       {/* Warning Message */}
       {warningMessage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2">
@@ -564,7 +564,7 @@ const GiveTest = () => {
 
         {/* Question Panel */}
         {started && !submitted && currentQuestion && (
-          <div className="space-y-6">
+          <div className="space-y-6 bg-cover bg-center" style={{ backgroundImage: "url('/testbackground.png')" }}>
             {/* Question Counter */}
             <div className="bg-blue-50 p-3 rounded-lg border">
               <p className="text-blue-800 font-medium">

@@ -121,7 +121,7 @@ const Footer = () => {
                             <ul className="space-y-2">
                                 <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/software_zone')} >Software Zone Affiliation</li>
                                 <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/hardware_zone')} >Hardware Zone Affiliation</li>
-                                <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/beautician_zone')} >Beautician Affiliation</li>
+                                <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/beautician_zone')} >Beauty & Wellness Affiliation</li>
                                 <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/it_zone')} >IT Zone Affiliation</li>
                                 <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/training_zone')} >Training Zone Affiliation</li>
                                 <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/ntt')} >Nursery Teacher Training (NTT)</li>

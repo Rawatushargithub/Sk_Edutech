@@ -78,7 +78,7 @@ const Navbar = () => {
       title: "STUDENT ZONE",
       hasDropdown: true,
       dropdownItems: [
-        { title: "Student Zone", link: "/student/dashboard" },
+        { title: "Student Career", link: "/student/dashboard" },
         { title: "Book for Student", link: "/student/books" },
         { title: "Login Panel", link: "/student/login" },
         { title: "Student Enquiry Form", link: "/student/enquiry" },
@@ -137,8 +137,8 @@ const Navbar = () => {
             { title: "Daily Update", link: "#" },
           ],
         },
-        { title: "Admission Form", link: "/downloads/admission-form" },
-        { title: "Franchise Form", link: "/downloads/franchise-form" },
+        { title: "Student Admission Form", link: "/downloads/admission-form" },
+        { title: "Institute Franchise Form", link: "/downloads/franchise-form" },
       ],
     },
     {

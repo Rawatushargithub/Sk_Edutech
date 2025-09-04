@@ -40,8 +40,8 @@ const ContactUsSection = forwardRef((props, ref) => {
             <PhoneCall className="text-green-600 group-hover:text-white w-6 h-6" />
           </div>
           <h3 className="font-semibold text-gray-800 text-lg mb-2">Call Us</h3>
-          <p className="text-gray-600 text-sm">+91 8700810876</p>
           <p className="text-gray-600 text-sm">+91 8860836811</p>
+          <p className="text-gray-600 text-sm">+91 8076782988</p>
         </a>
 
         {/* Email Card */}
@@ -54,7 +54,7 @@ const ContactUsSection = forwardRef((props, ref) => {
           </div>
           <h3 className="font-semibold text-gray-800 text-lg mb-2">Email Us</h3>
           <p className="text-gray-600 text-sm break-words w-full">
-            skcoachingclasses722@gmail.com
+            support@skedutech.com 
           </p>
         </a>
 

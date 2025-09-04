@@ -115,7 +115,20 @@ const Footer = () => {
                                 <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/privacy-policy')} >Privacy Policy</li>
                                 <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/refund-policy')} >Refund Policy</li>
                             </ul>
-                        </div>                        
+                        </div>  
+                        <div>
+                            <h3 className="font-semibold text-lg mb-3">Services</h3>
+                            <ul className="space-y-2">
+                                <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/software_zone')} >Software Zone Affiliation</li>
+                                <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/hardware_zone')} >Hardware Zone Affiliation</li>
+                                <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/beautician_zone')} >Beauty & Wellness Affiliation</li>
+                                <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/it_zone')} >IT Zone Affiliation</li>
+                                <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/training_zone')} >Training Zone Affiliation</li>
+                                <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/ntt')} >Nursery Teacher Training (NTT)</li>
+                                <li className="cursor-pointer hover:text-orange-400" onClick={() => navigate('/ctt')} >Computer Teacher training (CTT)</li>
+                                
+                            </ul>
+                        </div>                       
                     </div>
                 </div>
 

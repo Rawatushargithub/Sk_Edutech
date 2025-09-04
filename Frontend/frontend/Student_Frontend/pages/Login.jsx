@@ -100,7 +100,7 @@ const Login = () => {
             </div>
           </div>
           <h2 className="text-2xl font-bold">Student Login</h2>
-          <p className="text-sky-100 mt-1">Enter your roll number and password</p>
+          <p className="text-sky-100 mt-1">Enter your Registration Number and password</p>
         </div>
 
         {/* Form Section */}
@@ -115,7 +115,7 @@ const Login = () => {
           <form onSubmit={handleLogin}>
             <div className="mb-4">
               <label htmlFor="rollNumber" className="block text-sm font-medium text-sky-800 mb-1">
-                Roll Number
+                Registration Number
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -124,7 +124,7 @@ const Login = () => {
                 <input
                   id="rollNumber"
                   type="text"
-                  placeholder="Enter your roll number"
+                  placeholder="Enter your registration number"
                   value={rollNumber}
                   onChange={(e) => setRollNumber(e.target.value)}
                   required

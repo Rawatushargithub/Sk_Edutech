@@ -2,6 +2,11 @@ import React, { useState, useEffect, useMemo } from "react";
 import { FaCheckCircle, FaTimesCircle, FaWallet, FaSearch } from "react-icons/fa";
 import axios from "axios";
 import API_BASE_URL from "../../config"; // Adjust the import path as necessary
+// Import for Excel export
+import * as XLSX from 'xlsx';
+// Import for PDF export 
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const AdminWalletApproval = () => {
   const [transactions, setTransactions] = useState([]);
@@ -12,9 +17,12 @@ const AdminWalletApproval = () => {
   const [timeFilter, setTimeFilter] = useState("all");
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  
+  // Export dropdown state
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   useEffect(() => {
-    fetchTransactions();
+    fetchTransactions(); 
   }, [filter]);
 
   const fetchTransactions = async () => {
@@ -140,7 +148,6 @@ const AdminWalletApproval = () => {
       const searchMatch = 
         !searchQuery ||
         (transaction.franchise?.franchiseName?.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (transaction.institute?.email?.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (transaction.paymentId?.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (transaction._id?.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (transaction.amount?.toString().toLowerCase().includes(searchQuery.toLowerCase()));
@@ -152,12 +159,211 @@ const AdminWalletApproval = () => {
     return result;
   }, [transactions, filter, transactionTypeFilter, timeFilter, startDate, endDate, searchQuery]);
 
+  // Get filter display text for export filenames
+  const getFilterDisplayText = () => {
+    const statusText = filter === 'all' ? 'All_Statuses' : filter.replace('_', '_');
+    const typeText = transactionTypeFilter === 'all' ? 'All_Types' : transactionTypeFilter;
+    const timeText = timeFilter === 'all' ? 'All_Time' : 
+                    timeFilter === 'today' ? 'Today' :
+                    timeFilter === 'yesterday' ? 'Yesterday' :
+                    timeFilter === 'last7days' ? 'Last_7_Days' :
+                    timeFilter === 'last30days' ? 'Last_30_Days' :
+                    timeFilter === 'custom' ? 'Custom_Range' : timeFilter;
+    return `${statusText}_${typeText}_${timeText}`;
+  };
+
+  // Prepare export data for admin wallet transactions
+  const prepareExportData = (transactionsData) => {
+    return transactionsData.map((transaction, index) => ({
+      'S/N': index + 1,
+      'Date': formatDate(transaction.timestamp),
+      'Institute': transaction?.franchise?.franchiseName || 'N/A',
+      'Amount': `Rs.${transaction.amount}`,
+      'Payment ID': transaction.paymentId || 'N/A',
+      'Type': transaction.paymentId && transaction.paymentId !== 'N/A' ? 'Institute' : 'Student',
+      'Status': transaction.status?.replace("_", " ").toUpperCase() || 'N/A',
+      'Transaction ID': transaction._id || 'N/A',
+    }));
+  };
+
+  // Export to Excel function
+  const exportToExcel = async () => {
+    try {
+      setShowExportDropdown(false);
+      alert('Preparing Excel file... This may take a moment.');
+
+      const exportData = prepareExportData(filteredTransactions);
+      
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      
+      // Set column widths
+      const colWidths = [
+        { wch: 5 },   // S/N
+        { wch: 20 },  // Date
+        { wch: 25 },  // Institute
+        { wch: 15 },  // Amount
+        { wch: 20 },  // Payment ID
+        { wch: 12 },  // Type
+        { wch: 15 },  // Status
+        { wch: 25 },  // Transaction ID
+      ];
+      ws['!cols'] = colWidths;
+      
+      XLSX.utils.book_append_sheet(wb, ws, "Admin_Wallet_Transactions");
+      
+      // Generate filename with current date and filters
+      const currentDate = new Date().toISOString().split('T')[0];
+      const filterText = getFilterDisplayText();
+      const fileName = `Admin_Wallet_Transactions_${filterText}_${currentDate}.xlsx`;
+      
+      XLSX.writeFile(wb, fileName);
+      
+      alert(`Excel file "${fileName}" has been downloaded successfully with ${exportData.length} transaction records!`);
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      alert('Error exporting to Excel. Please try again.');
+    }
+  };
+
+  // Export to PDF function
+  const exportToPDF = async () => {
+    try {
+      setShowExportDropdown(false);
+      alert('Preparing PDF file... This may take a moment.');
+
+      const doc = new jsPDF('l', 'mm', 'a4'); // landscape orientation
+      
+      // Add title
+      doc.setFontSize(16);
+      doc.text('Admin Wallet Transaction Report', 14, 20);
+      
+      // Add filter info and date
+      const currentDate = new Date().toLocaleDateString();
+      doc.setFontSize(10);
+      doc.text(`Status Filter: ${filter === 'all' ? 'All Statuses' : filter.replace('_', ' ')}`, 14, 28);
+      doc.text(`Type Filter: ${transactionTypeFilter}`, 14, 34);
+      doc.text(`Time Filter: ${timeFilter === 'all' ? 'All Time' : timeFilter}`, 14, 40);
+      doc.text(`Generated on: ${currentDate}`, 14, 46);
+      
+      // Prepare data for PDF table
+      const exportData = prepareExportData(filteredTransactions);
+      
+      // Define columns for PDF (selecting key columns to fit better)
+      const columns = [
+        'S/N',
+        'Date',
+        'Institute',
+        'Amount',
+        'Payment ID',
+        'Type',
+        'Status'
+      ];
+      
+      const rows = exportData.map(transaction => [
+        transaction['S/N'],
+        transaction['Date'],
+        transaction['Institute'],
+        transaction['Amount'],
+        transaction['Payment ID'],
+        transaction['Type'],
+        transaction['Status']
+      ]);
+
+      // Add table using autoTable
+      autoTable(doc, {
+        head: [columns],
+        body: rows,
+        startY: 52,
+        styles: { fontSize: 7 },
+        headStyles: { fillColor: [41, 128, 185] },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        margin: { top: 52, right: 14, bottom: 20, left: 14 },
+        columnStyles: {
+          0: { cellWidth: 12 }, // S/N column - short
+          1: { cellWidth: 35 }, // Date column
+          2: { cellWidth: 40 }, // Institute column
+          3: { cellWidth: 20 }, // Amount column
+          4: { cellWidth: 30 }, // Payment ID column
+          5: { cellWidth: 18 }, // Type column
+          6: { cellWidth: 25 }, // Status column
+        }
+      });
+
+      // Generate filename with current date and filters
+      const currentDate2 = new Date().toISOString().split('T')[0];
+      const filterText = getFilterDisplayText();
+      const fileName = `Admin_Wallet_Transactions_${filterText}_${currentDate2}.pdf`;
+      
+      doc.save(fileName);
+      
+      alert(`PDF file "${fileName}" has been downloaded successfully with ${filteredTransactions.length} transaction records!`);
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      alert('Error exporting to PDF. Please try again.');
+    }
+  };
+
+  // Toggle export dropdown
+  const toggleExportDropdown = () => {
+    setShowExportDropdown(!showExportDropdown);
+  };
+
+  // Close dropdown when clicking outside
+  const closeDropdownOnOutsideClick = (e) => {
+    if (showExportDropdown && !e.target.closest('.export-dropdown-container')) {
+      setShowExportDropdown(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('click', closeDropdownOnOutsideClick);
+    return () => {
+      document.removeEventListener('click', closeDropdownOnOutsideClick);
+    };
+  }, [showExportDropdown]);
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold flex items-center">
           <FaWallet className="mr-2" /> Wallet Transaction Approvals
         </h1>
+        
+        {/* Export Button with Dropdown */}
+        <div className="relative export-dropdown-container">
+          <button 
+            className="bg-sky-900 text-white font-medium px-4 py-2 rounded-md cursor-pointer flex items-center"
+            onClick={toggleExportDropdown}
+          >
+            Export Transactions
+            <span className={`text-md ml-1 transition-transform duration-200 ${
+              showExportDropdown ? 'rotate-180' : ''
+            }`}>
+              ▼
+            </span>
+          </button>
+          
+          {/* Export Dropdown Menu */}
+          {showExportDropdown && (
+            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10">
+              <div className="py-1">
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  onClick={exportToExcel}
+                >
+                  📊 Export to Excel
+                </button>
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  onClick={exportToPDF}
+                >
+                  📄 Export to PDF
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex justify-between items-center mb-4">
         {/* Search input */}

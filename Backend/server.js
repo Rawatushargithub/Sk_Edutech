@@ -84,6 +84,7 @@ import adminRoutes from "./backend/Admin_Backend/routes/AdminPanel/admin.panel.j
 import adminstudentRouter from "./backend/Admin_Backend/routes/student.routes.js"; // Import student router
 import notificationRoutes from "./backend/Admin_Backend/routes/Notification/notification.routes.js"; // Import notification router
 import AdminCourseListRouter from "./backend/Admin_Backend/routes/admin.course.routes.js"
+import MarksheetrRouter from "./backend/Admin_Backend/routes/admin.marksheet.routes.js"
 // admin routes
 app.use("/api/v1/mainSliderImages",mainSliderRouter)
 app.use("/api/v1/marquee",marqueeRoutes)
@@ -97,6 +98,7 @@ app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/admin/courses", AdminCourseListRouter);
 app.use("/api/v1/admin_courses", adminCourseRouter); // Add admin course routes
 app.use("/api/v1/notification", notificationRoutes);
+app.use("/api/v1/marksheet", MarksheetrRouter);
 
 //Student Routes
 import StudentRoutes from "./backend/Student_backend/routes/studentRoutes.js"
@@ -109,6 +111,7 @@ import videoRoutes from "./backend/Student_backend/routes/videoRoutes.js";
 import AdmitCardRoutes from "./backend/Student_backend/routes/admitcard.routes.js"
 import CourseRouter from "./backend/Student_backend/routes/student.course.routes.js"
 import NotesVideosExam from "./backend/Student_backend/routes/student.video.notes.exam.routes.js"
+import starRating from "./backend/Student_backend/routes/star.routes.js"
 
 // Student Routes 
 app.use("/api/v1/student", StudentRoutes);
@@ -121,6 +124,9 @@ app.use("/api/v1/feedback", feedbackRoutes);
 app.use("/api/v1/admit-card", AdmitCardRoutes);
 app.use("/api/v1/coursedetails", CourseRouter);
 app.use("/api/v1/recentlyadded", NotesVideosExam);
+app.use("/api/v1/student/exams", starRating);
+
+
 
 
 

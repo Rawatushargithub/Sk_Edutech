@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, LogOut, User } from "lucide-react";
 import axios from "axios";
+import StudentRating from "../studentrating.jsx";
 import API_BASE_URL from "../../../config.js";
 
 const TopBar = () => {
@@ -55,6 +56,11 @@ const TopBar = () => {
             </h1>
             <p className="text-sm text-gray-600">{student?.rollNumber || ""}</p>
           </div>
+          {/* <StudentRating /> */}
+        </div>
+
+        <div>
+<StudentRating />
         </div>
 
         {/* Right Side - Action Buttons */}

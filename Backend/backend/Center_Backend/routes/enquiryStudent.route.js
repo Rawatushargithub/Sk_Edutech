@@ -1,5 +1,5 @@
 import express from 'express';
-import { addStudent, getStudents, deleteStudent } from '../controllers/enquiry.controller.js';
+import { addStudent, getStudents, deleteStudent, updateEnquiryStatus } from '../controllers/enquiry.controller.js';
 
 const router = express.Router();
 
@@ -15,5 +15,10 @@ router.get('/', getStudents);
 // @route   DELETE /api/students/:id
 // @desc    Delete a student enquiry by ID
 router.delete('/:id', deleteStudent);
+
+router.put('/:id/status', updateEnquiryStatus);
+
+// router.get('/status-summary', getStatusSummary);
+// router.get('/ready-to-contact', getReadyToContact);
 
 export default router;

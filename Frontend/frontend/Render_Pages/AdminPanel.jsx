@@ -25,6 +25,7 @@ import StudentAdmissionList from "../AdminPanel_frontend/Showing_students/Manage
 import NotificationAdminPanel from "../AdminPanel_frontend/Notification/NotificationMarquee";
 import AddCoursebyAdmin from "../AdminPanel_frontend/Courses/AddCoursebyAdmin"; // Import Add Course Component  
 import AdminCoursesList from "../AdminPanel_frontend/Courses/AdminCourseList";
+import Marksheet from "../AdminPanel_frontend/Marksheet";
 
 const AdminPanel = () => {
 
@@ -80,6 +81,8 @@ const AdminPanel = () => {
               <Route path="courselist" element={<AdminCoursesList />} />
 
               
+
+              <Route path="marksheet" element={<Marksheet />} />
 
 
               <Route path="Certificates" element={<RequestedCertificates />} />

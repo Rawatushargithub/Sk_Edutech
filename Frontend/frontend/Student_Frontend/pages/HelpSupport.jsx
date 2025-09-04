@@ -68,10 +68,10 @@ const HelpSupport = () => {
               SK EDUTECH Support
             </h3>
             <div className="space-y-6 text-base">
-              <SupportInfo label="Phone Support" icon={<Phone />} value="+91 8700810876,
+              <SupportInfo label="Phone Support" icon={<Phone />} value="+91 8076702988 ,
 
-+91 8860836811" />
-              <SupportInfo label="Email Support" icon={<Mail />} value="skcoachingclasses722@gmail.com" />
+  +91 8860836811" />
+              <SupportInfo label="Email Support" icon={<Mail />} value="help@skedutech.com " />
               <SupportInfo
                 label="Location"
                 icon={<MapPin />}

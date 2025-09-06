@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getFranchiseRequests, updateFranchiseStatusVerification } from '../../services/franchiseService';
+import { getFranchiseRequests, updateFranchiseStatusVerification, deleteFranchise } from '../../services/franchiseService';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -13,6 +13,7 @@ const RequestStackTable = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [franchiseToVerify, setFranchiseToVerify] = useState(null); // Franchise data for the modal
     const [isVerifying, setIsVerifying] = useState(false); // Tracks modal confirmation loading state
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchFranchisesForStack = useCallback(async () => {
         setLoading(true);
@@ -67,6 +68,27 @@ const RequestStackTable = () => {
         );
         setIsVerifying(false); // Hide loading state
         closeVerificationModal(); // Close modal on success or failure (toast shows result)
+    };
+
+    const handleDelete = async () => {
+        if (!franchiseToVerify || isDeleting) return;
+
+        setIsDeleting(true);
+        try {
+            const response = await deleteFranchise(franchiseToVerify._id);
+            if (response.statusCode === 200) {
+                toast.success('Franchise deleted successfully!');
+                fetchFranchisesForStack(); // Refresh the list
+                closeVerificationModal();
+            } else {
+                throw new Error(response.message || "Failed to delete franchise");
+            }
+        } catch (err) {
+            console.error(`Error deleting franchise ${franchiseToVerify._id}:`, err);
+            toast.error(`Error: ${err.message || 'Deletion failed.'}`);
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
 
@@ -270,6 +292,8 @@ const RequestStackTable = () => {
                 onConfirm={handleConfirmVerification}
                 onCancel={closeVerificationModal}
                 isVerifying={isVerifying}
+                onDelete={handleDelete}
+                isDeleting={isDeleting}
             />
         </div>
     );

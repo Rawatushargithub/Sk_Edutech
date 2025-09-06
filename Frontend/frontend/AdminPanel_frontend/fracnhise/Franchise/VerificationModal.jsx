@@ -21,7 +21,7 @@ const DetailItem = ({ label, value, isDate = false }) => (
     </div>
 );
 
-const VerificationModal = ({ franchise, isOpen, onConfirm, onCancel, isVerifying }) => {
+const VerificationModal = ({ franchise, isOpen, onConfirm, onCancel, isVerifying, onDelete, isDeleting }) => {
     if (!isOpen || !franchise) return null;
 
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -155,16 +155,28 @@ const VerificationModal = ({ franchise, isOpen, onConfirm, onCancel, isVerifying
                             onClick={onCancel}
                             type="button"
                             className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 disabled:opacity-50"
-                            disabled={isVerifying}
+                            disabled={isVerifying || isDeleting}
                         >
                             Cancel
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (window.confirm('Are you sure you want to delete this franchise request? This action is permanent.')) {
+                                    onDelete();
+                                }
+                            }}
+                            type="button"
+                            className="text-white bg-gray-500 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:opacity-50"
+                            disabled={isVerifying || isDeleting}
+                        >
+                            {isDeleting ? "Deleting..." : "Delete"}
                         </button>
                         {franchise.otpVerified && franchise.verificationStatus === 'Pending' && (
                             <button
                                 onClick={onConfirm}
                                 type="button"
                                 className="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:opacity-50"
-                                disabled={isVerifying}
+                                disabled={isVerifying || isDeleting}
                             >
                                 {isVerifying ? "Verifying..." : "Confirm Verification"}
                             </button>

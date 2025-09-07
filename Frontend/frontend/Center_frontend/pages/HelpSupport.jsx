@@ -22,15 +22,16 @@ const SkEduTechSupport = () => {
                 icon={<Phone />} 
                 value={
                   <>
-                    +91 8700810876 <br />
                     +91 8860836811
+                    <br />
+                    +91 8076782988
                   </>
                 } 
               />
               <SupportInfo 
                 label="Email Support" 
                 icon={<Mail />} 
-                value="skcoachingclasses722@gmail.com" 
+                value="support@skedutech.com" 
               />
               <SupportInfo
                 label="Location"

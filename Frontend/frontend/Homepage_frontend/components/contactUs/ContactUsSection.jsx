@@ -46,7 +46,7 @@ const ContactUsSection = forwardRef((props, ref) => {
 
         {/* Email Card */}
         <a
-          href="mailto:skcoachingclasses722@gmail.com"
+          href="mailto:support@skedutech.com"
           className="bg-white rounded-xl shadow-md p-6 transition duration-300 hover:shadow-lg hover:translate-y-1 flex flex-col items-center text-center group  w-full max-w-xs"
         >
           <div className="bg-red-100 p-4 rounded-full mb-4 group-hover:bg-red-600 transition-colors duration-300 ">

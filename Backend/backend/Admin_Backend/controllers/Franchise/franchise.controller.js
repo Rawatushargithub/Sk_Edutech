@@ -277,7 +277,7 @@ const updateFranchiseStatusVerification = asyncHandler(async (req, res) => {
 
         // Always include Franchise ID and the (potentially newly generated) password
         textBody += `Your Franchise ID is ${loginId} and password is ${passwordToSend}. Please use your PHONE NUMBER and given PASSWORD as credentials to login in your dashboard through www.skedutech.com/institute and do "Center Login" using the given credentials.\n\n`;
-        htmlBody += `<p>Your Franchise ID is <b>${loginId}</b> and password is <b>${passwordToSend}</b>. Please use your PHONE NUMBER and given PASSWORD as credentials to login in your dashboard through www.skedutech.com/institute and do "Center Login" using the given credentials.</p>`;
+        htmlBody += `<p>Your Franchise ID is <b>${loginId}</b> and password is <b>${passwordToSend}</b>. Please use your Franchise ID and given PASSWORD as credentials to login in your dashboard through www.skedutech.com/institute and do "Center Login" using the given credentials.</p>`;
 
         console.log(`--- Franchise Activated & Verified ---`);
         console.log(`   Franchise ID: ${loginId}`);

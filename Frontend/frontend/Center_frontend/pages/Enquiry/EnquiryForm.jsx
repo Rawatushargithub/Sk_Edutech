@@ -59,11 +59,29 @@ const EnquiryForm = () => {
     const fetchCourses = async () => {
       try {
         const franchiseId = localStorage.getItem('franchiseID');
-        const response = await axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`);
-        setCourses(response.data);
+        
+        // Fetch both institute and admin courses in parallel
+        const [instituteCourses, adminCourses] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`),
+          axios.get(`${API_BASE_URL}/api/v1/admin/courses/admin-courses`).catch(err => {
+            console.warn('Failed to fetch admin courses:', err);
+            return { data: [] };
+          })
+        ]);
+        console.log("Institute courses fetching :: ", instituteCourses);
+        console.log("Admin courses fetching :: ", adminCourses);
+
+        // Combine both course arrays
+        const allCourses = [
+          ...instituteCourses.data,
+          ...adminCourses.data.data
+        ];
+
+        setCourses(allCourses);
       } catch (error) {
         console.error("Error fetching courses:", error);
         toast.error("Failed to fetch courses");
+        setCourses([]);
       }
     };
     fetchCourses();
@@ -326,11 +344,18 @@ const EnquiryForm = () => {
                   <label htmlFor="courseInterested" className={labelStyle}>Course Interested {requiredStar}</label>
                   <select id="courseInterested" name="courseInterested" onChange={handleCourseChange} value={formData.courseInterested.courseName ? courses.find(c => c.courseName === formData.courseInterested.courseName)?._id : ""} required className={inputStyle}>
                     <option value="">Select a course</option>
-                    {courses.map((course) => (
-                      <option key={course._id} value={course._id}>
-                        {course.courseName} ({course.courseCode})
-                      </option>
-                    ))}
+                    {courses.map((course) => {
+                      const isAdminCourse = course.byAdmin === true || course.franchiseId === "Admin";
+                      return (
+                        <option key={course._id} value={course._id} style={{
+                          backgroundColor: isAdminCourse ? '#faf5ff' : 'white',
+                          color: isAdminCourse ? '#7c3aed' : '#374151',
+                          fontWeight: isAdminCourse ? '500' : 'normal'
+                        }}>
+                          {course.courseName} ({course.courseCode}){isAdminCourse ? ' [Admin]' : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
                 <div>

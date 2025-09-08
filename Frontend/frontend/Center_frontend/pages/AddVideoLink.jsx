@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from 'react-hot-toast';
 import { MdVideoLibrary } from "react-icons/md";
 import API_BASE_URL from "../../config"
-const AddVideoLink = () => {
+const AddVideoLink = () => { 
   const navigate = useNavigate();
   const [videoData, setVideoData] = useState({
     selectedCourseId: "",
@@ -20,18 +20,45 @@ const AddVideoLink = () => {
       try {
         const franchiseId = localStorage.getItem('franchiseID');
 
-        const url = `${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`;
+        // Fetch both institute and admin courses in parallel
+        const [instituteResponse, adminResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`),
+          fetch(`${API_BASE_URL}/api/v1/admin/courses/admin-courses`).catch(() => null)
+        ]);
 
-        const response = await fetch(url);
-//         const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`);
-
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({ message: 'Failed to fetch courses' }));
-          throw new Error(errData.message || `Error ${response.status}`);
+        if (!instituteResponse.ok) {
+          const errData = await instituteResponse.json().catch(() => ({ message: 'Failed to fetch institute courses' }));
+          throw new Error(errData.message || `Error ${instituteResponse.status}`);
         }
 
-        const fetchedCourses = await response.json();
-        setCourses(fetchedCourses);
+        const instituteCourses = await instituteResponse.json();
+        let adminCourses = [];
+
+        // Handle admin courses response
+        if (adminResponse && adminResponse.ok) {
+          try {
+            adminCourses = await adminResponse.json();
+            // Mark admin courses for identification
+            adminCourses = adminCourses.data.map(course => ({
+              ...course,
+              byAdmin: true,
+              franchiseId: "Admin"
+            }));
+          } catch (error) {
+            console.warn('Failed to parse admin courses:', error);
+          }
+        } 
+         console.log("Fetched institute courses ", instituteCourses);
+        console.log("Fetched admin courses ", adminCourses);
+
+        const activeApprovedInstituteCourses = instituteCourses.filter(
+          c => c.instituteStatus === 'active' && c.adminApprovalStatus === 'approved'
+        );
+        console.log("Active approved institute courses ", activeApprovedInstituteCourses);
+
+        // Combine both course types
+        const allCourses = [...activeApprovedInstituteCourses, ...adminCourses];
+        setCourses(allCourses);
       } catch (err) {
         toast.error(`Failed to fetch courses: ${err.message}`);
         console.error("Failed to fetch courses:", err);
@@ -61,12 +88,19 @@ const AddVideoLink = () => {
     }
 
     const franchiseId = localStorage.getItem("franchiseId");
+    const selectedCourse = courses.find(c => c._id === videoData.selectedCourseId);
+    const isAdminCourse = selectedCourse && (selectedCourse.byAdmin === true || selectedCourse.franchiseId === "Admin");
 
     setIsSubmitting(true);
     const toastId = toast.loading('Adding video link...');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/institute_courses/${videoData.selectedCourseId}/videos`, {
+      // Use different endpoints for admin vs institute courses
+      const endpoint = isAdminCourse 
+        ? `${API_BASE_URL}/api/v1/institute_courses/${videoData.selectedCourseId}/videos`
+        : `${API_BASE_URL}/api/v1/institute_courses/${videoData.selectedCourseId}/videos`;
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,10 +148,31 @@ const AddVideoLink = () => {
                 <option value="">-- Select Course --</option>
                 {loadingCourses && <option value="" disabled>Loading courses...</option>}
                 {!loadingCourses && courses.length === 0 && <option value="" disabled>No active & approved courses found.</option>}
-                {courses.map((course) => (
-                  <option key={course._id} value={course._id}>{course.courseName} ({course.courseCode})</option>
-                ))}
+                {courses.map((course) => {
+                  const isAdminCourse = course.byAdmin === true || course.franchiseId === "Admin";
+                  return (
+                    <option 
+                      key={course._id} 
+                      value={course._id}
+                      style={isAdminCourse ? { backgroundColor: '#f3f4f6', color: '#7c3aed', fontWeight: '600' } : {}}
+                    >
+                      {course.courseName} ({course.courseCode}) {isAdminCourse ? '[Admin]' : ''}
+                    </option>
+                  );
+                })}
               </select>
+              {videoData.selectedCourseId && courses.find(c => c._id === videoData.selectedCourseId)?.byAdmin && (
+                <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded-md">
+                  <div className="flex items-center">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                      Admin Course
+                    </span>
+                    <span className="ml-2 text-sm text-purple-700">
+                      This is an admin-managed course
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>

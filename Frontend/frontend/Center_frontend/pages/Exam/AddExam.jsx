@@ -26,18 +26,32 @@ const AddExam = () => {
 
     const fetchCourses = async () => {
       try {
+        // Fetch both institute and admin courses in parallel
+        const [instituteCourses, adminCourses] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`),
+          fetch(`${API_BASE_URL}/api/v1/admin/courses/admin-courses`).catch(err => {
+            console.warn('Failed to fetch admin courses:', err);
+            return { ok: false };
+          })
+        ]);
 
-        const response = await fetch(
-          `${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`
-        );
+        let allCourses = [];
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch courses");
+        if (instituteCourses.ok) {
+          const instituteData = await instituteCourses.json();
+          allCourses = [...instituteData];
         }
-        const data = await response.json();
-        setCourses(data || []);
+
+        if (adminCourses.ok) {
+          const adminData = await adminCourses.json();
+          console.log("Admin Data :: ", adminData);
+          allCourses = [...allCourses, ...adminData.data];
+        }
+
+        setCourses(allCourses);
       } catch (error) {
         console.error("Error fetching courses:", error);
+        setCourses([]);
       }
     };
 
@@ -343,22 +357,52 @@ const AddExam = () => {
           <div>
             <label className="block text-gray-700 mb-2">Course Code</label>
             <Select
-              options={courses.map(course => ({
-                value: course.courseCode,
-                label: `${course.courseCode} (${course.courseName})`
-              }))}
+              options={courses.map(course => {
+                const isAdminCourse = course.byAdmin === true || course.franchiseId === "Admin";
+                return {
+                  value: course.courseCode,
+                  label: `${course.courseCode} (${course.courseName})${isAdminCourse ? ' [Admin]' : ''}`,
+                  course: course,
+                  isAdminCourse: isAdminCourse
+                };
+              })}
               onChange={selectedOption => 
                 setNewExam({ ...newExam, courseCode: selectedOption ? selectedOption.value.trim() : "" })
               }
-              value={courses.map(course => ({
-                value: course.courseCode,
-                label: `${course.courseCode} (${course.courseName})`
-              })).find(option => option.value === newExam.courseCode)}
+              value={courses.map(course => {
+                const isAdminCourse = course.byAdmin === true || course.franchiseId === "Admin";
+                return {
+                  value: course.courseCode,
+                  label: `${course.courseCode} (${course.courseName})${isAdminCourse ? ' [Admin]' : ''}`,
+                  course: course,
+                  isAdminCourse: isAdminCourse
+                };
+              }).find(option => option.value === newExam.courseCode)}
               isClearable
               isSearchable
               placeholder="Select or search for a course..."
               className="w-full"
               classNamePrefix="select"
+              styles={{
+                option: (base, state) => ({
+                  ...base,
+                  backgroundColor: state.data?.isAdminCourse && state.isFocused ? '#f3e8ff' : 
+                                 state.data?.isAdminCourse ? '#faf5ff' : 
+                                 state.isFocused ? '#f0f9ff' : 'white',
+                  color: state.data?.isAdminCourse ? '#7c3aed' : '#374151',
+                  fontWeight: state.data?.isAdminCourse ? '500' : 'normal'
+                }),
+              }}
+              formatOptionLabel={(option) => (
+                <div className="flex items-center justify-between">
+                  <span>{option.course.courseCode} ({option.course.courseName})</span>
+                  {option.isAdminCourse && (
+                    <span className="ml-2 px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">
+                      Admin
+                    </span>
+                  )}
+                </div>
+              )}
             />
           </div>
 

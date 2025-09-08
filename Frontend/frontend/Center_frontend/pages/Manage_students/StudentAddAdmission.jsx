@@ -73,13 +73,36 @@ const AddNewStudent = () => {
         const franchiseId = localStorage.getItem('franchiseID');
       
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`);
-        console.log("course fetching :: " , response)
+        // Fetch both institute and admin courses in parallel
+        const [instituteCourses, adminCourses] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`),
+          axios.get(`${API_BASE_URL}/api/v1/admin/courses/admin-courses`).catch(err => {
+            console.warn('Failed to fetch admin courses:', err);
+            return { data: [] };
+          })
+        ]);
+
+        console.log("Institute courses fetching :: ", instituteCourses);
+        console.log("Admin courses fetching :: ", adminCourses);
+
+        // Safely extract course data with fallback
+        const instituteCourseData = Array.isArray(instituteCourses.data) ? instituteCourses.data : [];
+        const adminCourseData = Array.isArray(adminCourses.data.data) ? adminCourses.data.data : [];
+
+    
+
+        // Combine both course arrays
+        const allCourses = [
+          ...instituteCourseData,
+          ...adminCourseData
+        ];
 
 
-        setCourses(response.data); // Assuming the response is an array of course objects
+        setCourses(allCourses);
       } catch (error) {
         console.error('Error fetching courses:', error);
+        // Fallback to empty array if both requests fail
+        setCourses([]);
       }
     };
 
@@ -263,7 +286,7 @@ const handleChange = (e) => {
       courseFees: 0
     });
   }
-  }
+  } 
 
  const handleFileChange = (e) => {
   const { name, files } = e.target;
@@ -570,27 +593,56 @@ const handleSubmit = async (e) => {
               <label className="block mb-0 text-sm font-medium ">Course Interested *</label>
               <Select
                 name="courseInterested"
-                options={courses.map(course => ({
-                  value: course._id,
-                  label: `${course.courseName} (${course.courseCode})`
-                }))}
+                options={courses.map(course => {
+                  const isAdminCourse = course.byAdmin === true || course.franchiseId === "Admin";
+                  return {
+                    value: course._id,
+                    label: `${course.courseName} (${course.courseCode})${isAdminCourse ? ' [Admin]' : ''}`,
+                    course: course,
+                    isAdminCourse: isAdminCourse
+                  };
+                })}
                 onChange={handleCourseChange}
-                value={courses.map(course => ({
-                  value: course._id,
-                  label: `${course.courseName} (${course.courseCode})`
-                })).find(option => 
-                  courses.find(c => c._id === option.value)?.courseName === formData.courseInterested.courseName &&
-                  courses.find(c => c._id === option.value)?.courseCode === formData.courseInterested.courseCode
-                ) || null}
+                value={formData.courseInterested.courseName ? 
+                  courses.map(course => {
+                    const isAdminCourse = course.byAdmin === true || course.franchiseId === "Admin";
+                    return {
+                      value: course._id,
+                      label: `${course.courseName} (${course.courseCode})${isAdminCourse ? ' [Admin]' : ''}`,
+                      course: course,
+                      isAdminCourse: isAdminCourse
+                    };
+                  }).find(option => 
+                    option.course.courseName === formData.courseInterested.courseName &&
+                    option.course.courseCode === formData.courseInterested.courseCode
+                  ) : null
+                }
                 isClearable
                 isSearchable
-                required
-                placeholder="Select or search for a course..."
-                className="p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                placeholder="Select a course"
+                className="text-sm"
                 styles={{
-                  control: (base) => ({ ...base, border: '1px solid gray-300', boxShadow: 'none' }),
+                  control: (base) => ({ ...base, minHeight: '32px' }),
                   valueContainer: (base) => ({ ...base, padding: '4px' }),
+                  option: (base, state) => ({
+                    ...base,
+                    backgroundColor: state.data?.isAdminCourse && state.isFocused ? '#f3e8ff' : 
+                                   state.data?.isAdminCourse ? '#faf5ff' : 
+                                   state.isFocused ? '#f0f9ff' : 'white',
+                    color: state.data?.isAdminCourse ? '#7c3aed' : '#374151',
+                    fontWeight: state.data?.isAdminCourse ? '500' : 'normal'
+                  }),
                 }}
+                formatOptionLabel={(option) => (
+                  <div className="flex items-center justify-between">
+                    <span>{option.course.courseName} ({option.course.courseCode})</span>
+                    {option.isAdminCourse && (
+                      <span className="ml-2 px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                )}
               />
               {formData.courseInterested.courseName && (
                 <div className="mt-2 text-sm text-gray-600">

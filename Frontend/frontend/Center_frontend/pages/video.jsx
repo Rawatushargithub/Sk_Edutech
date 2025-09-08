@@ -39,20 +39,41 @@ const UploadCourseVideo1 = () => {
     try {
       const franchiseId = localStorage.getItem('franchiseID'); // Retrieve franchiseId
       // console.log("Fetching courses for franchiseId:", franchiseId);
+ 
+      // Fetch both institute and admin courses in parallel
+      const [instituteResponse, adminResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`),
+        fetch(`${API_BASE_URL}/api/v1/admin/courses/admin-courses`).catch(() => null)
+      ]);
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`
-      );
+      if (!instituteResponse.ok) throw new Error('Failed to fetch institute courses');
 
-      if (!response.ok) throw new Error('Failed to fetch courses');
+      const instituteData = await instituteResponse.json();
+      let adminCourses = [];
 
-      const data = await response.json();
+      // Handle admin courses response
+      if (adminResponse && adminResponse.ok) {
+        try {
+          adminCourses = await adminResponse.json();
+          // Mark admin courses for identification
+          adminCourses = adminCourses.data.map(course => ({
+            ...course,
+            byAdmin: true,
+            franchiseId: "Admin"
+          }));
+        } catch (error) {
+          console.warn('Failed to parse admin courses:', error);
+        }
+      }
 
-      const activeApprovedCourses = data.filter(
+      // Filter institute courses for active and approved ones
+      const activeApprovedInstituteCourses = instituteData.filter(
         c => c.instituteStatus === 'active' && c.adminApprovalStatus === 'approved'
       );
-      // console.log("Fetched courses ", data);
-      setAllCourses(activeApprovedCourses);
+
+      // Combine both course types
+      const allCourses = [...activeApprovedInstituteCourses, ...adminCourses];
+      setAllCourses(allCourses);
     } catch (error) {
       toastHot.error(`Error fetching courses: ${error.message}`);
     } finally {
@@ -118,16 +139,21 @@ const UploadCourseVideo1 = () => {
     setDeletingVideoId(videoId);
     try {
       const franchiseId = localStorage.getItem('franchiseID');
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/institute_courses/${selectedCourseId}/videos/${videoId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ franchiseId })
-        }
-      );
+      const selectedCourse = allCourses.find(c => c._id === selectedCourseId);
+      const isAdminCourse = selectedCourse && (selectedCourse.byAdmin === true || selectedCourse.franchiseId === "Admin");
+
+      // Use different endpoints for admin vs institute courses
+      const endpoint = isAdminCourse 
+        ? `${API_BASE_URL}/api/v1/admin/courses/${selectedCourseId}/videos/${videoId}`
+        : `${API_BASE_URL}/api/v1/institute_courses/${selectedCourseId}/videos/${videoId}`;
+
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ franchiseId })
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -195,14 +221,20 @@ const UploadCourseVideo1 = () => {
             <label htmlFor="courseFilter" className="block text-sm font-medium text-gray-700 mb-1">Filter by Course</label>
             <Select
               id="courseFilter"
-              options={[{ value: 'ALL', label: 'All Courses' }, ...allCourses.map(course => ({
-                value: course._id,
-                label: `${course.courseName} (${course.courseCode})`
-              }))]}
-              value={[{ value: 'ALL', label: 'All Courses' }, ...allCourses.map(course => ({
-                value: course._id,
-                label: `${course.courseName} (${course.courseCode})`
-              }))].find(option => option.value === selectedCourseId)}
+              options={[{ value: 'ALL', label: 'All Courses' }, ...allCourses.map(course => {
+                const isAdminCourse = course.byAdmin === true || course.franchiseId === "Admin";
+                return {
+                  value: course._id,
+                  label: `${course.courseName} (${course.courseCode})${isAdminCourse ? ' [Admin]' : ''}`
+                };
+              })]}
+              value={[{ value: 'ALL', label: 'All Courses' }, ...allCourses.map(course => {
+                const isAdminCourse = course.byAdmin === true || course.franchiseId === "Admin";
+                return {
+                  value: course._id,
+                  label: `${course.courseName} (${course.courseCode})${isAdminCourse ? ' [Admin]' : ''}`
+                };
+              })].find(option => option.value === selectedCourseId)}
               onChange={selectedOption => setSelectedCourseId(selectedOption ? selectedOption.value : "ALL")}
               isLoading={loadingCourses}
               isClearable
@@ -210,6 +242,35 @@ const UploadCourseVideo1 = () => {
               placeholder="-- Select or search for a Course --"
               className="w-full"
               classNamePrefix="select"
+              formatOptionLabel={(option) => {
+                if (option.value === 'ALL') return option.label;
+                const course = allCourses.find(c => c._id === option.value);
+                const isAdminCourse = course && (course.byAdmin === true || course.franchiseId === "Admin");
+                return (
+                  <div className="flex items-center justify-between">
+                    <span>{course ? `${course.courseName} (${course.courseCode})` : option.label}</span>
+                    {isAdminCourse && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 ml-2">
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                );
+              }}
+              styles={{
+                option: (provided, state) => {
+                  const course = allCourses.find(c => c._id === state.data.value);
+                  const isAdminCourse = course && (course.byAdmin === true || course.franchiseId === "Admin");
+                  return {
+                    ...provided,
+                    backgroundColor: state.isFocused 
+                      ? (isAdminCourse ? '#f3e8ff' : provided.backgroundColor)
+                      : (isAdminCourse ? '#faf5ff' : provided.backgroundColor),
+                    color: isAdminCourse ? '#7c3aed' : provided.color,
+                    fontWeight: isAdminCourse ? '600' : provided.fontWeight,
+                  };
+                }
+              }}
             />
           </div>
           <div className="flex-grow w-full sm:w-auto">

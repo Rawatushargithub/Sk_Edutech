@@ -97,17 +97,30 @@ const EditExam = () => {
   // ===== DATA FETCHING FUNCTIONS =====
   const fetchCourses = async () => {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/institute_courses/getCourses`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
-      const coursesData = await response.json();
-      setCourses(coursesData);
+      const franchiseId = localStorage.getItem('franchiseID');
+      
+      // Fetch both institute and admin courses in parallel
+      const [instituteCourses, adminCourses] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`),
+        fetch(`${API_BASE_URL}/api/v1/admin/courses/admin-courses`).catch(err => {
+          console.warn('Failed to fetch admin courses:', err);
+          return { ok: false };
+        })
+      ]);
+
+      let allCourses = [];
+
+      if (instituteCourses.ok) {
+        const instituteData = await instituteCourses.json();
+        allCourses = [...instituteData];
+      }
+      console.log(adminCourses)
+      if (adminCourses.ok) {
+        const adminData = await adminCourses.json();
+        allCourses = [...allCourses, ...adminData];
+      }
+
+      setCourses(allCourses);
     } catch (err) {
       console.error("Error fetching courses:", err);
       setCourses([]);

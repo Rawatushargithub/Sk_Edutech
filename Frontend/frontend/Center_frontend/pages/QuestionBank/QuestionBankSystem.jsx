@@ -50,7 +50,7 @@ const QuestionBankSystem = () => {
         },
         ...options,
       });
-
+console.log("response :: ", response , "of endpoint :: ", endpoint)
       const data = await response.json();
 
       if (!response.ok) {
@@ -83,12 +83,52 @@ const QuestionBankSystem = () => {
       setCoursesLoading(true);
 
       const franchiseId = localStorage.getItem('franchiseID');
-      const response = await apiCall(`/institute_courses/getCourses?franchiseId=${franchiseId}`);
-      console.log("Courses loaded:", response);
-      setCourses(response || []);
+      
+      // Fetch both institute and admin courses in parallel
+      const [instituteResponse, adminResponse] = await Promise.all([
+        fetch(`${API_BASE_URL2}/institute_courses/getCourses?franchiseId=${franchiseId}`),
+        fetch(`${API_BASE_URL2}/admin/courses/admin-courses`).catch(() => null)
+      ]);
+
+      if (!instituteResponse.ok) {
+        throw new Error('Failed to fetch institute courses');
+      }
+
+      const instituteCourses = await instituteResponse.json();
+      let adminCourses = [];
+
+      // Handle admin courses response
+      if (adminResponse && adminResponse.ok) {
+        try {
+          const adminData = await adminResponse.json();
+          // Mark admin courses for identification
+          adminCourses = adminData.data.map(course => ({
+            ...course,
+            byAdmin: true,
+            franchiseId: "Admin"
+          }));
+        } catch (error) {
+          console.warn('Failed to parse admin courses:', error);
+        }
+      }
+
+      console.log("Fetched institute courses:", instituteCourses);
+      console.log("Fetched admin courses:", adminCourses);
+
+      // Filter active and approved institute courses
+      const activeApprovedInstituteCourses = instituteCourses.filter(
+        c => c.instituteStatus === 'active' && c.adminApprovalStatus === 'approved'
+      );
+
+      // Combine both course types
+      const allCourses = [...activeApprovedInstituteCourses, ...adminCourses];
+      
+      console.log("All courses loaded:", allCourses);
+      setCourses(allCourses);
     } catch (error) {
       showNotification("Error loading courses: " + error.message, "error");
       console.error("Load courses error:", error);
+      setCourses([]);
     } finally {
       setCoursesLoading(false);
     }
@@ -238,11 +278,20 @@ const QuestionBankSystem = () => {
     setShowAddForm(true);
   };
 
-  const courseOptions = courses.map(course => ({
-    value: course.courseCode,
-    label: `${course.courseCode} - ${course.courseName}`
-  }));
-  
+  const handleAddQuestion = () => {
+    setShowAddForm(true);
+  };
+
+  const courseOptions = courses.map(course => {
+    const isAdminCourse = course.byAdmin === true || course.franchiseId === "Admin";
+    return {
+      value: course.courseCode,
+      label: `${course.courseCode} - ${course.courseName}${isAdminCourse ? ' [Admin]' : ''}`,
+      course: course,
+      isAdminCourse: isAdminCourse
+    };
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-6xl mx-auto">
@@ -270,6 +319,29 @@ const QuestionBankSystem = () => {
             isClearable
             isSearchable
             placeholder="Search or select a course..."
+            formatOptionLabel={(option) => (
+              <div className="flex items-center justify-between">
+                <span>{`${option.course.courseCode} - ${option.course.courseName}`}</span>
+                {option.isAdminCourse && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 ml-2">
+                    Admin
+                  </span>
+                )}
+              </div>
+            )}
+            styles={{
+              option: (base, state) => {
+                const isAdminCourse = state.data.isAdminCourse;
+                return {
+                  ...base,
+                  backgroundColor: state.isFocused 
+                    ? (isAdminCourse ? '#f3e8ff' : '#f0f9ff')
+                    : (isAdminCourse ? '#faf5ff' : 'white'),
+                  color: isAdminCourse ? '#7c3aed' : '#374151',
+                  fontWeight: isAdminCourse ? '600' : 'normal',
+                };
+              },
+            }}
           />
 
             {selectedCourseCode && (

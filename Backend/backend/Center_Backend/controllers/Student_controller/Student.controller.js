@@ -1357,7 +1357,7 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
 
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const size = 10;
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
 
   const drawText = (
     text,
@@ -1471,7 +1471,7 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
         franchiseSignatureImage = await pdfDoc.embedPng(signatureBytes);
       }
       
-      page.drawImage(franchiseSignatureImage, { x: 25, y: 100, width: 120, height: 40 });
+      page.drawImage(franchiseSignatureImage, { x: 16, y: 95, width: 120, height: 40 });
     } catch (error) {
       console.error("Error fetching or embedding franchise signature:", error);
     }
@@ -1508,13 +1508,13 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
       }
     }
 
-    // Center the franchise name with smaller text
+    // Center the franchise name with bigger text
     drawCenteredText(
       franchise.franchiseName, 
       716, 
       rgb(0, 0, 0), 
       boldFont, 
-      20  // Smaller font size
+      25
     );
   }
 
@@ -1598,7 +1598,7 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
   // RIGHT SIDE - OFFICE USE ONLY SECTION
   // Course Fees (after "COURSE FEES :")
   if (student.feeDetails) {
-    drawText(`Rs ${student.feeDetails.courseFees}`, 77, 238);
+    drawText(`Rs ${student.feeDetails.totalFees}`, 77, 238);
 
     // Paid Fees (after "PAID FEES :")
     drawText(`Rs ${student.feeDetails.feesReceived}`, 269, 238);
@@ -1652,7 +1652,7 @@ const generateIdCard = asyncHandler(async (req, res) => {
   const pageWidth = page.getWidth();
 
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
   const size = 6;
 
   const drawText = (text, x, y, color = rgb(0, 0, 0), textFont = font, textSize = size) => {
@@ -1933,7 +1933,7 @@ const generateIdCard = asyncHandler(async (req, res) => {
   
   // Calculate total width of logo + spacing + text for centering
   const textFont = boldFont;
-  const textSize = 7;
+  const textSize = 8;
   const textWidth = franchiseName ? textFont.widthOfTextAtSize(franchiseName, textSize) : 0;
   const spacing = franchiseLogo && franchiseName ? 5 : 0; // 5 units spacing between logo and text
   const totalWidth = logoWidth + spacing + textWidth;
@@ -1958,7 +1958,7 @@ const generateIdCard = asyncHandler(async (req, res) => {
     firstPage.drawText(franchiseName, {
       x: textX,
       y: 237, // Slightly higher than logo to align with text baseline
-      font: textFont,
+      font: boldFont,
       size: textSize,
       color: rgb(1, 1, 1)
     });

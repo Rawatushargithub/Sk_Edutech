@@ -4,7 +4,7 @@ import axios from "axios"
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../../config"; // Adjust the import path as necessary
 
-const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textColor = "#09182a" , isWallet=false }) => {
+const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textColor = "#09182a" , isWallet=false, isCourseCard=false }) => {
   const franchiseId = localStorage.getItem("franchiseID");
   const API_URL = `${API_BASE_URL}/api/v1/${apiEndpoint}?franchiseId=${franchiseId}`; // Replace with actual API
   const navigate = useNavigate();
@@ -18,25 +18,49 @@ const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textCo
       setLoading(true);
       setError(false);
       try {
-  
-        const response = await axios.get(API_URL);
         
-        // Axios already throws an error for non-2xx responses
-        console.log("Response data:", response.data);
-        
-       // For wallet, we expect balance instead of count
-        if (isWallet) {
-          if (response.data && response.data.balance !== undefined) {
-            setValue(response.data.balance);
-          } else {
-            throw new Error("No balance data available");
-          }
+        // Special handling for course count - fetch both institute and admin courses
+        if (isCourseCard) {
+          const [instituteCourses, adminCourses] = await Promise.all([
+            axios.get(`${API_BASE_URL}/api/v1/institute_courses/getCourses?franchiseId=${franchiseId}`),
+            axios.get(`${API_BASE_URL}/api/v1/admin/courses/admin-courses`).catch(err => {
+              console.warn('Failed to fetch admin courses:', err);
+              return { data: [] };
+            })
+          ]);
+
+          console.log("Institute courses fetching :: ", instituteCourses);
+          console.log("Admin courses fetching :: ", adminCourses);
+
+          // Safely extract course data with fallback
+          const instituteCourseData = Array.isArray(instituteCourses.data) ? instituteCourses.data : [];
+          const adminCourseData = Array.isArray(adminCourses.data.data) ? adminCourses.data.data : [];
+
+          // Calculate combined count
+          const totalCourseCount = instituteCourseData.length + adminCourseData.length;
+          setValue(totalCourseCount);
+          
         } else {
-          // For other stats cards
-          if (response.data && response.data.count !== undefined) {
-            setValue(response.data.count);
+          // Regular API call for other stats
+          const response = await axios.get(API_URL);
+          
+          // Axios already throws an error for non-2xx responses
+          console.log("Response data:", response.data);
+          
+         // For wallet, we expect balance instead of count
+          if (isWallet) {
+            if (response.data && response.data.balance !== undefined) {
+              setValue(response.data.balance);
+            } else {
+              throw new Error("No balance data available");
+            }
           } else {
-            throw new Error("No count data available");
+            // For other stats cards
+            if (response.data && response.data.count !== undefined) {
+              setValue(response.data.count);
+            } else {
+              throw new Error("No count data available");
+            }
           }
         }
 
@@ -48,7 +72,7 @@ const StatsCard = ({ title, icon: Icon, apiEndpoint, bgColor = "#E4E8ED", textCo
     };
 
     fetchStats();
-  }, [API_URL , isWallet]);
+  }, [API_URL , isWallet, isCourseCard, franchiseId]);
 
   // Handler for wallet card click
   const handleWalletClick = () => {
@@ -119,7 +143,8 @@ const DashboardStats = () => {
       apiEndpoint="institute_courses/count"
       bgColor="#E4E8ED"
       textColor = "#09182a"
-      />
+      isCourseCard={true}
+      /> 
       <StatsCard 
       title="Wallet" 
       icon={FaWallet} 

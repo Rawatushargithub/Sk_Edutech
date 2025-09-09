@@ -10,8 +10,8 @@ import mongoose from 'mongoose';
 // Get all courses for a franchise
 export const getFranchiseCourses = asyncHandler(async (req, res) => {
     try {
-        const franchiseId = req.query.franchiseId || req.user?.instituteID || req.body.franchiseId;
-        
+        const franchiseId = req.query.franchiseId || req.body.franchiseId;
+        console.log("Franchise ID in getFranchiseCourses:", franchiseId);
         if (!franchiseId) {
             return res.status(400).json({
                 success: false,
@@ -19,11 +19,14 @@ export const getFranchiseCourses = asyncHandler(async (req, res) => {
             });
         }
 
-        const courses = await Course.find({ 
-            franchiseId: franchiseId,
-            instituteStatus: 'active'
+        const courses = await Course.find({
+            $or: [
+                { franchiseId: franchiseId },
+                { franchiseId: 'Admin' }
+            ]
         }).select('_id courseName courseCode courseSubject');
 
+        console.log("Courses found:", courses);
         res.status(200).json({
             success: true,
             data: courses
@@ -61,7 +64,7 @@ export const getCourseStudents = asyncHandler(async (req, res) => {
         if (courseId && courseId !== 'all') {
             const course = await Course.findById(courseId);
             if (course) {
-                filteredStudents = students.filter(student => 
+                filteredStudents = students.filter(student =>
                     student.courseInterested.courseCode === course.courseCode
                 );
             }
@@ -87,7 +90,7 @@ export const createOrUpdateMarksheet = asyncHandler(async (req, res) => {
         const franchiseId = req.user?.instituteID || req.body.franchiseId;
 
         if (!franchiseId || !studentId || !courseId || !subjects || subjects.length === 0) {
-            console.log("Data coming from the frontend:: " , req.body)
+            console.log("Data coming from the frontend:: ", req.body)
             return res.status(400).json({
                 success: false,
                 error: "All fields are required: studentId, courseId, subjects"
@@ -135,7 +138,7 @@ export const createOrUpdateMarksheet = asyncHandler(async (req, res) => {
 
         // Find existing student in the course or create new entry
         let studentEntry = courseEntry.students.find(s => s.studentId.toString() === studentId);
-        
+
         // Find the franchise to get its ObjectId
         const franchise = await Franchise.findOne({ franchiseId });
         if (!franchise) {
@@ -150,7 +153,7 @@ export const createOrUpdateMarksheet = asyncHandler(async (req, res) => {
         const marksheetFee = 300; // Fee for creating marksheet
         let wallet;
         try {
-            wallet = await Wallet.findOne({franchiseId: franchiseId});
+            wallet = await Wallet.findOne({ franchiseId: franchiseId });
             if (!wallet || wallet.balance < marksheetFee) {
                 return res.status(400).json({
                     success: false,
@@ -269,7 +272,7 @@ export const getStudentMarksheet = asyncHandler(async (req, res) => {
 
         let student = null;
         let course = null;
-        
+
         if (marksheet) {
             course = marksheet.courses.find(c => c.courseCode === courseCode);
             if (course) {
@@ -317,11 +320,11 @@ export const getFranchiseMarksheets = asyncHandler(async (req, res) => {
         }
 
         let query = { franchiseId: franchiseId };
-        
+
         if (courseCode && courseCode !== 'all') {
             query['courses.courseCode'] = courseCode;
         }
-        
+
         if (approvalStatus) {
             query['courses.students.approvalStatus'] = approvalStatus;
         }
@@ -408,7 +411,7 @@ export const publishMarksheet = asyncHandler(async (req, res) => {
             { status: 'published' },
             { new: true }
         ).populate('studentId', 'studentName rollNumber')
-         .populate('courseId', 'courseName courseCode');
+            .populate('courseId', 'courseName courseCode');
 
         if (!marksheet) {
             return res.status(404).json({

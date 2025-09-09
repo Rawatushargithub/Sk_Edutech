@@ -119,6 +119,74 @@ const FeesManagementSystem = () => {
     });
   };
 
+  // Filter and sort functions for installment data (filters by payment dates)
+  const getFilteredAndSortedInstallmentData = (data, searchTerm, sortKey, timeFilter, startDate, endDate) => {
+    // Time Filter for installment data - checks payment dates
+    if (timeFilter !== 'all') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      const filterPaymentDate = (paymentDate) => {
+        const paymentDateTime = new Date(paymentDate);
+        if (isNaN(paymentDateTime.getTime())) return false;
+
+        switch (timeFilter) {
+          case 'today':
+            return paymentDateTime >= today;
+          case 'yesterday':
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            return paymentDateTime >= yesterday && paymentDateTime < today;
+          case 'last7days':
+            const last7days = new Date(today);
+            last7days.setDate(today.getDate() - 7);
+            return paymentDateTime >= last7days;
+          case 'last30days':
+            const last30days = new Date(today);
+            last30days.setDate(today.getDate() - 30);
+            return paymentDateTime >= last30days;
+          case 'custom':
+            if (startDate && endDate) {
+              const start = new Date(startDate);
+              const end = new Date(endDate);
+              end.setHours(23, 59, 59, 999); // Include the entire end day
+              return paymentDateTime >= start && paymentDateTime <= end;
+            }
+            return true;
+          default:
+            return true;
+        }
+      };
+
+      // Filter students who have payments matching the time criteria
+      data = data.filter(student => {
+        // Check if any installment has payment history with matching dates
+        return student.installments && student.installments.some(installment => {
+          return installment.paymentHistory && installment.paymentHistory.some(payment => {
+            return payment.paymentDate && filterPaymentDate(payment.paymentDate);
+          });
+        });
+      });
+    }
+
+    let filteredData = data.filter(item => {
+      const term = searchTerm.toLowerCase();
+      return (
+        item.studentName.toLowerCase().includes(term) ||
+        (item.rollNumber && item.rollNumber.toLowerCase().includes(term)) ||
+        (item.course.courseName && item.course.courseName.toLowerCase().includes(term))
+      );
+    });
+    
+    return [...filteredData].sort((a, b) => {
+      if (typeof a[sortKey] === "string") {
+        return a[sortKey].localeCompare(b[sortKey]);
+      } else {
+        return a[sortKey] - b[sortKey];
+      }
+    });
+  };
+
 
   // Helper to normalize active status
   const isActiveStatus = (s) => {
@@ -127,7 +195,7 @@ const FeesManagementSystem = () => {
   };
 
   const filteredStudents = getFilteredAndSortedData(students, search, sortKey, timeFilter, startDate, endDate);
-  const filteredInstallmentStudents = getFilteredAndSortedData(installmentStudents, search, sortKey, timeFilter, startDate, endDate);
+  const filteredInstallmentStudents = getFilteredAndSortedInstallmentData(installmentStudents, search, sortKey, timeFilter, startDate, endDate);
 
 
   // Calculate totals for normal fees based on filtered students for real-time updates

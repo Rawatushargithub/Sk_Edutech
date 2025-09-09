@@ -20,6 +20,9 @@ const Marksheet = () => {
   const [students, setStudents] = useState([]);
   const [marksheets, setMarksheets] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
+  const [courseSearch, setCourseSearch] = useState('');
+  const [isCourseDropdownOpen, setIsCourseDropdownOpen] = useState(false);
+  const [courseHighlightIndex, setCourseHighlightIndex] = useState(-1);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentSearch, setStudentSearch] = useState('');
   const [subjects, setSubjects] = useState([
@@ -144,6 +147,19 @@ const Marksheet = () => {
     setHasExistingMarksheet(false);
   };
 
+  const getCourseLabel = (course) => `${course.courseName} (${course.courseCode})`;
+  const handlePickCourse = (course) => {
+    setSelectedCourse(course._id);
+    setCourseSearch(getCourseLabel(course));
+    setIsCourseDropdownOpen(false);
+    setCourseHighlightIndex(-1);
+    // trigger student reset like native change
+    setSelectedStudent(null);
+    setShowStudentForm(false);
+    setSubjects([{ subjectName: '', practicalMarks: 0, theoryMarks: 0, maximumMarks: 50 }]);
+    setHasExistingMarksheet(false);
+  };
+
   const handleStudentSelect = (student) => {
     setSelectedStudent(student);
     setShowStudentForm(true);
@@ -198,7 +214,28 @@ const Marksheet = () => {
 const filteredStudents = students.filter((student) =>
   student.studentName.toLowerCase().includes(studentSearch.toLowerCase())
 );
-   
+  
+  // Filter courses based on courseSearch
+  const filteredCourses = courses.filter((course) => {
+    const term = courseSearch.trim().toLowerCase();
+    if (!term) return true;
+    const name = (course.courseName || '').toLowerCase();
+    const code = (course.courseCode || '').toLowerCase();
+    return name.includes(term) || code.includes(term);
+  });
+  
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      const container = document.getElementById('course-dropdown-container');
+      if (container && !container.contains(e.target)) {
+        setIsCourseDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+  
 
   const removeSubject = (index) => {
     if (subjects.length > 1) {
@@ -287,7 +324,7 @@ const filteredStudents = students.filter((student) =>
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-center bg-red-500 text-white text-2xl font-bold">Still in progress</h1>
+      {/* <h1 className="text-center bg-red-500 text-white text-2xl font-bold">Still in progress</h1> */}
 
       {/* Success Popup */}
       {showSuccessPopup && (
@@ -362,21 +399,68 @@ const filteredStudents = students.filter((student) =>
                 <h2 className="text-xl font-semibold text-gray-800">Select Course</h2>
               </div>
 
-              <div className="relative">
-                <select
-                  value={selectedCourse}
-                  onChange={handleCourseChange}
-                  className="w-full md:w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+              <div className="relative" id="course-dropdown-container">
+                {/* Custom searchable dropdown */}
+                <input
+                  type="text"
+                  placeholder="Search or select a course..."
+                  value={courseSearch}
+                  onChange={(e) => {
+                    setCourseSearch(e.target.value);
+                    setIsCourseDropdownOpen(true);
+                  }}
+                  onFocus={() => setIsCourseDropdownOpen(true)}
+                  onKeyDown={(e) => {
+                    if (!isCourseDropdownOpen) return;
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setCourseHighlightIndex((prev) => Math.min(prev + 1, filteredCourses.length - 1));
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setCourseHighlightIndex((prev) => Math.max(prev - 1, 0));
+                    } else if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const course = filteredCourses[courseHighlightIndex];
+                      if (course) handlePickCourse(course);
+                    } else if (e.key === 'Escape') {
+                      setIsCourseDropdownOpen(false);
+                    }
+                  }}
+                  className="w-full md:w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   disabled={loading}
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  onClick={() => setIsCourseDropdownOpen((o) => !o)}
+                  aria-label="Toggle course dropdown"
                 >
-                  <option value="">Select a course...</option>
-                  {courses.map((course) => (
-                    <option key={course._id} value={course._id}>
-                      {course.courseName} ({course.courseCode})
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+
+                {isCourseDropdownOpen && (
+                  <div className="absolute z-20 mt-2 w-full md:w-1/2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-auto">
+                    {filteredCourses.length === 0 ? (
+                      <div className="px-4 py-3 text-gray-500 text-sm">No courses found</div>
+                    ) : (
+                      filteredCourses.map((course, idx) => (
+                        <button
+                          key={course._id}
+                          type="button"
+                          onMouseEnter={() => setCourseHighlightIndex(idx)}
+                          onMouseLeave={() => setCourseHighlightIndex(-1)}
+                          onClick={() => handlePickCourse(course)}
+                          className={`w-full text-left px-4 py-3 flex items-center justify-between ${
+                            idx === courseHighlightIndex ? 'bg-blue-50' : 'bg-white'
+                          } hover:bg-blue-50 transition-colors`}
+                        >
+                          <span className="text-sm font-medium text-purple-700">{course.courseName} - {course.courseCode}</span>
+                          <span className="text-[10px] px-2 py-1 rounded-full bg-purple-100 text-purple-700">Admin</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

@@ -10,8 +10,8 @@ import mongoose from 'mongoose';
 // Get all courses for a franchise
 export const getFranchiseCourses = asyncHandler(async (req, res) => {
     try {
-        const franchiseId = req.query.franchiseId || req.user?.instituteID || req.body.franchiseId;
-        
+        const franchiseId = req.query.franchiseId ||  req.body.franchiseId;
+        console.log("Franchise ID in getFranchiseCourses:", franchiseId);
         if (!franchiseId) {
             return res.status(400).json({
                 success: false,
@@ -19,11 +19,14 @@ export const getFranchiseCourses = asyncHandler(async (req, res) => {
             });
         }
 
-        const courses = await Course.find({ 
-            franchiseId: franchiseId,
-            instituteStatus: 'active'
-        }).select('_id courseName courseCode courseSubject');
+        const courses = await Course.find({
+  $or: [
+    { franchiseId: franchiseId },
+    { franchiseId: 'Admin' }
+  ]
+}).select('_id courseName courseCode courseSubject');
 
+        console.log("Courses found:", courses);
         res.status(200).json({
             success: true,
             data: courses

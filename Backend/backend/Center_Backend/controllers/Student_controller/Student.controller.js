@@ -1332,7 +1332,8 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
 
   const student = await Student.findById(studentId)
     .populate("feeDetails")
-    .populate("selectedBatch");
+    .populate("selectedBatch")
+    .populate("installmentDetails");
 
   if (!student) {
     throw new ApiError(404, "Student not found");
@@ -1604,7 +1605,27 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
     drawText(`Rs ${student.feeDetails.feesReceived}`, 269, 238);
 
     // Balance Fees (after "BALANCE FEES :")
-    drawText(`Rs ${student.feeDetails.balance}`, 455, 238);
+    let finalBalanceFee;
+    if (student.feeDetails) {
+        const totalFeeNum = Number(student.feeDetails.totalFees || 0);
+        const paidFeeNum = Number(student.feeDetails.feesReceived || 0);
+        const dueFromFees = totalFeeNum - paidFeeNum;
+
+        const hasInstallments = Array.isArray(student.installmentDetails) && student.installmentDetails.length > 0;
+        
+        let dueFromInstallments = 0;
+        if (hasInstallments) {
+            const totalInstallmentAmount = student.installmentDetails.reduce((sum, inst) => sum + (inst.amount || 0), 0);
+            const paidInstallmentAmount = student.installmentDetails.reduce((sum, inst) => sum + (inst.paidAmount || 0), 0);
+            dueFromInstallments = totalInstallmentAmount - paidInstallmentAmount;
+        }
+
+        const display = hasInstallments ? dueFromInstallments : dueFromFees;
+        finalBalanceFee = isNaN(display) ? 0 : display;
+    } else {
+        finalBalanceFee = 0;
+    }
+    drawText(`Rs ${finalBalanceFee.toLocaleString()}`, 455, 238);
   }
 
   // Contact Number (after "CONTACT NO. :")

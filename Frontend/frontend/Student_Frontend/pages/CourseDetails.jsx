@@ -190,7 +190,6 @@ const CourseDetails = () => {
               {/* Pricing */}
               <div className="bg-gradient-to-r from-green-50 to-emerald-100 rounded-xl p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                  <DollarSign className="w-5 h-5 text-green-600 mr-2" />
                   Course Fees
                 </h3>
                 <div className="grid grid-cols-3 text-center">

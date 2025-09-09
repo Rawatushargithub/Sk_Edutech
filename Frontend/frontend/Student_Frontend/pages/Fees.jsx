@@ -104,7 +104,7 @@ const FeesDetails = () => {
               <div className="bg-white rounded-lg shadow-sm border border-sky-100 p-4">
                 <div className="flex items-start">
                   <div className="p-2 bg-sky-100 rounded-lg text-blue-950">
-                    <DollarSign size={20} />
+                    {/* <DollarSign size={20} /> */}
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-blue-950">Course Fees</p>

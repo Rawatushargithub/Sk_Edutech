@@ -20,7 +20,7 @@ const QuickActions = ({ setTab }) => {
     { 
       name: "Fees", 
       tab: "Fees", 
-      icon: <DollarSign size={22} className="text-gray-700" />
+      // icon: <DollarSign size={22} className="text-gray-700" />
     },
   ];
 

@@ -10,6 +10,12 @@ const MarksheetApproval = () => {
   const [rejectionReason, setRejectionReason] = useState("");
   const [selectedFranchise, setSelectedFranchise] = useState("all");
   const [selectedCourse, setSelectedCourse] = useState("all");
+  const [franchiseSearch, setFranchiseSearch] = useState("");
+  const [courseSearch, setCourseSearch] = useState("");
+  const [isFranchiseOpen, setIsFranchiseOpen] = useState(false);
+  const [isCourseOpen, setIsCourseOpen] = useState(false);
+  const [franchiseHighlight, setFranchiseHighlight] = useState(-1);
+  const [courseHighlight, setCourseHighlight] = useState(-1);
   const [activeTab, setActiveTab] = useState("all"); // all, approved, pending, rejected
   const [searchStudentName, setSearchStudentName] = useState("");
 
@@ -120,6 +126,47 @@ const MarksheetApproval = () => {
     ),
   ];
 
+  // Derived filtered lists
+  const filteredFranchises = franchiseOptions.filter((id) => {
+    const term = franchiseSearch.trim().toLowerCase();
+    if (!term) return true;
+    const label = id === "all" ? "all franchises" : String(id);
+    return label.toLowerCase().includes(term);
+  });
+
+  const filteredCourses = courseOptions.filter((code) => {
+    const term = courseSearch.trim().toLowerCase();
+    if (!term) return true;
+    const label = code === "all" ? "all courses" : String(code);
+    return label.toLowerCase().includes(term);
+  });
+
+  // Outside click close
+  useEffect(() => {
+    const handler = (e) => {
+      const f = document.getElementById('franchise-dropdown-container');
+      const c = document.getElementById('course-dropdown-container');
+      if (f && !f.contains(e.target)) setIsFranchiseOpen(false);
+      if (c && !c.contains(e.target)) setIsCourseOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const pickFranchise = (id) => {
+    setSelectedFranchise(id);
+    setFranchiseSearch(id === 'all' ? 'All Franchises' : String(id));
+    setIsFranchiseOpen(false);
+    setFranchiseHighlight(-1);
+  };
+
+  const pickCourse = (code) => {
+    setSelectedCourse(code);
+    setCourseSearch(code === 'all' ? 'All Courses' : String(code));
+    setIsCourseOpen(false);
+    setCourseHighlight(-1);
+  };
+
   if (loading) return <p className="text-center py-4">Loading...</p>;
 
   return (
@@ -129,34 +176,84 @@ const MarksheetApproval = () => {
 
       {/* Filters */}
       <div className="flex gap-4 mb-6">
-        <div>
+        <div className="relative" id="franchise-dropdown-container">
           <label className="block font-medium mb-1">Franchise</label>
-          <select
-            className="border px-3 py-2 rounded"
-            value={selectedFranchise}
-            onChange={(e) => setSelectedFranchise(e.target.value)}
-          >
-            {franchiseOptions.map((id) => (
-              <option key={id} value={id}>
-                {id === "all" ? "All Franchises" : id}
-              </option>
-            ))}
-          </select>
+          <input
+            type="text"
+            className="border px-3 py-2 rounded w-64"
+            placeholder="Search or select a franchise..."
+            value={franchiseSearch}
+            onChange={(e) => { setFranchiseSearch(e.target.value); setIsFranchiseOpen(true); }}
+            onFocus={() => setIsFranchiseOpen(true)}
+            onKeyDown={(e) => {
+              if (!isFranchiseOpen) return;
+              if (e.key === 'ArrowDown') { e.preventDefault(); setFranchiseHighlight((p) => Math.min(p + 1, filteredFranchises.length - 1)); }
+              else if (e.key === 'ArrowUp') { e.preventDefault(); setFranchiseHighlight((p) => Math.max(p - 1, 0)); }
+              else if (e.key === 'Enter') { e.preventDefault(); const id = filteredFranchises[franchiseHighlight]; if (id !== undefined) pickFranchise(id); }
+              else if (e.key === 'Escape') { setIsFranchiseOpen(false); }
+            }}
+          />
+          <button type="button" className="absolute right-2 top-8 text-gray-400" onClick={() => setIsFranchiseOpen((o) => !o)}>▼</button>
+          {isFranchiseOpen && (
+            <div className="absolute z-20 mt-1 w-64 bg-white border border-gray-200 rounded shadow max-h-64 overflow-auto">
+              {filteredFranchises.map((id, idx) => (
+                <button
+                  key={id}
+                  type="button"
+                  onMouseEnter={() => setFranchiseHighlight(idx)}
+                  onMouseLeave={() => setFranchiseHighlight(-1)}
+                  onClick={() => pickFranchise(id)}
+                  className={`w-full text-left px-3 py-2 ${idx === franchiseHighlight ? 'bg-blue-50' : 'bg-white'} hover:bg-blue-50`}
+                >
+                  <span className="text-sm font-medium text-purple-700">{id === 'all' ? 'All Franchises' : id}</span>
+                  <span className="float-right text-[10px] px-2 py-1 rounded-full bg-purple-100 text-purple-700">Admin</span>
+                </button>
+              ))}
+              {filteredFranchises.length === 0 && (
+                <div className="px-3 py-2 text-sm text-gray-500">No results</div>
+              )}
+            </div>
+          )}
         </div>
 
-        <div>
+        <div className="relative" id="course-dropdown-container">
           <label className="block font-medium mb-1">Course</label>
-          <select
-            className="border px-3 py-2 rounded"
-            value={selectedCourse}
-            onChange={(e) => setSelectedCourse(e.target.value)}
-          >
-            {courseOptions.map((code) => (
-              <option key={code} value={code}>
-                {code === "all" ? "All Courses" : code}
-              </option>
-            ))}
-          </select>
+          <input
+            type="text"
+            className="border px-3 py-2 rounded w-64"
+            placeholder="Search or select a course..."
+            value={courseSearch}
+            onChange={(e) => { setCourseSearch(e.target.value); setIsCourseOpen(true); }}
+            onFocus={() => setIsCourseOpen(true)}
+            onKeyDown={(e) => {
+              if (!isCourseOpen) return;
+              if (e.key === 'ArrowDown') { e.preventDefault(); setCourseHighlight((p) => Math.min(p + 1, filteredCourses.length - 1)); }
+              else if (e.key === 'ArrowUp') { e.preventDefault(); setCourseHighlight((p) => Math.max(p - 1, 0)); }
+              else if (e.key === 'Enter') { e.preventDefault(); const code = filteredCourses[courseHighlight]; if (code !== undefined) pickCourse(code); }
+              else if (e.key === 'Escape') { setIsCourseOpen(false); }
+            }}
+          />
+          <button type="button" className="absolute right-2 top-8 text-gray-400" onClick={() => setIsCourseOpen((o) => !o)}>▼</button>
+          {isCourseOpen && (
+            <div className="absolute z-20 mt-1 w-64 bg-white border border-gray-200 rounded shadow max-h-64 overflow-auto">
+              {filteredCourses.map((code, idx) => (
+                <button
+                  key={code}
+                  type="button"
+                  onMouseEnter={() => setCourseHighlight(idx)}
+                  onMouseLeave={() => setCourseHighlight(-1)}
+                  onClick={() => pickCourse(code)}
+                  className={`w-full text-left px-3 py-2 ${idx === courseHighlight ? 'bg-blue-50' : 'bg-white'} hover:bg-blue-50`}
+                >
+                  <span className="text-sm font-medium text-purple-700">{code === 'all' ? 'All Courses' : code}</span>
+                  <span className="float-right text-[10px] px-2 py-1 rounded-full bg-purple-100 text-purple-700">Admin</span>
+                </button>
+              ))}
+              {filteredCourses.length === 0 && (
+                <div className="px-3 py-2 text-sm text-gray-500">No results</div>
+              )}
+            </div>
+          )}
         </div>
 
         <div>

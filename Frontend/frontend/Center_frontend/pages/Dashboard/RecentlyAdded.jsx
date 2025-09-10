@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { MdHomeWork } from "react-icons/md";
+// import { MdHomeWork } from "react-icons/md";
 import { IoPerson } from "react-icons/io5";
 import { FaBookOpen } from "react-icons/fa";
 import { BiSort, BiSortAlt2, BiSortUp } from "react-icons/bi";
@@ -8,12 +8,11 @@ import API_BASE_URL from "../../../config";
 
 const TabMenu = () => {
   const tabs = [
-    { name: "Franchise", icon: <MdHomeWork /> },
     { name: "Student", icon: <IoPerson /> },
     { name: "Courses", icon: <FaBookOpen /> },
   ];
 
-  const [selectedTab, setSelectedTab] = useState("Franchise");
+  const [selectedTab, setSelectedTab] = useState("Student");
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false); 
@@ -23,7 +22,6 @@ const TabMenu = () => {
   // Update API URLs
   const API_ENDPOINTS = {
     Student: "/api/v1/institute_student/recent", 
-    Franchise: "/api/v1/franchises/recent",
     Courses: "/api/v1/institute_courses/recent",
   };
 

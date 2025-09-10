@@ -305,7 +305,7 @@ const AdminCoursesList = () => {
                                                 </span>
                                             </div>
                                             <div className="flex items-center space-x-2">
-                                                <DollarSign className="w-4 h-4 text-green-500" />
+                                            {/* <DollarSign className="w-4 h-4 text-green-500" /> */}
                                                 <span className="text-sm text-gray-600">
                                                     ₹{course.courseFees}
                                                 </span>

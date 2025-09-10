@@ -412,7 +412,7 @@ const CourseList = () => {
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <DollarSign className="w-4 h-4 text-gray-500" />
+                        {/* <DollarSign className="w-4 h-4 text-gray-500" /> */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Fees</label>
                           <p className="text-gray-900">₹{courseDetails.courseFees}</p>
@@ -420,7 +420,7 @@ const CourseList = () => {
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <DollarSign className="w-4 h-4 text-gray-500" />
+                        {/* <DollarSign className="w-4 h-4 text-gray-500" /> */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700">MRP</label>
                           <p className="text-gray-900">₹{courseDetails.courseMRP}</p>

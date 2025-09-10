@@ -895,7 +895,7 @@ const FeesManagementSystem = () => {
           {/* Top Section: Stats and Pie Chart */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatCard title="Total Fee (Student fee)" value={totalFee} color="bg-blue-500" icon={IndianRupee} />
+              <StatCard title="Total Fee" value={totalFee} color="bg-blue-500" icon={IndianRupee} />
               <StatCard title="Received Fee" value={totalPaid} color="bg-green-500" icon={CheckCircle} />
               <StatCard title="Balance Fee" value={totalDue} color="bg-red-500" icon={XCircle} />
             </div>

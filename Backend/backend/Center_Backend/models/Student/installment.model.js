@@ -4,7 +4,7 @@ const installmentSchema = new mongoose.Schema({
   studentId: { type: mongoose.Schema.Types.ObjectId, ref: "Student", required: true },
   installmentName: { type: String, required: true },
   amount: { type: Number, required: true },
-  date: { type: String, required: true }, // Format: dd-mm-yyyy
+  date: { type: String, required: true }, // Format: dd-mm-yyyy //due date
   paid: { type: Boolean, default: false },
   paymentMode: { 
     type: String, 

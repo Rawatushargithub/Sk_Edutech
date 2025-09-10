@@ -21,6 +21,7 @@ const FeesManagementSystem = () => {
   const [timeFilter, setTimeFilter] = useState('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [studentStatusFilter, setStudentStatusFilter] = useState('active'); // 'active', 'inactive', 'all'
   
   // Normal Fees Data
   const [students, setStudents] = useState([]);
@@ -58,46 +59,64 @@ const FeesManagementSystem = () => {
 
 
   // Filter and sort functions
-  const getFilteredAndSortedData = (data, searchTerm, sortKey, timeFilter, startDate, endDate) => {
+  const getFilteredAndSortedData = (data, searchTerm, sortKey, timeFilter, startDate, endDate, isInstallmentData = false) => {
     // Time Filter
     if (timeFilter !== 'all') {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-
       const filterDate = (date) => {
-        const admissionDate = new Date(date);
-        if (isNaN(admissionDate.getTime())) return false;
-
+        const targetDate = new Date(date);
+        if (isNaN(targetDate.getTime())) return false;
 
         switch (timeFilter) {
           case 'today':
-            return admissionDate >= today;
+            return targetDate >= today;
           case 'yesterday':
             const yesterday = new Date(today);
             yesterday.setDate(today.getDate() - 1);
-            return admissionDate >= yesterday && admissionDate < today;
+            return targetDate >= yesterday && targetDate < today;
           case 'last7days':
             const last7days = new Date(today);
             last7days.setDate(today.getDate() - 7);
-            return admissionDate >= last7days;
+            return targetDate >= last7days;
           case 'last30days':
             const last30days = new Date(today);
             last30days.setDate(today.getDate() - 30);
-            return admissionDate >= last30days;
+            return targetDate >= last30days;
           case 'custom':
             if (startDate && endDate) {
               const start = new Date(startDate);
               const end = new Date(endDate);
               end.setHours(23, 59, 59, 999); // Include the entire end day
-              return admissionDate >= start && admissionDate <= end;
+              return targetDate >= start && targetDate <= end;
             }
             return true;
           default:
             return true;
         }
       };
-      data = data.filter(item => filterDate(item.admissionDate));
+      
+      if (isInstallmentData) {
+        // For installment data, filter by installment due dates
+        data = data.filter(student => {
+          if (!student.installments || student.installments.length === 0) return false;
+          
+          // Check if any installment has a due date within the filter range
+          return student.installments.some(installment => {
+            // Convert dd-mm-yyyy format to Date object
+            const dateParts = installment.date.split('-');
+            if (dateParts.length === 3) {
+              const dueDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+              return filterDate(dueDate);
+            }
+            return false;
+          });
+        });
+      } else {
+        // For regular fee data, filter by admission date
+        data = data.filter(item => filterDate(item.admissionDate));
+      }
     }
 
 
@@ -126,29 +145,79 @@ const FeesManagementSystem = () => {
     return st === 'active' || st === 'true';
   };
 
-  const filteredStudents = getFilteredAndSortedData(students, search, sortKey, timeFilter, startDate, endDate);
-  const filteredInstallmentStudents = getFilteredAndSortedData(installmentStudents, search, sortKey, timeFilter, startDate, endDate);
+  const filteredStudents = getFilteredAndSortedData(students, search, sortKey, timeFilter, startDate, endDate, false);
+  const filteredInstallmentStudents = getFilteredAndSortedData(installmentStudents, search, sortKey, timeFilter, startDate, endDate, true);
 
 
-  // Calculate totals for normal fees based on filtered students for real-time updates
-  // Custom card logic per requirement:
-  // - Total Fee: for active students use totalFee, for inactive use paidFee
-  // - Received Fee: sum of paidFee for all students
-  // - Balance Fee: sum of dueFee for active students only
-  const totalFee = filteredStudents.reduce((acc, student) => acc + (isActiveStatus(student) ? (student.totalFee || 0) : (student.paidFee || 0)), 0);
-  const totalPaid = filteredStudents.reduce((acc, student) => acc + (student.paidFee || 0), 0);
-  const totalDue = filteredStudents.reduce((acc, student) => acc + (isActiveStatus(student) ? (student.dueFee || 0) : 0), 0);
+  // Filter students based on status filter
+  const getStudentsByStatusFilter = (students) => {
+    switch(studentStatusFilter) {
+      case 'active':
+        return students.filter(student => isActiveStatus(student));
+      case 'inactive':
+        return students.filter(student => !isActiveStatus(student));
+      case 'all':
+      default:
+        return students;
+    }
+  };
+
+  const statusFilteredStudents = getStudentsByStatusFilter(filteredStudents);
+  const statusFilteredInstallmentStudents = getStudentsByStatusFilter(filteredInstallmentStudents);
+
+  // Calculate totals for normal fees based on status-filtered students
+  const totalFee = statusFilteredStudents.reduce((acc, student) => acc + (student.totalFee || 0), 0);
+  const totalPaid = statusFilteredStudents.reduce((acc, student) => acc + (student.paidFee || 0), 0);
+  const totalDue = statusFilteredStudents.reduce((acc, student) => acc + (student.dueFee || 0), 0);
 
 
-  // Update these calculations based on your actual data structure
-  // Installments: use filtered list and apply same active/inactive rules
-  const totalInstallmentAmount = filteredInstallmentStudents.reduce((acc, student) => acc + (isActiveStatus(student) ? (student.totalInstallmentAmount || (student.installments?.reduce((sum, inst) => sum + (inst.amount || 0), 0) || 0)) : (student.paidInstallmentAmount || 0)), 0);
-
-
-  const totalInstallmentPaid = filteredInstallmentStudents.reduce((acc, student) => acc + (student.paidInstallmentAmount || (student.installments?.reduce((sum, inst) => sum + (inst.paid ? (inst.amount || 0) : 0), 0) || 0)), 0);
-
-
-  const totalInstallmentDue = filteredInstallmentStudents.reduce((acc, student) => acc + (isActiveStatus(student) ? (student.dueInstallmentAmount ?? ((student.totalInstallmentAmount || (student.installments?.reduce((sum, inst) => sum + (inst.amount || 0), 0) || 0)) - (student.paidInstallmentAmount || 0))) : 0), 0);
+  // Calculate installment totals based on status-filtered students
+  const calculateInstallmentTotals = (students) => {
+    return students.reduce((totals, student) => {
+      // Use the pre-calculated totals from backend if available
+      if (student.totalInstallmentAmount !== undefined && 
+          student.paidInstallmentAmount !== undefined && 
+          student.dueInstallmentAmount !== undefined) {
+        
+        const studentTotal = student.totalInstallmentAmount || 0;
+        const studentPaid = student.paidInstallmentAmount || 0;
+        const studentDue = student.dueInstallmentAmount || 0;
+        
+        totals.total += studentTotal;
+        totals.paid += studentPaid;
+        totals.due += studentDue;
+        
+        return totals;
+      }
+      
+      // Fallback: calculate from individual installments if backend totals not available
+      if (!student.installments || student.installments.length === 0) {
+        return totals;
+      }
+      
+      const studentTotals = student.installments.reduce((acc, installment) => {
+        const installmentAmount = installment.amount || 0;
+        const paidAmount = installment.paidAmount || 0;
+        const dueAmount = Math.max(0, installmentAmount - paidAmount);
+        
+        return {
+          total: acc.total + installmentAmount,
+          paid: acc.paid + paidAmount,
+          due: acc.due + dueAmount
+        };
+      }, { total: 0, paid: 0, due: 0 });
+      
+      totals.total += studentTotals.total;
+      totals.paid += studentTotals.paid;
+      totals.due += studentTotals.due;
+      
+      return totals;
+    }, { total: 0, paid: 0, due: 0 });
+  };
+  const installmentTotals = calculateInstallmentTotals(statusFilteredInstallmentStudents);
+  const totalInstallmentAmount = installmentTotals.total;
+  const totalInstallmentPaid = installmentTotals.paid;
+  const totalInstallmentDue = installmentTotals.due;
 
 
   // Handle normal fee update
@@ -166,7 +235,7 @@ const FeesManagementSystem = () => {
       paymentMode: newPayment.mode,
       date: newPayment.date,
     };
-    console.log(studentId)
+    // console.log(studentId)
   const franchiseId = localStorage.getItem('franchiseID');
     // Make the API call to update fees
     axios.post(`${API_BASE_URL}/api/v1/institute_fees/${studentId}/update-fee`, paymentData)
@@ -352,10 +421,10 @@ const FeesManagementSystem = () => {
     const limit = 15;
     const page = 1;
     const franchiseId = localStorage.getItem('franchiseID');
-    axios
+    axios 
       .get(`${API_BASE_URL}/api/v1/institute_fees/students?limit=${limit}&page=${page}&franchiseId=${franchiseId}`)
       .then((response) => {
-        console.log(response)
+       
         const updatedStudents = response.data.data.map((student) => ({
           ...student,
           dueFee: student.totalFee - student.paidFee, // Ensure dueFee is properly calculated
@@ -469,10 +538,10 @@ const FeesManagementSystem = () => {
       let fileName;
       
       if (activeTab === 'transactions') {
-        exportData = prepareTransactionExportData(filteredStudents);
+        exportData = prepareTransactionExportData(statusFilteredStudents);
         fileName = `Fee_Transactions_${new Date().toISOString().split('T')[0]}.xlsx`;
       } else {
-        exportData = prepareInstallmentExportData(filteredInstallmentStudents);
+        exportData = prepareInstallmentExportData(statusFilteredInstallmentStudents);
         fileName = `Installment_Details_${new Date().toISOString().split('T')[0]}.xlsx`;
       }
       
@@ -538,7 +607,7 @@ const FeesManagementSystem = () => {
       let exportData, columns, rows, fileName;
       
       if (activeTab === 'transactions') {
-        exportData = prepareTransactionExportData(filteredStudents);
+        exportData = prepareTransactionExportData(statusFilteredStudents);
         columns = ['S/N', 'Student ID', 'Student Name', 'Course', 'Course Fee', 'Student Fee', 'Paid Fee', 'Due Fee'];
         rows = exportData.map(student => [
           student['S/N'],
@@ -552,7 +621,7 @@ const FeesManagementSystem = () => {
         ]);
         fileName = `Fee_Transactions_${new Date().toISOString().split('T')[0]}.pdf`;
       } else {
-        exportData = prepareInstallmentExportData(filteredInstallmentStudents);
+        exportData = prepareInstallmentExportData(statusFilteredInstallmentStudents);
         columns = ['S/N', 'Student Name', 'Course', 'Installment', 'Amount', 'Due Date', 'Status'];
         rows = exportData.map(item => [
           item['S/N'],
@@ -797,10 +866,36 @@ const FeesManagementSystem = () => {
       {/* Fee Transactions Tab */}
       {activeTab === "transactions" && (
         <div>
+          {/* Status Filter Info Banner */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Users className="w-5 h-5 text-blue-600" />
+                <div>
+                  <p className="text-sm font-medium text-blue-800">
+                    Showing calculations for: <span className="font-bold">
+                      {studentStatusFilter === 'active' ? 'Active Students Only' : 
+                       studentStatusFilter === 'inactive' ? 'Inactive Students Only' : 
+                       'All Students (Active + Inactive)'}
+                    </span>
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    {studentStatusFilter === 'active' ? 'Only active student fees are included in totals' :
+                     studentStatusFilter === 'inactive' ? 'Only inactive student fees are included in totals' :
+                     'Both active and inactive student fees are included in totals'}
+                  </p>
+                </div>
+              </div>
+              <div className="text-sm text-blue-700 font-medium">
+                {statusFilteredStudents.length} student{statusFilteredStudents.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+          </div>
+
           {/* Top Section: Stats and Pie Chart */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatCard title="Total Fee" value={totalFee} color="bg-blue-500" icon={IndianRupee} />
+              <StatCard title="Total Fee (Student fee)" value={totalFee} color="bg-blue-500" icon={IndianRupee} />
               <StatCard title="Received Fee" value={totalPaid} color="bg-green-500" icon={CheckCircle} />
               <StatCard title="Balance Fee" value={totalDue} color="bg-red-500" icon={XCircle} />
             </div>
@@ -823,6 +918,16 @@ const FeesManagementSystem = () => {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
+
+              <select
+                className="border rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={studentStatusFilter}
+                onChange={(e) => setStudentStatusFilter(e.target.value)}
+              >
+                <option value="active">Active Students Only</option>
+                <option value="inactive">Inactive Students Only</option>
+                <option value="all">All Students</option>
+              </select>
 
               <select
                 className="border rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -887,7 +992,7 @@ const FeesManagementSystem = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredStudents.map((student) => (
+                {statusFilteredStudents.map((student) => (
                   <React.Fragment key={student.id}>
                     <tr
                       onClick={() => setSelectedStudent(selectedStudent === student.id ? null : student.id)}
@@ -962,6 +1067,32 @@ const FeesManagementSystem = () => {
       {/* Installment Management Tab */}
       {activeTab === "installments" && (
         <div>
+          {/* Status Filter Info Banner */}
+          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Users className="w-5 h-5 text-purple-600" />
+                <div>
+                  <p className="text-sm font-medium text-purple-800">
+                    Showing calculations for: <span className="font-bold">
+                      {studentStatusFilter === 'active' ? 'Active Students Only' : 
+                       studentStatusFilter === 'inactive' ? 'Inactive Students Only' : 
+                       'All Students (Active + Inactive)'}
+                    </span>
+                  </p>
+                  <p className="text-xs text-purple-600">
+                    {studentStatusFilter === 'active' ? 'Only active student installments are included in totals' :
+                     studentStatusFilter === 'inactive' ? 'Only inactive student installments are included in totals' :
+                     'Both active and inactive student installments are included in totals'}
+                  </p>
+                </div>
+              </div>
+              <div className="text-sm text-purple-700 font-medium">
+                {statusFilteredInstallmentStudents.length} student{statusFilteredInstallmentStudents.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+          </div>
+
           {/* Top Section: Stats and Pie Chart */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -988,6 +1119,17 @@ const FeesManagementSystem = () => {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
+              
+              <select
+                className="border rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={studentStatusFilter}
+                onChange={(e) => setStudentStatusFilter(e.target.value)}
+              >
+                <option value="active">Active Students Only</option>
+                <option value="inactive">Inactive Students Only</option>
+                <option value="all">All Students</option>
+              </select>
+              
               <div className="flex flex-wrap items-center gap-4">
                 <select
                   value={timeFilter}
@@ -1048,7 +1190,7 @@ const FeesManagementSystem = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredInstallmentStudents.map((student, index) => (
+                {statusFilteredInstallmentStudents.map((student, index) => (
                   <React.Fragment key={student._id}>
                     <tr
                       onClick={() =>

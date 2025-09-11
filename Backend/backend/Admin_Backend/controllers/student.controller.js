@@ -9,6 +9,7 @@ import fs from "fs/promises";
 import axios from "axios";
 import path from "path";
 import { fileURLToPath } from "url";
+import sharp from "sharp";
 
 // For ES modules, get the current directory
 const __filename = fileURLToPath(import.meta.url);
@@ -153,7 +154,8 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
 
   const student = await Student.findById(studentId)
     .populate("feeDetails")
-    .populate("selectedBatch");
+    .populate("selectedBatch")
+    .populate("installmentDetails");
 
   if (!student) {
     throw new ApiError(404, "Student not found");
@@ -232,7 +234,7 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
       const photoResponse = await axios.get(photoUrl, {
         responseType: "arraybuffer",
       });
-      const photoBytes = Buffer.from(photoResponse.data, "binary");
+      const photoBytes = await sharp(photoResponse.data).rotate().toBuffer();
       let photoImage;
       if (photoUrl.includes(".jpg") || photoUrl.includes(".jpeg")) {
         photoImage = await pdfDoc.embedJpg(photoBytes);
@@ -253,7 +255,7 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
       const signatureResponse = await axios.get(signatureUrl, {
         responseType: "arraybuffer",
       });
-      const signatureBytes = Buffer.from(signatureResponse.data, "binary");
+      const signatureBytes = await sharp(signatureResponse.data).rotate().toBuffer();
       let signatureImage;
       if (signatureUrl.includes(".jpg") || signatureUrl.includes(".jpeg")) {
         signatureImage = await pdfDoc.embedJpg(signatureBytes);
@@ -424,7 +426,27 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
     drawText(`Rs ${student.feeDetails.feesReceived}`, 269, 238);
 
     // Balance Fees (after "BALANCE FEES :")
-    drawText(`Rs ${student.feeDetails.balance}`, 455, 238);
+    let finalBalanceFee;
+    if (student.feeDetails) {
+        const totalFeeNum = Number(student.feeDetails.totalFees || 0);
+        const paidFeeNum = Number(student.feeDetails.feesReceived || 0);
+        const dueFromFees = totalFeeNum - paidFeeNum;
+
+        const hasInstallments = Array.isArray(student.installmentDetails) && student.installmentDetails.length > 0;
+        
+        let dueFromInstallments = 0;
+        if (hasInstallments) {
+            const totalInstallmentAmount = student.installmentDetails.reduce((sum, inst) => sum + (inst.amount || 0), 0);
+            const paidInstallmentAmount = student.installmentDetails.reduce((sum, inst) => sum + (inst.paidAmount || 0), 0);
+            dueFromInstallments = totalInstallmentAmount - paidInstallmentAmount;
+        }
+
+        const display = hasInstallments ? dueFromInstallments : dueFromFees;
+        finalBalanceFee = isNaN(display) ? 0 : display;
+    } else {
+        finalBalanceFee = 0;
+    }
+    drawText(`Rs ${finalBalanceFee.toLocaleString()}`, 455, 238);
   }
 
   // Contact Number (after "CONTACT NO. :")

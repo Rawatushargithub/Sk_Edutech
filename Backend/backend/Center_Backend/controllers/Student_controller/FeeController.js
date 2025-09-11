@@ -554,6 +554,45 @@ export const updateInstallmentPayment = async (req, res) => {
   }
 };
 
+// Get fee transactions for a specific student
+export const getStudentFeeTransactions = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    if (!studentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Student ID is required"
+      });
+    }
+
+    // Fetch all transactions for this student
+    const transactions = await FeeTransaction.find({ studentId })
+      .sort({ date: -1 });
+
+    const formattedTransactions = transactions.map(transaction => ({
+      amount: transaction.amount,
+      date: transaction.date,
+      paymentMode: transaction.paymentMode,
+      remarks: transaction.remarks
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: "Student fee transactions fetched successfully",
+      data: formattedTransactions
+    });
+
+  } catch (error) {
+    console.error("Error fetching student fee transactions:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
+
 // Get installment details by student ID
 export const getStudentInstallments = async (req, res) => {
   try {

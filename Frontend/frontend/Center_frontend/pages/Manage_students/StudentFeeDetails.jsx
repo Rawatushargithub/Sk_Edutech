@@ -37,6 +37,7 @@ const FeesManagementSystem = () => {
   // Installment Data
   const [installmentStudents, setInstallmentStudents] = useState([]);
   const [selectedInstallmentStudent, setSelectedInstallmentStudent] = useState(null);
+  const [studentInitialPayments, setStudentInitialPayments] = useState({});
   const [showInstallmentModal, setShowInstallmentModal] = useState(false);
   const [installmentPayment, setInstallmentPayment] = useState({
     installmentId: "",
@@ -171,9 +172,13 @@ const FeesManagementSystem = () => {
   const totalDue = statusFilteredStudents.reduce((acc, student) => acc + (student.dueFee || 0), 0);
 
 
-  // Calculate installment totals based on status-filtered students
+  // Calculate installment totals based on status-filtered students (including initial payments)
   const calculateInstallmentTotals = (students) => {
     return students.reduce((totals, student) => {
+      // Calculate initial payments for this student
+      const initialPaymentAmount = studentInitialPayments[student._id] ? 
+        studentInitialPayments[student._id].reduce((sum, payment) => sum + payment.amount, 0) : 0;
+      
       // Use the pre-calculated totals from backend if available
       if (student.totalInstallmentAmount !== undefined && 
           student.paidInstallmentAmount !== undefined && 
@@ -183,15 +188,19 @@ const FeesManagementSystem = () => {
         const studentPaid = student.paidInstallmentAmount || 0;
         const studentDue = student.dueInstallmentAmount || 0;
         
-        totals.total += studentTotal;
-        totals.paid += studentPaid;
-        totals.due += studentDue;
+        // Add initial payments to totals
+        totals.total += studentTotal + initialPaymentAmount;
+        totals.paid += studentPaid + initialPaymentAmount;
+        totals.due += studentDue; // Due amount remains the same as initial payments are already paid
         
         return totals;
       }
       
       // Fallback: calculate from individual installments if backend totals not available
       if (!student.installments || student.installments.length === 0) {
+        // If no installments but has initial payments, add them
+        totals.total += initialPaymentAmount;
+        totals.paid += initialPaymentAmount;
         return totals;
       }
       
@@ -207,8 +216,9 @@ const FeesManagementSystem = () => {
         };
       }, { total: 0, paid: 0, due: 0 });
       
-      totals.total += studentTotals.total;
-      totals.paid += studentTotals.paid;
+      // Add initial payments to student totals
+      totals.total += studentTotals.total + initialPaymentAmount;
+      totals.paid += studentTotals.paid + initialPaymentAmount;
       totals.due += studentTotals.due;
       
       return totals;
@@ -454,6 +464,36 @@ const FeesManagementSystem = () => {
         if (response.data.success) {
           const list = response.data.data || [];
           setInstallmentStudents(list);
+          
+          // Fetch initial payments for installment students
+          const studentIds = list.map(student => student._id);
+          if (studentIds.length > 0) {
+            // Directly fetch fee transactions for installment students
+            const fetchPromises = studentIds.map(studentId => 
+              axios.get(`${API_BASE_URL}/api/v1/institute_fees/transactions/${studentId}`)
+                .then(response => ({ studentId, transactions: response.data.data || [] }))
+                .catch(error => {
+                  console.error(`Error fetching transactions for student ${studentId}:`, error);
+                  return { studentId, transactions: [] };
+                })
+            );
+            
+            Promise.all(fetchPromises)
+              .then(results => {
+                const initialPaymentsMap = {};
+                results.forEach(({ studentId, transactions }) => {
+                  if (transactions.length > 0) {
+                    initialPaymentsMap[studentId] = transactions;
+                  }
+                });
+                console.log("Initial payments map:", initialPaymentsMap);
+                setStudentInitialPayments(initialPaymentsMap);
+              })
+              .catch(error => {
+                console.error("Error processing initial payments:", error);
+              });
+          }
+          
           // Merge statuses into installment students too
           axios
             .get(`${API_BASE_URL}/api/v1/institute_student/get_students?franchiseId=${franchiseId}`)
@@ -1203,8 +1243,16 @@ const FeesManagementSystem = () => {
                       <td className="py-3 px-4 border-b">{student.rollNumber}</td>
                       <td className="py-3 px-4 border-b font-medium">{student.studentName}</td>
                       <td className="py-3 px-4 border-b">{student.course.courseName}</td>
-                      <td className="py-3 px-4 border-b">₹{student.totalInstallmentAmount.toLocaleString()}</td>
-                      <td className="py-3 px-4 border-b text-green-600">₹{student.paidInstallmentAmount.toLocaleString()}</td>
+                      <td className="py-3 px-4 border-b">₹{(
+                        student.totalInstallmentAmount + 
+                        (studentInitialPayments[student._id] ? 
+                          studentInitialPayments[student._id].reduce((sum, payment) => sum + payment.amount, 0) : 0)
+                      ).toLocaleString()}</td>
+                      <td className="py-3 px-4 border-b text-green-600">₹{(
+                        student.paidInstallmentAmount + 
+                        (studentInitialPayments[student._id] ? 
+                          studentInitialPayments[student._id].reduce((sum, payment) => sum + payment.amount, 0) : 0)
+                      ).toLocaleString()}</td>
                       <td className="py-3 px-4 border-b text-red-600">₹{student.dueInstallmentAmount.toLocaleString()}</td>
                       <td className="py-3 px-4 border-b">
                         <button
@@ -1222,8 +1270,46 @@ const FeesManagementSystem = () => {
                       <tr>
                         <td colSpan="7" className="bg-gray-50">
                           <div className="p-4">
-                            <h3 className="text-lg font-semibold mb-3">Installment Details</h3>
-                            <div className="bg-white rounded-lg overflow-hidden">
+                            <h3 className="text-lg font-semibold mb-3">Complete Payment History</h3>
+                            
+                            {/* Initial Payment History Section */}
+                            {studentInitialPayments[student._id] && studentInitialPayments[student._id].length > 0 && (
+                              <div className="mb-4">
+                                <h4 className="text-md font-medium mb-2 text-blue-600">Initial Registration Payments</h4>
+                                <div className="bg-blue-50 rounded-lg overflow-hidden border border-blue-200 mb-4">
+                                  <table className="min-w-full text-left border-collapse">
+                                    <thead className="bg-blue-100">
+                                      <tr>
+                                        <th className="py-2 px-4 border-b font-medium text-blue-800">Payment Type</th>
+                                        <th className="py-2 px-4 border-b font-medium text-blue-800">Amount</th>
+                                        <th className="py-2 px-4 border-b font-medium text-blue-800">Date</th>
+                                        <th className="py-2 px-4 border-b font-medium text-blue-800">Payment Mode</th>
+                                        <th className="py-2 px-4 border-b font-medium text-blue-800">Status</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {studentInitialPayments[student._id].map((payment, idx) => (
+                                        <tr key={`initial-${idx}`} className="hover:bg-blue-50">
+                                          <td className="py-2 px-4 border-b text-blue-700 font-medium">Initial Payment</td>
+                                          <td className="py-2 px-4 border-b text-blue-700">₹{payment.amount.toLocaleString()}</td>
+                                          <td className="py-2 px-4 border-b text-blue-700">{new Date(payment.date).toLocaleDateString()}</td>
+                                          <td className="py-2 px-4 border-b text-blue-700">{payment.paymentMode}</td>
+                                          <td className="py-2 px-4 border-b">
+                                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                              Completed
+                                            </span>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Installment Details Section */}
+                            <h4 className="text-md font-medium mb-2 text-purple-600">Installment Payments</h4>
+                            <div className="bg-white rounded-lg overflow-hidden border">
                               <table className="min-w-full text-left border-collapse">
                                 <thead className="bg-gray-100">
                                   <tr>

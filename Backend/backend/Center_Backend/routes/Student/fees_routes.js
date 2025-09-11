@@ -7,7 +7,8 @@ updateStudentFeeWithTransaction,
   getAllStudentsFeeDetails,
   getInstallmentStudents,
   updateInstallmentPayment,
-  getStudentInstallments
+  getStudentInstallments,
+  getStudentFeeTransactions
 //   getFeesStatistics
 } from "../../controllers/Student_controller/FeeController.js";
 
@@ -29,6 +30,9 @@ router.post("/:studentId/update-fee", updateStudentFeeWithTransaction);
 router.get("/installments/students", getInstallmentStudents);
 router.put("/installments/:installmentId/update-payment", updateInstallmentPayment);
 router.get("/installments/student/:studentId", getStudentInstallments);
+
+// Get fee transactions for a specific student
+router.get("/transactions/:studentId", getStudentFeeTransactions);
 
 // Create initial fee record
 // router.post("/student/:studentId", createStudentFee);

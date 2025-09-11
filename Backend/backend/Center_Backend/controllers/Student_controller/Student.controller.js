@@ -21,6 +21,7 @@ import fs from "fs/promises";
 import axios from "axios";
 import path from "path";
 import { fileURLToPath } from "url";
+import sharp from "sharp";
 
 
 // For ES modules, get the current directory
@@ -1413,7 +1414,7 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
       const photoResponse = await axios.get(photoUrl, {
         responseType: "arraybuffer",
       });
-      const photoBytes = Buffer.from(photoResponse.data, "binary");
+      const photoBytes = await sharp(photoResponse.data).rotate().toBuffer();
       let photoImage;
       if (photoUrl.includes(".jpg") || photoUrl.includes(".jpeg")) {
         photoImage = await pdfDoc.embedJpg(photoBytes);
@@ -1434,7 +1435,7 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
       const signatureResponse = await axios.get(signatureUrl, {
         responseType: "arraybuffer",
       });
-      const signatureBytes = Buffer.from(signatureResponse.data, "binary");
+      const signatureBytes = await sharp(signatureResponse.data).rotate().toBuffer();
       let signatureImage;
       if (signatureUrl.includes(".jpg") || signatureUrl.includes(".jpeg")) {
         signatureImage = await pdfDoc.embedJpg(signatureBytes);

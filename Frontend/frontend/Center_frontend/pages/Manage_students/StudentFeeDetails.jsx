@@ -713,17 +713,107 @@ const FeesManagementSystem = () => {
     };
   }, [showExportDropdown]);
 
-  const StatCard = ({ title, value, color, icon: Icon }) => (
-    <div className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center justify-center text-center h-full">
-      <div className={`p-3 rounded-full ${color} mb-3`}>
-        <Icon className="w-6 h-6 text-white" />
+  const StatCard = ({ title, value, color, icon: Icon }) => {
+    // Calculate percentage with clear logic - handle both Fee and Installment calculations
+    let percentage, numerator, denominator, calculationText;
+    
+    // Determine if this is an installment card or fee card
+    const isInstallmentCard = title.includes('Installment');
+    
+    if (title.includes('Paid')) {
+      numerator = value;
+      if (isInstallmentCard) {
+        denominator = totalInstallmentAmount || 1;
+      } else {
+        denominator = totalFee || 1;
+      }
+      percentage = Math.round((numerator / denominator) * 100);
+      calculationText = `₹${numerator.toLocaleString()} ÷ ₹${denominator.toLocaleString()}`;
+    } else if (title.includes('Due')) {
+      numerator = value;
+      if (isInstallmentCard) {
+        denominator = totalInstallmentAmount || 1;
+      } else {
+        denominator = totalFee || 1;
+      }
+      percentage = Math.round((numerator / denominator) * 100);
+      calculationText = `₹${numerator.toLocaleString()} ÷ ₹${denominator.toLocaleString()}`;
+    } else {
+      // Total card - show collection efficiency
+      if (isInstallmentCard) {
+        numerator = totalInstallmentPaid;
+        denominator = totalInstallmentAmount || 1;
+      } else {
+        numerator = totalPaid;
+        denominator = totalFee || 1;
+      }
+      percentage = Math.round((numerator / denominator) * 100);
+      calculationText = `₹${numerator.toLocaleString()} ÷ ₹${denominator.toLocaleString()}`;
+    }
+    
+    return (
+      <div className="group relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 hover:border-gray-200 overflow-hidden min-h-[200px] flex flex-col">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full -mr-16 -mt-16 opacity-30"></div>
+        <div className="relative z-10 flex-1 flex flex-col">
+          {/* Header Section */}
+          <div className="flex items-start justify-between mb-6">
+            <div className={`p-4 rounded-2xl ${color} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+              <Icon className="w-8 h-8 text-white" />
+            </div>
+            <div className="text-right flex-1 ml-4">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{title}</p>
+              <p className="text-4xl font-bold text-gray-900 leading-none">₹{value.toLocaleString()}</p>
+            </div>
+          </div>
+          
+          {/* Progress Section */}
+          <div className="mt-auto">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-600">
+                {title.includes('Total') ? 'Collection Rate' : 
+                 title.includes('Paid') ? 'Payment Progress' : 
+                 'Outstanding Amount'}
+              </span>
+              <div className="flex flex-col items-end space-y-1">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-500 font-mono">{calculationText}</span>
+                  <span className="text-sm font-bold text-gray-800 bg-gray-100 px-2 py-1 rounded-full">{percentage}%</span>
+                </div>
+                <span className="text-xs text-gray-400">
+                  {title.includes('Total') ? 'Collection Efficiency' : 
+                   title.includes('Paid') ? 'Payment Ratio' : 
+                   'Outstanding Ratio'}
+                </span>
+              </div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5 shadow-inner">
+              <div 
+                className={`h-2.5 rounded-full ${color.replace('bg-gradient-to-r from-', 'bg-gradient-to-r from-').replace(' to-', ' to-')} transition-all duration-1000 shadow-sm`} 
+                style={{width: `${Math.min(percentage, 100)}%`}}
+              ></div>
+            </div>
+            
+            {/* Additional Info */}
+            <div className="mt-4 pt-3 border-t border-gray-100">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-500 font-medium">
+                  {title.includes('Total') ? 'Total Amount' : 
+                   title.includes('Paid') ? 'Amount Received' : 
+                   'Outstanding Balance'}
+                </span>
+                <div className="flex items-center space-x-1">
+                  <div className={`w-2 h-2 rounded-full ${color.replace('bg-gradient-to-r from-', 'bg-').replace(' to-blue-600', '-500').replace(' to-green-600', '-500').replace(' to-red-600', '-500')}`}></div>
+                  <span className="font-semibold text-gray-700">
+                    {statusFilteredStudents.length} student{statusFilteredStudents.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div>
-        <p className="text-sm text-gray-600">{title}</p>
-        <p className="text-2xl font-bold text-gray-800">₹{value.toLocaleString()}</p>
-      </div>
-    </div>
-  );
+    );
+  };
 
 
   // Pie Chart Component for Fee Transactions
@@ -835,82 +925,105 @@ const FeesManagementSystem = () => {
 
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Student Fee Details</h1>
-        
-        {/* Export Button with Dropdown */}
-        <div className="relative export-dropdown-container">
-          <button 
-            className="bg-sky-900 text-white font-medium px-4 py-2 rounded-md cursor-pointer flex items-center"
-            onClick={toggleExportDropdown}
-          >
-            Export 
-            <span className={`text-md ml-1 transition-transform duration-200 ${
-              showExportDropdown ? 'rotate-180' : ''
-            }`}>
-              ▼
-            </span>
-          </button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Student Fee Management</h1>
+            <p className="text-gray-600 mt-2">Comprehensive fee tracking and payment management system</p>
+          </div>
           
-          {/* Export Dropdown Menu */}
-          {showExportDropdown && (
-            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10">
-              <div className="py-1">
-                <button
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                  onClick={exportToExcel}
-                >
-                  📊 Export to Excel
-                </button>
-                <button
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                  onClick={exportToPDF}
-                >
-                  📄 Export to PDF
-                </button>
+          {/* Export Button with Dropdown */}
+          <div className="relative export-dropdown-container">
+            <button 
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 transform hover:scale-105"
+              onClick={toggleExportDropdown}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>Export Data</span>
+              <span className={`transition-transform duration-200 ${
+                showExportDropdown ? 'rotate-180' : ''
+              }`}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </button>
+            
+            {/* Export Dropdown Menu */}
+            {showExportDropdown && (
+              <div className="absolute right-0 mt-3 w-56 bg-white border border-gray-200 rounded-xl shadow-2xl z-10 overflow-hidden">
+                <div className="py-2">
+                  <button
+                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-200 flex items-center space-x-3"
+                    onClick={exportToExcel}
+                  >
+                    <span className="text-green-500">📊</span>
+                    <span className="font-medium">Export to Excel</span>
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors duration-200 flex items-center space-x-3"
+                    onClick={exportToPDF}
+                  >
+                    <span className="text-red-500">📄</span>
+                    <span className="font-medium">Export to PDF</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
 
 
-      {/* Tabs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <button
-          onClick={() => setActiveTab("transactions")}
-          className={`py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center ${
-            activeTab === "transactions"
-              ? "bg-blue-500 text-white shadow-lg"
-              : "bg-white text-gray-600 hover:bg-gray-100 shadow-sm border"
-          }`}
-        >
-          <CreditCard className="w-5 h-5 mr-2" />
-          Fee Transactions
-        </button>
-        <button
-          onClick={() => setActiveTab("installments")}
-          className={`py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center ${
-            activeTab === "installments"
-              ? "bg-blue-500 text-white shadow-lg"
-              : "bg-white text-gray-600 hover:bg-gray-100 shadow-sm border"
-          }`}
-        >
-          <Clock className="w-5 h-5 mr-2" />
-          Installment Management
-        </button>
-      </div>
+        {/* Tabs */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-white rounded-2xl p-2 shadow-lg border border-gray-200">
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setActiveTab("transactions")}
+                className={`relative py-3 px-8 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 ${
+                  activeTab === "transactions"
+                    ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg transform scale-105"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                <CreditCard className="w-5 h-5" />
+                <span>Fee Transactions</span>
+                {activeTab === "transactions" && (
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full"></div>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab("installments")}
+                className={`relative py-3 px-8 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 ${
+                  activeTab === "installments"
+                    ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg transform scale-105"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                <Clock className="w-5 h-5" />
+                <span>Installment Management</span>
+                {activeTab === "installments" && (
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full"></div>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
 
 
       {/* Fee Transactions Tab */}
       {activeTab === "transactions" && (
         <div>
           {/* Status Filter Info Banner */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border border-blue-200 rounded-2xl p-6 mb-8 shadow-lg">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Users className="w-5 h-5 text-blue-600" />
+              <div className="flex items-center space-x-4">
+                <div className="p-2 bg-blue-500 rounded-xl">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
                 <div>
                   <p className="text-sm font-medium text-blue-800">
                     Showing calculations for: <span className="font-bold">
@@ -933,34 +1046,38 @@ const FeesManagementSystem = () => {
           </div>
 
           {/* Top Section: Stats and Pie Chart */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatCard title="Total Fee" value={totalFee} color="bg-blue-500" icon={IndianRupee} />
-              <StatCard title="Received Fee" value={totalPaid} color="bg-green-500" icon={CheckCircle} />
-              <StatCard title="Balance Fee" value={totalDue} color="bg-red-500" icon={XCircle} />
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8">
+            <div className="xl:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+              <StatCard title="Total Fee (Student Fee)" value={totalFee} color="bg-gradient-to-r from-blue-500 to-blue-600" icon={IndianRupee} />
+              <StatCard title="Paid Fee" value={totalPaid} color="bg-gradient-to-r from-green-500 to-green-600" icon={CheckCircle} />
+              <StatCard title="Due Fee" value={totalDue} color="bg-gradient-to-r from-red-500 to-red-600" icon={XCircle} />
             </div>
-            <div className="lg:col-span-1">
-              <FeeTransactionPieChart totalFee={totalFee} totalPaid={totalPaid} totalDue={totalDue} />
+            <div className="xl:col-span-1">
+              <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 h-full">
+                <FeeTransactionPieChart totalFee={totalFee} totalPaid={totalPaid} totalDue={totalDue} />
+              </div>
             </div>
           </div>
 
 
           {/* Search and Filter */}
-          <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-            <div className="flex flex-wrap justify-between items-center gap-4">
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="w-5 h-5 text-gray-400" />
+                </div>
                 <input
                   type="text"
                   placeholder="Search by Name, ID, or Course"
-                  className="pl-10 pr-4 py-2 border rounded-lg w-full sm:w-108"
+                  className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-
+              
               <select
-                className="border rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
                 value={studentStatusFilter}
                 onChange={(e) => setStudentStatusFilter(e.target.value)}
               >
@@ -968,67 +1085,66 @@ const FeesManagementSystem = () => {
                 <option value="inactive">Inactive Students Only</option>
                 <option value="all">All Students</option>
               </select>
-
+              
               <select
-                className="border rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={timeFilter}
+                onChange={(e) => setTimeFilter(e.target.value)}
+                className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="last7days">Last 7 Days</option>
+                <option value="last30days">Last 30 Days</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              
+              <select
+                className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
                 value={sortKey}
                 onChange={(e) => setSortKey(e.target.value)}
               >
                 <option value="studentName">Sort by Name</option>
-                <option value="courseFee">Sort by Course Fee</option>
+                <option value="totalFee">Sort by Total Fee</option>
                 <option value="paidFee">Sort by Paid Fee</option>
                 <option value="dueFee">Sort by Due Fee</option>
               </select>
-
-              <div className="flex flex-wrap items-center gap-4">
-                <select
-                  value={timeFilter}
-                  onChange={(e) => setTimeFilter(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">All Time</option>
-                  <option value="today">Today</option>
-                  <option value="yesterday">Yesterday</option>
-                  <option value="last7days">Last 7 Days</option>
-                  <option value="last30days">Last 30 Days</option>
-                  <option value="custom">Custom Range</option>
-                </select>
-                {timeFilter === "custom" && (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 w-36 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <span>to</span>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 w-36 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                )}
-              </div>
-              
             </div>
+            
+            {timeFilter === "custom" && (
+              <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gray-200">
+                <label className="text-sm font-medium text-gray-700">Date Range:</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <span className="text-gray-500">to</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            )}
           </div>
 
 
-          {/* Students Table */}
-          <div className="bg-white shadow-md rounded-lg overflow-x-auto">
-            <table className="min-w-full text-left border-collapse">
-              <thead className="bg-gray-50">
+          {/* Fee Transactions Table */}
+          <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+            <table className="min-w-full">
+              <thead className="bg-gradient-to-r from-blue-600 to-indigo-600">
                 <tr>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Student ID</th>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Student Name</th>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Course</th>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Course Fee</th>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Student Fee</th>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Paid Fee</th>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Due Fee</th>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Actions</th>
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-white uppercase tracking-wider">Student ID</th>
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-white uppercase tracking-wider">Student Name</th>
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-white uppercase tracking-wider">Course</th>
+                  <th className="py-4 px-6 text-center text-xs font-semibold text-white uppercase tracking-wider">Course Fee</th>
+                  <th className="py-4 px-6 text-center text-xs font-semibold text-white uppercase tracking-wider">Student Fee</th>
+                  <th className="py-4 px-6 text-center text-xs font-semibold text-white uppercase tracking-wider">Paid Fee</th>
+                  <th className="py-4 px-6 text-center text-xs font-semibold text-white uppercase tracking-wider">Due Fee</th>
+                  <th className="py-4 px-6 text-center text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1036,55 +1152,170 @@ const FeesManagementSystem = () => {
                   <React.Fragment key={student.id}>
                     <tr
                       onClick={() => setSelectedStudent(selectedStudent === student.id ? null : student.id)}
-                      className={`bg-gray-50 cursor-pointer transition-colors ${!isActiveStatus(student) ? 'bg-red-50' : ''}`}
+                      className={`cursor-pointer transition-all duration-200 hover:bg-blue-50 hover:shadow-md ${
+                        !isActiveStatus(student) 
+                          ? 'bg-red-50 border-l-4 border-red-400' 
+                          : 'bg-white hover:bg-blue-50 border-l-4 border-transparent hover:border-blue-400'
+                      } ${selectedStudent === student.id ? 'bg-blue-100 border-l-4 border-blue-500' : ''}`}
                     >
-                      <td className="py-3 px-4 border-b whitespace-nowrap">{student.rollNumber}</td>
-                      <td className="py-3 px-4 border-b font-medium whitespace-nowrap">{student.studentName}</td>
-                      <td className="py-3 px-4 border-b">{student.course.courseName}</td>
-                      <td className="py-3 px-4 border-b whitespace-nowrap">₹{student.courseFee.toLocaleString()}</td>
-                      <td className="py-3 px-4 border-b whitespace-nowrap">₹{student.totalFee.toLocaleString()}</td>
-                      <td className="py-3 px-4 border-b text-green-600 font-semibold whitespace-nowrap">₹{student.paidFee.toLocaleString()}</td>
-                      <td className="py-3 px-4 border-b text-red-600 font-semibold whitespace-nowrap">₹{student.dueFee.toLocaleString()}</td>
-                      <td className="py-3 px-4 border-b">
+                      <td className="py-4 px-6 border-b border-gray-100">
+                        <div className="flex items-center">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full mr-3"></div>
+                          <span className="font-mono text-sm font-medium text-gray-700">{student.rollNumber}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 border-b border-gray-100">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full flex items-center justify-center mr-3">
+                            <span className="text-white text-xs font-bold">{student.studentName.charAt(0).toUpperCase()}</span>
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900">{student.studentName}</div>
+                            <div className="text-xs text-gray-500">{!isActiveStatus(student) ? 'Inactive' : 'Active'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 border-b border-gray-100">
+                        <div className="text-sm text-gray-900 font-medium">{student.course.courseName}</div>
+                        <div className="text-xs text-gray-500">{student.course.courseCode || 'N/A'}</div>
+                      </td>
+                      <td className="py-4 px-6 border-b border-gray-100 text-center">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-800">
+                          ₹{student.courseFee.toLocaleString()}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 border-b border-gray-100 text-center">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
+                          ₹{student.totalFee.toLocaleString()}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 border-b border-gray-100 text-center">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                          ₹{student.paidFee.toLocaleString()}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 border-b border-gray-100 text-center">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+                          ₹{student.dueFee.toLocaleString()}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 border-b border-gray-100 text-center">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setShowUpdateFeeModal(student.id);
                           }}
                           disabled={student.dueFee === 0}
-                          className="bg-blue-500 text-white px-3 py-1 rounded-md shadow hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-medium rounded-lg shadow-md hover:from-blue-600 hover:to-indigo-600 hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                         >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
                           Update Fee
                         </button>
                       </td>
                     </tr>
                     {selectedStudent === student.id && (
                       <tr>
-                        <td colSpan="8" className="bg-gray-100 p-0">
-                          <div className="p-4 bg-gray-100">
-                            <h3 className="text-md font-semibold mb-2 text-gray-800">Fee History</h3>
-                            <div className="bg-white rounded-lg overflow-hidden border">
+                        <td colSpan="8" className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-0">
+                          <div className="p-6">
+                            <div className="flex items-center mb-4">
+                              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              </div>
+                              <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Fee History</h3>
+                            </div>
+                            <div className="bg-white rounded-2xl overflow-hidden shadow-xl border border-gray-100 backdrop-blur-sm">
                               <table className="min-w-full text-left">
-                                <thead className="bg-gray-50">
+                                <thead className="bg-gradient-to-r from-blue-600 to-indigo-600">
                                   <tr>
-                                    <th className="py-2 px-4 border-b font-medium text-sm">Amount</th>
-                                    <th className="py-2 px-4 border-b font-medium text-sm">Date</th>
-                                    <th className="py-2 px-4 border-b font-medium text-sm">Payment Mode</th>
+                                    <th className="py-4 px-6 font-semibold text-white text-sm tracking-wide">
+                                      <div className="flex items-center space-x-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                        </svg>
+                                        <span>Amount</span>
+                                      </div>
+                                    </th>
+                                    <th className="py-4 px-6 font-semibold text-white text-sm tracking-wide">
+                                      <div className="flex items-center space-x-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 8a2 2 0 100-4 2 2 0 000 4zm0 0v4a2 2 0 002 2h6a2 2 0 002-2v-4" />
+                                        </svg>
+                                        <span>Date</span>
+                                      </div>
+                                    </th>
+                                    <th className="py-4 px-6 font-semibold text-white text-sm tracking-wide">
+                                      <div className="flex items-center space-x-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                        </svg>
+                                        <span>Payment Mode</span>
+                                      </div>
+                                    </th>
                                   </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-gray-100">
                                   {student.transactions.length > 0 ? (
                                     student.transactions.map((transaction, idx) => (
-                                      <tr key={idx} className="hover:bg-gray-50 text-sm">
-                                        <td className="py-2 px-4 border-b">₹{transaction.amount.toLocaleString()}</td>
-                                        <td className="py-2 px-4 border-b">{new Date(transaction.date).toLocaleDateString()}</td>
-                                        <td className="py-2 px-4 border-b">{transaction.paymentMode}</td>
+                                      <tr key={idx} className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 group">
+                                        <td className="py-4 px-6 border-b border-gray-100">
+                                          <div className="flex items-center space-x-2">
+                                            <div className="w-2 h-2 bg-green-400 rounded-full group-hover:scale-125 transition-transform duration-200"></div>
+                                            <span className="font-bold text-green-600 text-lg">₹{transaction.amount.toLocaleString()}</span>
+                                          </div>
+                                        </td>
+                                        <td className="py-4 px-6 border-b border-gray-100">
+                                          <div className="flex items-center space-x-2">
+                                            <div className="bg-blue-100 p-1.5 rounded-lg group-hover:bg-blue-200 transition-colors duration-200">
+                                              <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 8a2 2 0 100-4 2 2 0 000 4zm0 0v4a2 2 0 002 2h6a2 2 0 002-2v-4" />
+                                              </svg>
+                                            </div>
+                                            <span className="font-medium text-gray-700">{new Date(transaction.date).toLocaleDateString()}</span>
+                                          </div>
+                                        </td>
+                                        <td className="py-4 px-6 border-b border-gray-100">
+                                          <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${
+                                            transaction.paymentMode === 'Cash' ? 'bg-green-100 text-green-800' :
+                                            transaction.paymentMode === 'Card' ? 'bg-blue-100 text-blue-800' :
+                                            transaction.paymentMode === 'UPI' ? 'bg-purple-100 text-purple-800' :
+                                            'bg-gray-100 text-gray-800'
+                                          }`}>
+                                            {transaction.paymentMode === 'Cash' && (
+                                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                              </svg>
+                                            )}
+                                            {transaction.paymentMode === 'Card' && (
+                                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                              </svg>
+                                            )}
+                                            {transaction.paymentMode === 'UPI' && (
+                                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                              </svg>
+                                            )}
+                                            {transaction.paymentMode}
+                                          </span>
+                                        </td>
                                       </tr>
                                     ))
                                   ) : (
                                     <tr>
-                                      <td colSpan="3" className="text-center py-4 text-gray-500">
-                                        No transaction history.
+                                      <td colSpan="3" className="text-center py-12">
+                                        <div className="flex flex-col items-center">
+                                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                          </div>
+                                          <h3 className="text-lg font-medium text-gray-600 mb-2">No Transaction History</h3>
+                                          <p className="text-gray-500">No payments have been recorded yet.</p>
+                                        </div>
                                       </td>
                                     </tr>
                                   )}
@@ -1108,10 +1339,12 @@ const FeesManagementSystem = () => {
       {activeTab === "installments" && (
         <div>
           {/* Status Filter Info Banner */}
-          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-4 mb-6">
+          <div className="bg-gradient-to-r from-purple-50 via-indigo-50 to-pink-50 border border-purple-200 rounded-2xl p-6 mb-8 shadow-lg">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Users className="w-5 h-5 text-purple-600" />
+              <div className="flex items-center space-x-4">
+                <div className="p-2 bg-purple-500 rounded-xl">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
                 <div>
                   <p className="text-sm font-medium text-purple-800">
                     Showing calculations for: <span className="font-bold">
@@ -1134,34 +1367,38 @@ const FeesManagementSystem = () => {
           </div>
 
           {/* Top Section: Stats and Pie Chart */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatCard title="Total Installment" value={totalInstallmentAmount} color="bg-purple-500" icon={IndianRupee} />
-              <StatCard title="Paid Installment" value={totalInstallmentPaid} color="bg-green-500" icon={CheckCircle} />
-              <StatCard title="Due Installment" value={totalInstallmentDue} color="bg-red-500" icon={XCircle} />
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8">
+            <div className="xl:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+              <StatCard title="Total Installment" value={totalInstallmentAmount} color="bg-gradient-to-r from-purple-500 to-purple-600" icon={IndianRupee} />
+              <StatCard title="Paid Installment" value={totalInstallmentPaid} color="bg-gradient-to-r from-green-500 to-green-600" icon={CheckCircle} />
+              <StatCard title="Due Installment" value={totalInstallmentDue} color="bg-gradient-to-r from-red-500 to-red-600" icon={XCircle} />
             </div>
-            <div className="lg:col-span-1">
-              <InstallmentPieChart totalAmount={totalInstallmentAmount} paidAmount={totalInstallmentPaid} dueAmount={totalInstallmentDue} />
+            <div className="xl:col-span-1">
+              <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 h-full">
+                <InstallmentPieChart totalAmount={totalInstallmentAmount} paidAmount={totalInstallmentPaid} dueAmount={totalInstallmentDue} />
+              </div>
             </div>
           </div>
 
 
           {/* Search and Filter */}
-          <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-            <div className="flex flex-wrap justify-between items-center gap-4">
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="w-5 h-5 text-gray-400" />
+                </div>
                 <input
                   type="text"
                   placeholder="Search by Name, ID, or Course"
-                  className="pl-10 pr-4 py-2 border rounded-lg w-full sm:w-56"
+                  className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
               
               <select
-                className="border rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 bg-white"
                 value={studentStatusFilter}
                 onChange={(e) => setStudentStatusFilter(e.target.value)}
               >
@@ -1170,39 +1407,21 @@ const FeesManagementSystem = () => {
                 <option value="all">All Students</option>
               </select>
               
-              <div className="flex flex-wrap items-center gap-4">
-                <select
-                  value={timeFilter}
-                  onChange={(e) => setTimeFilter(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">All Time</option>
-                  <option value="today">Today</option>
-                  <option value="yesterday">Yesterday</option>
-                  <option value="last7days">Last 7 Days</option>
-                  <option value="last30days">Last 30 Days</option>
-                  <option value="custom">Custom Range</option>
-                </select>
-                {timeFilter === "custom" && (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 w-36 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <span>to</span>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 w-36 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                )}
-              </div>
               <select
-                className="border rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={timeFilter}
+                onChange={(e) => setTimeFilter(e.target.value)}
+                className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 bg-white"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="last7days">Last 7 Days</option>
+                <option value="last30days">Last 30 Days</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              
+              <select
+                className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 bg-white"
                 value={sortKey}
                 onChange={(e) => setSortKey(e.target.value)}
               >
@@ -1212,21 +1431,40 @@ const FeesManagementSystem = () => {
                 <option value="dueInstallmentAmount">Sort by Due</option>
               </select>
             </div>
+            
+            {timeFilter === "custom" && (
+              <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gray-200">
+                <label className="text-sm font-medium text-gray-700">Date Range:</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+                <span className="text-gray-500">to</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+            )}
           </div>
 
 
           {/* Installment Students Table */}
-          <div className="bg-white shadow-md rounded-lg overflow-x-auto">
-            <table className="min-w-full text-left border-collapse">
-              <thead className="bg-gray-50">
+          <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+            <table className="min-w-full">
+              <thead className="bg-gradient-to-r from-purple-600 to-indigo-600">
                 <tr>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">ID</th>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Student Name</th>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Course</th>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Total Amount</th>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Paid Amount</th>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Due Amount</th>
-                  <th className="py-3 px-4 border-b font-semibold text-gray-700">Actions</th>
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-white uppercase tracking-wider">Student ID</th>
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-white uppercase tracking-wider">Student Name</th>
+                  <th className="py-4 px-6 text-left text-xs font-semibold text-white uppercase tracking-wider">Course</th>
+                  <th className="py-4 px-6 text-center text-xs font-semibold text-white uppercase tracking-wider">Total Amount</th>
+                  <th className="py-4 px-6 text-center text-xs font-semibold text-white uppercase tracking-wider">Paid Amount</th>
+                  <th className="py-4 px-6 text-center text-xs font-semibold text-white uppercase tracking-wider">Due Amount</th>
+                  <th className="py-4 px-6 text-center text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1238,31 +1476,69 @@ const FeesManagementSystem = () => {
                           selectedInstallmentStudent === student._id ? null : student._id
                         )
                       }
-                      className={`bg-gray-50 cursor-pointer transition-colors ${!isActiveStatus(student) ? 'bg-red-50' : ''}`}
+                      className={`cursor-pointer transition-all duration-200 hover:bg-purple-50 hover:shadow-md ${
+                        !isActiveStatus(student) 
+                          ? 'bg-red-50 border-l-4 border-red-400' 
+                          : 'bg-white hover:bg-purple-50 border-l-4 border-transparent hover:border-purple-400'
+                      } ${selectedInstallmentStudent === student._id ? 'bg-purple-100 border-l-4 border-purple-500' : ''}`}
                     >
-                      <td className="py-3 px-4 border-b">{student.rollNumber}</td>
-                      <td className="py-3 px-4 border-b font-medium">{student.studentName}</td>
-                      <td className="py-3 px-4 border-b">{student.course.courseName}</td>
-                      <td className="py-3 px-4 border-b">₹{(
-                        student.totalInstallmentAmount + 
-                        (studentInitialPayments[student._id] ? 
-                          studentInitialPayments[student._id].reduce((sum, payment) => sum + payment.amount, 0) : 0)
-                      ).toLocaleString()}</td>
-                      <td className="py-3 px-4 border-b text-green-600">₹{(
-                        student.paidInstallmentAmount + 
-                        (studentInitialPayments[student._id] ? 
-                          studentInitialPayments[student._id].reduce((sum, payment) => sum + payment.amount, 0) : 0)
-                      ).toLocaleString()}</td>
-                      <td className="py-3 px-4 border-b text-red-600">₹{student.dueInstallmentAmount.toLocaleString()}</td>
-                      <td className="py-3 px-4 border-b">
+                      <td className="py-4 px-6 border-b border-gray-100">
+                        <div className="flex items-center">
+                          <div className="w-2 h-2 bg-purple-400 rounded-full mr-3"></div>
+                          <span className="font-mono text-sm font-medium text-gray-700">{student.rollNumber}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 border-b border-gray-100">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full flex items-center justify-center mr-3">
+                            <span className="text-white text-xs font-bold">{student.studentName.charAt(0).toUpperCase()}</span>
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900">{student.studentName}</div>
+                            <div className="text-xs text-gray-500">{!isActiveStatus(student) ? 'Inactive' : 'Active'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 border-b border-gray-100">
+                        <div className="text-sm text-gray-900 font-medium">{student.course.courseName}</div>
+                        <div className="text-xs text-gray-500">{student.course.courseCode || 'N/A'}</div>
+                      </td>
+                      <td className="py-4 px-6 border-b border-gray-100 text-center">
+                        <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
+                          ₹{(
+                            student.totalInstallmentAmount + 
+                            (studentInitialPayments[student._id] ? 
+                              studentInitialPayments[student._id].reduce((sum, payment) => sum + payment.amount, 0) : 0)
+                          ).toLocaleString()}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 border-b border-gray-100 text-center">
+                        <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                          ₹{(
+                            student.paidInstallmentAmount + 
+                            (studentInitialPayments[student._id] ? 
+                              studentInitialPayments[student._id].reduce((sum, payment) => sum + payment.amount, 0) : 0)
+                          ).toLocaleString()}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 border-b border-gray-100 text-center">
+                        <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+                          ₹{student.dueInstallmentAmount.toLocaleString()}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 border-b border-gray-100 text-center">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedInstallmentStudent(student._id);
                           }}
-                          className="bg-purple-500 text-white px-3 py-1 rounded-md shadow hover:bg-purple-600 transition-colors"
+                          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm font-medium rounded-lg shadow-md hover:from-purple-600 hover:to-indigo-600 hover:shadow-lg transform hover:scale-105 transition-all duration-200"
                         >
-                          View Installments
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          View Details
                         </button>
                       </td>
                     </tr>
@@ -1308,52 +1584,158 @@ const FeesManagementSystem = () => {
                             )}
                             
                             {/* Installment Details Section */}
-                            <h4 className="text-md font-medium mb-2 text-purple-600">Installment Payments</h4>
-                            <div className="bg-white rounded-lg overflow-hidden border">
+                            <div className="flex items-center mb-4">
+                              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mr-3">
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </div>
+                              <h4 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Installment Payments</h4>
+                            </div>
+                            <div className="bg-white rounded-2xl overflow-hidden shadow-xl border border-gray-100 backdrop-blur-sm">
                               <table className="min-w-full text-left border-collapse">
-                                <thead className="bg-gray-100">
+                                <thead className="bg-gradient-to-r from-purple-600 to-pink-600">
                                   <tr>
-                                    <th className="py-2 px-4 border-b font-medium">Installment Name</th>
-                                    <th className="py-2 px-4 border-b font-medium">Amount</th>
-                                    <th className="py-2 px-4 border-b font-medium">Paid Amount</th>
-                                    <th className="py-2 px-4 border-b font-medium">Due Date</th>
-                                    <th className="py-2 px-4 border-b font-medium">Status</th>
-                                    <th className="py-2 px-4 border-b font-medium">Actions</th>
+                                    <th className="py-4 px-6 font-semibold text-white text-sm tracking-wide">
+                                      <div className="flex items-center space-x-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a1.994 1.994 0 01-1.414.586H7a4 4 0 01-4-4V7a4 4 0 014-4z" />
+                                        </svg>
+                                        <span>Installment Name</span>
+                                      </div>
+                                    </th>
+                                    <th className="py-4 px-6 font-semibold text-white text-sm tracking-wide">
+                                      <div className="flex items-center space-x-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                        </svg>
+                                        <span>Amount</span>
+                                      </div>
+                                    </th>
+                                    <th className="py-4 px-6 font-semibold text-white text-sm tracking-wide">
+                                      <div className="flex items-center space-x-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>Paid Amount</span>
+                                      </div>
+                                    </th>
+                                    <th className="py-4 px-6 font-semibold text-white text-sm tracking-wide">
+                                      <div className="flex items-center space-x-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 8a2 2 0 100-4 2 2 0 000 4zm0 0v4a2 2 0 002 2h6a2 2 0 002-2v-4" />
+                                        </svg>
+                                        <span>Due Date</span>
+                                      </div>
+                                    </th>
+                                    <th className="py-4 px-6 font-semibold text-white text-sm tracking-wide">
+                                      <div className="flex items-center space-x-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>Status</span>
+                                      </div>
+                                    </th>
+                                    <th className="py-4 px-6 font-semibold text-white text-sm tracking-wide">
+                                      <div className="flex items-center space-x-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                        </svg>
+                                        <span>Actions</span>
+                                      </div>
+                                    </th>
                                   </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-gray-100">
                                   {student.installments.map((installment) => {
                                     const remainingAmount = installment.amount - (installment.paidAmount || 0);
                                     const isFullyPaid = installment.paid || remainingAmount <= 0;
                                     const isPartiallyPaid = installment.paidAmount > 0 && !isFullyPaid;
                                     
                                     return (
-                                      <tr key={installment._id} className="hover:bg-gray-50">
-                                        <td className="py-2 px-4 border-b">{installment.installmentName}</td>
-                                        <td className="py-2 px-4 border-b">₹{installment.amount.toLocaleString()}</td>
-                                        <td className="py-2 px-4 border-b">
-                                          <div className="flex flex-col">
-                                            <span>₹{(installment.paidAmount || 0).toLocaleString()}</span>
+                                      <tr key={installment._id} className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 group">
+                                        <td className="py-4 px-6 border-b border-gray-100">
+                                          <div className="flex items-center space-x-3">
+                                            <div className="w-3 h-3 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full group-hover:scale-125 transition-transform duration-200"></div>
+                                            <span className="font-semibold text-gray-800">{installment.installmentName}</span>
+                                          </div>
+                                        </td>
+                                        <td className="py-4 px-6 border-b border-gray-100">
+                                          <div className="flex items-center space-x-2">
+                                            <div className="bg-purple-100 p-1.5 rounded-lg group-hover:bg-purple-200 transition-colors duration-200">
+                                              <svg className="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                              </svg>
+                                            </div>
+                                            <span className="font-bold text-purple-600 text-lg">₹{installment.amount.toLocaleString()}</span>
+                                          </div>
+                                        </td>
+                                        <td className="py-4 px-6 border-b border-gray-100">
+                                          <div className="flex flex-col space-y-1">
+                                            <div className="flex items-center space-x-2">
+                                              <div className="bg-green-100 p-1 rounded-full">
+                                                <svg className="w-2 h-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                              </div>
+                                              <span className="font-bold text-green-600">₹{(installment.paidAmount || 0).toLocaleString()}</span>
+                                            </div>
                                             {remainingAmount > 0 && (
-                                              <span className="text-xs text-red-600">
-                                                (Due: ₹{remainingAmount.toLocaleString()})
-                                              </span>
+                                              <div className="flex items-center space-x-2">
+                                                <div className="bg-red-100 p-1 rounded-full">
+                                                  <svg className="w-2 h-2 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                  </svg>
+                                                </div>
+                                                <span className="text-sm font-medium text-red-600">
+                                                  Due: ₹{remainingAmount.toLocaleString()}
+                                                </span>
+                                              </div>
                                             )}
                                           </div>
                                         </td>
-                                        <td className="py-2 px-4 border-b">{installment.date}</td>
-                                        <td className="py-2 px-4 border-b">
+                                        <td className="py-4 px-6 border-b border-gray-100">
+                                          <div className="flex items-center space-x-2">
+                                            <div className="bg-indigo-100 p-1.5 rounded-lg group-hover:bg-indigo-200 transition-colors duration-200">
+                                              <svg className="w-3 h-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 8a2 2 0 100-4 2 2 0 000 4zm0 0v4a2 2 0 002 2h6a2 2 0 002-2v-4" />
+                                              </svg>
+                                            </div>
+                                            <span className="font-medium text-gray-700">{installment.date}</span>
+                                          </div>
+                                        </td>
+                                        <td className="py-4 px-6 border-b border-gray-100">
                                           <span
-                                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                            className={`inline-flex items-center px-3 py-2 rounded-full text-xs font-bold shadow-lg transform transition-all duration-200 hover:scale-105 ${
                                               installment.status === "Fully_Paid_Early"
-                                                ? "bg-blue-100 text-blue-800"
+                                                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white"
                                                 : isFullyPaid
-                                                ? "bg-green-100 text-green-800"
+                                                ? "bg-gradient-to-r from-green-500 to-green-600 text-white"
                                                 : isPartiallyPaid
-                                                ? "bg-yellow-100 text-yellow-800"
-                                                : "bg-red-100 text-red-800"
+                                                ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white"
+                                                : "bg-gradient-to-r from-red-500 to-red-600 text-white"
                                             }`}
                                           >
+                                            {installment.status === "Fully_Paid_Early" && (
+                                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                              </svg>
+                                            )}
+                                            {isFullyPaid && installment.status !== "Fully_Paid_Early" && (
+                                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                              </svg>
+                                            )}
+                                            {isPartiallyPaid && !isFullyPaid && (
+                                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                              </svg>
+                                            )}
+                                            {!isFullyPaid && !isPartiallyPaid && (
+                                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                              </svg>
+                                            )}
                                             {installment.status === "Fully_Paid_Early" 
                                               ? "Paid Early" 
                                               : isFullyPaid 
@@ -1363,8 +1745,8 @@ const FeesManagementSystem = () => {
                                               : "Pending"}
                                           </span>
                                         </td>
-                                        <td className="py-2 px-4 border-b">
-                                          <div className="flex gap-1">
+                                        <td className="py-4 px-6 border-b border-gray-100">
+                                          <div className="flex gap-2">
                                             {!isFullyPaid && (
                                               <>
                                                 <button
@@ -1372,30 +1754,39 @@ const FeesManagementSystem = () => {
                                                     handlePaymentModeChange("normal", student, installment);
                                                     setShowInstallmentModal(student._id);
                                                   }}
-                                                  className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600 transition-colors"
+                                                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-3 py-2 rounded-xl text-xs font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-1"
                                                   title="Pay remaining amount for this installment"
                                                 >
-                                                  Pay
+                                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                  </svg>
+                                                  <span>Pay</span>
                                                 </button>
                                                 <button
                                                   onClick={() => {
                                                     handlePaymentModeChange("full_payment", student, installment);
                                                     setShowInstallmentModal(student._id);
                                                   }}
-                                                  className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition-colors"
+                                                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-3 py-2 rounded-xl text-xs font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-1"
                                                   title="Pay all remaining fees"
                                                 >
-                                                  Pay All
+                                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                  </svg>
+                                                  <span>Pay All</span>
                                                 </button>
                                                 <button
                                                   onClick={() => {
                                                     handlePaymentModeChange("custom", student, installment);
                                                     setShowInstallmentModal(student._id);
                                                   }}
-                                                  className="bg-purple-500 text-white px-2 py-1 rounded text-xs hover:bg-purple-600 transition-colors"
+                                                  className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-3 py-2 rounded-xl text-xs font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-1"
                                                   title="Pay custom amount"
                                                 >
-                                                  Custom
+                                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                                                  </svg>
+                                                  <span>Custom</span>
                                                 </button>
                                               </>
                                             )}
@@ -1406,10 +1797,13 @@ const FeesManagementSystem = () => {
                                                   setSelectedInstallmentName(installment.installmentName);
                                                   setShowPaymentHistoryModal(true);
                                                 }}
-                                                className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600 transition-colors"
+                                                className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-3 py-2 rounded-xl text-xs font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-1"
                                                 title="View payment history"
                                               >
-                                                History
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span>History</span>
                                               </button>
                                             )}
                                           </div>
@@ -1544,7 +1938,7 @@ const FeesManagementSystem = () => {
 
       {/* Enhanced Installment Payment Modal */}
       {showInstallmentModal && (
-        <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-96 max-h-96 overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">
               {paymentMode === "full_payment" ? "Pay All Fees" : 
@@ -1665,7 +2059,7 @@ const FeesManagementSystem = () => {
 
       {/* Payment History Modal */}
       {showPaymentHistoryModal && (
-        <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden transform transition-all duration-300 scale-100">
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-gray-600 to-gray-700 text-white p-6 rounded-t-2xl">
@@ -1720,7 +2114,9 @@ const FeesManagementSystem = () => {
                                 ? 'bg-green-100 text-green-700'
                                 : payment.paymentMode === 'Card'
                                 ? 'bg-blue-100 text-blue-700'
-                                : 'bg-purple-100 text-purple-700'
+                                : payment.paymentMode === 'UPI'
+                                ? 'bg-purple-100 text-purple-700'
+                                : 'bg-gray-100 text-gray-700'
                             }`}>
                               {payment.paymentMode || 'N/A'}
                             </span>
@@ -1772,6 +2168,7 @@ const FeesManagementSystem = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

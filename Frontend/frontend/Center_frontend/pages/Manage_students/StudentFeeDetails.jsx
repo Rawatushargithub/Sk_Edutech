@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";  
+import React, { useState, useEffect } from "react";
 import { Search, Calendar, CreditCard, Users, Clock, CheckCircle, XCircle, IndianRupee } from "lucide-react";
 import axios from "axios";
 import API_BASE_URL from "../../../config";
@@ -22,7 +22,7 @@ const FeesManagementSystem = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [studentStatusFilter, setStudentStatusFilter] = useState('active'); // 'active', 'inactive', 'all'
-  
+
   // Normal Fees Data
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -97,12 +97,12 @@ const FeesManagementSystem = () => {
             return true;
         }
       };
-      
+
       if (isInstallmentData) {
         // For installment data, filter by installment due dates
         data = data.filter(student => {
           if (!student.installments || student.installments.length === 0) return false;
-          
+
           // Check if any installment has a due date within the filter range
           return student.installments.some(installment => {
             // Convert dd-mm-yyyy format to Date object
@@ -129,7 +129,7 @@ const FeesManagementSystem = () => {
         (item.course.courseName && item.course.courseName.toLowerCase().includes(term))
       );
     });
-    
+
     return [...filteredData].sort((a, b) => {
       if (typeof a[sortKey] === "string") {
         return a[sortKey].localeCompare(b[sortKey]);
@@ -152,7 +152,7 @@ const FeesManagementSystem = () => {
 
   // Filter students based on status filter
   const getStudentsByStatusFilter = (students) => {
-    switch(studentStatusFilter) {
+    switch (studentStatusFilter) {
       case 'active':
         return students.filter(student => isActiveStatus(student));
       case 'inactive':
@@ -176,26 +176,26 @@ const FeesManagementSystem = () => {
   const calculateInstallmentTotals = (students) => {
     return students.reduce((totals, student) => {
       // Calculate initial payments for this student
-      const initialPaymentAmount = studentInitialPayments[student._id] ? 
+      const initialPaymentAmount = studentInitialPayments[student._id] ?
         studentInitialPayments[student._id].reduce((sum, payment) => sum + payment.amount, 0) : 0;
-      
+
       // Use the pre-calculated totals from backend if available
-      if (student.totalInstallmentAmount !== undefined && 
-          student.paidInstallmentAmount !== undefined && 
-          student.dueInstallmentAmount !== undefined) {
-        
+      if (student.totalInstallmentAmount !== undefined &&
+        student.paidInstallmentAmount !== undefined &&
+        student.dueInstallmentAmount !== undefined) {
+
         const studentTotal = student.totalInstallmentAmount || 0;
         const studentPaid = student.paidInstallmentAmount || 0;
         const studentDue = student.dueInstallmentAmount || 0;
-        
+
         // Add initial payments to totals
         totals.total += studentTotal + initialPaymentAmount;
         totals.paid += studentPaid + initialPaymentAmount;
         totals.due += studentDue; // Due amount remains the same as initial payments are already paid
-        
+
         return totals;
       }
-      
+
       // Fallback: calculate from individual installments if backend totals not available
       if (!student.installments || student.installments.length === 0) {
         // If no installments but has initial payments, add them
@@ -203,24 +203,24 @@ const FeesManagementSystem = () => {
         totals.paid += initialPaymentAmount;
         return totals;
       }
-      
+
       const studentTotals = student.installments.reduce((acc, installment) => {
         const installmentAmount = installment.amount || 0;
         const paidAmount = installment.paidAmount || 0;
         const dueAmount = Math.max(0, installmentAmount - paidAmount);
-        
+
         return {
           total: acc.total + installmentAmount,
           paid: acc.paid + paidAmount,
           due: acc.due + dueAmount
         };
       }, { total: 0, paid: 0, due: 0 });
-      
+
       // Add initial payments to student totals
       totals.total += studentTotals.total + initialPaymentAmount;
       totals.paid += studentTotals.paid + initialPaymentAmount;
       totals.due += studentTotals.due;
-      
+
       return totals;
     }, { total: 0, paid: 0, due: 0 });
   };
@@ -238,7 +238,7 @@ const FeesManagementSystem = () => {
       alert("Please enter a valid amount greater than zero");
       return;
     }
-  
+
     // Create the payload for the API call
     const paymentData = {
       amount: amount,
@@ -246,12 +246,12 @@ const FeesManagementSystem = () => {
       date: newPayment.date,
     };
     // console.log(studentId)
-  const franchiseId = localStorage.getItem('franchiseID');
+    const franchiseId = localStorage.getItem('franchiseID');
     // Make the API call to update fees
     axios.post(`${API_BASE_URL}/api/v1/institute_fees/${studentId}/update-fee`, paymentData)
       .then(response => {
         if (response.data.success) {
-          console.log("Student data coming:: " , response)
+          console.log("Student data coming:: ", response)
           // Update the local state with the updated student data
           const updatedStudents = students.map(student => {
             if (student.id === studentId) {
@@ -263,13 +263,13 @@ const FeesManagementSystem = () => {
             }
             return student;
           });
-  
+
           // Update the state
           setStudents(updatedStudents);
-          
+
           // Show success message
           alert("Payment recorded successfully!");
-          
+
           // Close the modal and reset form
           setShowUpdateFeeModal(false);
           setNewPayment({
@@ -277,7 +277,7 @@ const FeesManagementSystem = () => {
             mode: "Cash",
             date: new Date().toISOString().slice(0, 10),
           });
-          
+
           // Optionally refresh the data from the server
           // fetchStudents(); // If you have a function to fetch all students
         } else {
@@ -290,7 +290,7 @@ const FeesManagementSystem = () => {
         alert("Error: " + errorMessage);
       });
   };
-  
+
   // Enhanced installment payment handler with flexible payment scenarios
   const handleInstallmentPayment = (studentId, installmentId) => {
     const amount = parseFloat(installmentPayment.amount);
@@ -311,11 +311,11 @@ const FeesManagementSystem = () => {
       .then(response => {
         if (response.data.success) {
           const { updatedInstallments, paymentScenario, overpayment, totalProcessed, studentTotals } = response.data.data;
-          
+
           // Show enhanced success message based on payment scenario
           let message = `Payment of ₹${totalProcessed.toLocaleString()} processed successfully.`;
-          
-          switch(paymentScenario) {
+
+          switch (paymentScenario) {
             case "full_payment":
               message += " All installments have been marked as paid!";
               break;
@@ -332,7 +332,7 @@ const FeesManagementSystem = () => {
               message += " Installment fully paid!";
               break;
           }
-          
+
           alert(message);
 
           // Update local state with all affected installments
@@ -355,7 +355,7 @@ const FeesManagementSystem = () => {
                 }
                 return inst;
               });
-              
+
               // Use totals from backend response
               return {
                 ...student,
@@ -402,9 +402,9 @@ const FeesManagementSystem = () => {
     setPaymentMode(mode);
     const studentDueAmount = calculateStudentDueAmount(student);
     setTotalDueAmount(studentDueAmount);
-    
+
     let amount = "";
-    switch(mode) {
+    switch (mode) {
       case "full_payment":
         amount = studentDueAmount.toString();
         break;
@@ -416,7 +416,7 @@ const FeesManagementSystem = () => {
         amount = "";
         break;
     }
-    
+
     setInstallmentPayment({
       ...installmentPayment,
       installmentId: installment._id,
@@ -431,10 +431,10 @@ const FeesManagementSystem = () => {
     const limit = 15;
     const page = 1;
     const franchiseId = localStorage.getItem('franchiseID');
-    axios 
+    axios
       .get(`${API_BASE_URL}/api/v1/institute_fees/students?limit=${limit}&page=${page}&franchiseId=${franchiseId}`)
       .then((response) => {
-       
+
         const updatedStudents = response.data.data.map((student) => ({
           ...student,
           dueFee: student.totalFee - student.paidFee, // Ensure dueFee is properly calculated
@@ -455,7 +455,7 @@ const FeesManagementSystem = () => {
       })
       .catch((error) => console.error("Error fetching students:", error));
 
- 
+
     // Fetch installment students
     axios
       .get(`${API_BASE_URL}/api/v1/institute_fees/installments/students?franchiseId=${franchiseId}`)
@@ -464,12 +464,12 @@ const FeesManagementSystem = () => {
         if (response.data.success) {
           const list = response.data.data || [];
           setInstallmentStudents(list);
-          
+
           // Fetch initial payments for installment students
           const studentIds = list.map(student => student._id);
           if (studentIds.length > 0) {
             // Directly fetch fee transactions for installment students
-            const fetchPromises = studentIds.map(studentId => 
+            const fetchPromises = studentIds.map(studentId =>
               axios.get(`${API_BASE_URL}/api/v1/institute_fees/transactions/${studentId}`)
                 .then(response => ({ studentId, transactions: response.data.data || [] }))
                 .catch(error => {
@@ -477,7 +477,7 @@ const FeesManagementSystem = () => {
                   return { studentId, transactions: [] };
                 })
             );
-            
+
             Promise.all(fetchPromises)
               .then(results => {
                 const initialPaymentsMap = {};
@@ -493,7 +493,7 @@ const FeesManagementSystem = () => {
                 console.error("Error processing initial payments:", error);
               });
           }
-          
+
           // Merge statuses into installment students too
           axios
             .get(`${API_BASE_URL}/api/v1/institute_student/get_students?franchiseId=${franchiseId}`)
@@ -576,7 +576,7 @@ const FeesManagementSystem = () => {
 
       let exportData;
       let fileName;
-      
+
       if (activeTab === 'transactions') {
         exportData = prepareTransactionExportData(statusFilteredStudents);
         fileName = `Fee_Transactions_${new Date().toISOString().split('T')[0]}.xlsx`;
@@ -584,10 +584,10 @@ const FeesManagementSystem = () => {
         exportData = prepareInstallmentExportData(statusFilteredInstallmentStudents);
         fileName = `Installment_Details_${new Date().toISOString().split('T')[0]}.xlsx`;
       }
-      
+
       const ws = XLSX.utils.json_to_sheet(exportData);
       const wb = XLSX.utils.book_new();
-      
+
       // Set column widths
       const colWidths = activeTab === 'transactions' ? [
         { wch: 5 },   // S/N
@@ -614,12 +614,12 @@ const FeesManagementSystem = () => {
         { wch: 15 },  // Paid Amount
         { wch: 15 },  // Due Amount
       ];
-      
+
       ws['!cols'] = colWidths;
-      
+
       XLSX.utils.book_append_sheet(wb, ws, activeTab === 'transactions' ? 'Fee Transactions' : 'Installments');
       XLSX.writeFile(wb, fileName);
-      
+
       alert(`Excel file "${fileName}" has been downloaded successfully!`);
     } catch (error) {
       console.error('Error exporting to Excel:', error);
@@ -633,19 +633,19 @@ const FeesManagementSystem = () => {
       alert('Preparing PDF file... This may take a moment.');
 
       const doc = new jsPDF('l', 'mm', 'a4'); // landscape orientation
-      
+
       // Add title
       doc.setFontSize(16);
       const title = activeTab === 'transactions' ? 'Student Fee Transactions' : 'Student Installment Details';
       doc.text(title, 14, 20);
-      
+
       // Add date
       const currentDate = new Date().toLocaleDateString();
       doc.setFontSize(10);
       doc.text(`Generated on: ${currentDate}`, 14, 28);
-      
+
       let exportData, columns, rows, fileName;
-      
+
       if (activeTab === 'transactions') {
         exportData = prepareTransactionExportData(statusFilteredStudents);
         columns = ['S/N', 'Student ID', 'Student Name', 'Course', 'Course Fee', 'Student Fee', 'Paid Fee', 'Due Fee'];
@@ -715,11 +715,14 @@ const FeesManagementSystem = () => {
 
   const StatCard = ({ title, value, color, icon: Icon }) => {
     // Calculate percentage with clear logic - handle both Fee and Installment calculations
-    let percentage, numerator, denominator, calculationText;
-    
+    let percentage, numerator, denominator, calculationText, studentCount;
+
     // Determine if this is an installment card or fee card
     const isInstallmentCard = title.includes('Installment');
-    
+
+    // Set the correct student count based on card type
+    studentCount = isInstallmentCard ? statusFilteredInstallmentStudents.length : statusFilteredStudents.length;
+
     if (title.includes('Paid')) {
       numerator = value;
       if (isInstallmentCard) {
@@ -750,7 +753,7 @@ const FeesManagementSystem = () => {
       percentage = Math.round((numerator / denominator) * 100);
       calculationText = `₹${numerator.toLocaleString()} ÷ ₹${denominator.toLocaleString()}`;
     }
-    
+
     return (
       <div className="group relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 hover:border-gray-200 overflow-hidden min-h-[200px] flex flex-col">
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full -mr-16 -mt-16 opacity-30"></div>
@@ -765,14 +768,14 @@ const FeesManagementSystem = () => {
               <p className="text-4xl font-bold text-gray-900 leading-none">₹{value.toLocaleString()}</p>
             </div>
           </div>
-          
+
           {/* Progress Section */}
           <div className="mt-auto">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-600">
-                {title.includes('Total') ? 'Collection Rate' : 
-                 title.includes('Paid') ? 'Payment Progress' : 
-                 'Outstanding Amount'}
+                {title.includes('Total') ? 'Collection Rate' :
+                  title.includes('Paid') ? 'Payment Progress' :
+                    'Outstanding Amount'}
               </span>
               <div className="flex flex-col items-end space-y-1">
                 <div className="flex items-center space-x-2">
@@ -780,238 +783,235 @@ const FeesManagementSystem = () => {
                   <span className="text-sm font-bold text-gray-800 bg-gray-100 px-2 py-1 rounded-full">{percentage}%</span>
                 </div>
                 <span className="text-xs text-gray-400">
-                  {title.includes('Total') ? 'Collection Efficiency' : 
-                   title.includes('Paid') ? 'Payment Ratio' : 
-                   'Outstanding Ratio'}
+                  {title.includes('Total') ? 'Collection Efficiency' :
+                    title.includes('Paid') ? 'Payment Ratio' :
+                      'Outstanding Ratio'}
                 </span>
               </div>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5 shadow-inner">
-              <div 
-                className={`h-2.5 rounded-full ${color.replace('bg-gradient-to-r from-', 'bg-gradient-to-r from-').replace(' to-', ' to-')} transition-all duration-1000 shadow-sm`} 
-                style={{width: `${Math.min(percentage, 100)}%`}}
+              <div
+                className={`h-2.5 rounded-full ${color.replace('bg-gradient-to-r from-', 'bg-gradient-to-r from-').replace(' to-', ' to-')} transition-all duration-1000 shadow-sm`}
+                style={{ width: `${Math.min(percentage, 100)}%` }}
               ></div>
             </div>
-            
+
             {/* Additional Info */}
             <div className="mt-4 pt-3 border-t border-gray-100">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-500 font-medium">
-                  {title.includes('Total') ? 'Total Amount' : 
-                   title.includes('Paid') ? 'Amount Received' : 
-                   'Outstanding Balance'}
+                  {title.includes('Total') ? 'Total Amount' :
+                    title.includes('Paid') ? 'Amount Received' :
+                      'Outstanding Balance'}
                 </span>
                 <div className="flex items-center space-x-1">
                   <div className={`w-2 h-2 rounded-full ${color.replace('bg-gradient-to-r from-', 'bg-').replace(' to-blue-600', '-500').replace(' to-green-600', '-500').replace(' to-red-600', '-500')}`}></div>
                   <span className="font-semibold text-gray-700">
-                    {statusFilteredStudents.length} student{statusFilteredStudents.length !== 1 ? 's' : ''}
+                    {studentCount} student{studentCount !== 1 ? 's' : ''}
                   </span>
-                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+      </div >
     );
   };
 
 
-  // Pie Chart Component for Fee Transactions
-  const FeeTransactionPieChart = ({ totalFee, totalPaid, totalDue }) => {
-    const data = {
-      labels: ['Received Fee', 'Balance Fee'],
-      datasets: [
-        {
-          data: [totalPaid, totalDue],
-          backgroundColor: ['#10b981', '#ef4444'],
-          borderColor: ['#ffffff'],
-          borderWidth: 2,
-        },
-      ],
-    };
-
-
-    const options = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'right',
-          labels: {
-            boxWidth: 12,
-            padding: 15,
-            font: {
-              size: 12
-            }
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const label = context.label || '';
-              const value = context.raw || 0;
-              const percentage = totalFee > 0 ? Math.round((value / totalFee) * 100) : 0;
-              return `${label}: ₹${value.toLocaleString()} (${percentage}%)`;
-            }
-          }
-        }
-      }
-    };
-
-
-    return (
-      <div className="bg-white rounded-lg shadow-md p-4 h-full flex flex-col justify-center">
-        <p className="text-sm font-semibold text-gray-700 mb-2 text-center">Fee Distribution</p>
-        <div className="relative h-40 w-full">
-          <Pie data={data} options={options} />
-        </div>
-      </div>
-    );
+// Pie Chart Component for Fee Transactions
+const FeeTransactionPieChart = ({ totalFee, totalPaid, totalDue }) => {
+  const data = {
+    labels: ['Received Fee', 'Balance Fee'],
+    datasets: [
+      {
+        data: [totalPaid, totalDue],
+        backgroundColor: ['#10b981', '#ef4444'],
+        borderColor: ['#ffffff'],
+        borderWidth: 2,
+      },
+    ],
   };
 
 
-  // Pie Chart Component for Installments
-  const InstallmentPieChart = ({ totalAmount, paidAmount, dueAmount }) => {
-    const data = {
-      labels: ['Paid Installment', 'Due Installment'],
-      datasets: [
-        {
-          data: [paidAmount, dueAmount],
-          backgroundColor: ['#10b981', '#ef4444'],
-          borderColor: ['#ffffff'],
-          borderWidth: 2,
-        },
-      ],
-    };
-
-
-    const options = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'right',
-          labels: {
-            boxWidth: 12,
-            padding: 15,
-            font: {
-              size: 12
-            }
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: {
+          boxWidth: 12,
+          padding: 15,
+          font: {
+            size: 12
           }
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const label = context.label || '';
-              const value = context.raw || 0;
-              const percentage = totalAmount > 0 ? Math.round((value / totalAmount) * 100) : 0;
-              return `${label}: ₹${value.toLocaleString()} (${percentage}%)`;
-            }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const percentage = totalFee > 0 ? Math.round((value / totalFee) * 100) : 0;
+            return `${label}: ₹${value.toLocaleString()} (${percentage}%)`;
           }
         }
       }
-    };
-
-
-    return (
-      <div className="bg-white rounded-lg shadow-md p-4 h-full flex flex-col justify-center">
-        <p className="text-sm font-semibold text-gray-700 mb-2 text-center">Installment Distribution</p>
-        <div className="relative h-40 w-full">
-          <Pie data={data} options={options} />
-        </div>
-      </div>
-    );
+    }
   };
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Student Fee Management</h1>
-            <p className="text-gray-600 mt-2">Comprehensive fee tracking and payment management system</p>
-          </div>
-          
-          {/* Export Button with Dropdown */}
-          <div className="relative export-dropdown-container">
-            <button 
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 transform hover:scale-105"
-              onClick={toggleExportDropdown}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span>Export Data</span>
-              <span className={`transition-transform duration-200 ${
-                showExportDropdown ? 'rotate-180' : ''
+    <div className="bg-white rounded-lg shadow-md p-4 h-full flex flex-col justify-center">
+      <p className="text-sm font-semibold text-gray-700 mb-2 text-center">Fee Distribution</p>
+      <div className="relative h-40 w-full">
+        <Pie data={data} options={options} />
+      </div>
+    </div>
+  );
+};
+
+
+// Pie Chart Component for Installments
+const InstallmentPieChart = ({ totalAmount, paidAmount, dueAmount }) => {
+  const data = {
+    labels: ['Paid Installment', 'Due Installment'],
+    datasets: [
+      {
+        data: [paidAmount, dueAmount],
+        backgroundColor: ['#10b981', '#ef4444'],
+        borderColor: ['#ffffff'],
+        borderWidth: 2,
+      },
+    ],
+  };
+
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: {
+          boxWidth: 12,
+          padding: 15,
+          font: {
+            size: 12
+          }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const percentage = totalAmount > 0 ? Math.round((value / totalAmount) * 100) : 0;
+            return `${label}: ₹${value.toLocaleString()} (${percentage}%)`;
+          }
+        }
+      }
+    }
+  };
+
+
+  return (
+    <div className="bg-white rounded-lg shadow-md p-4 h-full flex flex-col justify-center">
+      <p className="text-sm font-semibold text-gray-700 mb-2 text-center">Installment Distribution</p>
+      <div className="relative h-40 w-full">
+        <Pie data={data} options={options} />
+      </div>
+    </div>
+  );
+};
+
+
+return (
+  <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Student Fee Management</h1>
+          <p className="text-gray-600 mt-2">Comprehensive fee tracking and payment management system</p>
+        </div>
+
+        {/* Export Button with Dropdown */}
+        <div className="relative export-dropdown-container">
+          <button
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 transform hover:scale-105"
+            onClick={toggleExportDropdown}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Export Data</span>
+            <span className={`transition-transform duration-200 ${showExportDropdown ? 'rotate-180' : ''
               }`}>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </span>
-            </button>
-            
-            {/* Export Dropdown Menu */}
-            {showExportDropdown && (
-              <div className="absolute right-0 mt-3 w-56 bg-white border border-gray-200 rounded-xl shadow-2xl z-10 overflow-hidden">
-                <div className="py-2">
-                  <button
-                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-200 flex items-center space-x-3"
-                    onClick={exportToExcel}
-                  >
-                    <span className="text-green-500">📊</span>
-                    <span className="font-medium">Export to Excel</span>
-                  </button>
-                  <button
-                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors duration-200 flex items-center space-x-3"
-                    onClick={exportToPDF}
-                  >
-                    <span className="text-red-500">📄</span>
-                    <span className="font-medium">Export to PDF</span>
-                  </button>
-                </div>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </button>
+
+          {/* Export Dropdown Menu */}
+          {showExportDropdown && (
+            <div className="absolute right-0 mt-3 w-56 bg-white border border-gray-200 rounded-xl shadow-2xl z-10 overflow-hidden">
+              <div className="py-2">
+                <button
+                  className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors duration-200 flex items-center space-x-3"
+                  onClick={exportToExcel}
+                >
+                  <span className="text-green-500">📊</span>
+                  <span className="font-medium">Export to Excel</span>
+                </button>
+                <button
+                  className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors duration-200 flex items-center space-x-3"
+                  onClick={exportToPDF}
+                >
+                  <span className="text-red-500">📄</span>
+                  <span className="font-medium">Export to PDF</span>
+                </button>
               </div>
-            )}
-          </div>
-        </div>
-
-
-        {/* Tabs */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-white rounded-2xl p-2 shadow-lg border border-gray-200">
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setActiveTab("transactions")}
-                className={`relative py-3 px-8 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 ${
-                  activeTab === "transactions"
-                    ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg transform scale-105"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                }`}
-              >
-                <CreditCard className="w-5 h-5" />
-                <span>Fee Transactions</span>
-                {activeTab === "transactions" && (
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full"></div>
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab("installments")}
-                className={`relative py-3 px-8 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 ${
-                  activeTab === "installments"
-                    ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg transform scale-105"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                }`}
-              >
-                <Clock className="w-5 h-5" />
-                <span>Installment Management</span>
-                {activeTab === "installments" && (
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full"></div>
-                )}
-              </button>
             </div>
+          )}
+        </div>
+      </div>
+
+
+      {/* Tabs */}
+      <div className="flex justify-center mb-8">
+        <div className="bg-white rounded-2xl p-2 shadow-lg border border-gray-200">
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setActiveTab("transactions")}
+              className={`relative py-3 px-8 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 ${activeTab === "transactions"
+                  ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg transform scale-105"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+            >
+              <CreditCard className="w-5 h-5" />
+              <span>Fee Transactions</span>
+              {activeTab === "transactions" && (
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full"></div>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("installments")}
+              className={`relative py-3 px-8 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 ${activeTab === "installments"
+                  ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg transform scale-105"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+            >
+              <Clock className="w-5 h-5" />
+              <span>Installment Management</span>
+              {activeTab === "installments" && (
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full"></div>
+              )}
+            </button>
           </div>
         </div>
+      </div>
 
 
       {/* Fee Transactions Tab */}
@@ -1027,15 +1027,15 @@ const FeesManagementSystem = () => {
                 <div>
                   <p className="text-sm font-medium text-blue-800">
                     Showing calculations for: <span className="font-bold">
-                      {studentStatusFilter === 'active' ? 'Active Students Only' : 
-                       studentStatusFilter === 'inactive' ? 'Inactive Students Only' : 
-                       'All Students (Active + Inactive)'}
+                      {studentStatusFilter === 'active' ? 'Active Students Only' :
+                        studentStatusFilter === 'inactive' ? 'Inactive Students Only' :
+                          'All Students (Active + Inactive)'}
                     </span>
                   </p>
                   <p className="text-xs text-blue-600">
                     {studentStatusFilter === 'active' ? 'Only active student fees are included in totals' :
-                     studentStatusFilter === 'inactive' ? 'Only inactive student fees are included in totals' :
-                     'Both active and inactive student fees are included in totals'}
+                      studentStatusFilter === 'inactive' ? 'Only inactive student fees are included in totals' :
+                        'Both active and inactive student fees are included in totals'}
                   </p>
                 </div>
               </div>
@@ -1075,7 +1075,7 @@ const FeesManagementSystem = () => {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-              
+
               <select
                 className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
                 value={studentStatusFilter}
@@ -1085,7 +1085,7 @@ const FeesManagementSystem = () => {
                 <option value="inactive">Inactive Students Only</option>
                 <option value="all">All Students</option>
               </select>
-              
+
               <select
                 value={timeFilter}
                 onChange={(e) => setTimeFilter(e.target.value)}
@@ -1098,7 +1098,7 @@ const FeesManagementSystem = () => {
                 <option value="last30days">Last 30 Days</option>
                 <option value="custom">Custom Range</option>
               </select>
-              
+
               <select
                 className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
                 value={sortKey}
@@ -1110,7 +1110,7 @@ const FeesManagementSystem = () => {
                 <option value="dueFee">Sort by Due Fee</option>
               </select>
             </div>
-            
+
             {timeFilter === "custom" && (
               <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gray-200">
                 <label className="text-sm font-medium text-gray-700">Date Range:</label>
@@ -1152,11 +1152,10 @@ const FeesManagementSystem = () => {
                   <React.Fragment key={student.id}>
                     <tr
                       onClick={() => setSelectedStudent(selectedStudent === student.id ? null : student.id)}
-                      className={`cursor-pointer transition-all duration-200 hover:bg-blue-50 hover:shadow-md ${
-                        !isActiveStatus(student) 
-                          ? 'bg-red-50 border-l-4 border-red-400' 
+                      className={`cursor-pointer transition-all duration-200 hover:bg-blue-50 hover:shadow-md ${!isActiveStatus(student)
+                          ? 'bg-red-50 border-l-4 border-red-400'
                           : 'bg-white hover:bg-blue-50 border-l-4 border-transparent hover:border-blue-400'
-                      } ${selectedStudent === student.id ? 'bg-blue-100 border-l-4 border-blue-500' : ''}`}
+                        } ${selectedStudent === student.id ? 'bg-blue-100 border-l-4 border-blue-500' : ''}`}
                     >
                       <td className="py-4 px-6 border-b border-gray-100">
                         <div className="flex items-center">
@@ -1278,12 +1277,11 @@ const FeesManagementSystem = () => {
                                           </div>
                                         </td>
                                         <td className="py-4 px-6 border-b border-gray-100">
-                                          <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${
-                                            transaction.paymentMode === 'Cash' ? 'bg-green-100 text-green-800' :
-                                            transaction.paymentMode === 'Card' ? 'bg-blue-100 text-blue-800' :
-                                            transaction.paymentMode === 'UPI' ? 'bg-purple-100 text-purple-800' :
-                                            'bg-gray-100 text-gray-800'
-                                          }`}>
+                                          <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${transaction.paymentMode === 'Cash' ? 'bg-green-100 text-green-800' :
+                                              transaction.paymentMode === 'Card' ? 'bg-blue-100 text-blue-800' :
+                                                transaction.paymentMode === 'UPI' ? 'bg-purple-100 text-purple-800' :
+                                                  'bg-gray-100 text-gray-800'
+                                            }`}>
                                             {transaction.paymentMode === 'Cash' && (
                                               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -1348,15 +1346,15 @@ const FeesManagementSystem = () => {
                 <div>
                   <p className="text-sm font-medium text-purple-800">
                     Showing calculations for: <span className="font-bold">
-                      {studentStatusFilter === 'active' ? 'Active Students Only' : 
-                       studentStatusFilter === 'inactive' ? 'Inactive Students Only' : 
-                       'All Students (Active + Inactive)'}
+                      {studentStatusFilter === 'active' ? 'Active Students Only' :
+                        studentStatusFilter === 'inactive' ? 'Inactive Students Only' :
+                          'All Students (Active + Inactive)'}
                     </span>
                   </p>
                   <p className="text-xs text-purple-600">
                     {studentStatusFilter === 'active' ? 'Only active student installments are included in totals' :
-                     studentStatusFilter === 'inactive' ? 'Only inactive student installments are included in totals' :
-                     'Both active and inactive student installments are included in totals'}
+                      studentStatusFilter === 'inactive' ? 'Only inactive student installments are included in totals' :
+                        'Both active and inactive student installments are included in totals'}
                   </p>
                 </div>
               </div>
@@ -1396,7 +1394,7 @@ const FeesManagementSystem = () => {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-              
+
               <select
                 className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 bg-white"
                 value={studentStatusFilter}
@@ -1406,7 +1404,7 @@ const FeesManagementSystem = () => {
                 <option value="inactive">Inactive Students Only</option>
                 <option value="all">All Students</option>
               </select>
-              
+
               <select
                 value={timeFilter}
                 onChange={(e) => setTimeFilter(e.target.value)}
@@ -1419,7 +1417,7 @@ const FeesManagementSystem = () => {
                 <option value="last30days">Last 30 Days</option>
                 <option value="custom">Custom Range</option>
               </select>
-              
+
               <select
                 className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 bg-white"
                 value={sortKey}
@@ -1431,7 +1429,7 @@ const FeesManagementSystem = () => {
                 <option value="dueInstallmentAmount">Sort by Due</option>
               </select>
             </div>
-            
+
             {timeFilter === "custom" && (
               <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gray-200">
                 <label className="text-sm font-medium text-gray-700">Date Range:</label>
@@ -1476,11 +1474,10 @@ const FeesManagementSystem = () => {
                           selectedInstallmentStudent === student._id ? null : student._id
                         )
                       }
-                      className={`cursor-pointer transition-all duration-200 hover:bg-purple-50 hover:shadow-md ${
-                        !isActiveStatus(student) 
-                          ? 'bg-red-50 border-l-4 border-red-400' 
+                      className={`cursor-pointer transition-all duration-200 hover:bg-purple-50 hover:shadow-md ${!isActiveStatus(student)
+                          ? 'bg-red-50 border-l-4 border-red-400'
                           : 'bg-white hover:bg-purple-50 border-l-4 border-transparent hover:border-purple-400'
-                      } ${selectedInstallmentStudent === student._id ? 'bg-purple-100 border-l-4 border-purple-500' : ''}`}
+                        } ${selectedInstallmentStudent === student._id ? 'bg-purple-100 border-l-4 border-purple-500' : ''}`}
                     >
                       <td className="py-4 px-6 border-b border-gray-100">
                         <div className="flex items-center">
@@ -1506,8 +1503,8 @@ const FeesManagementSystem = () => {
                       <td className="py-4 px-6 border-b border-gray-100 text-center">
                         <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
                           ₹{(
-                            student.totalInstallmentAmount + 
-                            (studentInitialPayments[student._id] ? 
+                            student.totalInstallmentAmount +
+                            (studentInitialPayments[student._id] ?
                               studentInitialPayments[student._id].reduce((sum, payment) => sum + payment.amount, 0) : 0)
                           ).toLocaleString()}
                         </div>
@@ -1515,8 +1512,8 @@ const FeesManagementSystem = () => {
                       <td className="py-4 px-6 border-b border-gray-100 text-center">
                         <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
                           ₹{(
-                            student.paidInstallmentAmount + 
-                            (studentInitialPayments[student._id] ? 
+                            student.paidInstallmentAmount +
+                            (studentInitialPayments[student._id] ?
                               studentInitialPayments[student._id].reduce((sum, payment) => sum + payment.amount, 0) : 0)
                           ).toLocaleString()}
                         </div>
@@ -1547,7 +1544,7 @@ const FeesManagementSystem = () => {
                         <td colSpan="7" className="bg-gray-50">
                           <div className="p-4">
                             <h3 className="text-lg font-semibold mb-3">Complete Payment History</h3>
-                            
+
                             {/* Initial Payment History Section */}
                             {studentInitialPayments[student._id] && studentInitialPayments[student._id].length > 0 && (
                               <div className="mb-4">
@@ -1582,7 +1579,7 @@ const FeesManagementSystem = () => {
                                 </div>
                               </div>
                             )}
-                            
+
                             {/* Installment Details Section */}
                             <div className="flex items-center mb-4">
                               <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mr-3">
@@ -1651,7 +1648,7 @@ const FeesManagementSystem = () => {
                                     const remainingAmount = installment.amount - (installment.paidAmount || 0);
                                     const isFullyPaid = installment.paid || remainingAmount <= 0;
                                     const isPartiallyPaid = installment.paidAmount > 0 && !isFullyPaid;
-                                    
+
                                     return (
                                       <tr key={installment._id} className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 group">
                                         <td className="py-4 px-6 border-b border-gray-100">
@@ -1706,15 +1703,14 @@ const FeesManagementSystem = () => {
                                         </td>
                                         <td className="py-4 px-6 border-b border-gray-100">
                                           <span
-                                            className={`inline-flex items-center px-3 py-2 rounded-full text-xs font-bold shadow-lg transform transition-all duration-200 hover:scale-105 ${
-                                              installment.status === "Fully_Paid_Early"
+                                            className={`inline-flex items-center px-3 py-2 rounded-full text-xs font-bold shadow-lg transform transition-all duration-200 hover:scale-105 ${installment.status === "Fully_Paid_Early"
                                                 ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white"
                                                 : isFullyPaid
-                                                ? "bg-gradient-to-r from-green-500 to-green-600 text-white"
-                                                : isPartiallyPaid
-                                                ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white"
-                                                : "bg-gradient-to-r from-red-500 to-red-600 text-white"
-                                            }`}
+                                                  ? "bg-gradient-to-r from-green-500 to-green-600 text-white"
+                                                  : isPartiallyPaid
+                                                    ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white"
+                                                    : "bg-gradient-to-r from-red-500 to-red-600 text-white"
+                                              }`}
                                           >
                                             {installment.status === "Fully_Paid_Early" && (
                                               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1736,13 +1732,13 @@ const FeesManagementSystem = () => {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                               </svg>
                                             )}
-                                            {installment.status === "Fully_Paid_Early" 
-                                              ? "Paid Early" 
-                                              : isFullyPaid 
-                                              ? "Paid" 
-                                              : isPartiallyPaid 
-                                              ? "Partial" 
-                                              : "Pending"}
+                                            {installment.status === "Fully_Paid_Early"
+                                              ? "Paid Early"
+                                              : isFullyPaid
+                                                ? "Paid"
+                                                : isPartiallyPaid
+                                                  ? "Partial"
+                                                  : "Pending"}
                                           </span>
                                         </td>
                                         <td className="py-4 px-6 border-b border-gray-100">
@@ -1828,7 +1824,7 @@ const FeesManagementSystem = () => {
 
 
       {/* Enhanced Update Fee Modal */}
-      {showUpdateFeeModal && ( 
+      {showUpdateFeeModal && (
         <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100">
             {/* Modal Header */}
@@ -1887,11 +1883,10 @@ const FeesManagementSystem = () => {
                     <button
                       key={mode}
                       onClick={() => setNewPayment({ ...newPayment, mode })}
-                      className={`p-3 rounded-xl border-2 transition-all duration-200 font-medium ${
-                        newPayment.mode === mode
+                      className={`p-3 rounded-xl border-2 transition-all duration-200 font-medium ${newPayment.mode === mode
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
                           : 'border-gray-200 hover:border-gray-300 text-gray-600'
-                      }`}
+                        }`}
                     >
                       {mode}
                     </button>
@@ -1941,10 +1936,10 @@ const FeesManagementSystem = () => {
         <div className="fixed inset-0 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-96 max-h-96 overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">
-              {paymentMode === "full_payment" ? "Pay All Fees" : 
-               paymentMode === "custom" ? "Custom Payment" : "Pay Installment"}
+              {paymentMode === "full_payment" ? "Pay All Fees" :
+                paymentMode === "custom" ? "Custom Payment" : "Pay Installment"}
             </h2>
-            
+
             {/* Payment Type Info */}
             <div className="mb-4 p-3 bg-gray-50 rounded-lg">
               <div className="text-sm text-gray-600">
@@ -1984,19 +1979,19 @@ const FeesManagementSystem = () => {
               {paymentMode === "custom" && (
                 <div className="mt-2 flex gap-2">
                   <button
-                    onClick={() => setInstallmentPayment({...installmentPayment, amount: "1000"})}
+                    onClick={() => setInstallmentPayment({ ...installmentPayment, amount: "1000" })}
                     className="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
                   >
                     ₹1,000
                   </button>
                   <button
-                    onClick={() => setInstallmentPayment({...installmentPayment, amount: "5000"})}
+                    onClick={() => setInstallmentPayment({ ...installmentPayment, amount: "5000" })}
                     className="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
                   >
                     ₹5,000
                   </button>
                   <button
-                    onClick={() => setInstallmentPayment({...installmentPayment, amount: totalDueAmount.toString()})}
+                    onClick={() => setInstallmentPayment({ ...installmentPayment, amount: totalDueAmount.toString() })}
                     className="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
                   >
                     All (₹{totalDueAmount.toLocaleString()})
@@ -2004,7 +1999,7 @@ const FeesManagementSystem = () => {
                 </div>
               )}
             </div>
-            
+
             <div className="mb-4">
               <label className="block text-gray-700 mb-2">Payment Mode</label>
               <select
@@ -2019,7 +2014,7 @@ const FeesManagementSystem = () => {
                 <option value="UPI">UPI</option>
               </select>
             </div>
-            
+
             <div className="mb-4">
               <label className="block text-gray-700 mb-2">Date</label>
               <input
@@ -2031,7 +2026,7 @@ const FeesManagementSystem = () => {
                 }
               />
             </div>
-            
+
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => {
@@ -2044,11 +2039,10 @@ const FeesManagementSystem = () => {
               </button>
               <button
                 onClick={() => handleInstallmentPayment(showInstallmentModal, installmentPayment.installmentId)}
-                className={`text-white px-4 py-2 rounded-lg transition-colors ${
-                  paymentMode === "full_payment" ? "bg-blue-500 hover:bg-blue-600" :
-                  paymentMode === "custom" ? "bg-purple-500 hover:bg-purple-600" :
-                  "bg-green-500 hover:bg-green-600"
-                }`}
+                className={`text-white px-4 py-2 rounded-lg transition-colors ${paymentMode === "full_payment" ? "bg-blue-500 hover:bg-blue-600" :
+                    paymentMode === "custom" ? "bg-purple-500 hover:bg-purple-600" :
+                      "bg-green-500 hover:bg-green-600"
+                  }`}
               >
                 {paymentMode === "full_payment" ? "Pay All Fees" : "Record Payment"}
               </button>
@@ -2109,21 +2103,20 @@ const FeesManagementSystem = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <CreditCard className="w-4 h-4 text-gray-500" />
-                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                              payment.paymentMode === 'Cash' 
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${payment.paymentMode === 'Cash'
                                 ? 'bg-green-100 text-green-700'
                                 : payment.paymentMode === 'Card'
-                                ? 'bg-blue-100 text-blue-700'
-                                : payment.paymentMode === 'UPI'
-                                ? 'bg-purple-100 text-purple-700'
-                                : 'bg-gray-100 text-gray-700'
-                            }`}>
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : payment.paymentMode === 'UPI'
+                                    ? 'bg-purple-100 text-purple-700'
+                                    : 'bg-gray-100 text-gray-700'
+                              }`}>
                               {payment.paymentMode || 'N/A'}
                             </span>
                           </div>
                         </div>
                       </div>
-                      
+
                       {payment.remarks && (
                         <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200">
                           <div className="flex items-start space-x-2">
@@ -2168,9 +2161,9 @@ const FeesManagementSystem = () => {
           </div>
         </div>
       )}
-      </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default FeesManagementSystem;

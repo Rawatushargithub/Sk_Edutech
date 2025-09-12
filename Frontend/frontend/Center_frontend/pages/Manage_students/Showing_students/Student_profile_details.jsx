@@ -270,14 +270,14 @@ const StudentProfileDetails = () => {
   return (
     <div className="min-h-full flex items-center justify-center">
       {/* Form Card */}
-      <div className="relative bg-white rounded-lg shadow-lg w-[1400px] mx-4 border-2 border-black max-h-[90vh] overflow-y-auto top-0">
-        <div className="bg-blue-600 p-4 rounded-t-lg">
-          <h2 className="text-xl font-bold text-white">Edit Student Profile</h2>
+      <div className="relative bg-white rounded-2xl shadow-xl w-[1400px] mx-4 ring-1 ring-slate-200 max-h-[90vh] overflow-y-auto top-0">
+        <div className="p-4 rounded-t-2xl bg-gradient-to-r from-sky-600 to-indigo-600">
+          <h2 className="text-xl font-extrabold tracking-tight text-white">Edit Student Profile</h2>
         </div>
 
         {/* Close Button */}
         <button
-          className="absolute top-3 right-3 text-white bg-red-500 rounded-full p-1"
+          className="absolute top-3 right-3 text-white bg-red-500 rounded-full p-1 shadow hover:shadow-md active:scale-95"
           onClick={onClose}
         >
           <svg
@@ -307,7 +307,7 @@ const StudentProfileDetails = () => {
                   Student Photo
                 </label>
                 <div className="flex items-center space-x-4">
-                  <div className="w-24 h-24 border rounded-full overflow-hidden flex items-center justify-center bg-gray-100">
+                  <div className="w-24 h-24 border rounded-xl overflow-hidden flex items-center justify-center bg-gray-100 ring-1 ring-slate-200">
                     {formData.studentPhoto ? (
                       <img
                         src={formData.studentPhoto}
@@ -323,7 +323,7 @@ const StudentProfileDetails = () => {
                     type="file"
                     accept="image/*"
                     onChange={handlePhotoChange}
-                    className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    className="text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"
                   />
                 </div>
               </div>
@@ -334,7 +334,7 @@ const StudentProfileDetails = () => {
                   Student Signature
                 </label>
                 <div className="flex items-center space-x-4">
-                  <div className="w-24 h-16 border rounded overflow-hidden flex items-center justify-center bg-gray-100">
+                  <div className="w-28 h-16 border rounded-md overflow-hidden flex items-center justify-center bg-gray-100 ring-1 ring-slate-200">
                     {formData.studentSignature ? (
                       <img
                         src={formData.studentSignature}
@@ -352,7 +352,7 @@ const StudentProfileDetails = () => {
                     type="file"
                     accept="image/*"
                     onChange={handleSignatureChange}
-                    className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    className="text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"
                   />
                 </div>
               </div>

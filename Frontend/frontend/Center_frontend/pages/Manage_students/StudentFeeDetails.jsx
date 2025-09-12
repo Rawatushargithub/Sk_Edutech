@@ -1825,7 +1825,7 @@ return (
 
       {/* Enhanced Update Fee Modal */}
       {showUpdateFeeModal && (
-        <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 backdrop-blur-sm bg-opacity-100 bg-grey flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100">
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-t-2xl">
@@ -1933,7 +1933,7 @@ return (
 
       {/* Enhanced Installment Payment Modal */}
       {showInstallmentModal && (
-        <div className="fixed inset-0 bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 backdrop-blur-sm bg-opacity-100 bg-grey flex justify-center items-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-96 max-h-96 overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">
               {paymentMode === "full_payment" ? "Pay All Fees" :
@@ -2053,7 +2053,7 @@ return (
 
       {/* Payment History Modal */}
       {showPaymentHistoryModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 bg-grey bg-opacity-50 flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden transform transition-all duration-300 scale-100">
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-gray-600 to-gray-700 text-white p-6 rounded-t-2xl">

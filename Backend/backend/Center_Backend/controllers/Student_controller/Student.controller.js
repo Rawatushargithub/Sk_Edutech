@@ -1128,7 +1128,7 @@ const getStudents = asyncHandler(async (req, res) => {
   // Query database with projections for only the fields we need
   const students = await Student.find(filter)
     .select(
-      "studentPhoto studentSignature studentName rollNumber abbreviation franchiseId status courseInterested studentMobile referralCode email dob city postCode permanentAddress admissionDate caste qualifications occupation relationType gender selectedBatch motherName "
+      "studentPhoto studentSignature studentName rollNumber abbreviation franchiseId status courseInterested studentMobile referralCode email dob city postCode permanentAddress admissionDate caste qualifications occupation relationType gender selectedBatch motherName fatherHusbandName surnameName"
     )
     .populate({
       path: "selectedBatch",

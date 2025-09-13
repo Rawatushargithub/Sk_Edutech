@@ -19,7 +19,7 @@ const AddNewStudent = () => {
     abbreviation: "Mr.",
     studentName: "",
     relationType: "S/O",
-    fatherOrHusbandName: "",
+    fatherHusbandName: "",
     includeFatherHusband: true,
     surnameName: "",
     includeSurname: true,
@@ -389,7 +389,7 @@ const handleSubmit = async (e) => {
         abbreviation: "Mr.",
         studentName: "",
         relationType: "S/O",
-        fatherOrHusbandName: "",
+        fatherHusbandName: "",
         includeFatherHusband: true,
         surnameName: "",
         includeSurname: true,
@@ -537,8 +537,8 @@ const handleSubmit = async (e) => {
               <label className="block mb-2 text-sm font-medium">Father/Husband Name</label>
               <input
                 type="text"
-                name="fatherOrHusbandName"
-                value={formData.fatherOrHusbandName}
+                name="fatherHusbandName"
+                value={formData.fatherHusbandName}
                 onChange={handleChange}
                 className="border-gray-300 border rounded-md p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               />

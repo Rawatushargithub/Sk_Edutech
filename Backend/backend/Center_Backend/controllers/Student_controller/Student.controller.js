@@ -438,45 +438,50 @@ const registerStudent = asyncHandler(async (req, res) => {
       // Create student record with the auto-generated roll number
       let student;
       try {
+        const studentData = {
+          studentPhoto: studentPhoto.url,
+          studentSignature: studentSignature.url,
+          rollNumber, // Auto-generated roll number
+          abbreviation: req.body.abbreviation || "Mr.",
+          studentName,
+          franchiseId,
+          relationType,
+          includeFatherHusband:
+            req.body.includeFatherHusband !== undefined
+              ? req.body.includeFatherHusband
+              : true,
+          surnameName,
+          includeSurname:
+            req.body.includeSurname !== undefined
+              ? req.body.includeSurname
+              : true,
+          motherName,
+          courseInterested: parsedCourseInterested,
+          studentMobile,
+          alternateMobile,
+          email,
+          password: studentMobile.toString(),
+          dob,
+          gender,
+          city,
+          postCode,
+          permanentAddress,
+          referralCode,
+          caste,
+          qualifications,
+          occupation,
+          admissionDate,
+          selectedBatch: batch._id,
+          displayAdmissionOptions: displayAdmissionOptions || false,
+        };
+
+        if (studentData.includeFatherHusband) {
+          studentData.fatherHusbandName = fatherHusbandName || "";
+        }
+
         student = await Student.create(
           [
-            {
-              studentPhoto: studentPhoto.url,
-              studentSignature: studentSignature.url,
-              rollNumber, // Auto-generated roll number
-              abbreviation: req.body.abbreviation || "Mr.",
-              studentName,
-              franchiseId,
-              relationType,
-              fatherHusbandName,
-              includeFatherHusband:
-                req.body.includeFatherHusband !== undefined
-                  ? req.body.includeFatherHusband
-                  : true,
-              surnameName,
-              includeSurname:
-                req.body.includeSurname !== undefined
-                  ? req.body.includeSurname
-                  : true,
-              motherName,
-              courseInterested: parsedCourseInterested,
-              studentMobile,
-              alternateMobile,
-              email,
-              password: studentMobile.toString(),
-              dob,
-              gender,
-              city,
-              postCode,
-              permanentAddress,
-              referralCode,
-              caste,
-              qualifications,
-              occupation,
-              admissionDate,
-              selectedBatch: batch._id,
-              displayAdmissionOptions: displayAdmissionOptions || false,
-            },
+            studentData
           ],
           { session }
         );

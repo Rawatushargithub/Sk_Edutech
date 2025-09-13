@@ -15,8 +15,24 @@ export default defineConfig({
         enabled: true
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg}'],
+        // Precache app shell + critical assets only; images will be runtime-cached
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         navigateFallback: '/index.html',
+        // Allow larger app bundles to be precached if needed
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // 6 MiB
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.destination === 'image',
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+            },
+          },
+        ],
       },
       manifest: {
         name: 'SK Edutech',
@@ -28,8 +44,8 @@ export default defineConfig({
         theme_color: '#7c3aed',
         background_color: '#ffffff',
         icons: [
-          { src: '/assets/Logo.jpg', sizes: '192x192', type: 'image/jpeg', purpose: 'any maskable' },
-          { src: '/assets/LogoSolo.jpeg', sizes: '512x512', type: 'image/jpeg', purpose: 'any maskable' }
+          { src: '/assets/Logo.jpg', sizes: '192x192', type: 'image/jpeg', purpose: 'any' },
+          { src: '/assets/LogoSolo.jpeg', sizes: '512x512', type: 'image/jpeg', purpose: 'any' }
         ]
       }
     })

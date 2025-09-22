@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import FeeHistory from "../component/transactionhistory";
 import { CreditCard, DollarSign, Percent, Receipt, AlertCircle, Clock, CheckCircle } from "lucide-react";
 import API_BASE_URL from "../../config";
 
@@ -165,6 +166,7 @@ const FeesDetails = () => {
           </>
         )}
       </div>
+      <FeeHistory /> 
     </div>
   );
 };

@@ -22,6 +22,7 @@ export const getCenterCertificate = async (req, res) => {
         const __dirname = path.dirname(__filename);
         const templatePath = path.join(__dirname, '..', '..', 'templates', 'centerCertificate.pdf');
         const templateBytes = fs.readFileSync(templatePath);
+        
 
         const pdfDoc = await PDFDocument.load(templateBytes);
         const pages = pdfDoc.getPages();
@@ -32,29 +33,29 @@ export const getCenterCertificate = async (req, res) => {
         const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
         // ========== Insert Passport-Size Photo ==========
-        if (franchise.franchiseLogoUrl) {
-            let photoBytes;
-            if (franchise.franchiseLogoUrl.startsWith('http')) {
-                const fetchRes = await fetch(franchise.franchiseLogoUrl);
-                photoBytes = await fetchRes.arrayBuffer();
-            } else {
-                const photoPath = path.join(__dirname, '..', '..', 'uploads', franchise.franchiseLogoUrl);
-                photoBytes = fs.readFileSync(photoPath);
-            }
+        // if (franchise.franchiseLogoUrl) {
+        //     let photoBytes;
+        //     if (franchise.franchiseLogoUrl.startsWith('http')) {
+        //         const fetchRes = await fetch(franchise.franchiseLogoUrl);
+        //         photoBytes = await fetchRes.arrayBuffer();
+        //     } else {
+        //         const photoPath = path.join(__dirname, '..', '..', 'uploads', franchise.franchiseLogoUrl);
+        //         photoBytes = fs.readFileSync(photoPath);
+        //     }
 
-            const imageExt = franchise.franchiseLogoUrl.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
-            const pdfImage =
-                imageExt === 'png'
-                    ? await pdfDoc.embedPng(photoBytes)
-                    : await pdfDoc.embedJpg(photoBytes);
+        //     const imageExt = franchise.franchiseLogoUrl.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
+        //     const pdfImage =
+        //         imageExt === 'png'
+        //             ? await pdfDoc.embedPng(photoBytes)
+        //             : await pdfDoc.embedJpg(photoBytes);
 
-            firstPage.drawImage(pdfImage, {
-                x: 400,
-                y: 720,
-                width: 78,
-                height: 78
-            });
-        }
+        //     firstPage.drawImage(pdfImage, {
+        //         x: 400,
+        //         y: 715,
+        //         width: 78,
+        //         height: 78
+        //     });
+        // }
 
         // ========== Insert QR Code ==========
         const frontendUrl = process.env.FRONTEND_URL;
@@ -158,52 +159,6 @@ export const getCenterCertificate = async (req, res) => {
                 color: rgb(0, 0, 1)
             });
         });
-
-        // // ========== Address Box (Two Lines) ==========
-        // const addressLine1 = franchise.address || '';
-        // const addressLine2 = `${franchise.city || ''}, ${franchise.state || ''} - ${franchise.postalCode || ''}`;
-
-        // const boxXAddr = 95;
-        // const boxYAddr = 540;
-        // const boxWidthAddr = 350;
-        // const boxHeightAddr = 45;
-
-        // // firstPage.drawRectangle({
-        // //     x: boxXAddr,
-        // //     y: boxYAddr,
-        // //     width: boxWidthAddr,
-        // //     height: boxHeightAddr,
-        // //     borderColor: rgb(0, 0, 0),
-        // //     borderWidth: 1
-        // // });
-
-        // const fontSizeAddr = 14;
-        // const lineSpacingAddr = 15;
-
-        // const textWidthAddr1 = boldFont.widthOfTextAtSize(addressLine1, fontSizeAddr);
-        // const textWidthAddr2 = boldFont.widthOfTextAtSize(addressLine2, fontSizeAddr);
-
-        // const textXAddr1 = boxXAddr + (boxWidthAddr - textWidthAddr1) / 2;
-        // const textXAddr2 = boxXAddr + (boxWidthAddr - textWidthAddr2) / 2;
-
-        // const textHeightAddr = boldFont.heightAtSize(fontSizeAddr);
-        // const startYAddr = boxYAddr + (boxHeightAddr - (textHeightAddr * 2 + lineSpacingAddr - 5)) / 2 + 5;
-
-        // firstPage.drawText(addressLine1, {
-        //     x: textXAddr1,
-        //     y: startYAddr + lineSpacingAddr,
-        //     size: fontSizeAddr,
-        //     font: boldFont,
-        //     color: rgb(0, 0, 1)
-        // });
-
-        // firstPage.drawText(addressLine2, {
-        //     x: textXAddr2,
-        //     y: startYAddr,
-        //     size: fontSizeAddr,
-        //     font: boldFont,
-        //     color: rgb(0, 0, 1)
-        // });
 
         // ========== Owner Name & Franchise ID ==========
         const ownerName = franchise.ownerName || '';

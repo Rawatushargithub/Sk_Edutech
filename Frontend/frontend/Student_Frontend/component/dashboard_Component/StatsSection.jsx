@@ -275,39 +275,58 @@ const StatsSection = () => {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
-            {/* Close button */}
-            <button
-              onClick={handleCloseModal}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
+  <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg shadow-2xl w-[80vw] max-w-4xl h-[80vh] p-6 relative flex flex-col">
+      {/* Close button */}
+      <button
+        onClick={handleCloseModal}
+        className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl"
+      >
+        ✕
+      </button>
 
-            <h2 className="text-xl font-semibold text-sky-600 mb-4">Course Details</h2>
+      {/* Header (sticky so it stays while scrolling) */}
+      <h2 className="text-2xl font-semibold text-sky-600 mb-4">Course Details</h2>
 
-            {loadingCourse ? (
-              <div className="flex items-center justify-center py-6">
-                <Loader className="h-6 w-6 text-sky-500 animate-spin" />
-                <p className="ml-2 text-gray-500">Loading...</p>
-              </div>
-            ) : errorCourse ? (
-              <p className="text-red-500">{errorCourse}</p>
-            ) : courseDetails ? (
-              <div className="space-y-3">
-                <p><span className="font-semibold">Course Name:</span> {courseDetails.data.courseName}</p>
-                {/* <p><span className="font-semibold">Duration:</span> {courseDetails.data.duration} months</p> */}
-                <p><span className="font-semibold">Syllabus:</span> {courseDetails.data.syllabus}</p>
-                {/* <p><span className="font-semibold">Instructor:</span> {courseDetails.data.instructor}</p> */}
-                {/* Add more fields based on backend response */}
-              </div>
-            ) : (
-              <p className="text-gray-500">No course details available.</p>
-            )}
-          </div>
+      {/* Content */}
+      {loadingCourse ? (
+        <div className="flex flex-1 items-center justify-center">
+          <Loader className="h-6 w-6 text-sky-500 animate-spin" />
+          <p className="ml-2 text-gray-500">Loading...</p>
         </div>
+      ) : errorCourse ? (
+        <p className="text-red-500">{errorCourse}</p>
+      ) : courseDetails ? (
+        <div className="flex-1 overflow-y-auto pr-3 space-y-4">
+          <p>
+            <span className="font-semibold">Course Name:</span>{" "}
+            {courseDetails.data.courseName}
+          </p>
+          <p>
+            <span className="font-semibold">Syllabus:</span>{" "}
+            {courseDetails.data.syllabus}
+          </p>
+          {courseDetails.data.duration && (
+            <p>
+              <span className="font-semibold">Duration:</span>{" "}
+              {courseDetails.data.duration} months
+            </p>
+          )}
+          {courseDetails.data.instructor && (
+            <p>
+              <span className="font-semibold">Instructor:</span>{" "}
+              {courseDetails.data.instructor}
+            </p>
+          )}
+          {/* Add more fields from backend as needed */}
+        </div>
+      ) : (
+        <p className="text-gray-500">No course details available.</p>
       )}
+    </div>
+  </div>
+)}
+
 
 
       {/* Quick Stats Row */}

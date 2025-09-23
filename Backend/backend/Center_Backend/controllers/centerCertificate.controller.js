@@ -22,7 +22,7 @@ export const getCenterCertificate = async (req, res) => {
         const __dirname = path.dirname(__filename);
         const templatePath = path.join(__dirname, '..', '..', 'templates', 'centerCertificate.pdf');
         const templateBytes = fs.readFileSync(templatePath);
-        
+
 
         const pdfDoc = await PDFDocument.load(templateBytes);
         const pages = pdfDoc.getPages();
@@ -87,11 +87,22 @@ export const getCenterCertificate = async (req, res) => {
         //     borderWidth: 1
         // });
 
+        // Franchise Name Box
         const franchiseName = franchise.franchiseName || '';
-        const fontSizeFranchise = 28;
-        const textWidthFranchise = boldFont.widthOfTextAtSize(franchiseName, fontSizeFranchise);
-        const textHeightFranchise = boldFont.heightAtSize(fontSizeFranchise);
 
+        // Max and min font sizes
+        let fontSizeFranchise = 28;
+        const minFontSize = 10;
+
+        // Shrink font size until it fits
+        let textWidthFranchise = boldFont.widthOfTextAtSize(franchiseName, fontSizeFranchise);
+        while (textWidthFranchise > boxWidthName && fontSizeFranchise > minFontSize) {
+            fontSizeFranchise -= 1;
+            textWidthFranchise = boldFont.widthOfTextAtSize(franchiseName, fontSizeFranchise);
+        }
+
+        // Center text inside the box
+        const textHeightFranchise = boldFont.heightAtSize(fontSizeFranchise);
         const textXFranchise = boxXName + (boxWidthName - textWidthFranchise) / 2;
         const textYFranchise = boxYName + (boxHeightName - textHeightFranchise) / 2 + 4;
 
@@ -103,7 +114,7 @@ export const getCenterCertificate = async (req, res) => {
             color: rgb(0, 0, 0)
         });
 
-               // ✅ Helper: Word wrap
+        // ✅ Helper: Word wrap
         function wrapText(text, font, fontSize, maxWidth) {
             const words = text.split(' ');
             let lines = [];
@@ -124,7 +135,7 @@ export const getCenterCertificate = async (req, res) => {
             return lines;
         }
 
-        // ========== Address Box (Auto-Wrapped) ==========
+        // ========== Address Box (Max 2 Lines) ==========
         const boxXAddr = 95;
         const boxYAddr = 540;
         const boxWidthAddr = 350;
@@ -133,19 +144,27 @@ export const getCenterCertificate = async (req, res) => {
         const fontSizeAddr = 14;
         const lineSpacingAddr = 15;
 
-        let addressLines = [];
+        // Full address in one string
+        const fullAddress = `${franchise.address || ''}, ${franchise.city || ''}, ${franchise.state || ''} - ${franchise.postalCode || ''}`.trim();
 
-        // Wrap both parts
-        addressLines = [
-            ...wrapText(franchise.address || '', boldFont, fontSizeAddr, boxWidthAddr),
-            ...wrapText(`${franchise.city || ''}, ${franchise.state || ''} - ${franchise.postalCode || ''}`, boldFont, fontSizeAddr, boxWidthAddr)
-        ];
+        // Wrap into lines
+        let addressLines = wrapText(fullAddress, boldFont, fontSizeAddr, boxWidthAddr);
 
-        // Calculate height and starting Y
+        // Limit to 2 lines only
+        if (addressLines.length > 2) {
+            addressLines = addressLines.slice(0, 2);
+            // Add ellipsis (...) at the end of the 2nd line if cut off
+            if (!fullAddress.endsWith(addressLines[1])) {
+                addressLines[1] = addressLines[1].replace(/.$/, '') + '…';
+            }
+        }
+
+        // Calculate height and center vertically
         const textHeightAddr = boldFont.heightAtSize(fontSizeAddr);
         const totalTextHeight = addressLines.length * (textHeightAddr + 2);
         let startYAddr = boxYAddr + (boxHeightAddr - totalTextHeight) / 2 + (addressLines.length - 1) * lineSpacingAddr;
 
+        // Draw lines
         addressLines.forEach((line, i) => {
             const textWidth = boldFont.widthOfTextAtSize(line, fontSizeAddr);
             const textX = boxXAddr + (boxWidthAddr - textWidth) / 2;
@@ -159,6 +178,7 @@ export const getCenterCertificate = async (req, res) => {
                 color: rgb(0, 0, 1)
             });
         });
+
 
         // ========== Owner Name & Franchise ID ==========
         const ownerName = franchise.ownerName || '';
@@ -187,10 +207,11 @@ export const getCenterCertificate = async (req, res) => {
         const formatDate = (date) => {
             return date.toLocaleDateString('en-GB', {
                 day: 'numeric',
-                month: 'long',
+                month: 'short',  // <-- gives Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sept, Oct, Nov, Dec
                 year: 'numeric'
-            });
+            }).replace('.', ''); // removes the dot (e.g., "Sept." -> "Sept")
         };
+
 
         const activationDate = franchise.activationDate
             ? new Date(franchise.activationDate)

@@ -50,13 +50,13 @@ const FeeHistory = () => {
   return (
     <div className="max-w-3xl mx-auto mt-8 px-4">
       <h2 className="text-2xl font-bold mb-6 text-gray-800">
-        Fee History for {data.student.name}
+        Your Recent Fees Transaction Records
       </h2>
       <div className="space-y-4">
         {/* Headings Row */}
-        <div className="grid grid-cols-4 gap-4 bg-gray-200 rounded-lg py-2 px-3 font-semibold text-gray-700">
+        <div className="grid grid-cols-3 gap-4 bg-gray-200 rounded-lg py-2 px-3 font-semibold text-gray-700">
           <div>Date</div>
-          <div>Fee Type</div>
+          {/* <div>Fee Type</div> */}
           <div>Amount Paid</div>
           <div>Payment Mode</div>
         </div>
@@ -65,10 +65,10 @@ const FeeHistory = () => {
         {data.feeHistory.map((item) => (
           <div
             key={item._id}
-            className="grid grid-cols-4 gap-4 bg-white rounded-lg shadow p-4 items-center border hover:shadow-md transition"
+            className="grid grid-cols-3 gap-4 bg-white rounded-lg shadow p-4 items-center border hover:shadow-md transition"
           >
             <div className="text-gray-600">{item.date}</div>
-            <div className="text-gray-700">{item.feeId?.name || "N/A"}</div>
+            {/* <div className="text-gray-700">{item.feeId?.name || "N/A"}</div> */}
             <div className="text-green-700 font-semibold">₹{item.amount}</div>
             <div className="text-blue-600">{item.paymentMode}</div>
           </div>

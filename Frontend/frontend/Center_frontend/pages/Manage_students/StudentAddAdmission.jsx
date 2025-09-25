@@ -109,6 +109,31 @@ const AddNewStudent = () => {
     fetchCourses();
   }, []);
 
+ // Utility: deep trim all string values in an object/array (non-destructive for files and numbers)
+ const deepTrim = (data) => {
+   if (typeof data === 'string') return data.trim();
+   if (Array.isArray(data)) return data.map(deepTrim);
+   if (data && typeof data === 'object') {
+     // Do not mutate File objects
+     if (typeof File !== 'undefined' && data instanceof File) return data;
+     const result = {};
+     Object.entries(data).forEach(([k, v]) => {
+       // Preserve booleans, numbers, null/undefined as is; trim strings recursively
+       if (v === null || v === undefined) {
+         result[k] = v;
+       } else if (typeof v === 'string') {
+         result[k] = v.trim();
+       } else if (Array.isArray(v) || (v && typeof v === 'object')) {
+         result[k] = deepTrim(v);
+       } else {
+         result[k] = v;
+       }
+     });
+     return result;
+   }
+   return data;
+ };
+
 const validateForm = (formData) => {
   const errors = {};
   
@@ -318,8 +343,11 @@ const handleChange = (e) => {
 const handleSubmit = async (e) => {
   e.preventDefault();
   
-  // Client-side validation
-  const validationErrors = validateForm(formData);
+  // Sanitize inputs to ensure no leading/trailing spaces are sent
+  const sanitizedFormData = deepTrim(formData);
+
+  // Client-side validation using sanitized data
+  const validationErrors = validateForm(sanitizedFormData);
   if (Object.keys(validationErrors).length > 0) {
     const firstError = Object.values(validationErrors)[0];
     toast.error(firstError);
@@ -343,30 +371,29 @@ const handleSubmit = async (e) => {
     }
     
     // Append files
-    if (formData.studentPhoto) {
-      formDataToSend.append("studentPhoto", formData.studentPhoto); 
+    if (sanitizedFormData.studentPhoto) {
+      formDataToSend.append("studentPhoto", sanitizedFormData.studentPhoto); 
     }
-    if (formData.studentSignature) {
-      formDataToSend.append("studentSignature", formData.studentSignature);
+    if (sanitizedFormData.studentSignature) {
+      formDataToSend.append("studentSignature", sanitizedFormData.studentSignature);
     }
 
     // Append other fields with trimming for string values
-    Object.entries(formData).forEach(([key, value]) => {
+    Object.entries(sanitizedFormData).forEach(([key, value]) => {
       if (key !== "studentPhoto" && key !== "studentSignature" && key !== "courseInterested"  && value !== null && value !== undefined) {
         if (typeof value === 'object' && !Array.isArray(value)) {
           formDataToSend.append(key, JSON.stringify(value));
         } else if (Array.isArray(value)) {
           formDataToSend.append(key, JSON.stringify(value));
         } else {
-          // Trim string values to remove leading/trailing spaces
-          const trimmedValue = typeof value === 'string' ? value.trim() : value;
-          formDataToSend.append(key, trimmedValue);
+          // Values are already sanitized; append directly
+          formDataToSend.append(key, value);
         } 
       }
     }); 
      
     // Handle courseInterested separately
-    formDataToSend.append("courseInterested", JSON.stringify(formData.courseInterested));
+    formDataToSend.append("courseInterested", JSON.stringify(sanitizedFormData.courseInterested));
     
     const response = await axios.post( 
       `${API_BASE_URL}/api/v1/institute_student/register_student`,

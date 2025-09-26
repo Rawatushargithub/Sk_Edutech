@@ -31,21 +31,17 @@ const buildTransporter = async () => {
                 user: process.env.MAIL_USERNAME,
                 pass: process.env.MAIL_PASSWORD,
             },
+            // Add connection timeouts for better reliability
+            connectionTimeout: 60000, // 60 seconds
+            greetingTimeout: 30000,   // 30 seconds
+            socketTimeout: 60000      // 60 seconds
         });
 
         // If forced or in production, use configured SMTP and do not fallback
         if (forceSmtp || isProd) {
             console.log(`[Mailer] Using Configured SMTP (${process.env.MAIL_HOST}:${mailPort}) [forced=${forceSmtp}, prod=${isProd}]`);
-            // Optional: verify and throw explicit error if misconfigured
-            try {
-                await Promise.race([
-                    transporter.verify(),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('verify timeout')), 5000)),
-                ]);
-            } catch (e) {
-                console.error('[Mailer] Configured SMTP verification failed:', e.message);
-                throw new Error(`Configured SMTP verification failed: ${e.message}`);
-            }
+            // SKIP VERIFICATION IN PRODUCTION - it's causing timeouts on Render
+            console.log('[Mailer] Skipping SMTP verification in production environment');
             return transporter;
         }
 

@@ -170,7 +170,6 @@ const sendEmailViaAPI = async ({ to, subject, text, html }) => {
     // This would require Brevo API key instead of SMTP
     // Uncomment and configure if SMTP issues persist
     
-    /*
     const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
     const BREVO_API_KEY = process.env.BREVO_API_KEY;
     
@@ -198,13 +197,12 @@ const sendEmailViaAPI = async ({ to, subject, text, html }) => {
     });
 
     if (!response.ok) {
+        const errorBody = await response.text();
+        console.error(`[Mailer] Brevo API Error: ${response.status} ${response.statusText}`, errorBody);
         throw new Error(`Brevo API error: ${response.status} ${response.statusText}`);
     }
 
     return await response.json();
-    */
-    
-    throw new Error('API fallback not implemented yet');
 };
 
 export { sendEmail, sendEmailViaAPI };

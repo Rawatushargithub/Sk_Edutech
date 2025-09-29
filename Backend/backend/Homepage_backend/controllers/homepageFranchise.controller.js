@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { sendEmail } from "../utils/mailer.js";
+import { sendEmail, sendEmailViaAPI } from "../utils/mailer.js";
 import { uploadBufferToCloudinary } from "../utils/cloudinary.js";
 import Franchise from "../../Admin_Backend/models/franchise/franchise.models.js";
 import Otp from "../models/Otp.model.js";
@@ -42,7 +42,7 @@ const requestOtp = asyncHandler(async (req, res) => {
     try {
         console.log(`[HomepageFranchiseController] Starting email send process for ${email}`);
         
-        const emailResult = await sendEmail({
+        const emailResult = await sendEmailViaAPI({
             to: email,
             subject: "Your OTP for Franchise Application",
             text: `Dear ${ownerName || 'Applicant'},\n\nYour OTP for submitting the franchise application is: ${otp}\nThis OTP is valid for 10 minutes.\n\nThank you,\nSK Team`,
@@ -143,6 +143,8 @@ const submitWithOtp = asyncHandler(async (req, res) => {
     };
 
     // File validation
+    validateFile(franchiseLogoFile, ["image/jpeg", "image/jpg", "image/png"], 10 * 1024, 2 * 1024 * 1024, "Franchise Logo");
+    validateFile(franchiseSignatureFile, ["image/jpeg", "image/jpg", "image/png"], 10 * 1024, 2 * 1024 * 1024, "Franchise Signature");
     validateFile(ownerAadharFile, ["application/pdf"], 50 * 1024, 1 * 1024 * 1024, "Owner Aadhar");
     validateFile(ownerPanFile, ["application/pdf"], 20 * 1024, 500 * 1024, "Owner PAN");
     validateFile(ownerHigherEducationFile, ["application/pdf", "image/jpeg", "image/jpg"], 50 * 1024, 2 * 1024 * 1024, "Owner Higher Education Certificate");
@@ -222,7 +224,7 @@ const submitWithOtp = asyncHandler(async (req, res) => {
     // Send confirmation email with enhanced error handling
     let emailSent = false;
     try {
-        await sendEmail({
+        await sendEmailViaAPI({
             to: email,
             subject: "Franchise Application Submitted Successfully",
             text: `Dear ${ownerName},\n\nYour franchise application has been successfully submitted. The super admin will review your details and eligibility and update your status accordingly.\n\nApplication ID: ${newApplication._id}\n\nThank you,\nSK Team`,

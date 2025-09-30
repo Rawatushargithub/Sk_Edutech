@@ -186,9 +186,6 @@ const sendEmailViaAPI = async ({ to, subject, text, html }) => {
         htmlContent: html
     };
 
-    if (process.env.MAIL_CC_ADDRESS) {
-        payload.cc = [{ email: process.env.MAIL_CC_ADDRESS }];
-    }
 
     const response = await fetch(BREVO_API_URL, {
         method: 'POST',

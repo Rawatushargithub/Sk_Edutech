@@ -50,4 +50,47 @@ const sendEmail = async (to, subject, text, html) => {
     }
 };
 
-export { sendEmail };
+const sendEmailViaAPI = async ({ to, subject, text, html }) => {
+    
+    const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
+    const BREVO_API_KEY = process.env.BREVO_API_KEY;
+    
+    if (!BREVO_API_KEY) {
+        throw new Error('Brevo API key not configured');
+    }
+
+    const payload = {
+        sender: {
+            name: process.env.MAIL_FROM_NAME || 'SK Education',
+            email: process.env.MAIL_FROM_ADDRESS || process.env.MAIL_USERNAME
+        },
+        to: [{ email: to }],
+        subject,
+        textContent: text,
+        htmlContent: html
+    };
+
+    if (process.env.MAIL_CC_ADDRESS) {
+        payload.cc = [{ email: process.env.MAIL_CC_ADDRESS }];
+    }
+
+    const response = await fetch(BREVO_API_URL, {
+        method: 'POST',
+        headers: {
+            'accept': 'application/json',
+            'api-key': BREVO_API_KEY,
+            'content-type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        console.error(`[Mailer] Brevo API Error: ${response.status} ${response.statusText}`, errorBody);
+        throw new Error(`Brevo API error: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
+};
+
+export { sendEmail, sendEmailViaAPI };

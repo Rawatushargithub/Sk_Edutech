@@ -6,7 +6,7 @@ import { asyncHandler } from '../../utils/asynchanlder.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 import { uploadOnCloudinary } from '../../utils/cloudinary.js';
-import { sendEmail } from '../../utils/mailer.js'; // Import the email utility
+import { sendEmail, sendEmailViaAPI } from '../../utils/mailer.js'; // Import the email utility
 
 const JWT_SECRET = process.env.JWT_SECRET;
 // Helper function to generate Franchise ID (Example: SK + 6 random digits)
@@ -293,7 +293,7 @@ const updateFranchiseStatusVerification = asyncHandler(async (req, res) => {
 
         // Send the activation/verification email
         try {
-            await sendEmail(recipientEmail, subject, textBody, htmlBody);
+            await sendEmailViaAPI(recipientEmail, subject, textBody, htmlBody);
         } catch (emailError) {
             console.error(`!!! Failed to send activation/verification email to ${recipientEmail}:`, emailError.message);
             // Decide if this should cause the API request to fail or just log the error
@@ -308,7 +308,7 @@ const updateFranchiseStatusVerification = asyncHandler(async (req, res) => {
          console.log(`   Email to: ${recipientEmail}`);
          console.log(`--------------------------------------`);
          try {
-            await sendEmail(recipientEmail, subject, textBody, htmlBody);
+            await sendEmailViaAPI(recipientEmail, subject, textBody, htmlBody);
          } catch (emailError) {
              console.error(`!!! Failed to send rejection email to ${recipientEmail}:`, emailError.message);
          }
@@ -321,7 +321,7 @@ const updateFranchiseStatusVerification = asyncHandler(async (req, res) => {
          console.log(`   Email to: ${recipientEmail}`);
          console.log(`--------------------------------------`);
           try {
-            await sendEmail(recipientEmail, subject, textBody, htmlBody);
+            await sendEmailViaAPI(recipientEmail, subject, textBody, htmlBody);
          } catch (emailError) {
              console.error(`!!! Failed to send inactivation email to ${recipientEmail}:`, emailError.message);
          }
@@ -564,7 +564,7 @@ const resendFranchiseCredentials = asyncHandler(async (req, res) => {
     const htmlBody = `<p>Hello ${ownerName},</p><p>Your credentials for SK Edutech have been reset/resent.</p><p><b>Franchise ID:</b> ${loginId}<br><b>New Password:</b> ${newRawPassword}</p><p>Please use these to log in.</p><p>Regards,<br>The SK Edutech Team</p>`;
 
     try {
-        await sendEmail(recipientEmail, subject, textBody, htmlBody);
+        await sendEmailViaAPI(recipientEmail, subject, textBody, htmlBody);
         console.log(`--- Credentials Resent Successfully for ${recipientEmail} ---`);
         console.log("Frenchise password", newRawPassword); // Log the new password for debugging (remove in production)
         return res.status(200).json(

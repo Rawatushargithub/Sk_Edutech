@@ -167,14 +167,27 @@ const sendEmail = async ({ to, subject, text, html }, retryCount = 0) => {
  * You can use this if SMTP continues to fail
  */
 const sendEmailViaAPI = async ({ to, subject, text, html }) => {
-    // This would require Brevo API key instead of SMTP
-    // Uncomment and configure if SMTP issues persist
     
     const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
     const BREVO_API_KEY = process.env.BREVO_API_KEY;
     
     if (!BREVO_API_KEY) {
         throw new Error('Brevo API key not configured');
+    }
+
+    const payload = {
+        sender: {
+            name: process.env.MAIL_FROM_NAME || 'SK Education',
+            email: process.env.MAIL_FROM_ADDRESS || process.env.MAIL_USERNAME
+        },
+        to: [{ email: to }],
+        subject,
+        textContent: text,
+        htmlContent: html
+    };
+
+    if (process.env.MAIL_CC_ADDRESS) {
+        payload.cc = [{ email: process.env.MAIL_CC_ADDRESS }];
     }
 
     const response = await fetch(BREVO_API_URL, {
@@ -184,16 +197,7 @@ const sendEmailViaAPI = async ({ to, subject, text, html }) => {
             'api-key': BREVO_API_KEY,
             'content-type': 'application/json'
         },
-        body: JSON.stringify({
-            sender: {
-                name: process.env.MAIL_FROM_NAME || 'SK Education',
-                email: process.env.MAIL_FROM_ADDRESS || process.env.MAIL_USERNAME
-            },
-            to: [{ email: to }],
-            subject,
-            textContent: text,
-            htmlContent: html
-        })
+        body: JSON.stringify(payload)
     });
 
     if (!response.ok) {

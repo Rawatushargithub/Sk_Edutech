@@ -1,4 +1,4 @@
-import React, { useState , useEffect } from "react";
+import React, { useState , useEffect, useCallback } from "react";
 import axios from "axios";
 import Fees_table from "./Fees_table";
 import { ToastContainer, toast } from 'react-toastify';
@@ -64,6 +64,10 @@ const AddNewStudent = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showFormView, setShowFormView] = useState(false);
   const [registeredStudent, setRegisteredStudent] = useState(null);
+
+  const handleCloseFormView = useCallback(() => {
+    setShowFormView(false);
+  }, []);
 
   useEffect(() => {
     // Fetch courses from the backend
@@ -161,7 +165,9 @@ const validateForm = (formData) => {
     errors.courseInterested = "Course selection is required";
   }
   
-  if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+  if (!formData.email?.trim()) {
+    errors.email = "Email is required";
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
     errors.email = "Please enter a valid email address";
   }
   
@@ -704,7 +710,7 @@ const handleSubmit = async (e) => {
           {/* Personal Details Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div>
-              <label className="block mb-2 text-sm font-medium">Email</label>
+              <label className="block mb-2 text-sm font-medium">Email <span className="text-red-500">*</span></label>
               <input
                 type="email"
                 name="email"
@@ -860,7 +866,7 @@ const handleSubmit = async (e) => {
       {showFormView && registeredStudent && (
         <FormView
           student={registeredStudent}
-          onClose={() => setShowFormView(false)}
+          onClose={handleCloseFormView}
         />
       )}
     </div>

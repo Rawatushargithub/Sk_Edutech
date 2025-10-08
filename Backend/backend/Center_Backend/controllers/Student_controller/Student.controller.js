@@ -177,6 +177,15 @@ const registerStudent = asyncHandler(async (req, res) => {
       });
     }
 
+    // Prevent empty email string
+    if (email && email.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Email cannot be empty",
+        code: "EMPTY_EMAIL",
+      });
+    }
+
     // Roll number will be auto-generated, so no need to check for duplicates here
 
     // Check for duplicate email if provided

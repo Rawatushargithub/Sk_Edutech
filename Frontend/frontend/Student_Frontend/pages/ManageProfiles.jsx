@@ -8,6 +8,7 @@ const ManageProfile = () => {
   const studentData = JSON.parse(localStorage.getItem("student"));
   const studentId = studentData ? studentData.studentId : null;
 
+
   useEffect(() => {
     const fetchStudentDetails = async () => {
       try {
@@ -18,7 +19,9 @@ const ManageProfile = () => {
           throw new Error("Failed to fetch student details");
         }
 
+
         const data = await response.json();
+        // console.log("student data:", data);
         setStudent(data.student);
       } catch (error) {
         console.error("Error fetching student details:", error);
@@ -55,8 +58,8 @@ const ManageProfile = () => {
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric', 
-      month: 'short', 
+      year: 'numeric',
+      month: 'short',
       day: 'numeric'
     });
   };
@@ -69,7 +72,7 @@ const ManageProfile = () => {
           <h1 className="text-2xl font-bold text-center">STUDENT PROFILE</h1>
           <p className="text-center text-blue-100 font-bold text-sm">Roll Number: {student.rollNumber}</p>
         </div>
-        
+
         {/* Main Form Container */}
         <div className="bg-white rounded-b-lg shadow-lg border border-gray-200">
           {/* Photo and Signature Section */}
@@ -90,7 +93,7 @@ const ManageProfile = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Right: Signature */}
             <div className="w-full md:w-1/2 p-6">
               <div className="flex flex-col items-center">
@@ -108,20 +111,20 @@ const ManageProfile = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Student Details Section */}
           <div className="p-6">
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-blue-950 border-b border-blue-200 pb-2 mb-4">
                 Personal Information
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500">Full Name</span>
                   <p className="font-medium">{student.abbreviation} {student.studentName} {student.surnameName}</p>
                 </div>
-                
+
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500 flex items-center">
                     <Calendar size={12} className="mr-1" />
@@ -129,24 +132,24 @@ const ManageProfile = () => {
                   </span>
                   <p className="font-medium">{formatDate(student.dob)}</p>
                 </div>
-                
+
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500">Gender</span>
                   <p className="font-medium">{student.gender}</p>
                 </div>
-                
+
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500">Caste</span>
                   <p className="font-medium">{student.caste}</p>
                 </div>
               </div>
             </div>
-            
+
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-blue-950 border-b border-blue-200 pb-2 mb-4">
                 Contact Information
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500 flex items-center">
@@ -155,7 +158,7 @@ const ManageProfile = () => {
                   </span>
                   <p className="font-medium">{student.studentMobile}</p>
                 </div>
-                
+
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500 flex items-center">
                     <Phone size={12} className="mr-1" />
@@ -163,7 +166,7 @@ const ManageProfile = () => {
                   </span>
                   <p className="font-medium">{student.alternateMobile || "Not provided"}</p>
                 </div>
-                
+
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500 flex items-center">
                     <Mail size={12} className="mr-1" />
@@ -171,7 +174,7 @@ const ManageProfile = () => {
                   </span>
                   <p className="font-medium">{student.email}</p>
                 </div>
-                
+
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500 flex items-center">
                     <MapPin size={12} className="mr-1" />
@@ -179,42 +182,42 @@ const ManageProfile = () => {
                   </span>
                   <p className="font-medium">{student.city}, {student.postCode}</p>
                 </div>
-                
+
                 <div className="border border-gray-200 rounded p-3 bg-gray-50 md:col-span-2">
                   <span className="text-xs text-gray-500">Permanent Address</span>
                   <p className="font-medium">{student.permanentAddress}</p>
                 </div>
               </div>
             </div>
-            
+
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-blue-950 border-b border-blue-200 pb-2 mb-4">
                 Family Information
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500">Relation Type</span>
                   <p className="font-medium">{student.relationType}</p>
                 </div>
-                
+
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500">Father's Name</span>
-                  <p className="font-medium">{student.relationType} {student.surnameName}</p>
+                  <p className="font-medium"> {student.fatherHusbandName}</p>
                 </div>
-                
+
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500">Mother's Name</span>
                   <p className="font-medium">{student.motherName}</p>
                 </div>
               </div>
             </div>
-            
+
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-blue-950 border-b border-blue-200 pb-2 mb-4">
                 Academic Information
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500">Course Interested</span>
@@ -225,13 +228,13 @@ const ManageProfile = () => {
                   <span className="text-xs text-gray-500">Course Interested</span>
                   <p className="font-medium">{student.courseInterested.courseCode}</p>
                 </div>
-                
-                
+
+
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500">Admission Date</span>
                   <p className="font-medium">{formatDate(student.admissionDate)}</p>
                 </div>
-                
+
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500 flex items-center">
                     <Award size={12} className="mr-1" />
@@ -239,12 +242,12 @@ const ManageProfile = () => {
                   </span>
                   <p className="font-medium">{student.qualifications}</p>
                 </div>
-                
+
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500">Occupation</span>
                   <p className="font-medium">{student.occupation}</p>
                 </div>
-                
+
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
                   <span className="text-xs text-gray-500">Referral Code</span>
                   <p className="font-medium">{student.referralCode || "None"}</p>
@@ -252,7 +255,7 @@ const ManageProfile = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Form Footer */}
           {/* <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 text-center">
             <p className="text-sm text-gray-500">

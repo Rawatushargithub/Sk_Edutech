@@ -21,7 +21,7 @@ const ManageProfile = () => {
 
 
         const data = await response.json();
-        // console.log("student data:", data);
+        console.log("student data:", data);
         setStudent(data.student);
       } catch (error) {
         console.error("Error fetching student details:", error);

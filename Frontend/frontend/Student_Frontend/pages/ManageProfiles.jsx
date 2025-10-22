@@ -202,7 +202,7 @@ const ManageProfile = () => {
                 </div>
 
                 <div className="border border-gray-200 rounded p-3 bg-gray-50">
-                  <span className="text-xs text-gray-500">Father's 1 Name</span>
+                  <span className="text-xs text-gray-500">Father's Name</span>
                   <p className="font-medium"> {student.fatherHusbandName}</p>
                 </div>
 

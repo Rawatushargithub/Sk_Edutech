@@ -1620,7 +1620,7 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
     drawText(`Rs ${student.feeDetails.feesReceived}`, 269, 238);
 
     // Balance Fees (after "BALANCE FEES :")
-    let finalBalanceFee;
+    let balanceText = '';
     if (student.feeDetails) {
         const totalFeeNum = Number(student.feeDetails.totalFees || 0);
         const paidFeeNum = Number(student.feeDetails.feesReceived || 0);
@@ -1628,19 +1628,22 @@ const generateAdmissionForm = asyncHandler(async (req, res) => {
 
         const hasInstallments = Array.isArray(student.installmentDetails) && student.installmentDetails.length > 0;
         
-        let dueFromInstallments = 0;
         if (hasInstallments) {
             const totalInstallmentAmount = student.installmentDetails.reduce((sum, inst) => sum + (inst.amount || 0), 0);
             const paidInstallmentAmount = student.installmentDetails.reduce((sum, inst) => sum + (inst.paidAmount || 0), 0);
-            dueFromInstallments = totalInstallmentAmount - paidInstallmentAmount;
+            const dueFromInstallments = totalInstallmentAmount - paidInstallmentAmount;
+            const totalInstallments = student.installmentDetails.length;
+            
+            // For installments, show the installment balance and count
+            balanceText = `Rs ${dueFromInstallments.toLocaleString()} (${totalInstallments} Installments)`;
+        } else {
+            // For non-installment, just show the balance fee
+            balanceText = `Rs ${dueFromFees.toLocaleString()}`;
         }
-
-        const display = hasInstallments ? dueFromInstallments : dueFromFees;
-        finalBalanceFee = isNaN(display) ? 0 : display;
     } else {
-        finalBalanceFee = 0;
+        balanceText = 'Rs 0';
     }
-    drawText(`Rs ${finalBalanceFee.toLocaleString()}`, 455, 238);
+    drawText(balanceText, 410, 238);
   }
 
   // Contact Number (after "CONTACT NO. :")

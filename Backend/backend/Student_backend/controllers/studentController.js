@@ -283,7 +283,6 @@ export const getCourseDuration = async (req, res) => {
 export const getFranchiseLogo = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("Fetching logo for franchise ID:", id);
 
     const franchise = await Franchise.findOne({ franchiseId: id });
 
@@ -325,7 +324,6 @@ export const getStudentImage = async (req, res) => {
   try {
     const { rollNumber } = req.params;
     const decodedRollNumber = decodeURIComponent(rollNumber);
-    console.log("Fetching image for student roll number:", rollNumber);
 
     const student = await Student.findOne({ rollNumber: rollNumber });
 

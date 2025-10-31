@@ -14,7 +14,7 @@ const Dashboard = ({ student, setSelectedComponent }) => {
             <TopBar />
             <StatsSection />
             <QuickActions setTab={setSelectedComponent} />
-            <ToggleSection />
+            <ToggleSection student={student} />
         </>
     );
 };

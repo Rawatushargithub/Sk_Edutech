@@ -4,7 +4,7 @@ import { getCourseByCode, getCoursesByFranchise, getCourseSyllabus } from "../co
 const   router = express.Router();
 
 // Route -> /api/courses/:courseCode
-router.get("/:courseCode", getCourseByCode);
+router.get("/student/:studentId", getCourseByCode);
 router.get("/list/:franchiseId", getCoursesByFranchise);
 router.post("/course-syllabus", getCourseSyllabus);
 

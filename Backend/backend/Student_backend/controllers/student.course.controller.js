@@ -1,27 +1,72 @@
 import Course from "../../Center_Backend/models/Courses/Courses.models.js"; // adjust path if needed
-
+import Student from "../../Student_backend/models/Student.js";
+import Fee from "../models/Fees.js";
+import mongoose from "mongoose";
 // Get course details by courseCode
 export const getCourseByCode = async (req, res) => {
-  try {
-    const { courseCode } = req.params;
-  
-    // console.log(courseCode);
-    if (!courseCode) {
-      return res.status(400).json({ success: false, message: "Course code is required" });
+   try {
+    const { studentId } = req.params; // Get studentId from URL params
+console.log("studentId :",studentId)
+    if (!studentId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Student ID is required" 
+      });
     }
+    const objectId = new mongoose.Types.ObjectId(studentId);
+    // Find the student
+    const student = await Student.findById(objectId)
+      .populate('feeDetails') // Populate the fee details
+      .select('studentName email studentMobile courseInterested feeDetails');
 
-    // Find course and exclude notes & videos
-    const course = await Course.findOne({ courseCode: courseCode })
-      .select("-courseMaterials -courseVideoLinks");
-
-    if (!course) {
-      return res.status(404).json({ success: false, message: "Course not found" });
+    if (!student) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Student not found" 
+      });
     }
+    
+    // Get all fee records for this student
+    const feeRecords = await Fee.find({ studentId: student._id });
 
-    return res.status(200).json({ success: true, data: course });
+    const coursedetails = await Course.findOne({ courseCode: student.courseInterested.courseCode })
+    .select("courseImage courseName courseSubject courseCode courseDuration courseEligibility courseSyllabus");
+    console.log("coursedetails :", coursedetails)
+
+
+    // Prepare response data
+    const responseData = {
+      student: {
+        name: student.studentName,
+        email: student.email,
+        mobile: student.studentMobile,
+        course: student.courseInterested
+      },
+      feeDetails: feeRecords.map(fee => ({
+        courseFees: fee.courseFees,
+        discountType: fee.discountType,
+        discountAmount: fee.discountAmount,
+        totalFees: fee.totalFees,
+        feesReceived: fee.feesReceived,
+        balance: fee.balance,
+        remarks: fee.remarks,
+        createdAt: fee.createdAt
+      })),
+      coursedetails: coursedetails
+    };
+
+    return res.status(200).json({ 
+      success: true, 
+      data: responseData 
+    });
+
   } catch (error) {
-    console.error("Error fetching course:", error);
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    console.error("Error fetching student course details:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error", 
+      error: error.message 
+    });
   }
 };
 

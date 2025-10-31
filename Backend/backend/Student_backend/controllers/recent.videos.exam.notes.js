@@ -6,10 +6,11 @@ import Batch from "../../Center_Backend/models/batch.model.js"
 // Get notes and videos for a course
 export const getCourseResources = async (req, res) => {
   try {
+  
     const { courseCode } = req.params;
 
     // Find the latest course (if multiple exist with same code)
-    const course = await Course.findOne({ courseCode })
+    const course = await Course.findOne({ courseCode:courseCode })
       .sort({ createdAt: -1 }) // ✅ latest first
       .lean();
 

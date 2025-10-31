@@ -3,7 +3,7 @@ import axios from "axios";
 import { BookOpen, CreditCard, Calendar, User, Clock, Disc, Loader } from "lucide-react";
 import API_BASE_URL from "../../../config";
 
-const StatsSection = () => {
+const StatsSection = () => { 
   const [fees, setFees] = useState(null);
   const [installments, setInstallments] = useState([]);
   const [transactions, setTransactions] = useState([]);

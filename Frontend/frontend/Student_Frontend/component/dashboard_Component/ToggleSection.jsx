@@ -13,24 +13,31 @@ const ToggleSection = ({ student }) => {
   // Extract student, course, and batch info from localStorage or props
   const storedStudent = localStorage.getItem("student");
   const parsedStudent = storedStudent ? JSON.parse(storedStudent) : null;
+
   const course = student?.courseCode || parsedStudent?.courseCode;
   const rollNumber = student?.rollNumber || parsedStudent?.rollNumber;
   const franchiseId = student?.franchiseId || parsedStudent?.franchiseId;
   console.log(rollNumber, franchiseId);
   // console.log("runnning course  :", course);
-
+ 
   const batchId = parsedStudent?.batch?.id || student?.batch?.id;
 
   // Fetch notes, videos, and exam details
   useEffect(() => {
-    console.log("running 1:");
-    if (!course) return;
-    console.log("runnning :");
 
+    if (!course) return;
+
+ let courseCode = course
     // Fetch Notes and Videos
-    fetch(`${API_BASE_URL}/api/v1/recentlyadded/course/resources/${course}`)
+    fetch(`${API_BASE_URL}/api/v1/recentlyadded/course/resources/${courseCode}`,{
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
       .then((res) => res.json())
       .then((data) => {
+  
         setNotes(data.notes || []);
         setVideos(data.videos || []);
         // console.log("running");

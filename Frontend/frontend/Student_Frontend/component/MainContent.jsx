@@ -59,12 +59,12 @@ const MainContent = () => {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex md:h-screen h-auto">
       {/* Sidebar */}
       <Sidebar onSelect={setSelectedComponent} />
 
       {/* Right Content */}
-      <div className="flex-1 overflow-auto ml-64">{renderComponent()}</div>
+      <div className="flex-1 overflow-auto md:ml-64 ml-0">{renderComponent()}</div>
     </div>
   );
 };

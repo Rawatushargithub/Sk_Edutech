@@ -585,7 +585,8 @@ import {
     Download,
     Timer,
     AlertCircle,
-    PlayCircle
+    PlayCircle,
+    RefreshCcw
 } from "lucide-react";
 import API_BASE_URL from "../../config";
 
@@ -594,6 +595,7 @@ const ExamDetails = () => {
     const [error, setError] = useState("");
     const [downloadingAdmit, setDownloadingAdmit] = useState(null);
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [refreshing, setRefreshing] = useState(false);
     const navigate = useNavigate();
 
     const storedStudent = localStorage.getItem("student");
@@ -611,59 +613,101 @@ const ExamDetails = () => {
     }, []);
 
     console.log("Roll No .", rollNumber);
-    useEffect(() => {
-        const fetchExams = async () => {
-            try {
-                // Send POST request with roll number and course code
-                const res = await fetch(`${API_BASE_URL}/api/exams/by-student-details`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        rollNumber: rollNumber,
-                        courseCode: courseCode
-                    })
-                });
 
-                const data = await res.json();
-                if (res.ok) {
-                    setExams(data.exams);
-                    console.log("Exams fetched successfully:", data.exams);
-                } else {
-                    setError(data.message || "Failed to fetch exams");
-                }
-            } catch (err) {
-                setError("Server error: " + (err.message || "An error occurred while fetching exams"));
+    const refreshExams = async () => {
+        if (!courseCode || !rollNumber) return;
+        try {
+            setRefreshing(true);
+            setError("");
+            const res = await fetch(`${API_BASE_URL}/api/exams/by-student-details`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    rollNumber: rollNumber,
+                    courseCode: courseCode
+                })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                setExams(data.exams);
+            } else {
+                setError(data.message || "Failed to fetch exams");
             }
-        };
+        } catch (err) {
+            setError("Server error: " + (err.message || "An error occurred while fetching exams"));
+        } finally {
+            setRefreshing(false);
+            setCurrentTime(new Date());
+        }
+    };
 
-        if (courseCode && rollNumber) fetchExams();
+    useEffect(() => {
+        refreshExams();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [courseCode, rollNumber]);
 
     // Function to create a proper date-time object from exam date and time
     const createExamDateTime = (examDate, timeStr) => {
         try {
-            // Parse the date string (assuming format like "2025-01-15" or "15/01/2025")
-            let dateObj;
-            if (examDate.includes('/')) {
-                // Handle DD/MM/YYYY format
-                const [day, month, year] = examDate.split('/');
+            const ds = String(examDate).trim();
+            let dateObj = null;
+            if (ds.includes('/')) {
+                const parts = ds.split('/');
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10);
+                const year = parseInt(parts[2], 10);
                 dateObj = new Date(year, month - 1, day);
             } else {
-                // Handle YYYY-MM-DD format
-                dateObj = new Date(examDate);
+                const m = ds.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                if (m) {
+                    const year = parseInt(m[1], 10);
+                    const month = parseInt(m[2], 10);
+                    const day = parseInt(m[3], 10);
+                    dateObj = new Date(year, month - 1, day);
+                } else {
+                    const tentative = new Date(ds);
+                    if (!isNaN(tentative)) {
+                        dateObj = tentative;
+                    }
+                }
             }
 
-            // Parse time string (assuming format like "10:30" or "14:00")
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            
-            // Set the time on the date
+            if (!dateObj) return null;
+
+            const ts = String(timeStr).trim();
+            let hours = null;
+            let minutes = null;
+            const ampm = ts.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
+            if (ampm) {
+                let h = parseInt(ampm[1], 10);
+                const m = ampm[2] ? parseInt(ampm[2], 10) : 0;
+                const p = ampm[3].toUpperCase();
+                if (p === 'PM' && h !== 12) h += 12;
+                if (p === 'AM' && h === 12) h = 0;
+                hours = h;
+                minutes = m;
+            } else {
+                const colon = ts.match(/^(\d{1,2}):(\d{2})$/);
+                if (colon) {
+                    hours = parseInt(colon[1], 10);
+                    minutes = parseInt(colon[2], 10);
+                } else {
+                    const compact = ts.match(/^(\d{1,2})(\d{2})$/);
+                    if (compact) {
+                        hours = parseInt(compact[1], 10);
+                        minutes = parseInt(compact[2], 10);
+                    }
+                }
+            }
+
+            if (hours === null || minutes === null) return null;
+
             dateObj.setHours(hours, minutes, 0, 0);
-            
             return dateObj;
         } catch (error) {
-            console.error('Error parsing date/time:', error);
             return null;
         }
     };
@@ -937,18 +981,163 @@ const ExamDetails = () => {
         return null;
     };
 
+    const renderExamCard = (exam) => {
+        const studentResult = exam.results?.find((r) => r.rollNumber === rollNumber);
+        const alreadyGiven = !!studentResult;
+        const examTimeStatus = getExamTimeStatus(exam);
+        return (
+            <div
+                key={exam.ExamID}
+                className="border border-blue-900 rounded-xl p-6 hover:border-blue-900 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10"
+            >
+                <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                        <Hash className="w-5 h-5 text-blue-900" />
+                        <h3 className="text-xl font-semibold text-blue-900">
+                            Exam ID: {exam.ExamID}
+                        </h3>
+                    </div>
+
+                    <span
+                        className={`px-3 py-1 rounded-full border-blue-900 border-1 text-sm font-medium flex items-center gap-2 ${getStatusColor(
+                            exam.status
+                        )}`}
+                    >
+                        {getStatusIcon(exam.status)}
+                        {exam.status}
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="flex items-center gap-3">
+                        <Users className="w-4 h-4 text-blue-900" />
+                        <div>
+                            <p className="text-sm text-blue-900">Batch</p>
+                            <p className="font-medium text-blue-900">{exam.batch.name}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Calendar className="w-4 h-4 text-blue-900" />
+                        <div>
+                            <p className="text-sm text-blue-900">Exam Date</p>
+                            <p className="font-medium text-blue-900">{exam.examDate}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Timer className="w-4 h-4 text-blue-900" />
+                        <div>
+                            <p className="text-sm text-blue-900">Exam Time</p>
+                            <p className="font-medium text-blue-900">
+                                {exam.examStartTime} - {exam.examEndTime}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Clock className="w-4 h-4 text-blue-900" />
+                        <div>
+                            <p className="text-sm text-blue-900">Duration</p>
+                            <p className="font-medium text-blue-900">{exam.examDurationMinutes} mins</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <FileText className="w-4 h-4 text-blue-900" />
+                        <div>
+                            <p className="text-sm text-blue-900">Questions</p>
+                            <p className="font-medium text-blue-900">{exam.totalQuestions}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Trophy className="w-4 h-4 text-blue-900" />
+                        <div>
+                            <p className="text-sm text-blue-900">Total Marks</p>
+                            <p className="font-medium text-blue-900">{exam.totalMarks}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Award className="w-4 h-4 text-blue-900" />
+                        <div>
+                            <p className="text-sm text-blue-900">Passing Marks</p>
+                            <p className="font-medium text-blue-900">{exam.passingMarks}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <CheckCircle className="w-4 h-4 text-blue-900" />
+                        <div>
+                            <p className="text-sm text-blue-900">Mode</p>
+                            <p className="font-medium text-blue-900">{exam.examMode}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <FileText className="w-4 h-4 text-blue-900" />
+                        <div>
+                            <p className="text-sm text-blue-900">Exam Type</p>
+                            <p className="font-medium text-blue-900">{exam.examType}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {exam.status === "Active" && exam.examMode === "Online" && examTimeStatus.timeInfo && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className={`border rounded-lg p-3 ${getTimeInfoStyle(examTimeStatus.timeInfo.type)}`}>
+                            <div className="flex items-center gap-2">
+                                <examTimeStatus.timeInfo.icon className="w-4 h-4" />
+                                <span className="font-medium">{examTimeStatus.timeInfo.text}</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {exam.status === "Active" && exam.examType?.toLowerCase() === "final test" && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                        <button
+                            onClick={() => downloadAdmitCard(exam.ExamID)}
+                            disabled={downloadingAdmit === String(exam.ExamID)}
+                            className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
+                        >
+                            <Download className="w-4 h-4" />
+                            {downloadingAdmit === String(exam.ExamID) ? 'Generating...' : 'Download Admit Card'}
+                        </button>
+                    </div>
+                )}
+
+                <div className="mt-4">
+                    {renderExamActions(exam, studentResult, alreadyGiven, examTimeStatus)}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="min-h-screen p-6">
             <div className="max-w-4xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-blue-900 mb-2 flex items-center gap-3">
-                        <BookOpen className="w-8 h-8 text-blue-900" />
-                        Exams for {courseCode}
-                    </h1>
-                    <div className="h-1 w-24 bg-gradient-to-r from-blue-500 to-blue-700 rounded-full"></div>
-                    <p className="text-sm text-gray-600 mt-2">
-                        Current Time: {currentTime.toLocaleString()}
-                    </p>
+                <div className="mb-8 flex items-start justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold text-blue-900 mb-2 flex items-center gap-3">
+                            <BookOpen className="w-8 h-8 text-blue-900" />
+                            Exams for {courseCode}
+                        </h1>
+                        <div className="h-1 w-24 bg-gradient-to-r from-blue-500 to-blue-700 rounded-full"></div>
+                        <p className="text-sm text-gray-600 mt-2">
+                            Current Time: {currentTime.toLocaleString()}
+                        </p>
+                    </div>
+                    <button
+                        onClick={refreshExams}
+                        disabled={refreshing}
+                        className="ml-4 px-3 py-2 rounded border border-blue-900 text-blue-900 hover:bg-blue-50 flex items-center gap-2 disabled:opacity-50"
+                        title="Refresh exams"
+                    >
+                        <RefreshCcw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                        {refreshing ? 'Refreshing' : 'Refresh'}
+                    </button>
                 </div>
 
                 {error && (
@@ -966,146 +1155,54 @@ const ExamDetails = () => {
                         <p className="text-blue-900 text-lg">No exams found for your course and batch.</p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
-                        {exams.map((exam) => {
-                            const studentResult = exam.results?.find((r) => r.rollNumber === rollNumber);
-                            const alreadyGiven = !!studentResult;
-
-                            // Get time status using new logic
-                            const examTimeStatus = getExamTimeStatus(exam);
+                    <div className="space-y-6">
+                        {(() => {
+                            const order = { active: 0, not_started: 1, ended: 2, invalid: 3 };
+                            const sorted = [...exams].sort((a, b) => {
+                                const sa = getExamTimeStatus(a).status;
+                                const sb = getExamTimeStatus(b).status;
+                                const oa = order[sa] ?? 10;
+                                const ob = order[sb] ?? 10;
+                                if (oa !== ob) return oa - ob;
+                                const aStart = createExamDateTime(a.examDate, a.examStartTime)?.getTime() ?? 0;
+                                const bStart = createExamDateTime(b.examDate, b.examStartTime)?.getTime() ?? 0;
+                                return aStart - bStart;
+                            });
+                            const upcomingActive = sorted.filter((e) => {
+                                const s = getExamTimeStatus(e).status;
+                                return s === 'active' || s === 'not_started';
+                            });
+                            const ended = sorted.filter((e) => getExamTimeStatus(e).status === 'ended');
+                            const others = sorted.filter((e) => {
+                                const s = getExamTimeStatus(e).status;
+                                return s !== 'active' && s !== 'not_started' && s !== 'ended';
+                            });
 
                             return (
-                                <div
-                                    key={exam.ExamID}
-                                    className="border border-blue-900 rounded-xl p-6 hover:border-blue-900 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10"
-                                >
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex items-center gap-3">
-                                            <Hash className="w-5 h-5 text-blue-900" />
-                                            <h3 className="text-xl font-semibold text-blue-900">
-                                                Exam ID: {exam.ExamID}
-                                            </h3>
-                                        </div>
-
-                                        <span
-                                            className={`px-3 py-1 rounded-full border-blue-900 border-1 text-sm font-medium flex items-center gap-2 ${getStatusColor(
-                                                exam.status
-                                            )}`}
-                                        >
-                                            {getStatusIcon(exam.status)}
-                                            {exam.status}
-                                        </span>
+                                <>
+                                    <h2 className="text-xl font-semibold text-blue-900">Upcoming & Active</h2>
+                                    <div className="space-y-4">
+                                        {upcomingActive.length > 0 ? upcomingActive.map(renderExamCard) : (
+                                            <p className="text-gray-600">No upcoming or active exams.</p>
+                                        )}
                                     </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <div className="flex items-center gap-3">
-                                            <Users className="w-4 h-4 text-blue-900" />
-                                            <div>
-                                                <p className="text-sm text-blue-900">Batch</p>
-                                                <p className="font-medium text-blue-900">{exam.batch.name}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <Calendar className="w-4 h-4 text-blue-900" />
-                                            <div>
-                                                <p className="text-sm text-blue-900">Exam Date</p>
-                                                <p className="font-medium text-blue-900">{exam.examDate}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <Timer className="w-4 h-4 text-blue-900" />
-                                            <div>
-                                                <p className="text-sm text-blue-900">Exam Time</p>
-                                                <p className="font-medium text-blue-900">
-                                                    {exam.examStartTime} - {exam.examEndTime}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <Clock className="w-4 h-4 text-blue-900" />
-                                            <div>
-                                                <p className="text-sm text-blue-900">Duration</p>
-                                                <p className="font-medium text-blue-900">{exam.examDurationMinutes} mins</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <FileText className="w-4 h-4 text-blue-900" />
-                                            <div>
-                                                <p className="text-sm text-blue-900">Questions</p>
-                                                <p className="font-medium text-blue-900">{exam.totalQuestions}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <Trophy className="w-4 h-4 text-blue-900" />
-                                            <div>
-                                                <p className="text-sm text-blue-900">Total Marks</p>
-                                                <p className="font-medium text-blue-900">{exam.totalMarks}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <Award className="w-4 h-4 text-blue-900" />
-                                            <div>
-                                                <p className="text-sm text-blue-900">Passing Marks</p>
-                                                <p className="font-medium text-blue-900">{exam.passingMarks}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <CheckCircle className="w-4 h-4 text-blue-900" />
-                                            <div>
-                                                <p className="text-sm text-blue-900">Mode</p>
-                                                <p className="font-medium text-blue-900">{exam.examMode}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <FileText className="w-4 h-4 text-blue-900" />
-                                            <div>
-                                                <p className="text-sm text-blue-900">Exam Type</p>
-                                                <p className="font-medium text-blue-900">{exam.examType}</p>
-                                            </div>
-                                        </div>
+                                    <h2 className="text-xl font-semibold text-blue-900 mt-4">Ended</h2>
+                                    <div className="space-y-4">
+                                        {ended.length > 0 ? ended.map(renderExamCard) : (
+                                            <p className="text-gray-600">No ended exams.</p>
+                                        )}
                                     </div>
-
-                                    {/* Time Status Display - only for active online exams */}
-                                    {exam.status === "Active" && exam.examMode === "Online" && examTimeStatus.timeInfo && (
-                                        <div className="mt-4 pt-4 border-t border-gray-200">
-                                            <div className={`border rounded-lg p-3 ${getTimeInfoStyle(examTimeStatus.timeInfo.type)}`}>
-                                                <div className="flex items-center gap-2">
-                                                    <examTimeStatus.timeInfo.icon className="w-4 h-4" />
-                                                    <span className="font-medium">{examTimeStatus.timeInfo.text}</span>
-                                                </div>
+                                    {others.length > 0 && (
+                                        <>
+                                            <h2 className="text-xl font-semibold text-blue-900 mt-4">Others</h2>
+                                            <div className="space-y-4">
+                                                {others.map(renderExamCard)}
                                             </div>
-                                        </div>
+                                        </>
                                     )}
-
-                                    {/* Show Admit Card Download Button ONLY for Active "Final Test" exams */}
-                                    {exam.status === "Active" && exam.examType?.toLowerCase() === "final test" && (
-                                        <div className="mt-4 pt-4 border-t border-gray-200">
-                                            <button
-                                                onClick={() => downloadAdmitCard(exam.ExamID)}
-                                                disabled={downloadingAdmit === String(exam.ExamID)}
-                                                className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
-                                            >
-                                                <Download className="w-4 h-4" />
-                                                {downloadingAdmit === String(exam.ExamID) ? 'Generating...' : 'Download Admit Card'}
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {/* Show Results or Action Buttons for both Online and Offline Exams */}
-                                    <div className="mt-4">
-                                        {renderExamActions(exam, studentResult, alreadyGiven, examTimeStatus)}
-                                    </div>
-                                </div>
+                                </>
                             );
-                        })}
+                        })()}
                     </div>
                 )}
             </div>

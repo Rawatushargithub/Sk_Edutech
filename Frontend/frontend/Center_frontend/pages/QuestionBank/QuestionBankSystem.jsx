@@ -185,8 +185,8 @@ console.log("response :: ", response , "of endpoint :: ", endpoint)
       return;
     }
 
-    const franchiseId = localStorage.getItem("franchiseId");
-
+    const franchiseId = localStorage.getItem("franchiseID");
+    console.log("franchise id",franchiseId);
     try {
       setLoading(true);
 

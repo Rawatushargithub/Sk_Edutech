@@ -20,6 +20,7 @@ export const getExamsByStudentDetails = async (req, res) => {
       'courseInterested.courseCode': courseCode.trim().toUpperCase() 
     }).populate('selectedBatch');
     
+    // console.log("fetch student", student);
     if (!student) {
       return res.status(404).json({ 
         message: "Student not found with provided roll number and course code" 
@@ -27,7 +28,7 @@ export const getExamsByStudentDetails = async (req, res) => {
     }
 
     const batchName = student.selectedBatch?.batchName;
-
+    console.log("batch name:", batchName);
     // Find exams that match both course code and student's batch
     const exams = await Exam.find({ 
       courseCode: courseCode.trim().toUpperCase(),
@@ -35,6 +36,7 @@ export const getExamsByStudentDetails = async (req, res) => {
       // Alternative if student has batch object: 'batch.id': student.batch.id
     }).sort({ examDate: 1 }); // Sort by exam date
 
+    console.log("Exam", exams);
     if (!exams || exams.length === 0) {
       return res.status(404).json({ 
         message: "No exams found for this student's course and batch" 
